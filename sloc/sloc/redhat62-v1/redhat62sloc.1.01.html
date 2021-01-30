@@ -1,0 +1,2605 @@
+<html>
+<head>
+<title>Estimating Linux's Size</title>
+</head>
+<body bgcolor="#ffffff">
+<center><b><font size="+3">Estimating Linux's Size</font><br>
+<font size="+2">David A. Wheeler (dwheeler&#64;dwheeler.com)</font><br>
+November 1, 2000<br>
+Version 1.01
+</b></center></font>
+
+<p>
+<i>
+This paper presents size estimates (and their implications) of the
+source code of a distribution of the Linux operating system (OS),
+a combination often called GNU/Linux.
+The distribution used in this paper is
+Red Hat Linux version 6.2, including the kernel, software development tools,
+graphics interfaces, client applications, and so on.
+Other distributions and versions will have different sizes.
+<p>
+In total, this distribution includes well over 17 million lines
+of physical source lines of code (SLOC).
+Using the COCOMO cost model,
+this is estimated to have required over 4,500 person-years of development time.
+Had this Linux distribution been developed by conventional proprietary means,
+it's estimated that it would have cost over $600 million to develop in the U.S.
+(in year 2000 dollars).
+<p>
+Many other interesting statistics emerge.
+The largest components (in order) were the
+linux kernel (including device drivers), the X-windows server
+(for the graphical user interface), egcs (a compilation system),
+and emacs (a text editor and far more).
+The languages used, sorted by the most lines of code, were C, C++,
+LISP (including Emacs' LISP and Scheme), shell (including ksh), Perl,
+Tcl (including expect), assembly (all kinds),
+Python, yacc/bison, Java, lex/flex, awk, objective-C,
+C-shell, Ada, Pascal, sed, and Fortran.
+More information is available at
+<a href="http://www.dwheeler.com/sloc">http://www.dwheeler.com/sloc</a>.
+</i>
+
+
+<h1>1. Introduction</h1>
+
+The Linux operating system (also called GNU/Linux)
+has gone from an unknown to a powerful market force.
+One survey found that
+more Internet servers use Linux than any other operating system
+<a href="http://leb.net/hzo/ioscount">[Zoebelein 1999]</a>.
+IDC found that 25% of all server operating systems purchased in 1999
+were Linux, making it second only to Windows NT's 38%
+<a href="http://news.cnet.com/news/0-1003-200-1549312.html">[Shankland 2000a]</a>.
+
+<p>
+There appear to be many reasons for this, and not simply because
+Linux can be obtained at no or low cost.
+For example, experiments suggest that Linux is highly reliable.
+A 1995 study of a set of
+individual components found that the GNU and Linux
+components had a significantly higher reliability
+than their proprietary Unix competitors
+(6% to 9% failure rate with GNU and Linux, versus
+an average 23% failure rate with the proprietary software using
+their measurement technique)
+<a href="http://www.cs.wisc.edu/~bart/fuzz/fuzz.html">[Miller 1995]</a>.
+A ten-month experiment in 1999 by ZDnet
+found that, while Microsoft's Windows NT crashed every six weeks under a
+``typical'' intranet load, using
+the same load and request set the Linux systems (from two different
+distributors) <i>never</i> crashed
+<a href="http://www.zdnet.com/sp/stories/issue/0,4537,2387282,00.html">[Vaughan-Nichols 1999]</a>.
+
+<p>
+However, possibly the most important reason for Linux's popularity among
+many developers and users is that its source code is generally
+``open source software'' and/or ``free software'' (where the ``free''
+here means ``freedom'').
+A program that is ``open source software'' or ``free software'' is essentially
+a program whose source code can be
+obtained, viewed, changed, and redistributed without royalties or
+other limitations of these actions.
+A more formal definition of ``open source software'' is available at
+<a href="http://www.opensource.org/osd.html">OSI [1999]</a>,
+a more formal definition of ``free software'' is available at
+<a href="http://www.gnu.org/philosophy/free-sw.html">FSF [2000]</a>,
+and other general information about these topics is available at
+<a href="http://www.dwheeler.com/oss_fs_refs.html">Wheeler [2000]</a>.
+The Linux operating system is actually a suite of components,
+including the Linux kernel on which it is based,
+and it is packaged, sold, and supported by a variety of distributors.
+The Linux kernel is ``open source software''/``free software'',
+and this is also true for all (or nearly all)
+other components of a typical Linux distribution.
+Open source software/free software frees users from being captives of
+a particular vendor, since it permits users to fix any problems immediately,
+tailor their system, and analyze their software in arbitrary ways.
+
+<p>
+Surprisingly, although anyone can analyze Linux for arbitrary properties,
+I have found little published
+analysis of the amount of source lines of code (SLOC)
+contained in a Linux distribution.
+The only published data I've found was developed by Microsoft in the
+documents usually called ``Halloween I'' and ``Halloween II''.
+Unfortunately, the meaning, derivation, and assumptions of their numbers
+is not explained, making the numbers hard to use and truly understand.
+Even worse, although the two documents were written by essentially
+the same people at
+the same time, the numbers in the documents appear (on their surface)
+to be contradictory.
+The so-called ``Halloween I'' document claimed that the Linux kernel (x86 only)
+was 500,000 lines of code, the Apache web server was 80,000 lines of code,
+the X-windows server was 1.5 million, and a
+full Linux distribution was about 10 million lines of code
+<a href="http://www.opensource.org/halloween/halloween1.html">[Halloween I]</a>.
+The ``Halloween II'' document
+seemed to contradict this, saying that ``Linux'' by 1998 included
+1.5 million lines of code. Since ``version 2.1.110'' is identified as the
+version number, presumably this only measures the Linux kernel,
+and it does note that this measure includes all Linux ports to various
+architectures
+<a href="http://www.opensource.org/halloween/halloween2.html">[Halloween II]</a>.
+However, this asks as many questions as it answers -
+what exactly was being measured, and what assumptions were made?
+For example,
+is the Linux kernel support for other architectures <i>really</i>
+one million lines of code?
+
+<p>
+This paper bridges this gap.
+In particular, it shows estimates of the size of Linux, and
+it estimates how much it would cost to rebuild
+a typical Linux distribution using traditional software development techniques.
+Various definitions and assumptions are included, so that others can understand
+exactly what these numbers mean.
+
+<p>
+For my purposes, I have selected as my ``representative'' Linux distribution
+Red Hat Linux version 6.2.
+I believe this distribution is reasonably representative for several reasons:
+<ol>
+<li>Red Hat Linux is the most popular Linux distribution sold in 1999
+according to IDC
+<a href="http://news.cnet.com/news/0-1003-200-2662090.html">[Shankland 2000b]</a>.
+Red Hat sold 48% of all copies in 1999; the next largest distribution
+in market share sales was SuSE at 15%.
+Not all Linux copies are ``sold'' in a way that this study would count,
+but the study at least shows that Red Hat's distribution is a popular one.
+<li>Many distributions (such as Mandrake) are based on older
+versions of Red Hat Linux.
+<li>All major general-purpose distributions support (at least) the kind of
+functionality supported by Red Hat Linux,
+if for no other reason than to compete with Red Hat.
+<li>All distributors start with the same set of open source software projects
+from which to choose components to integrate.
+Therefore, other distributions are likely to choose the same
+components or similar kinds of components with often similar size.
+</ol>
+
+<p>
+Different distributions and versions
+would produce different size figures, but I hope
+that this paper will be enlightening even though it doesn't
+try to evaluate ``all'' distributions.
+Note that some distributions (such as SuSE) may decide to add
+many more applications,
+but also note this would only create larger (not smaller)
+sizes and estimated levels of effort.
+At the time that I began this project,
+version 6.2 was the latest version of Red Hat Linux available,
+so I selected that version for analysis.
+
+<p>
+Section 2 briefly describes the approach used to estimate
+the ``size'' of this distribution (most of the details are in Appendix A).
+Section 3 discusses some of the results (with the details in Appendix B).
+Section 4 presents conclusions, followed by the two appendices.
+
+
+<h1>2. Approach</h1>
+
+My basic approach was to:
+<ol>
+<li>install the source code files,
+<li>categorize the files, creating for each package a list of files
+  for each programming language; each file in each list
+  contains source code in that language (excluding duplicate file
+  contents and automatically generated files),
+<li>count the lines of code for each language for each component, and
+<li>use the original COCOMO model to estimate the effort to develop
+    each component, and then the cost to develop using traditional methods.
+</ol>
+
+<p>
+This was not as easy as it sounds; the steps and assumptions
+made are described in Appendix A.
+
+<p>
+A few summary points are worth mentioning here, however, for those who
+don't read appendix A.
+I included software for all architectures, not just the i386.
+I did not include ``old'' versions of software (with the one exception of bash,
+as discussed in appendix A).
+I used md5 checksums to identify and ignore duplicate files, so if the
+same file contents appeared in more than one file, it was only counted once.
+The code in makefiles and RPM package specifications was not included.
+Various heuristics were used to detect automatically generated code, and
+any such code was also excluded from the count.
+A number of other heuristics were used to determine if a language was
+a source program file, and if so, what its language was.
+
+<p>
+The ``physical source lines of code'' (physical SLOC) measure was used
+as the primary measure of SLOC in this paper.
+Less formally,
+a physical SLOC in this paper
+is a line with something other than comments and whitespace (tabs and spaces).
+More specifically, physical SLOC is defined as follows:
+``a physical source line of code is a
+line ending in a newline or end-of-file marker, and which contains at least
+one non-whitespace non-comment character.''
+Comment delimiters (characters other than newlines
+starting and ending a comment) were considered
+comment characters.
+Data lines only including whitespace (e.g.,
+lines with only tabs and spaces in multiline strings) were not included.
+
+<p>
+Note that the ``logical'' SLOC is not the primary measure used here;
+one example of a logical SLOC measure would be the ``count of all terminating
+semicolons in a C file.''
+The ``physical'' SLOC was chosen instead of the ``logical'' SLOC
+because there were so many different languages that needed to be measured.
+I had trouble getting freely-available tools to work on this scale, and
+the non-free tools were too expensive for my budget
+(nor is it certain that they would have fared any better).
+Since I had to develop my own tools, I chose a measure that is much
+easier to implement.
+<a href="http://www.sei.cmu.edu/publications/documents/92.reports/92.tr.020.html">Park [1992]</a> actually recommends the use of the
+physical SLOC measure (as a minimum), for this and other reasons.
+There are disadvantages to the ``physical'' SLOC measure.
+In particular, physical SLOC measures are sensitive to how the code
+is formatted.
+However, logical SLOC measures have problems too.
+First, as noted, implementing tools to measure logical SLOC is more
+difficult, requiring more sophisticated analysis of the code.
+Also, there are many different possible logical SLOC measures,
+requiring even more careful definition.
+Finally, a logical SLOC measure must be redefined for every
+language being measured, making inter-language comparisons more difficult.
+For more information on measuring software size, including the
+issues and decisions that must be made, see
+<a href="http://sunset.usc.edu/research/CODECOUNT/documents/3rd_REVIC.pdf">Kalb [1990]</a>,
+<a href="http://sunset.usc.edu/research/CODECOUNT/documents/ispa.pdf">Kalb [1996]</a>,
+and
+<a href="http://www.sei.cmu.edu/publications/documents/92.reports/92.tr.020.html">Park [1992]</a>.
+
+<p>
+This decision to use physical SLOC
+also implied that for an effort estimator I needed to use the
+original COCOMO cost and effort estimation model
+(see Boehm [1981]), rather than the newer ``COCOMO II'' model.
+This is simply because COCOMO II requires logical SLOC as an input instead
+of physical SLOC.
+
+<p>
+For programmer salary averages, I used a salary survey from the
+September 4, 2000 issue of ComputerWorld; their survey claimed that
+this annual programmer salary averaged $56,286 in the United States.
+I was unable to find a publicly-backed average value for
+overhead, also called the ``wrap rate.''
+This value is necessary to
+estimate the costs of office space, equipment, overhead staff, and so on.
+I talked to two cost analysts, who suggested that 2.4 would be a reasonable
+overhead (wrap) rate.
+Some Defense Systems Management College (DSMC) training material
+gives examples of 2.3 (125.95%+100%) not including general and administrative
+(G&amp;A) overhead, and 2.8 when including G&amp;A
+(125% engineering overhead, plus 25% on top of that amount for G&amp;A)
+<a href="http://portal.deskbook.osd.mil/reflib/DTNG/009CM/004/009CM004DOC.HTM">[DSMC]</a>.
+This at least suggests that 2.4 is a plausible estimate.
+Clearly, these values vary widely by company and region; the information
+provided in this paper is enough to use different numbers if desired.
+
+
+<h1>3. Results</h1>
+
+Given this approach, here are some of the results.
+Section 3.1 presents the largest components (by SLOC),
+section 3.2 presents results specifically from the Linux kernel's SLOC,
+section 3.3 presents total counts by language,
+section 3.4 presents total counts of files (instead of SLOC),
+section 3.5 presents total SLOC counts,
+and section 3.6 presents effort and cost estimates.
+
+
+<h2>3.1 Largest Components by SLOC</h2>
+
+Here are the top 25 largest components (as measured by
+number of source lines of code):
+
+<pre>
+SLOC	Directory	SLOC-by-Language (Sorted)
+1526722 linux           ansic=1462165,asm=59574,sh=2860,perl=950,tcl=414,
+                        yacc=324,lex=230,awk=133,sed=72
+1291745 XFree86-3.3.6   ansic=1246420,asm=14913,sh=13433,tcl=8362,cpp=4358,
+                        yacc=2710,perl=711,awk=393,lex=383,sed=57,csh=5
+720112  egcs-1.1.2      ansic=598682,cpp=75206,sh=14307,asm=11462,yacc=7988,
+                        lisp=7252,exp=2887,fortran=1515,objc=482,sed=313,perl=18
+652087  gdb-19991004    ansic=587542,exp=37737,sh=9630,cpp=6735,asm=4139,
+                        yacc=4117,lisp=1820,sed=220,awk=142,fortran=5
+625073  emacs-20.5      lisp=453647,ansic=169624,perl=884,sh=652,asm=253,
+                        csh=9,sed=4
+467120  binutils-2.9.5.0.22 ansic=407352,asm=27575,exp=12265,sh=7398,yacc=5606,
+                        cpp=4454,lex=1479,sed=557,lisp=394,awk=24,perl=16
+415026  glibc-2.1.3     ansic=378753,asm=30644,sh=2520,cpp=1704,awk=910,
+                        perl=464,sed=16,csh=15
+327021  tcltk-8.0.5     ansic=240093,tcl=71947,sh=8531,exp=5150,yacc=762,
+                        awk=273,perl=265
+247026  postgresql-6.5.3 ansic=207735,yacc=10718,java=8835,tcl=7709,sh=7399,
+                        lex=1642,perl=1206,python=959,cpp=746,asm=70,csh=5,sed=2
+235702  gimp-1.0.4      ansic=225211,lisp=8497,sh=1994
+231072  Mesa            ansic=195796,cpp=17717,asm=13467,sh=4092
+222220  krb5-1.1.1      ansic=192822,exp=19364,sh=4829,yacc=2476,perl=1528,
+                        awk=393,python=348,lex=190,csh=147,sed=123
+206237  perl5.005_03    perl=94712,ansic=89366,sh=15654,lisp=5584,yacc=921
+205082  qt-2.1.0-beta1  cpp=180866,ansic=20513,yacc=2284,sh=538,lex=464,
+                        perl=417
+200628  Python-1.5.2    python=100935,ansic=96323,lisp=2353,sh=673,perl=342,
+                        sed=2
+199982  gs5.50          ansic=195491,cpp=2266,asm=968,sh=751,lisp=405,perl=101
+193916  teTeX-1.0       ansic=166041,sh=10263,cpp=9407,perl=3795,pascal=1546,
+                        yacc=1507,awk=522,lex=323,sed=297,asm=139,csh=47,lisp=29
+155035  bind-8.2.2_P5   ansic=131946,sh=10068,perl=7607,yacc=2231,cpp=1360,
+                        csh=848,awk=753,lex=222
+140130  AfterStep-APPS-20000124 ansic=135806,sh=3340,cpp=741,perl=243
+138931  kdebase         cpp=113971,ansic=23016,perl=1326,sh=618
+138118  gtk+-1.2.6      ansic=137006,perl=479,sh=352,awk=274,lisp=7
+138024  gated-3-5-11    ansic=126846,yacc=7799,sh=1554,lex=877,awk=666,csh=235,
+                        sed=35,lisp=12
+133193  kaffe-1.0.5     java=65275,ansic=62125,cpp=3923,perl=972,sh=814,
+                        asm=84
+131372  jade-1.2.1      cpp=120611,ansic=8228,sh=2150,perl=378,sed=5
+128672  gnome-libs-1.0.55 ansic=125373,sh=2178,perl=667,awk=277,lisp=177
+</pre>
+<p>
+Note that the operating system kernel (linux) is the largest single
+component, at over 1.5 million lines of code (mostly in C).
+See section 3.2 for a more discussion discussion of
+the linux kernel.
+
+<p>
+The next largest component is the X windows server, a critical part of the
+graphical user interface (GUI).
+Given the importance of GUIs, the long history of this program
+(giving it time to accrete functionality), and
+the many incompatible video displays it must support,
+this is perhaps not surprising.
+<p>
+Next is the compilation system, including the C and C++ compilers.
+Following this is the symbolic debugger and emacs.
+Emacs is probably not a real surprise; some users use nothing but
+emacs (e.g., reading their email via emacs), using emacs as a kind
+of virtual operating system.
+This is followed by the set of utilities for binary files, and the
+C library (which is actually used by most other language libraries
+as well).
+This is followed by TCL/Tk (a combined language and widget set),
+PostgreSQL (a relational DBMS), and the GIMP
+(an excellent client application for editing bitmapped drawings).
+<p>
+Note that language implementations tend to be written in themselves,
+particularly for their libraries.
+Thus there is more Perl than any other single language
+in the Perl implementation,
+more Python than any other single language in Python,
+and more Java than any other
+single language in Kaffe (an implementation of
+the Java Virtual Machine and library).
+<p>
+
+<h2>3.2 Examination of the Linux Kernel's SLOC</h2>
+Since the largest single component was the linux kernel
+(at over 1.5 million SLOC), I examined it further, to learn why it was
+so large and determine its ramifications.
+<p>
+I found that over 870,000 lines of this code was in the ``drivers''
+subdirectory, thus, the primary reason the kernel is so large is that
+it supports so many different kinds of hardware.
+The linux kernel's design is expressed in its source code directory
+structure, and no other directory comes close to this size -
+the second largest is the ``arch'' directory (at over 230,000 SLOC),
+which contains the architecture-unique code for each CPU architecture.
+Supporting many different filesystems also increases its size,
+but not as much as expected; the entire filesystem code
+is not quite 88,000 SLOC.
+See the appendix for more detail.
+
+<p>
+Richard Stallman and others have argued that the resulting system
+often called ``Linux'' should instead be called ``GNU/Linux''
+<a href="http://www.anchordesk.co.uk/anchordesk/commentary/columns/0,2415,7106622,00.html">[Stallman 2000]</a>.
+In particular, by hiding GNU's contributions (through not including
+GNU's name), many people are kept unaware of the GNU project and its purpose,
+which is to encourage a transition to ``free software'' (free as in freedom).
+Certainly, the resulting system was the intentional goal and result
+of the GNU project's efforts.
+Another argument used to justify the term ``GNU/Linux'' is that
+it is confusing if both the entire operating system and the 
+operating system kernel are both called ``Linux''.
+Using the term ``Linux'' is particularly bizarre for GNU/Hurd, which
+takes the Debian GNU/Linux distribution and swaps out one component:
+the Linux kernel.
+
+<p>
+The data here can be used to justify calling the
+system either ``Linux'' or ``GNU/Linux.''
+It's clear that the largest single component in the
+operating system is the Linux kernel, so it's at least understandable
+how so many people have chosen to name the entire system after
+its largest single component (``Linux'').
+It's also clear that there are many contributors, not just the GNU project
+itself, and some of those contributors do not agree with the GNU project's
+philosophy.
+On the other hand, many of the largest components of the system
+are essentially GNU projects: egcs (gcc), gdb, emacs, binutils
+(a set of commands for binary files), and glibc (the C library).
+Other GNU projects in the system include binutils, bash, gawk, make,
+textutils, sh-utils, gettext, readline, automake, tar, less, findutils,
+diffutils, and grep.
+This is not even counting GNOME, a GNU project.
+In short,
+the total of the GNU project's code is <i>much</i> larger than the
+Linux kernel's size.
+Thus, by comparing the total contributed effort,
+it's certainly justifiable to call the entire system ``GNU/Linux''
+and not just ``Linux.''
+
+<p>
+These measurements at least debunk one possible explanation of the
+Halloween documents' measures.
+Since Halloween I claimed that the x86-only code for the Linux kernel
+measured 500,000 SLOC, while Halloween II claimed that the kernel
+(all architectures) was 1.5 million SLOC, one explanation of this
+difference would be that the code for non-x86 systems was 1 million SLOC.
+This isn't so;
+I computed a grand total of 267,320 physical SLOC of
+non-i86 code (including drivers and architecture-specific code).
+It seems unlikely that over 700,000 lines of code would have been removed
+(not added) in the intervening time.
+
+<p>
+However, other measures (and explanations) are more promising.
+I also ran the CodeCount tools on the linux operating system kernel.
+Using the CodeCount definition of C logical lines of code,
+CodeCount determined that this version of the linux kernel included
+673,627 logical SLOC in C.
+This is obviously much smaller than the 1,462,165 of physical SLOC in C,
+or the 1,526,722 SLOC when all languages are combined for the Linux kernel.
+When I removed all non-i86 code and re-ran
+the CodeCount tool on just the C code,
+a logical SLOC of 570,039 of C code was revealed.
+Since the Halloween I document reported 
+500,000 SLOC (when only including x86 code), it appears very likely that
+the Halloween I paper counted logical SLOC (and only C code)
+when reporting measurements of the linux kernel.
+However, the other Halloween I measures appear to be physical SLOC
+measures:
+their estimate of 1.5 million SLOC for the X server is closer to
+the 1.2 million physical SLOC measured here, and their estimate of 80,000 SLOC
+for Apache is close to the 77,873 SLOC measured here (as shown in Appendix B).
+These variations in measurements should be expected, since the versions
+I am measuring are slightly different than the ones they measured, and
+it is likely that some assumptions are different as well.
+Meanwhile, Halloween II reported a measure of
+1.5 million lines of code for the linux kernel, essentially the
+same value given here for physical SLOC.
+
+<p>
+In short, it appears that
+Halloween I used the ``logical SLOC'' measure when measuring the
+Linux kernel, while all other measures in Halloween I and II used
+physical SLOC as the measure.
+I have attempted to contact the Microsoft author to confirm this,
+but as of yet I have not received such confirmation.
+In any case, this example clearly
+demonstrates the need to carefully identify the units of measure
+and assumptions made in any measurement of SLOC.
+
+
+
+<h2>3.3 Total Counts by Language</h2>
+<p>
+Here are the various programming languages, sorted by the total
+number of source lines of code:
+<pre>
+ansic:    14218806 (80.55%)
+cpp:       1326212 (7.51%)
+lisp:       565861 (3.21%)
+sh:         469950 (2.66%)
+perl:       245860 (1.39%)
+asm:        204634 (1.16%)
+tcl:        152510 (0.86%)
+python:     140725 (0.80%)
+yacc:        97506 (0.55%)
+java:        79656 (0.45%)
+exp:         79605 (0.45%)
+lex:         15334 (0.09%)
+awk:         14705 (0.08%)
+objc:        13619 (0.08%)
+csh:         10803 (0.06%)
+ada:          8217 (0.05%)
+pascal:       4045 (0.02%)
+sed:          2806 (0.02%)
+fortran:      1707 (0.01%)
+</pre>
+<p>
+Here you can see that C is pre-eminent (with over 80% of the code),
+followed by C++, LISP, shell, and Perl.
+Note that the separation of Expect and TCL is somewhat artificial; if
+combined, they would be next (at 232115), followed by assembly.
+Following this in order are
+Python, yacc/bison, Java, lex/flex, awk, objective-C,
+C-shell, Ada, Pascal, sed, and Fortran.
+Some of the languages with smaller counts
+(such as objective-C and Ada) show up primarily
+as test cases or bindings to support users of those languages.
+Nevertheless, it's nice to see at least some
+support for a variety of languages, since each language has some
+strength for some type of application.
+<p>
+C++ has over a million lines of code, a very respectable showing, and
+yet at least in this distribution it is far less than C.
+One could ask why there's so much more C code,
+particularly against C++.
+One possible argument is that well-written C++ takes
+fewer lines of code than does C;
+while this is often true, that's unlikely to entirely explain this.
+Another important factor
+is that many of the larger programs were written before C++ became widely used,
+and no one wishes to rewrite their C programs into C++.
+Also, there are a significant number of software developers who prefer C
+over C++
+(e.g., due to simplicity of understanding the entire language), which
+would certainly affect these numbers.
+There have been several efforts in the past to switch from C to C++
+in the Linux kernel, and they have all failed (for a variety of reasons).
+<p>
+The fact that LISP places so highly (it's in third place) is a little
+surprising.
+LISP is used in many components, but its
+high placement is due to the widespread use of emacs.
+Emacs itself is written in primarily in its own variant of LISP,
+and the emacs package itself accounts for 80% (453647/565861) of the total
+amount of LISP code.
+In addition, many languages include sophisticated (and large) emacs
+modes to support development in those languages:
+Perl includes 5584 lines of LISP, and
+Python includes another 2333 of LISP that is directly used to support
+elaborate Emacs modes for program editing.
+The ``psgml'' package is solely an emacs mode for
+editing SGML documents.
+The components with the second and third largest amounts of LISP are
+xlispstat-3-52-17 and scheme-3.2, which are implementations of LISP
+and Scheme (a LISP dialect) respectively.
+Other programs (such as the GIMP and Sawmill) also use LISP or one of
+its variants as a ``control'' language to control components built in other
+languages (in these cases C).
+LISP has a long history of use in the hacking
+(computer enthusiast) community, due to powerful influences such as
+MIT's old ITS community.
+For more information on the history of hackerdom, including the
+influence of ITS and LISP, see
+<a href="http://www.oreilly.com/catalog/opensources/book/raymond.html">[Raymond 1999]</a>.
+
+<h2>3.4 Total Counts of Files</h2>
+
+Of course, instead of counting SLOC, you could count just the
+number of files in various categories, looking for other insights.
+<p>
+Lex/flex and yacc/bison are widely-used program generators.
+They make respectable showings when counting SLOC, but their
+widespread use is more obvious when examining the file counts.
+There are 57 different lex/flex files, and 110 yacc/bison files.
+Since some build directories use lex/flex or yacc/bison more than once,
+the count of build directories using these tools
+is smaller but still respectable:
+38 different build directories use lex/flex, and 62 different build
+directories use yacc/bison.
+<p>
+Other insights can be gained from the file counts shown in appendix B.
+The number of source code files counted were 72,428.
+Not included in this count were 5,820 files which contained duplicate
+contents, and 817 files which were detected as being automatically generated.
+<p>
+These values can be used to compute average SLOC per file across the
+entire system.
+For example,
+for C, there was
+14218806 SLOC contained in 52088 files,
+resulting in an ``average'' C file containing
+273 (14218806/52088) physical source lines of code.
+
+
+
+
+<h2>3.5 Total SLOC Counts</h2>
+Given all of these assumptions, the counting programs compute a total
+of 17,652,561 physical source lines of code (SLOC);
+I will simplify this to ``over 17 million physical SLOC''.
+This is an astounding amount of code; compare this to reported sizes
+of other systems:
+
+<table BORDER NOSAVE>
+<tr><td><b>Product</b></td><td><b>SLOC</b></td><tr>
+<tr><td>NASA Space Shuttle flight control</td> <td>420K (shuttle) + 1.4 million (ground)</td></tr>
+<tr><td>Sun Solaris (1998-2000)</td> <td>7-8 million</td></tr>
+<tr><td>Microsoft Windows 3.1 (1992)</td> <td>3 million</td></tr>
+<tr><td>Microsoft Windows 95</td> <td>15 million</td></tr>
+<tr><td>Microsoft Windows 98</td> <td>18 million</td></tr>
+<tr><td>Microsoft Windows NT (1992)</td> <td>4 million</td></tr>
+<tr><td>Microsoft Windows NT 5.0 (1998)</td> <td>20 million</td></tr>
+</table>
+<p>
+These numbers come from
+Bruce Schneier's <i>Crypto-Gram</i>
+<a href="http://www.counterpane.com/crypto-gram-0003.html">[Schneier 2000]</a>,
+except for the Space Shuttle numbers which come from a
+National Academy of Sciences study
+<a href="http://www.nap.edu/html/statsoft/chap2.html">[NAS 1996]</a>.
+Numbers for later versions of Microsoft products are not shown here because
+their values have great uncertainty in the published literature.
+The assumptions of these numbers are unclear
+(e.g., are these physical or logical lines of code?), but they are
+likely to be comparable physical SLOC counts.
+<p>
+Schneier also reports that ``Linux, even with the addition of
+X Windows and Apache, is still under 5 million lines of code''.
+At first, this seems to be contradictory, since this paper counts
+over 17 million SLOC, but Schneier appears to be literally
+correct in the context of his statement.
+The phrasing of his sentence suggests that Schneier is considering
+some sort of ``minimal'' system, since he considers ``even the addition
+of X Windows'' as a significant addition.
+As shown in appendix section B.4, taking the minimal ``base'' set of
+components in Red Hat Linux, and then adding the minimal set of components
+for graphical interaction (the X Windows's graphical server, library,
+configuration tool, and a graphics toolkit) and the Apache web server,
+the total is about 4.4 million physical SLOC - which is less than 5 million.
+This minimal system doesn't include some useful (but not strictly
+necessary) components, but a number of useful components could be added
+while still staying under a total of 5 million SLOC.
+<p>
+However, note the contrast.
+Many Linux distributions include with their operating systems
+many applications (e.g., bitmap editors) and
+development tools (for many different languages).
+As a result, the entire <i>delivered</i> system for such distributions
+(including Red Hat Linux 6.2) is <i>much</i> larger than the
+5 million SLOC stated by Schneier.
+In short, this distribution's size appears similar to the size of
+Windows 98 and Windows NT 5.0 in 1998.
+<p>
+Microsoft's recent legal battles with the U.S. Department of Justice (DoJ)
+also involve the bundling of applications with the operating system.
+However, it's worth noting some differences.
+First, and most important legally, a judge has ruled that Microsoft is
+a monopoly, and under U.S. law monopolies aren't allowed to perform certain
+actions that other organizations may perform.
+Second, anyone can take Linux, bundle it with an application,
+and redistribute the resulting product.
+There is no barrier such as ``secret interfaces'' or relicensing costs
+that prevent anyone from making an application work on or integrate
+with Linux.
+Third, many Linux distributions include alternatives; users can choose
+between a number of options, all on the CD-ROM.
+Thus, while Linux distributions also appear to be going in the direction
+of adding applications to their system, they do not do so in a way that
+significantly interferes with a user's ability to select between alternatives.
+<p>
+It's worth noting that SLOC counts do not necessarily measure
+user functionality very well.
+For example, smart developers often find creative ways to
+simplify problems, so programs with small SLOC counts
+can often provide greater functionality than programs with large SLOC counts.
+However, there is evidence that SLOC counts correlate to effort
+(and thus development time), so
+using SLOC to estimate effort is still valid.
+<p>
+Creating reliable code can require
+much more effort than creating unreliable code.
+For example, it's known that the Space Shuttle code underwent rigorous
+testing and analysis, far more than typical commercial software undergoes,
+driving up its development costs.
+However, it cannot be reasonably argued that reliability differences between
+Linux and either Solaris or Windows NT would necessary cause Linux
+to take less effort to develop for a similar size.
+To see this, let's pretend that Linux had been developed
+using traditional proprietary means and a similar process
+to these other products.
+As noted earlier, experiments suggest that Linux, or at least
+certain portions of it, is more reliable than either.
+This would either cost more money (due to increased testing) or require
+a substantive change in development process (e.g., through
+increased peer review).
+Therefore, Linux's reliability suggests that developing Linux
+traditionally
+(at the same level of reliability) would have taken at least the same amount
+of effort if similar development processes were used as compared
+to similarly-sized systems.
+
+
+
+<h2>3.6 Effort and Cost Estimates</h2>
+
+Finally, given all the assumptions shown, are the effort values:
+
+<pre>
+Total Physical Source Lines of Code (SLOC) = 17652561
+Total Estimated Person-Years of Development = 4548.36
+Average Programmer Annual Salary = 56286
+Overhead Multiplier = 2.4
+Total Estimated Cost to Develop = $ 614421924.71
+</pre>
+
+<p>
+See appendix A for more data on how these effort values were
+calculated; you can retrieve more information from
+<a href="http://www.dwheeler.com/sloc">http://www.dwheeler.com/sloc</a>.
+
+
+<h1>4. Conclusions</h1>
+
+Red Hat Linux version 6.2 includes well over 17 million lines
+of physical source lines of code (SLOC).
+Using the COCOMO cost model,
+this is estimated to have required over 4,500 person-years of development time.
+Had this Linux distribution been developed by conventional proprietary means,
+it's estimated that it would have cost over $600 million to develop in the U.S.
+(in year 2000 dollars).
+Clearly, this demonstrates that it is possible
+to build large-scale systems using open source approaches.
+<p>
+Many other interesting statistics emerge.
+The largest components (in order) were the
+linux kernel (including device drivers), the X-windows server
+(for the graphical user interface), egcs (a compilation system),
+and emacs (a text editor and far more).
+The languages used, sorted by the most lines of code, were C, C++,
+LISP (including Emacs' LISP and Scheme), shell (including ksh), Perl,
+Tcl (including expect), assembly (all kinds),
+Python, yacc/bison, Java, lex/flex, awk, objective-C,
+C-shell, Ada, Pascal, sed, and Fortran.
+Here you can see that C is pre-eminent (with over 80% of the code),
+More information is available in the appendices and at
+<a href="http://www.dwheeler.com/sloc">http://www.dwheeler.com/sloc</a>.
+<p>
+It would be interesting to re-run these values on other
+Linux distributions (such as SuSE and Debian),
+other open source systems (such as FreeBSD),
+and other versions of Red Hat (such as Red Hat 7).
+SuSE and Debian, for example, by policy include many more packages, and
+would probably produce significantly larger estimates of effort
+and development cost.
+It's known that Red Hat 7 includes more source code; Red Hat 7 has
+had to add another CD-ROM to contain the binary programs, and adds such
+capabilities as a word processor (abiword) and secure shell (openssh).
+<p>
+Some actions by developers could simplify further similar analyses.
+The most important would be for programmers to always mark, at the top,
+any generated files (e.g., with a phrase like ``Automatically
+generated'').  This would do much more than aid counting tools -
+programmers are likely to accidentally manually edit such files unless
+the files are <i>clearly</i> marked as files that should not be edited.
+It would be useful if developers would use file extensions consistently
+and not ``reuse'' extension names for other meanings;
+the suffixes(7) manual page lists a number of already-claimed extensions.
+This is more difficult for less-used languages; many developers have no idea
+that ``.m'' is a standard extension for objective-C.
+It would also be nice to have high-quality open source tools for
+performing logical SLOC counting on all of the languages represented here.
+<p>
+It should be re-emphasized that these are <i>estimates</i>;
+it is very difficult to precisely categorize all files, and some files
+might confuse the size estimators.
+Some assumptions had to be made (such as not including makefiles)
+which, if made differently, would produce different results.
+Identifying automatically-generated files is very difficult, and it's
+quite possible that some were miscategorized.
+<p>
+Nevertheless, there are many insights to be gained from the
+analysis of entire open source systems, and hopefully this paper
+has provided some of those insights.
+It is my hope that, since open source systems make it possible for anyone
+to analyze them, others will pursue many other lines of analysis to
+gain further insight into these systems.
+
+<p>
+<hr>
+<p>
+
+<h1>Appendix A. Details of Approach</h1>
+
+My basic approach was to:
+<ol>
+<li>install the source code files,
+<li>categorize the files, creating for each package a list of files
+  for each programming language; each file in each list
+  contains source code in that language (excluding duplicate file
+  contents and automatically generated files),
+<li>count the lines of code for each language for each component, and
+<li>use the original COCOMO model to estimate the effort to develop
+    each component, and then the cost to develop using traditional methods.
+</ol>
+
+<p>
+This was not as easy as it sounds; each step is described below.
+Some steps I describe in some detail, because it's sometimes hard to find
+the necessary information even when the actual steps are easy.
+Hopefully, this detail will make it easier for others to do similar
+activities or to repeat the experiment.
+
+
+<h2>A.1 Installing Source Code</h2>
+
+<p>
+Installing the source code files turned out to be nontrivial.
+First, I inserted the CD-ROM containing all of the source files
+(in ``.src.rpm'' format) and installed the packages (files) using:
+<pre>
+  mount /mnt/cdrom
+  cd /mnt/cdrom/SRPMS
+  rpm -ivh *.src.rpm
+</pre>
+
+<p>
+This installs ``spec'' files and compressed source files;
+another rpm command (``rpm -bp'') uses the spec files to uncompress
+the source files into ``build directories'' (as well as apply
+any necessary patches).
+Unfortunately, the rpm tool does not enforce any naming consistency
+between the package names, the spec names, and the
+build directory names; for consistency this paper will use the
+names of the build directories, since all later tools based themselves
+on the build directories.
+
+<p>
+I decided to (in general) not count ``old'' versions of software
+(usually placed there for compatibility reasons), since that would be
+counting the same software more than once.
+Thus, the following components were not included:
+``compat-binutils'', ``compat-egcs'', ``compat-glib'', ``compat-libs'',
+``gtk+10'', ``libc-5.3.12'' (an old C library), ``libxml10'',
+``ncurses3'', and ``qt1x''.
+I also didn't include egcs64-19980921 and netscape-sparc, which
+simply repeated something on another architecture that was
+available on the i386 in a different package.
+I did make one exception.
+I kept both bash-1.14.7 and bash2, two versions of the
+shell command processor, instead of only counting bash2.
+While bash2 is the later version
+of the shell available in the package, the main shell actually used by
+the Red Hat distribution was the older version of bash.
+The rationale for this decision appears to be backwards compatibility
+for older shell scripts; this is suggested by the Red Hat package
+documentation in both bash-1.14.7 and bash2.
+It seemed wrong to not include one of the most fundamental pieces
+of the system in the count, so I included it.
+At 47067 lines of code (ignoring duplicates), bash-1.14.7 is
+one of the smaller components anyway.
+Not including this older component would not substantively
+change the results presented here.
+
+<p>
+There are two directories, krb4-1.0 and krb5-1.1.1,
+which appear to violate this rule - but don't.
+krb5-1.1.1 is the build directory created by krb5.spec, which is
+in turn installed by the source RPM package krb5-1.1.1-9.src.rpm.
+This build directory contains
+Kerberos V5, a trusted-third-party authentication system.
+The source RPM package krb5-1.1.1-9.src.rpm eventually generates
+the binary RPM files krb5-configs-1.1.1-9, krb5-libs-1.1.1-9, and
+krb5-devel-1.1.1-9.
+You might guess that ``krb4-1.0'' is just the older version of Kerberos,
+but this build directory is created by the spec file krbafs.spec
+and not just an old version of the code.
+To quote its description,
+``This is the Kerberos to AFS bridging library, built against Kerberos 5.
+krbafs is a shared library that allows programs to obtain AFS tokens using
+Kerberos IV credentials, without having to link with official AFS libraries
+which may not be available for a given platform.''
+For this situation, I simply counted both packages, since their
+purposes are different.
+
+<p>
+I was then confronted with a fundamental question: should I count
+software that only works for another architecture?
+I was using an i86-type system, but some components are only for
+Alpha or Sparc systems.  I decided that I should count them;
+even if I didn't use the code today, the ability to use these other
+architectures in the future was of value and certainly required effort
+to develop.
+
+<p>
+This caused complications for creating the build directories.
+If all installed packages fit the architecture, you can install the
+uncompressed software by typing:
+<pre>
+cd /usr/src/redhat/SPECS and typing the command
+rpm -bp *.spec
+</pre>
+Unfortunately, the rpm tool notes that you're trying to load code for
+the ``wrong'' architecture, and (at least at the time) there was
+no simple ``override'' flag.
+Instead, I had to identify each package as belonging to SPARC or ALPHA,
+and then use the rpm option --target to forcibly load them.
+For example, I renamed all sparc-specific SPARC file files to end in ``.sparc''
+and could then load them with:
+<pre>
+rpm -bp --target sparc-redhat-linux *.spec.sparc
+</pre>
+The following spec files were non-i86:
+(sparc) audioctl, elftoaout, ethtool, prtconf, silo, solemul, sparc32;
+(alpha) aboot, minlabel, quickstrip.
+In general, these were tools to aid in supporting some
+part of the boot process or for using system-specific hardware.
+
+<p>
+Note that not all packages create build directories.
+For example, ``anonftp'' is a package that, when installed,
+sets up an anonymous ftp system.
+This package doesn't actually install any software; it merely installs
+a specific configuration of another piece of software
+(and unsets the configuration when uninstalled).
+Such packages are not counted at all in this sizing estimate.
+
+<p>
+Simply loading all the source code requires a fair amount of disk space.
+Using ``du'' to measure the disk space requirements (with 1024 byte
+disk blocks), I obtained the following results:
+<pre>
+$ du -s /usr/src/redhat/BUILD /usr/src/redhat/SOURCES /usr/src/redhat/SPECS
+2375928	/usr/src/redhat/BUILD
+592404	/usr/src/redhat/SOURCES
+4592	/usr/src/redhat/SPECS
+</pre>
+Thus, these three directories required 2972924 1K blocks -
+approximately 3 gigabytes of space.
+Much more space would be required to compile it all.
+
+
+
+<h2>A.2 Categorizing Source Code</h2>
+
+My next task was to identify all files containing source code
+(not including any automatically generated source code).
+This is a non-trivial problem; there are
+181,679 ordinary files in the build directory,
+and I had no interest in doing this identification by hand.
+
+<p>
+In theory, one could just look at the file extensions
+(.c for C, .py for python), but this is not enough in practice.
+Some packages reuse extensions if the package doesn't use that kind of
+file (e.g., the ``.exp'' extension of expect was used by some
+packages as ``export'' files, and the ``.m'' of objective-C was used
+by some packages for module information extracted from C code).
+Some files don't have extensions, particularly scripts.
+And finally, files automatically generated by another
+program should not be counted, since I wished to use the results
+to estimate effort.
+
+<p>
+I ended up writing a program of over 600 lines of Perl to perform
+this identification, which used a number of heuristics to
+categorize each file into categories.
+There is a category for each language,
+plus the categories non-programs, unknown (useful for scanning for problems),
+automatically generated program files,
+duplicate files (whose file contents duplicated other files),
+and zero-length files.
+
+<p>
+The program first checked for well-known extensions (such as .gif) that
+cannot be program files, and for a number of common generated filenames.
+It then peeked at the first line for "#!" followed by a legal script
+name.
+If that didn't work, it used the extension to try to determine the category.
+For a number of languages, the extension was not reliable, so for those
+languages the categorization program
+examined the file contents and used a set of heuristics
+to determine if the file actually belonged that category.
+If all else failed, the file was placed in the ``unknown'' category for
+later analysis.
+I later looked at the ``unknown'' items, checking the common extensions
+to ensure I had not missed any common types of code.
+
+<p>
+One complicating factor was that I wished to separate C, C++, and
+objective-C code, but a header file ending with
+``.h'' or ``.hpp'' file could be any of them.
+I developed a number of heuristics to determine, for each file,
+what language it belonged to.
+For example, if a build directory has exactly one of these languages,
+determining the correct category for header files is easy.
+Similarly, if there is exactly one of these in the directory with the
+header file, it is presumed to be that kind.
+Finally, a header file with the keyword ``class'' is almost certainly not a
+C header file, but a C++ header file.
+
+<p>
+Detecting automatically generated files was not easy, and it's
+quite conceivable I missed a number of them.
+The first 15 lines were examined, to determine if any of them
+included at the beginning of the line (after spaces and
+possible comment markers) one of the following phrases:
+``generated automatically'',
+``automatically generated'',
+``this is a generated file'',
+``generated with the (something) utility'',
+or ``do not edit''.
+A number of filename conventions were used, too.
+For example,
+any ``configure'' file is presumed to be automatically generated if
+there's a ``configure.in'' file in the same directory.
+
+<p>
+To eliminate duplicates,
+the program kept md5 checksums of each program file.
+Any given md5 checksum would only be counted once.
+Build directories were processed alphabetically, so this meant that
+if the same file content was in both directories ``a'' and ``b'',
+it would be counted only once as being part of ``a''.
+Thus, some packages with names later in the alphabet may appear
+smaller than would make sense at first glance.
+It is very difficult to eliminate ``almost identical'' files
+(e.g., an older and newer version of the same code, included in two
+separate packages), because
+it is difficult to determine when ``similar'' two files are essentially
+the ``same'' file.
+Changes such as the use of pretty-printers and massive renaming of variables
+could make small changes seem large, while the many small files in the system
+could easy make different files seem the ``same.''
+Thus, I did not try to make such a determination, and just considered
+files with different contents as different.
+<!--
+Comment by Andi Kleen, 31 October:
+ From looking at your SLOC table you seem to count both gdb and binutils,
+ althought they have lots of duplicated code (e.g. the BFD library). The code
+ may slightly differ because they tend to use different release branches,
+ but it is basically the same code.
+-->
+
+
+<p>
+It's important to note that different rules could be used to
+``count'' lines of code.
+Some kinds of code were intentionally excluded from the count.
+Many RPM packages include a number of shell commands used to
+install and uninstall software; the estimate in this paper
+does not include the code in RPM packages.
+This estimate also does not include the code in Makefiles
+(which can be substantive).
+In both cases, the code in these cases is often cut and pasted from
+other similar files, so counting such code would probably overstate
+the actual development effort.
+In addition, Makefiles are often automatically generated.
+
+<p>
+On the other hand, this estimate does include some code that
+others might not count.
+This estimate includes test code included
+with the package, which isn't visible directly to users
+(other than hopefully higher quality of the executable program).
+It also includes code not used in this particular system, such
+as code for other architectures and OS's, bindings for languages
+not compiled into the binaries, and compilation-time options not chosen.
+I decided to include such code for two reasons.
+First, this code is validly represents the
+effort to build each component.
+Second, it does represent indirect value
+to the user, because the user can later use those components
+in other circumstances even if the user doesn't choose to do so by default.
+
+<p>
+So, after the work of categorizing the files, the following
+categories of files were created for each build directory
+(common extensions are shown in parentheses, and the name used in the
+data tables below are shown in brackets):
+<ol>
+<li>C (.c) [ansic]
+<li>C++  (.C, .cpp, .cxx, .cc) [cpp]
+<li>LISP (.el, .scm, .lsp, .jl) [lisp]
+<li>shell (.sh) [sh]
+<li>Perl (.pl, .pm, .perl) [perl]
+<li>Assembly (.s, .S, .asm) [asm]
+<li>TCL (.tcl, .tk, .itk) [tcl]
+<li>Python (.py) [python]
+<li>Yacc (.y) [yacc]
+<li>Java (.java) [java]
+<li>Expect (.exp) [exp]
+<li>lex (.l) [lex]
+<li>awk (.awk) [awk]
+<li>Objective-C (.m) [objc]
+<li>C shell (.csh) [csh]
+<li>Ada (.ada, .ads, .adb) [ada]
+<li>Pascal (.p) [pascal]
+<li>sed (.sed) [sed]
+<li>Fortran (.f) [fortran]
+</ol>
+<p>
+Note that we're counting Scheme as a dialect of LISP, and Expect is
+being counted separately from TCL.
+The command line shells
+Bourne shell, the Bourne-again shell (bash), and the K shell are all
+counted together as
+``shell'', but the C shell (csh and tcsh) is counted separately.
+
+
+
+<h2>A.3 Counting Lines of Code</h2>
+
+Every language required its own counting scheme.
+This was more complex than I realized; there were a number of languages
+involved.
+
+<p>
+I originally tried to use USC's ``CodeCount'' tools to count the code.
+Unfortunately, this turned out to be buggy and did not handle most
+of the languages used in the system, so I eventually abandoned it
+for this task and wrote my own tools.
+Those who wish to use this tool are welcome to do so;
+you can learn more from its web site at
+<a href="http://sunset.usc.edu/research/CODECOUNT">http://sunset.usc.edu/research/CODECOUNT</a>.
+
+<p>
+I did manage to use the CodeCount to compute the logical source lines of code
+for the C portions of the linux kernel.
+This came out to be 673,627 logical source lines of code, compared to the
+1,462,165 lines of physical code
+(again, this ignores files with duplicate contents).
+
+<!--
+Didn't realize that ".cxx" is a common C++ extension (patched).
+
+Failed to process /* comment1 *//* comment 2 */; this
+actually occurs in the Linux kernel (patched).
+
+
+/usr/src/redhat/BUILD/Mesa/3Dfx/demos/sources.c
+had a maximum line length of 1497 characters (!).
+This was far in excess of the 132 expected by the program
+(could be patched).
+
+Didn't handle spaces in filenames.
+This is needed by Kerberos 5, in which a directory has spaces
+(``Kerberos v5 Globals'').
+-->
+
+<p>
+Since there were a large number of languages to count, I used the
+``physical lines of code'' definition.
+In this definition, a line of code is a line (ending with
+newline or end-of-file) with at least one non-comment
+non-whitespace character.
+These are known as ``non-comment non-blank'' lines.
+If a line only had whitespace (tabs and spaces) it was not counted,
+even if it was in the middle of a data value (e.g., a multiline string).
+It is much easier to write programs to measure this value than to
+measure the ``logical'' lines of code, and this measure can be
+easily applied to widely different languages.
+Since I had to process a large number of different languages,
+it made sense to choose the measure that is easier to obtain.
+
+<p>
+<a href="http://www.sei.cmu.edu/publications/documents/92.reports/92.tr.020.html">Park [1992]</a>
+presents a framework of issues to be decided when trying to count code.
+Using Park's framework, here is how code was counted in this paper:
+<ol>
+<li>Statement Type: I used a physical line-of-code as my basis.
+I included executable statements, declarations
+(e.g., data structure definitions), and compiler directives
+(e.g., preprocessor commands such as #define).
+I excluded all comments and blank lines.
+<li>How Produced:
+I included all programmed code, including any files that had been modified.
+I excluded code generated with source code generators, converted with
+automatic translators, and those copied or reused without change.
+If a file was in the source package, I included it; if the file had
+been removed from a source package (including via a patch), I did
+not include it.
+<li>Origin: I included all code included in the package.
+<li>Usage: I included code in or part of the primary product; I
+did not include code external to the product
+(i.e., additional applications able to run on the system but not
+included with the system).
+<li>Delivery: I counted code delivered as source; not surprisingly,
+I didn't count code not delivered as source.
+I also didn't count undelivered code.
+<li>Functionality: I included both operative and inoperative code.
+An examples of intentionally ``inoperative'' code is
+code turned off by #ifdef commands; since it could be
+turned on for special purposes, it made sense to count it.
+An examples of unintentionally ``inoperative'' code is dead or unused code.
+<li>Replications: I included master (original) source statements.
+I also included ``physical replicates of master statements stored in
+the master code''.
+This is simply code cut and pasted from one place to another to reuse code;
+it's hard to tell where this happens, and since it has to be maintained
+separately, it's fair to include this in the measure.
+I excluded copies inserted, instantiated, or expanded when compiling
+or linking, and I excluded postproduction replicates
+(e.g., reparameterized systems).
+<li>Development Status: Since I only measured code included
+in the packages used to build the
+delivered system, I declared that all software I was measuring had
+(by definition) passed whatever ``system tests'' were required by
+that component's developers.
+<li>Languages: I included all languages, as identified earlier
+in section A.2.
+<li>Clarifications: I included all statement types.
+This included nulls, continues, no-ops, lone semicolons,
+statements that instantiate generics,
+lone curly braces ({ and }), and labels by themselves.
+</ol>
+
+<p>
+Park includes in his paper a ``basic definition'' of physical lines
+of code, defined using his framework.
+I adhered to Park's definition unless
+(1) it was impossible in my technique to do so, or
+(2) it would appear to make the result inappropriate for use in
+cost estimation (using COCOMO).
+COCOMO states that source code:
+<blockquote>
+``includes all program instructions created by project personnel
+and processed into machine code by some combination of preprocessors,
+compilers, and assemblers.
+It excludes comment cards and unmodified utility software.
+It includes job control language, format statements, and data declarations.
+Instructions are defined as lines of code.''
+</blockquote>
+
+<p>
+In summary,
+though in general I followed Park's definition,
+I didn't follow Park's ``basic definition'' in the following ways:
+<ol>
+<li>How Produced:
+I excluded code generated with source code generators, converted with
+automatic translators, and those copied or reused without change.
+After all, COCOMO states that the only code that should be counted is code
+``produced by project personnel'', whereas these kinds of files are
+instead the output of ``preprocessors and compilers.''
+If code is always maintained as the input to a code generator, and then
+the code generator is re-run, it's only the code generator input's size that
+validly measures the size of what is maintained.
+Note that while I attempted to exclude generated code, this exclusion
+is based on heuristics which may have missed some cases.
+<li>Origin: Normally physical SLOC doesn't include an unmodified
+``vendor-supplied language support library'' nor a
+``vendor-supplied system or utility''.
+However, in this case this was <i>exactly</i> what I was measuring,
+so I naturally included these as well.
+<li>Delivery: I didn't count code not delivered as source.
+After all, since I didn't have it, I couldn't count it.
+<li>Functionality: I included unintentionally inoperative code
+(e.g., dead or unused code).
+There might be such code,
+but it is very difficult to automatically detect in general for many languages.
+For example, a program not directly invoked by anything else nor
+installed by the installer is much more likely to be a test program,
+which I'm including in the count.
+Clearly, discerning human ``intent'' is hard to automate.
+Hopefully, unintentionally inoperative code
+is a small amount of the total delivered code.
+</ol>
+Otherwise, I followed Park's
+``basic definition'' of a physical line of code, even down to Park's
+language-specific definitions where Park defined them for a language.
+
+
+<p>
+One annoying problem was that one file wasn't
+syntactically correct and it affected the count.
+File /usr/src/redhat/BUILD/cdrecord-1.8/mkiso
+had an #ifdef not taken, and the road not taken had a missing
+double-quote mark before the word ``cannot'':
+<pre>
+ #ifdef  USE_LIBSCHILY
+         comerr(Cannot open '%s'.\n", filename);
+ #endif
+       perror ("fopen");
+       exit (1);
+ #endif
+</pre>
+I solved this by hand-patching the source code (for purposes of counting).
+There were also some files with intentionally erroneous code
+(e.g., compiler error tests), but these did not impact the SLOC count.
+<p>
+Several languages turn out to be non-trivial to count:
+<ul>
+<li>In C, C++, and Java, comment markers should be ignored inside strings.
+Since they have multi-line comment markers this requirement should not
+be ignored, or a ``/*'' inside a string could cause most of the code
+to be erroneously uncounted.
+<li>Officially, C doesn't have C++'s "//" comment marker, but the
+gcc compiler accepts it and a great deal of C code uses it, so my
+counters accepted it.
+<li>Perl permits in-line ``perlpod'' documents, ``here'' documents, and an
+__END__ marker that complicate code-counting.
+Perlpod documents are essentially comments, but a ``here'' document
+may include text to generate them (in which case the perlpod document
+is data and should be counted).
+The __END__ marker indicates the end of the file from Perl's
+viewpoint, even if there's more text afterwards.
+<li>Python has a convention that, at the beginning of a definition
+(e.g., of a function, method, or class), an unassigned string can be
+placed to describe what's being defined. Since this is essentially
+a comment (though it doesn't syntactically look like one), the counter
+must avoid counting such strings, which may have multiple lines.
+To handle this,
+strings which started the beginning of a line were not counted.
+Python also has the ``triple quote'' operator, permitting multiline
+strings; these needed to be handled specially.
+Triple quote stirngs were normally considered as data, regardless of
+content, unless they were used as a comment about a definition.
+<li>Assembly languages vary greatly in the comment character they use,
+so my counter had to handle this variance.
+I wrote a program which first examined the file to determine if
+C-style ``/*'' comments and C preprocessor commands
+(e.g., ``#include'') were used.
+If both ``/*'' and ``*/'' were in the file, it was assumed that
+C-style comments were used, since it is unlikely that <i>both</i> would be used
+as something else (e.g., as string data) in the same assembly language file.
+Determining if a file used the C preprocessor was trickier, since
+many assembly files do use ``#'' as a comment character and some
+preprocessor directives are ordinary words that might be included
+in a human comment.
+The heuristic used was: if #ifdef, #endif, or #include are used, the
+preprocessor is used; if at least three lines have either #define or #else,
+then the preprocessor is used.
+No doubt other heuristics are possible, but this at least seemed to produce
+reasonable results.
+The program then determined what the comment character was, by identifying
+which punctuation mark (from a set of possible marks)
+was the most common non-space initial character on a line
+(ignoring ``/'' and ``#'' if C comments or preprocessor commands,
+respectively, were used).
+Once the comment character had been determined, and it had been determined
+if C-style comments were also allowed, the lines of code
+could be counted in the file.
+</ol>
+
+<p>
+Although their values are not used in estimating effort, I also counted
+the number of files; summaries of these values are included in appendix B.
+
+
+<p>
+Since the linux kernel was the largest single component, and I
+had questions about the various inconsistencies in the
+``Halloween'' documents, I made additional measures of the
+Linux kernel.
+
+<p>
+Some have objected because the counting approach used here
+includes lines not compiled into code in this Linux distribution.
+However, the primary objective of these measures was to estimate
+total effort to develop all of these components.
+Even if some lines are not normally enabled on Linux, it still
+required effort to develop that code.
+Code for other architectures still has value, for example, because
+it enables users to port to other architectures while using the component.
+Even if that code is no longer being maintained (e.g., because
+the architecture has become less popular), nevertheless someone had
+to invest effort to create it, the results benefitted someone, and if
+it is needed again it's still there (at least for use as a starting point).
+Code that is only enabled by compile-time options still has value,
+because if the options were desired the user could enable them and
+recompile.
+Code that is only used for testing still has value, because
+its use improves the quality of the software directly run by users.
+It is possible that there is some ``dead code'' (code that cannot be
+run under any circumstance), but it is expected that
+this amount of code is very small and would not signficantly affect
+the results.
+Andi Kleen (of SuSE) noted that
+if you wanted to only count compiled and running code, one technique
+(for some languages) would be to use gcc's ``-g'' option and use the
+resulting .stabs
+debugging information with some filtering (to exclude duplicated
+inline functions).
+I determined this to be out-of-scope for this paper, but this approach
+could be used to make additional measurements of the system.
+
+
+<h2>A.4 Estimating Effort and Costs</h2>
+
+For each build directory, I totalled the source lines of code (SLOC) for
+each language, then totalled those values to determine the SLOC
+for each directory.
+I then used the basic Constructive Cost Model (COCOMO)
+to estimate effort.
+The basic
+model is the simplest (and least accurate) model, but I simply did
+not have the additional information necessary to use the more
+complex (and more accurate) models.
+COCOMO is described in depth by Boehm [1981].
+
+<p>
+Basic COCOMO is designed to estimate the time from product design
+(after plans and requirements have been developed) through detailed design,
+code, unit test, and integration testing.
+Note that plans and requirement development are not included.
+COCOMO is designed to include management overhead and the creation of
+documentation (e.g., user manuals) as well as the code itself.
+Again, see
+Boehm [1981] for a more detailed description of the model's assumptions.
+
+<p>
+In the basic COCOMO model, estimated man-months of effort,
+design through test, equals
+2.4*(KSLOC)^1.05, where KSLOC is the total physical SLOC divided by 1000.
+
+<p>
+I assumed that each package was built completely independently
+and that there were no efforts necessary for integration
+not represented in the code itself.
+This almost certainly underestimates the true costs, but for most packages it's
+actually true (many packages don't interact with each other at all).
+I wished to underestimate (instead of overestimate) the
+effort and costs, and having no better model, I assumed the
+simplest possible integration effort.
+This meant that I applied the model to each component, then summed the
+results, as opposed to applying the model once to the grand total
+of all software.
+
+<p>
+Note that the only input to this model is source lines of code,
+so some factors simply aren't captured.
+For example, creating some kinds of data (such as fonts)
+can be very time-consuming, but this isn't directly captured by this model.
+Some programs are intentionally designed to be data-driven, that is,
+they're designed as small programs which are driven by specialized data.
+Again, this data may be as complex to develop as code, but this is
+not counted.
+
+<p>
+Another example of uncaptured factors is the difficulty of writing
+kernel code.
+It's generally acknowledged that writing kernel-level code is
+more difficult than most other kinds of code, because this kind of
+code is subject to a subtle timing and race conditions,
+hardware interactions, a small stack, and none of the normal error protections.
+In this paper I do not attempt to account for this.
+You could try to
+use the Intermediate COCOMO model to try to account for this, but
+again this requires knowledge of other factors that can only be guessed at.
+Again, the effort estimation probably significantly underestimates the
+actual effort represented here.
+
+<p>
+It's worth noting that there is an update to COCOMO, COCOMO II.
+However, COCOMO II requires as its input logical (not physical) SLOC,
+and since this measure is much harder to obtain, I did not pursue it
+for this paper.
+More information about COCOMO II is available at the web site
+<a href="http://sunset.usc.edu/research/COCOMOII/index.html">http://sunset.usc.edu/research/COCOMOII/index.html</a>.
+A nice overview paper where you can learn more about software metrics is
+Masse [1997].
+
+
+
+<p>
+I assumed that an average U.S. programmer/analyst salary in the year 2000
+was $56,286 per year; this value was from the
+ComputerWorld, September 4, 2000's Salary Survey,
+Overhead is much harder to estimate; I did not find a definitive source
+for information on overheads.
+After informal discussions with several cost analysts, I determined
+that an overhead of 2.4 would be representative of the overhead sustained
+by a typical software development company.
+Should you diagree with these figures, I've provided all the information
+necessary to recalculate your own cost figures; just start with the
+effort estimates and recalculate cost yourself.
+
+
+<h1>Appendix B. More Detailed Results</h1>
+
+This appendix provides some more detailed results.
+B.1 lists the SLOC found in each build directory;
+B.2 shows counts of files for each category of file;
+B.3 presents some additional measures about the Linux kernel.
+B.4 presents some SLOC totals of putatively ``minimal'' systems.
+You can learn more at
+<a href="http://www.dwheeler.com/sloc">http://www.dwheeler.com/sloc</a>.
+
+<h2>B.1 SLOC in Build Directories</h1>
+
+The following is a list of all build directories, and the source
+lines of code (SLOC) found in them, followed by a few statistics counting
+files (instead of SLOC).
+<p>
+Remember that duplicate files are only counted once,
+with the build directory ``first in ASCII sort order'' receiving any
+duplicates (to break ties).
+As a result, some build directories have a
+smaller number than might at first make sense.
+For example, the ``kudzu'' build directory does contain code, but all
+of it is also contained in the ``Xconfigurator'' build directory..
+and since that directory sorts first, the kudzu package is considered
+to have ``no code''.
+<p>
+The columns are SLOC (total physical source lines of code), Directory
+(the name of the build directory, usually the same or similar to the
+package name), and SLOC-by-Language (Sorted).
+This last column lists languages by name and the number of SLOC in that
+language; zeros are not shown, and the list is sorted from largest to
+smallest in that build directory.
+Similarly, the directories are sorted from largest to smallest total SLOC.
+
+ 
+<pre>
+SLOC	Directory	SLOC-by-Language (Sorted)
+1526722 linux           ansic=1462165,asm=59574,sh=2860,perl=950,tcl=414,
+                        yacc=324,lex=230,awk=133,sed=72
+1291745 XFree86-3.3.6   ansic=1246420,asm=14913,sh=13433,tcl=8362,cpp=4358,
+                        yacc=2710,perl=711,awk=393,lex=383,sed=57,csh=5
+720112  egcs-1.1.2      ansic=598682,cpp=75206,sh=14307,asm=11462,yacc=7988,
+                        lisp=7252,exp=2887,fortran=1515,objc=482,sed=313,perl=18
+652087  gdb-19991004    ansic=587542,exp=37737,sh=9630,cpp=6735,asm=4139,
+                        yacc=4117,lisp=1820,sed=220,awk=142,fortran=5
+625073  emacs-20.5      lisp=453647,ansic=169624,perl=884,sh=652,asm=253,
+                        csh=9,sed=4
+467120  binutils-2.9.5.0.22 ansic=407352,asm=27575,exp=12265,sh=7398,yacc=5606,
+                        cpp=4454,lex=1479,sed=557,lisp=394,awk=24,perl=16
+415026  glibc-2.1.3     ansic=378753,asm=30644,sh=2520,cpp=1704,awk=910,
+                        perl=464,sed=16,csh=15
+327021  tcltk-8.0.5     ansic=240093,tcl=71947,sh=8531,exp=5150,yacc=762,
+                        awk=273,perl=265
+247026  postgresql-6.5.3 ansic=207735,yacc=10718,java=8835,tcl=7709,sh=7399,
+                        lex=1642,perl=1206,python=959,cpp=746,asm=70,csh=5,sed=2
+235702  gimp-1.0.4      ansic=225211,lisp=8497,sh=1994
+231072  Mesa            ansic=195796,cpp=17717,asm=13467,sh=4092
+222220  krb5-1.1.1      ansic=192822,exp=19364,sh=4829,yacc=2476,perl=1528,
+                        awk=393,python=348,lex=190,csh=147,sed=123
+206237  perl5.005_03    perl=94712,ansic=89366,sh=15654,lisp=5584,yacc=921
+205082  qt-2.1.0-beta1  cpp=180866,ansic=20513,yacc=2284,sh=538,lex=464,
+                        perl=417
+200628  Python-1.5.2    python=100935,ansic=96323,lisp=2353,sh=673,perl=342,
+                        sed=2
+199982  gs5.50          ansic=195491,cpp=2266,asm=968,sh=751,lisp=405,perl=101
+193916  teTeX-1.0       ansic=166041,sh=10263,cpp=9407,perl=3795,pascal=1546,
+                        yacc=1507,awk=522,lex=323,sed=297,asm=139,csh=47,lisp=29
+155035  bind-8.2.2_P5   ansic=131946,sh=10068,perl=7607,yacc=2231,cpp=1360,
+                        csh=848,awk=753,lex=222
+140130  AfterStep-APPS-20000124 ansic=135806,sh=3340,cpp=741,perl=243
+138931  kdebase         cpp=113971,ansic=23016,perl=1326,sh=618
+138118  gtk+-1.2.6      ansic=137006,perl=479,sh=352,awk=274,lisp=7
+138024  gated-3-5-11    ansic=126846,yacc=7799,sh=1554,lex=877,awk=666,csh=235,
+                        sed=35,lisp=12
+133193  kaffe-1.0.5     java=65275,ansic=62125,cpp=3923,perl=972,sh=814,
+                        asm=84
+131372  jade-1.2.1      cpp=120611,ansic=8228,sh=2150,perl=378,sed=5
+128672  gnome-libs-1.0.55 ansic=125373,sh=2178,perl=667,awk=277,lisp=177
+127536  pine4.21        ansic=126678,sh=766,csh=62,perl=30
+121878  ImageMagick-4.2.9 ansic=99383,sh=11143,cpp=8870,perl=2024,tcl=458
+119613  lynx2-8-3       ansic=117385,sh=1860,perl=340,csh=28
+116951  mc-4.5.42       ansic=114406,sh=1996,perl=345,awk=148,csh=56
+116615  gnumeric-0.48   ansic=115592,yacc=600,lisp=191,sh=142,perl=67,python=23
+113272  xlispstat-3-52-17 ansic=91484,lisp=21769,sh=18,csh=1
+113241  vim-5.6         ansic=111724,awk=683,sh=469,perl=359,csh=6
+109824  php-3.0.15      ansic=105901,yacc=1887,sh=1381,perl=537,awk=90,cpp=28
+104032  linuxconf-1.17r2 cpp=93139,perl=4570,sh=2984,java=2741,ansic=598
+102674  libgr-2.0.13    ansic=99647,sh=2438,csh=589
+100951  lam-6.3.1       ansic=86177,cpp=10569,sh=3677,perl=322,fortran=187,
+                        csh=19
+99066   krb4-1.0        ansic=84077,asm=5163,cpp=3775,perl=2508,sh=1765,
+                        yacc=1509,lex=236,awk=33
+94637   xlockmore-4.15  ansic=89816,cpp=1987,tcl=1541,sh=859,java=285,perl=149
+93940   kdenetwork      cpp=80075,ansic=7422,perl=6260,sh=134,tcl=49
+92964   samba-2.0.6     ansic=88308,sh=3557,perl=831,awk=158,csh=110
+91213   anaconda-6.2.2  ansic=74303,python=13657,sh=1583,yacc=810,lex=732,
+                        perl=128
+89959   xscreensaver-3.23 ansic=88488,perl=1070,sh=401
+88128   cvs-1.10.7      ansic=68303,sh=17909,perl=902,yacc=826,csh=181,lisp=7
+87940   isdn4k-utils    ansic=78752,perl=3369,sh=3089,cpp=2708,tcl=22
+85383   xpdf-0.90       cpp=60427,ansic=21400,sh=3556
+81719   inn-2.2.2       ansic=62403,perl=10485,sh=5465,awk=1567,yacc=1547,
+                        lex=249,tcl=3
+80343   kdelibs         cpp=71217,perl=5075,ansic=3660,yacc=240,lex=116,
+                        sh=35
+79997   WindowMaker-0.61.1 ansic=77924,sh=1483,perl=371,lisp=219
+78787   extace-1.2.15   ansic=66571,sh=9322,perl=2894
+77873   apache_1.3.12   ansic=69191,sh=6781,perl=1846,cpp=55
+75257   xpilot-4.1.0    ansic=68669,tcl=3479,cpp=1896,sh=1145,perl=68
+73817   w3c-libwww-5.2.8 ansic=64754,sh=4678,cpp=3181,perl=1204
+72726   ucd-snmp-4.1.1  ansic=64411,perl=5558,sh=2757
+72425   gnome-core-1.0.55 ansic=72230,perl=141,sh=54
+71810   jikes           cpp=71452,java=358
+70260   groff-1.15      cpp=59453,ansic=5276,yacc=2957,asm=1866,perl=397,
+                        sh=265,sed=46
+69265   fvwm-2.2.4      ansic=63496,cpp=2463,perl=1835,sh=723,yacc=596,lex=152
+69246   linux-86        ansic=63328,asm=5276,sh=642
+68997   blt2.4g         ansic=58630,tcl=10215,sh=152
+68884   squid-2.3.STABLE1 ansic=66305,sh=1570,perl=1009
+68560   bash-2.03       ansic=56758,sh=7264,yacc=2808,perl=1730
+68453   kdegraphics     cpp=34208,ansic=29347,sh=4898
+65722   xntp3-5.93      ansic=60190,perl=3633,sh=1445,awk=417,asm=37
+62922   ppp-2.3.11      ansic=61756,sh=996,exp=82,perl=44,csh=44
+62137   sgml-tools-1.0.9 cpp=38543,ansic=19185,perl=2866,lex=560,sh=532,
+                        lisp=309,awk=142
+61688   imap-4.7        ansic=61628,sh=60
+61324   ncurses-5.0     ansic=45856,ada=8217,cpp=3720,sh=2822,awk=506,perl=103,
+                        sed=100
+60429   kdesupport      ansic=42421,cpp=17810,sh=173,awk=13,csh=12
+60302   openldap-1.2.9  ansic=58078,sh=1393,perl=630,python=201
+57217   xfig.3.2.3-beta-1 ansic=57212,csh=5
+56093   lsof_4.47       ansic=50268,sh=4753,perl=856,awk=214,asm=2
+55667   uucp-1.06.1     ansic=52078,sh=3400,perl=189
+54935   gnupg-1.0.1     ansic=48884,asm=4586,sh=1465
+54603   glade-0.5.5     ansic=49545,sh=5058
+54431   svgalib-1.4.1   ansic=53725,asm=630,perl=54,sh=22
+53141   AfterStep-1.8.0 ansic=50898,perl=1168,sh=842,cpp=233
+52808   kdeutils        cpp=41365,ansic=9693,sh=1434,awk=311,sed=5
+52574   nmh-1.0.3       ansic=50698,sh=1785,awk=74,sed=17
+51813   freetype-1.3.1  ansic=48929,sh=2467,cpp=351,csh=53,perl=13
+51592   enlightenment-0.15.5 ansic=51569,sh=23
+50970   cdrecord-1.8    ansic=48595,sh=2177,perl=194,sed=4
+49370   tin-1.4.2       ansic=47763,sh=908,yacc=699
+49325   imlib-1.9.7     ansic=49260,sh=65
+48223   kdemultimedia   ansic=24248,cpp=22275,tcl=1004,sh=621,perl=73,awk=2
+47067   bash-1.14.7     ansic=41654,sh=3140,yacc=2197,asm=48,awk=28
+46312   tcsh-6.09.00    ansic=43544,sh=921,lisp=669,perl=593,csh=585
+46159   unzip-5.40      ansic=40977,cpp=3778,asm=1271,sh=133
+45811   mutt-1.0.1      ansic=45574,sh=237
+45589   am-utils-6.0.3  ansic=33389,sh=8950,perl=2421,lex=454,yacc=375
+45485   guile-1.3       ansic=38823,lisp=4626,asm=1514,sh=310,awk=162,csh=50
+45378   gnuplot-3.7.1   ansic=43276,lisp=661,asm=539,objc=387,csh=297,perl=138,
+                        sh=80
+44323   mgetty-1.1.21   ansic=33757,perl=5889,sh=3638,tcl=756,lisp=283
+42880   sendmail-8.9.3  ansic=40364,perl=1737,sh=779
+42746   elm2.5.3        ansic=32931,sh=9774,awk=41
+41388   p2c-1.22        ansic=38788,pascal=2499,perl=101
+41205   gnome-games-1.0.51 ansic=31191,lisp=6966,cpp=3048
+39861   rpm-3.0.4       ansic=36994,sh=1505,perl=1355,python=7
+39160   util-linux-2.10f ansic=38627,sh=351,perl=65,csh=62,sed=55
+38927   xmms-1.0.1      ansic=38366,asm=398,sh=163
+38548   ORBit-0.5.0     ansic=35656,yacc=1750,sh=776,lex=366
+38453   zsh-3.0.7       ansic=36208,sh=1763,perl=331,awk=145,sed=6
+37515   ircii-4.4       ansic=36647,sh=852,lex=16
+37360   tiff-v3.5.4     ansic=32734,sh=4054,cpp=572
+36338   textutils-2.0a  ansic=18949,sh=16111,perl=1218,sed=60
+36243   exmh-2.1.1      tcl=35844,perl=316,sh=49,exp=34
+36239   x11amp-0.9-alpha3 ansic=31686,sh=4200,asm=353
+35812   xloadimage.4.1  ansic=35705,sh=107
+35554   zip-2.3         ansic=32108,asm=3446
+35397   gtk-engines-0.10 ansic=20636,sh=14761
+35136   php-2.0.1       ansic=33991,sh=1056,awk=89
+34882   pmake           ansic=34599,sh=184,awk=58,sed=41
+34772   xpuzzles-5.4.1  ansic=34772
+34768   fileutils-4.0p  ansic=31324,sh=2042,yacc=841,perl=561
+33203   strace-4.2      ansic=30891,sh=1988,perl=280,lisp=44
+32767   trn-3.6         ansic=25264,sh=6843,yacc=660
+32277   pilot-link.0.9.3 ansic=26513,java=2162,cpp=1689,perl=971,yacc=660,
+                        python=268,tcl=14
+31994   korganizer      cpp=23402,ansic=5884,yacc=2271,perl=375,lex=61,sh=1
+31174   ncftp-3.0beta21 ansic=30347,cpp=595,sh=232
+30438   gnome-pim-1.0.55 ansic=28665,yacc=1773
+30122   scheme-3.2      lisp=19483,ansic=10515,sh=124
+30061   tcpdump-3.4     ansic=29208,yacc=236,sh=211,lex=206,awk=184,csh=16
+29730   screen-3.9.5    ansic=28156,sh=1574
+29315   jed             ansic=29315
+29091   xchat-1.4.0     ansic=28894,perl=121,python=53,sh=23
+28897   ncpfs-2.2.0.17  ansic=28689,sh=182,tcl=26
+28449   slrn-0.9.6.2    ansic=28438,sh=11
+28261   xfishtank-2.1tp ansic=28261
+28186   texinfo-4.0     ansic=26404,sh=841,awk=451,perl=256,lisp=213,sed=21
+28169   e2fsprogs-1.18  ansic=27250,awk=437,sh=339,sed=121,perl=22
+28118   slang           ansic=28118
+27860   kdegames        cpp=27507,ansic=340,sh=13
+27117   librep-0.10     ansic=19381,lisp=5385,sh=2351
+27040   mikmod-3.1.6    ansic=26975,sh=55,awk=10
+27022   x3270-3.1.1     ansic=26456,sh=478,exp=88
+26673   lout-3.17       ansic=26673
+26608   Xaw3d-1.3       ansic=26235,yacc=247,lex=126
+26363   gawk-3.0.4      ansic=19871,awk=2519,yacc=2046,sh=1927
+26146   libxml-1.8.6    ansic=26069,sh=77
+25994   xrn-9.02        ansic=24686,yacc=888,sh=249,lex=92,perl=35,awk=31,
+                        csh=13
+25915   gv-3.5.8        ansic=25821,sh=94
+25479   xpaint          ansic=25456,sh=23
+25236   shadow-19990827 ansic=23464,sh=883,yacc=856,perl=33
+24910   kdeadmin        cpp=19919,sh=3936,perl=1055
+24773   pdksh-5.2.14    ansic=23599,perl=945,sh=189,sed=40
+24583   gmp-2.0.2       ansic=17888,asm=5252,sh=1443
+24387   mars_nwe        ansic=24158,sh=229
+24270   gnome-python-1.0.51 python=14331,ansic=9791,sh=148
+23838   kterm-6.2.0     ansic=23838
+23666   enscript-1.6.1  ansic=22365,lex=429,perl=308,sh=291,yacc=164,lisp=109
+22373   sawmill-0.24    ansic=11038,lisp=8172,sh=3163
+22279   make-3.78.1     ansic=19287,sh=2029,perl=963
+22011   libpng-1.0.5    ansic=22011
+21593   xboard-4.0.5    ansic=20640,lex=904,sh=41,csh=5,sed=3
+21010   netkit-telnet-0.16 ansic=14796,cpp=6214
+20433   pam-0.72        ansic=18936,yacc=634,sh=482,perl=321,lex=60
+20125   ical-2.2        cpp=12651,tcl=6763,sh=624,perl=60,ansic=27
+20078   gd1.3           ansic=19946,perl=132
+19971   wu-ftpd-2.6.0   ansic=17572,yacc=1774,sh=421,perl=204
+19500   gnome-utils-1.0.50 ansic=18099,yacc=824,lisp=577
+19065   joe             ansic=18841,asm=224
+18885   X11R6-contrib-3.3.2 ansic=18616,lex=161,yacc=97,sh=11
+18835   glib-1.2.6      ansic=18702,sh=133
+18151   git-4.3.19      ansic=16166,sh=1985
+18020   xboing          ansic=18006,sh=14
+17939   sh-utils-2.0    ansic=13366,sh=3027,yacc=871,perl=675
+17765   mtools-3.9.6    ansic=16155,sh=1602,sed=8
+17750   gettext-0.10.35 ansic=13414,lisp=2030,sh=1983,yacc=261,perl=53,sed=9
+17682   bc-1.05         ansic=9186,sh=7236,yacc=967,lex=293
+17271   fetchmail-5.3.1 ansic=13441,python=1490,sh=1246,yacc=411,perl=321,
+                        lex=238,awk=124
+17259   sox-12.16       ansic=16659,sh=600
+16785   control-center-1.0.51 ansic=16659,sh=126
+16266   dhcp-2.0        ansic=15328,sh=938
+15967   SVGATextMode-1.9-src ansic=15079,yacc=340,sh=294,lex=227,sed=15,
+                        asm=12
+15868   kpilot-3.1b9    cpp=8613,ansic=5640,yacc=1615
+15851   taper-6.9a      ansic=15851
+15819   mpg123-0.59r    ansic=14900,asm=919
+15691   transfig.3.2.1  ansic=15643,sh=38,csh=10
+15638   mod_perl-1.21   perl=10278,ansic=5124,sh=236
+15522   console-tools-0.3.3 ansic=13335,yacc=986,sh=800,lex=291,perl=110
+15456   rpm2html-1.2    ansic=15334,perl=122
+15143   gnotepad+-1.1.4 ansic=15143
+15108   GXedit1.23      ansic=15019,sh=89
+15087   mm2.7           ansic=8044,csh=6924,sh=119
+14941   readline-2.2.1  ansic=11375,sh=1890,perl=1676
+14912   ispell-3.1      ansic=8380,lisp=3372,yacc=1712,cpp=585,objc=385,
+                        csh=221,sh=157,perl=85,sed=15
+14871   gnuchess-4.0.pl80 ansic=14584,sh=258,csh=29
+14774   flex-2.5.4      ansic=13011,lex=1045,yacc=605,awk=72,sh=29,sed=12
+14587   multimedia      ansic=14577,sh=10
+14516   libgtop-1.0.6   ansic=13768,perl=653,sh=64,asm=31
+14427   mawk-1.2.2      ansic=12714,yacc=994,awk=629,sh=90
+14363   automake-1.4    perl=10622,sh=3337,ansic=404
+14350   rsync-2.4.1     ansic=13986,perl=179,sh=126,awk=59
+14299   nfs-utils-0.1.6 ansic=14107,sh=165,perl=27
+14269   rcs-5.7         ansic=12209,sh=2060
+14255   tar-1.13.17     ansic=13014,lisp=592,sh=538,perl=111
+14105   wmakerconf-2.1  ansic=13620,perl=348,sh=137
+14039   less-346        ansic=14032,awk=7
+13779   rxvt-2.6.1      ansic=13779
+13586   wget-1.5.3      ansic=13509,perl=54,sh=23
+13504   rp3-1.0.7       cpp=10416,ansic=2957,sh=131
+13241   iproute2        ansic=12139,sh=1002,perl=100
+13100   silo-0.9.8      ansic=10485,asm=2615
+12657   macutils        ansic=12657
+12639   libungif-4.1.0  ansic=12381,sh=204,perl=54
+12633   minicom-1.83.0  ansic=12503,sh=130
+12593   audiofile-0.1.9 sh=6440,ansic=6153
+12463   gnome-objc-1.0.2 objc=12365,sh=86,ansic=12
+12313   jpeg-6a         ansic=12313
+12124   ypserv-1.3.9    ansic=11622,sh=460,perl=42
+11790   lrzsz-0.12.20   ansic=9512,sh=1263,exp=1015
+11775   modutils-2.3.9  ansic=9309,sh=1620,lex=484,yacc=362
+11721   enlightenment-conf-0.15 ansic=6232,sh=5489
+11633   net-tools-1.54  ansic=11531,sh=102
+11404   findutils-4.1   ansic=11160,sh=173,exp=71
+11299   xmorph-1999dec12 ansic=10783,tcl=516
+10958   kpackage-1.3.10 cpp=8863,sh=1852,ansic=124,perl=119
+10914   diffutils-2.7   ansic=10914
+10404   gnorpm-0.9      ansic=10404
+10271   gqview-0.7.0    ansic=10271
+10267   libPropList-0.9.1 sh=5974,ansic=3982,lex=172,yacc=139
+10187   dump-0.4b15     ansic=9422,sh=760,sed=5
+10088   piranha         ansic=10048,sh=40
+10013   grep-2.4        ansic=9852,sh=103,awk=49,sed=9
+9961    procps-2.0.6    ansic=9959,sh=2
+9942    xpat2-1.04      ansic=9942
+9927    procmail-3.14   ansic=8090,sh=1837
+9873    nss_ldap-105    ansic=9784,perl=89
+9801    man-1.5h1       ansic=7377,sh=1802,perl=317,awk=305
+9741    Xconfigurator-4.3.5 ansic=9578,perl=125,sh=32,python=6
+9731    ld.so-1.9.5     ansic=6960,asm=2401,sh=370
+9725    gpm-1.18.1      ansic=8107,yacc=1108,lisp=221,sh=209,awk=74,sed=6
+9699    bison-1.28      ansic=9650,sh=49
+9666    ash-linux-0.2   ansic=9445,sh=221
+9607    cproto-4.6      ansic=7600,lex=985,yacc=761,sh=261
+9551    pwdb-0.61       ansic=9488,sh=63
+9465    rdist-6.1.5     ansic=8306,sh=553,yacc=489,perl=117
+9263    ctags-3.4       ansic=9240,sh=23
+9138    gftp-2.0.6a     ansic=9138
+8939    mkisofs-1.12b5  ansic=8939
+8766    pxe-linux       cpp=4463,ansic=3622,asm=681
+8572    psgml-1.2.1     lisp=8572
+8540    xxgdb-1.12      ansic=8540
+8491    gtop-1.0.5      ansic=8151,cpp=340
+8356    gedit-0.6.1     ansic=8225,sh=131
+8303    dip-3.3.7o      ansic=8207,sh=96
+7859    libglade-0.11   ansic=5898,sh=1809,python=152
+7826    xpm-3.4k        ansic=7750,sh=39,cpp=37
+7740    sed-3.02        ansic=7301,sed=359,sh=80
+7617    cpio-2.4.2      ansic=7598,sh=19
+7615    esound-0.2.17   ansic=7387,sh=142,csh=86
+7570    sharutils-4.2.1 ansic=5511,perl=1741,sh=318
+7427    ed-0.2          ansic=7263,sh=164
+7255    lilo            ansic=3522,asm=2557,sh=740,perl=433,cpp=3
+7227    cdparanoia-III-alpha9.6 ansic=6006,sh=1221
+7095    xgammon-0.98    ansic=6506,lex=589
+7041    newt-0.50.8     ansic=6526,python=515
+7030    ee-0.3.11       ansic=7007,sh=23
+6976    aboot-0.5       ansic=6680,asm=296
+6968    mailx-8.1.1     ansic=6963,sh=5
+6877    lpr             ansic=6842,sh=35
+6827    gnome-media-1.0.51 ansic=6827
+6646    iputils         ansic=6646
+6611    patch-2.5       ansic=6561,sed=50
+6592    xosview-1.7.1   cpp=6205,ansic=367,awk=20
+6550    byacc-1.9       ansic=5520,yacc=1030
+6496    pidentd-3.0.10  ansic=6475,sh=21
+6391    m4-1.4          ansic=5993,lisp=243,sh=155
+6306    gzip-1.2.4a     ansic=5813,asm=458,sh=24,perl=11
+6234    awesfx-0.4.3a   ansic=6234
+6172    sash-3.4        ansic=6172
+6116    lslk            ansic=5325,sh=791
+6090    joystick-1.2.15 ansic=6086,sh=4
+6072    kdoc            perl=6010,sh=45,cpp=17
+6043    irda-utils-0.9.10 ansic=5697,sh=263,perl=83
+6033    sysvinit-2.78   ansic=5256,sh=777
+6025    pnm2ppa         ansic=5708,sh=317
+6021    rpmfind-1.4     ansic=6021
+5981    indent-2.2.5    ansic=5958,sh=23
+5975    ytalk-3.1       ansic=5975
+5960    isapnptools-1.21 ansic=4394,yacc=1383,perl=123,sh=60
+5744    gdm-2.0beta2    ansic=5632,sh=112
+5594    isdn-config     cpp=3058,sh=2228,perl=308
+5526    efax-0.9        ansic=4570,sh=956
+5383    acct-6.3.2      ansic=5016,cpp=287,sh=80
+5115    libtool-1.3.4   sh=3374,ansic=1741
+5111    netkit-ftp-0.16 ansic=5111
+4996    bzip2-0.9.5d    ansic=4996
+4895    xcpustate-2.5   ansic=4895
+4792    libelf-0.6.4    ansic=3310,sh=1482
+4780    make-3.78.1_pvm-0.5 ansic=4780
+4542    gpgp-0.4        ansic=4441,sh=101
+4430    gperf-2.7       cpp=2947,exp=745,ansic=695,sh=43
+4367    aumix-1.30.1    ansic=4095,sh=179,sed=93
+4087    zlib-1.1.3      ansic=2815,asm=712,cpp=560
+4038    sysklogd-1.3-31 ansic=3741,perl=158,sh=139
+4024    rep-gtk-0.8     ansic=2905,lisp=971,sh=148
+3962    netkit-timed-0.16 ansic=3962
+3929    initscripts-5.00 sh=2035,ansic=1866,csh=28
+3896    ltrace-0.3.10   ansic=2986,sh=854,awk=56
+3885    phhttpd-0.1.0   ansic=3859,sh=26
+3860    xdaliclock-2.18 ansic=3837,sh=23
+3855    pciutils-2.1.5  ansic=3800,sh=55
+3804    quota-2.00-pre3 ansic=3795,sh=9
+3675    dosfstools-2.2  ansic=3675
+3654    tcp_wrappers_7.6 ansic=3654
+3651    ipchains-1.3.9  ansic=2767,sh=884
+3625    autofs-3.1.4    ansic=2862,sh=763
+3588    netkit-rsh-0.16 ansic=3588
+3438    yp-tools-2.4    ansic=3415,sh=23
+3433    dialog-0.6      ansic=2834,perl=349,sh=250
+3415    ext2ed-0.1      ansic=3415
+3315    gdbm-1.8.0      ansic=3290,cpp=25
+3245    ypbind-3.3      ansic=1793,sh=1452
+3219    playmidi-2.4    ansic=3217,sed=2
+3096    xtrojka123      ansic=3087,sh=9
+3084    at-3.1.7        ansic=1442,sh=1196,yacc=362,lex=84
+3051    dhcpcd-1.3.18-pl3 ansic=2771,sh=280
+3012    apmd            ansic=2617,sh=395
+2883    netkit-base-0.16 ansic=2883
+2879    vixie-cron-3.0.1 ansic=2866,sh=13
+2835    gkermit-1.0     ansic=2835
+2810    kdetoys         cpp=2618,ansic=192
+2791    xjewel-1.6      ansic=2791
+2773    mpage-2.4       ansic=2704,sh=69
+2758    autoconf-2.13   sh=2226,perl=283,exp=167,ansic=82
+2705    autorun-2.61    sh=1985,cpp=720
+2661    cdp-0.33        ansic=2661
+2647    file-3.28       ansic=2601,perl=46
+2645    libghttp-1.0.4  ansic=2645
+2631    getty_ps-2.0.7j ansic=2631
+2597    pythonlib-1.23  python=2597
+2580    magicdev-0.2.7  ansic=2580
+2531    gnome-kerberos-0.2 ansic=2531
+2490    sndconfig-0.43  ansic=2490
+2486    bug-buddy-0.7   ansic=2486
+2459    usermode-1.20   ansic=2459
+2455    fnlib-0.4       ansic=2432,sh=23
+2447    sliplogin-2.1.1 ansic=2256,sh=143,perl=48
+2424    raidtools-0.90  ansic=2418,sh=6
+2423    netkit-routed-0.16 ansic=2423
+2407    nc              ansic=1670,sh=737
+2324    up2date-1.13    python=2324
+2270    memprof-0.3.0   ansic=2270
+2268    which-2.9       ansic=1398,sh=870
+2200    printtool       tcl=2200
+2163    gnome-linuxconf-0.25 ansic=2163
+2141    unarj-2.43      ansic=2141
+2065    units-1.55      ansic=1963,perl=102
+2048    netkit-ntalk-0.16 ansic=2048
+1987    cracklib,2.7    ansic=1919,perl=46,sh=22
+1984    cleanfeed-0.95.7b perl=1984
+1977    wmconfig-0.9.8  ansic=1941,sh=36
+1941    isicom          ansic=1898,sh=43
+1883    slocate-2.1     ansic=1802,sh=81
+1857    netkit-rusers-0.16 ansic=1857
+1856    pump-0.7.8      ansic=1856
+1842    cdecl-2.5       ansic=1002,yacc=765,lex=75
+1765    fbset-2.1       ansic=1401,yacc=130,lex=121,perl=113
+1653    adjtimex-1.9    ansic=1653
+1634    netcfg-2.25     python=1632,sh=2
+1630    psmisc          ansic=1624,sh=6
+1621    urlview-0.7     ansic=1515,sh=106
+1604    fortune-mod-9708 ansic=1604
+1531    netkit-tftp-0.16 ansic=1531
+1525    logrotate-3.3.2 ansic=1524,sh=1
+1473    traceroute-1.4a5 ansic=1436,awk=37
+1452    time-1.7        ansic=1395,sh=57
+1435    ncompress-4.2.4 ansic=1435
+1361    mt-st-0.5b      ansic=1361
+1290    cxhextris       ansic=1290
+1280    pam_krb5-1      ansic=1280
+1272    bsd-finger-0.16 ansic=1272
+1229    hdparm-3.6      ansic=1229
+1226    procinfo-17     ansic=1145,perl=81
+1194    passwd-0.64.1   ansic=1194
+1182    auth_ldap-1.4.0 ansic=1182
+1146    prtconf-1.3     ansic=1146
+1143    anacron-2.1     ansic=1143
+1129    xbill-2.0       cpp=1129
+1099    popt-1.4        ansic=1039,sh=60
+1088    nag             perl=1088
+1076    stylesheets-0.13rh perl=888,sh=188
+1075    authconfig-3.0.3 ansic=1075
+1049    kpppload-1.04   cpp=1044,sh=5
+1020    MAKEDEV-2.5.2   sh=1020
+1013    trojka          ansic=1013
+987     xmailbox-2.5    ansic=987
+967     netkit-rwho-0.16 ansic=967
+953     switchdesk-2.1  ansic=314,perl=287,cpp=233,sh=119
+897     portmap_4       ansic=897
+874     ldconfig-1999-02-21 ansic=874
+844     jpeg-6b         sh=844
+834     ElectricFence-2.1 ansic=834
+830     mouseconfig-4.4 ansic=830
+816     rpmlint-0.8     python=813,sh=3
+809     kdpms-0.2.8     cpp=809
+797     termcap-2.0.8   ansic=797
+787     xsysinfo-1.7    ansic=787
+770     giftrans-1.12.2 ansic=770
+742     setserial-2.15  ansic=742
+728     tree-1.2        ansic=728
+717     chkconfig-1.1.2 ansic=717
+682     lpg             perl=682
+657     eject-2.0.2     ansic=657
+616     diffstat-1.27   ansic=616
+592     netscape-4.72   sh=592
+585     usernet-1.0.9   ansic=585
+549     genromfs-0.3    ansic=549
+548     tksysv-1.1      tcl=526,sh=22
+537     minlabel-1.2    ansic=537
+506     netkit-bootparamd-0.16 ansic=506
+497     locale_config-0.2 ansic=497
+491     helptool-2.4    perl=288,tcl=203
+480     elftoaout-2.2   ansic=480
+463     tmpwatch-2.2    ansic=311,sh=152
+445     rhs-printfilters-1.63 sh=443,ansic=2
+441     audioctl        ansic=441
+404     control-panel-3.13 ansic=319,tcl=85
+368     kbdconfig-1.9.2.4 ansic=368
+368     vlock-1.3       ansic=368
+367     timetool-2.7.3  tcl=367
+347     kernelcfg-0.5   python=341,sh=6
+346     timeconfig-3.0.3 ansic=318,sh=28
+343     mingetty-0.9.4  ansic=343
+343     chkfontpath-1.7 ansic=343
+332     ethtool-1.0     ansic=332
+314     mkbootdisk-1.2.5 sh=314
+302     symlinks-1.2    ansic=302
+301     xsri-1.0        ansic=301
+294     netkit-rwall-0.16 ansic=294
+290     biff+comsat-0.16 ansic=290
+288     mkinitrd-2.4.1  sh=288
+280     stat-1.5        ansic=280
+265     sysreport-1.0   sh=265
+261     bdflush-1.5     ansic=202,asm=59
+255     ipvsadm-1.1     ansic=255
+255     sag-0.6-html    perl=255
+245     man-pages-1.28  sh=244,sed=1
+240     open-1.4        ansic=240
+236     xtoolwait-1.2   ansic=236
+222     utempter-0.5.2  ansic=222
+222     mkkickstart-2.1 sh=222
+221     hellas          sh=179,perl=42
+213     rhmask          ansic=213
+159     quickstrip-1.1  ansic=159
+132     rdate-1.0       ansic=132
+131     statserial-1.1  ansic=121,sh=10
+107     fwhois-1.00     ansic=107
+85      mktemp-1.5      ansic=85
+82      modemtool-1.21  python=73,sh=9
+67      setup-1.2       ansic=67
+56      shaper          ansic=56
+52      sparc32-1.1     ansic=52
+47      intimed-1.10    ansic=47
+23      locale-ja-9     sh=23
+16      AnotherLevel-1.0.1 sh=16
+11      words-2         sh=11
+7       trXFree86-2.1.2 tcl=7
+0       install-guide-3.2.html (none)
+0       caching-nameserver-6.2 (none)
+0       XFree86-ISO8859-2-1.0 (none)
+0       rootfiles       (none)
+0       ghostscript-fonts-5.50 (none)
+0       kudzu-0.36      (none)
+0       wvdial-1.41     (none)
+0       mailcap-2.0.6   (none)
+0       desktop-backgrounds-1.1 (none)
+0       redhat-logos    (none)
+0       solemul-1.1     (none)
+0       dev-2.7.18      (none)
+0       urw-fonts-2.0   (none)
+0       users-guide-1.0.72 (none)
+0       sgml-common-0.1 (none)
+0       setup-2.1.8     (none)
+0       jadetex         (none)
+0       gnome-audio-1.0.0 (none)
+0       specspo-6.2     (none)
+0       gimp-data-extras-1.0.0 (none)
+0       docbook-3.1     (none)
+0       indexhtml-6.2   (none)
+
+
+ansic:    14218806 (80.55%)
+cpp:       1326212 (7.51%)
+lisp:       565861 (3.21%)
+sh:         469950 (2.66%)
+perl:       245860 (1.39%)
+asm:        204634 (1.16%)
+tcl:        152510 (0.86%)
+python:     140725 (0.80%)
+yacc:        97506 (0.55%)
+java:        79656 (0.45%)
+exp:         79605 (0.45%)
+lex:         15334 (0.09%)
+awk:         14705 (0.08%)
+objc:        13619 (0.08%)
+csh:         10803 (0.06%)
+ada:          8217 (0.05%)
+pascal:       4045 (0.02%)
+sed:          2806 (0.02%)
+fortran:      1707 (0.01%)
+
+
+Total Physical Source Lines of Code (SLOC) = 17652561
+Total Estimated Person-Years of Development = 4548.36
+Average Programmer Annual Salary = 56286
+Overhead Multiplier = 2.4
+Total Estimated Cost to Develop = $ 614421924.71
+</pre>
+
+<h2>B.2 Counts of Files For Each Category</h2>
+
+<p>
+There were 181,679 ordinary files in the build directory.
+The following are counts of the number of files
+(<i>not</i> the SLOC) for each language:
+<pre>
+ansic:       52088 (71.92%)
+cpp:          8092 (11.17%)
+sh:           3381 (4.67%)
+asm:          1931 (2.67%)
+perl:         1387 (1.92%)
+lisp:         1168 (1.61%)
+java:         1047 (1.45%)
+python:        997 (1.38%)
+tcl:           798 (1.10%)
+exp:           472 (0.65%)
+awk:           285 (0.39%)
+objc:          260 (0.36%)
+sed:           112 (0.15%)
+yacc:          110 (0.15%)
+csh:            94 (0.13%)
+ada:            92 (0.13%)
+lex:            57 (0.08%)
+fortran:        50 (0.07%)
+pascal:          7 (0.01%)
+
+
+Total Number of Source Code Files = 72428
+</pre>
+
+<p>
+In addition, when counting the number of files (not SLOC),
+some files were identified as source code files but nevertheless were
+not counted for other reasons (and thus not included in the file counts above).
+Of these source code files,
+5,820 files were identified as duplicating the contents of another file,
+817 files were identified as files that had been automatically generated,
+and 65 files were identified as zero-length files.
+
+
+<h2>B.3 Additional Measures of the Linux Kernel</h2>
+
+I also made additional measures of the Linux kernel.
+This kernel is Linux kernel version 2.2.14 as patched by Red Hat.
+The Linux kernel's design is reflected in its directory structure.
+Only 8 lines of source code are in its main directory; the rest
+are in descendent directories.
+Counting the physical SLOC in each subdirectory (or its descendents)
+yielded the following:
+
+<pre>
+BUILD/linux/Documentation/      765
+BUILD/linux/arch/            236651
+BUILD/linux/configs/              0
+BUILD/linux/drivers/         876436
+BUILD/linux/fs/               88667
+BUILD/linux/ibcs/             16619
+BUILD/linux/include/         136982
+BUILD/linux/init/              1302
+BUILD/linux/ipc/               1757
+BUILD/linux/kernel/            7436
+BUILD/linux/ksymoops-0.7c/     3271
+BUILD/linux/lib/               1300
+BUILD/linux/mm/                6771
+BUILD/linux/net/             105549
+BUILD/linux/pcmcia-cs-3.1.8/  34851
+BUILD/linux/scripts/           8357
+</pre>
+
+<p>
+I separately ran the CodeCount tools on the entire
+linux operating system kernel.
+Using the CodeCount definition of C logical lines of code,
+CodeCount determined that this version of the linux kernel included
+673,627 logical SLOC in C.
+This is obviously much smaller than the 1,462,165 of physical SLOC in C,
+or the 1,526,722 SLOC when all languages are combined for Linux.
+
+<p>
+However, this included non-i86 code.
+To make a more reasonable comparison with the Halloween documents,
+I needed to ignore non-i386 code.
+
+<p>
+First, I looked at the linux/arch directory,
+which contained architecture-specific code.
+This directory had the following subdirectories (architectures):
+alpha,	arm,  i386,  m68k,  mips,  ppc,  s390,	sparc,	sparc64.
+I then computed the total for all of ``arch'', which was
+236651 SLOC, and subtracted out linux/arch/i386 code, which totalled to
+26178 SLOC; this gave me a total of non-i386 code in linux/arc
+as 210473 physical SLOC.
+
+I then looked through the ``drivers'' directory to see if there
+were sets of drivers which were non-i386.
+I identified the following directories, with the SLOC totals as shown:
+<pre>
+linux/drivers/sbus/       22354
+linux/drivers/macintosh/   6000
+linux/drivers/sgi/         4402
+linux/drivers/fc4/         3167
+linux/drivers/nubus/        421
+linux/drivers/acorn/      11850
+linux/drivers/s390/        8653
+
+Driver Total:              56847
+</pre>
+
+Thus, I had a grand total on non-i86 code (including
+drivers and architecture-specific code) as 267320 physical SLOC.
+This is, of course, another approximation, since there's certainly
+other architecture-specific lines, but I believe that is most of it.
+Running the CodeCount tool on just the C code, once these architectural
+and driver directories are removed, reveals a logical SLOC of 570,039
+of C code.
+
+
+<h2>B.4 Minimum System SLOC</h2>
+
+Most of this paper worries about counting an ``entire'' system.
+However, what's the SLOC size of a ``minimal'' system?
+Here's an attempt to answer that question.
+
+<p>
+Red Hat Linux 6.2, CD-ROM #1, file RedHat/base/comps,
+defines the ``base'' (minimum) Red Hat Linux 6.2 installation
+as a set of packages.
+The following are the build directories corresponding to
+this base (minimum) installation, along with
+the SLOC counts (as shown above).
+Note that this creates a text-only system:
+
+<pre>
+Component                SLOC
+anacron-2.1              1143
+apmd                     3012
+ash-linux-0.2            9666
+at-3.1.7                 3084
+authconfig-3.0.3         1075
+bash-1.14.7             47067
+bc-1.05                 17682
+bdflush-1.5               261
+binutils-2.9.5.0.22    467120
+bzip2-0.9.5d             4996
+chkconfig-1.1.2           717
+console-tools-0.3.3     15522
+cpio-2.4.2               7617
+cracklib,2.7             1987
+dev-2.7.18                  0
+diffutils-2.7           10914
+dump-0.4b15             10187
+e2fsprogs-1.18          28169
+ed-0.2                   7427
+egcs-1.1.2             720112
+eject-2.0.2               657
+file-3.28                2647
+fileutils-4.0p          34768
+findutils-4.1           11404
+gawk-3.0.4              26363
+gd1.3                   20078
+gdbm-1.8.0               3315
+getty_ps-2.0.7j          2631
+glibc-2.1.3            415026
+gmp-2.0.2               24583
+gnupg-1.0.1             54935
+gpm-1.18.1               9725
+grep-2.4                10013
+groff-1.15              70260
+gzip-1.2.4a              6306
+hdparm-3.6               1229
+initscripts-5.00         3929
+isapnptools-1.21         5960
+kbdconfig-1.9.2.4         368
+kernelcfg-0.5             347
+kudzu-0.36                  0
+ldconfig-1999-02-21       874
+ld.so-1.9.5              9731
+less-346                14039
+lilo                     7255
+linuxconf-1.17r2       104032
+logrotate-3.3.2          1525
+mailcap-2.0.6               0
+mailx-8.1.1              6968
+MAKEDEV-2.5.2            1020
+man-1.5h1                9801
+mingetty-0.9.4            343
+mkbootdisk-1.2.5          314
+mkinitrd-2.4.1            288
+mktemp-1.5                 85
+modutils-2.3.9          11775
+mouseconfig-4.4           830
+mt-st-0.5b               1361
+ncompress-4.2.4          1435
+ncurses-5.0             61324
+net-tools-1.54          11633
+newt-0.50.8              7041
+pam-0.72                20433
+passwd-0.64.1            1194
+pciutils-2.1.5           3855
+popt-1.4                 1099
+procmail-3.14            9927
+procps-2.0.6             9961
+psmisc                   1630
+pump-0.7.8               1856
+pwdb-0.61                9551
+quota-2.00-pre3          3804
+raidtools-0.90           2424
+readline-2.2.1          14941
+redhat-logos                0
+rootfiles                   0
+rpm-3.0.4               39861
+sash-3.4                 6172
+sed-3.02                 7740
+sendmail-8.9.3          42880
+setserial-2.15            742
+setup-1.2                  67
+setup-2.1.8                 0
+shadow-19990827         25236
+sh-utils-2.0            17939
+slang                   28118
+slocate-2.1              1883
+stat-1.5                  280
+sysklogd-1.3-31          4038
+sysvinit-2.78            6033
+tar-1.13.17             14255
+termcap-2.0.8             797
+texinfo-4.0             28186
+textutils-2.0a          36338
+time-1.7                 1452
+timeconfig-3.0.3          346
+tmpwatch-2.2              463
+utempter-0.5.2            222
+util-linux-2.10f        39160
+vim-5.6                113241
+vixie-cron-3.0.1         2879
+which-2.9                2268
+zlib-1.1.3               4087
+</pre>
+
+<p>
+Thus, the contents of the build directories corresponding to
+the ``base'' (minimum) installation totals to
+2,819,334 SLOC.
+<p>
+A few notes are in order about this build directory total:
+<ol>
+<li>Some of the packages listed by a traditional package list aren't
+shown here because they don't contain any code.
+Package "basesystem" is a pseudo-package for dependency purposes.
+Package redhat-release is just a package for keeping track of the
+base system's version number.
+Package "filesystem" contains a directory layout.
+<li>ntsysv's source is in chkconfig-1.1.2;
+kernel-utils and kernel-pcmcia-cs are part of "linux".
+Package shadow-utils is in build directory shadow-19990827.
+Build directory util-linux includes losetup and mount.
+"dump" is included to include rmt.
+<li>
+Sometimes the build directories contain more code than is
+necessary to create just the parts for the ``base'' system; this
+is a side-effect of how things are packaged.
+``info'' is included in the base, so we count all of texinfo.
+The build directory termcap is counted, because libtermcap is in the base.
+Possibly most important,
+egcs is there because libstdc++ is in the base.
+<!--
+It might be possible to try to count only the code for ``libstdc++''.
+When I count only the egcs subdirectories ``libstdc++'' (17.583 physical SLOC)
+and ``libio'' (25,360 physical SLOC), I get a total of
+42,943 physical SLOC instead of egcs-1.1.2's 720,112 physical SLOC.
+Unfortunately, with only a cursory look at the build process, I can't
+be certain that those are the only components included in libstdc++.
+It's quite possible that much more code is part of libstdc++.
+To be sure that I include all relevant code in the count,
+I'm counting all of egcs.
+This approach may inflate the count somewhat, but the problem
+noted below (eliminated duplicates may not be counted at all)
+may deflate the number.
+-->
+<li>
+Sometimes a large component is included in the base, even though
+most of the time little of its functionality is used.
+In particular, the mail transfer agent ``sendmail'' is in the base,
+even though for many users most of sendmail's functionality isn't used.
+However, for this paper's purposes this isn't a problem.
+After all, even if sendmail's functionality
+is often underused, clearly that functionality
+took time to develop and that functionality
+is available to those who want it.
+<li>
+My tools intentionally eliminated duplicates; it may be that a few
+files aren't counted here because they're considered duplicates of
+another build directory not included here.
+I do not expect this factor to materially change the total.
+<li>
+Red Hat Linux is not optimized to be a ``small as possible'' distribution;
+their emphasis is on functionality, not small size.
+A working Linux distribution could include much less code,
+depending on its intended application.
+For example, ``linuxconf'' simplifies system configuration,
+but the system can be configured by editing its system configuration files
+directly, which would reduce the base system's size.
+This also includes vim, a full-featured text editor - a simpler
+editor with fewer functions would be smaller as well.
+</ol>
+
+
+<p>
+Many people prefer some sort of graphical interface;
+here is a minimal configuration of a graphical system,
+adding the X server, a window manager, and a few tools:
+<table BORDER NOSAVE>
+<tr><td><b>Component</b></td><td><b>SLOC</b></td></tr>
+<tr><td>XFree86-3.3.6</td><td>1291745</td></tr>
+<tr><td>Xconfigurator-4.3.5</td><td>9741</td></tr>
+<tr><td>fvwm-2.2.4</td><td>69265</td></tr>
+<tr><td>X11R6-contrib-3.3.2</td><td>18885</td></tr>
+</table>
+These additional graphical components add
+1,389,636 SLOC.
+Due to oddities of the way the initialization system
+xinitrc is built, it isn't shown here in the total, but
+xinitrc has so little code that its omission does
+not significantly affect the total.
+<p>
+Adding these numbers together,
+we now have a total of 4,208,970 SLOC for a ``minimal graphical system.''
+Many people would want to add more components.
+For example, this doesn't include a graphical toolkit
+(necessary for running most graphical applications).
+We could add gtk+-1.2.6 (a toolkit needed for running GTK+
+based applications), adding 138,118 SLOC.
+This would now total 4,347,088 for a ``basic graphical system,''
+one able to run basic GTK+ applications.
+<p>
+Let's add a web server to the mix.
+Adding apache_1.3.12 adds only 77,873 SLOC.
+We now have 4,424,961 physical SLOC for a basic graphical system plus
+a web server.
+<p>
+We could then add a graphical desktop environment, but there are
+so many different options and possibilities that trying to
+identify a ``minimal'' system is hard to do without knowing the
+specific uses intended for the system.
+Red Hat defines a standard ``GNOME'' and ``KDE'' desktop, but
+these are intended to be highly functional (not ``minimal'').
+Thus, we'll stop here,
+with a total of 2.8 million physical SLOC for a minimal text-based system,
+and total of 4.4 million physical SLOC for a basic graphical system plus
+a web server.
+
+
+
+<h1>References</h1>
+
+<p>
+[Boehm 1981]
+Boehm, Barry.
+1981.
+<i>Software Engineering Economics</i>.
+Englewood Cliffs, N.J.: Prentice-Hall, Inc.
+ISBN 0-13-822122-7.
+
+<p>
+[DSMC]
+Defense Systems Management College (DSMC).
+<i>Indirect Cost Management Guide: Navigating the Sea of Overhead</i>.
+Defense Systems Management College Press, Fort Belvoir, VA 22060-5426.
+Available as part of the ``Defense Acquisition Deskbook.''
+<a href="http://portal.deskbook.osd.mil/reflib/DTNG/009CM/004/009CM004DOC.HTM">http://portal.deskbook.osd.mil/reflib/DTNG/009CM/004/009CM004DOC.HTM</a>.
+
+<p>
+[FSF 2000]
+Free Software Foundation (FSF).
+<i>What is Free Software?</i>.
+<a href="http://www.gnu.org/philosophy/free-sw.html">http://www.gnu.org/philosophy/free-sw.html</a>.
+
+<p>
+[Halloween I]
+Valloppillil, Vinod, with interleaved commentary by Eric S. Raymond.
+Aug 11, 1998.
+"Open Source Software: A (New?) Development Methodology"
+v1.00.
+<a href="http://www.opensource.org/halloween/halloween1.html">http://www.opensource.org/halloween/halloween1.html</a>.
+
+<p>
+[Halloween II]
+Valloppillil, Vinod and Josh Cohen,
+with interleaved commentary by Eric S. Raymond.
+Aug 11, 1998.
+"Linux OS Competitive Analysis: The Next Java VM?".
+v1.00.
+<a href="http://www.opensource.org/halloween/halloween2.html">http://www.opensource.org/halloween/halloween2.html</a>
+ 
+
+<p>
+[Kalb 1990]
+Kalb, George E.
+"Counting Lines of Code, Confusions, Conclusions, and Recommendations".
+Briefing to the 3rd Annual REVIC User's Group Conference,
+January 10-12, 1990.
+<a href="http://sunset.usc.edu/research/CODECOUNT/documents/3rd_REVIC.pdf">http://sunset.usc.edu/research/CODECOUNT/documents/3rd_REVIC.pdf</a>
+
+
+<p>
+[Kalb 1996]
+Kalb, George E.
+October 16, 1996
+"Automated Collection of Software Sizing Data"
+Briefing to the International Society of Parametric Analysts,
+Southern California Chapter.
+<a href="http://sunset.usc.edu/research/CODECOUNT/documents/ispa.pdf">http://sunset.usc.edu/research/CODECOUNT/documents/ispa.pdf</a>
+
+
+<p>
+[Masse 1997]
+Masse, Roger E.
+July 8, 1997.
+<i>Software Metrics:
+An Analysis of the Evolution of COCOMO and Function Points</i>.
+University of Maryland.
+<a href="http://www.python.org/~rmasse/papers/software-metrics">http://www.python.org/~rmasse/papers/software-metrics</a>.
+
+<p>
+[Miller 1995]
+Miller, Barton P.,
+David Koski, Cjin Pheow Lee, Vivekananda Maganty,
+Ravi Murthy, Ajitkumar Natarajan, and Jeff Steidl.
+1995.
+<i>Fuzz Revisited: A Re-examination of the Reliability of
+UNIX Utilities and Services</i>.
+<a href="http://www.cs.wisc.edu/~bart/fuzz/fuzz.html">http://www.cs.wisc.edu/~bart/fuzz/fuzz.html</a>.
+
+<p>
+[NAS 1996]
+National Academy of Sciences (NAS).
+1996.
+<i>Statistical Software Engineering</i>.
+<a href="http://www.nap.edu/html/statsoft/chap2.html">http://www.nap.edu/html/statsoft/chap2.html</a>
+
+
+<p>
+[OSI 1999].
+Open Source Initiative.
+1999.
+<i>The Open Source Definition</i>.
+<a href="http://www.opensource.org/osd.html">http://www.opensource.org/osd.html</a>.
+
+
+<p>
+[Park 1992]
+Park, R.
+1992.
+<i>Software Size Measurement: A Framework for Counting Source Statements</i>.
+Technical Report CMU/SEI-92-TR-020.
+<a href="http://www.sei.cmu.edu/publications/documents/92.reports/92.tr.020.html">http://www.sei.cmu.edu/publications/documents/92.reports/92.tr.020.html</a>
+
+<p>
+[Raymond 1999]
+Raymond, Eric S.
+January 1999.
+``A Brief History of Hackerdom''.
+<i>Open Sources: Voices from the Open Source Revolution</i>.
+<a href="http://www.oreilly.com/catalog/opensources/book/raymond.html">http://www.oreilly.com/catalog/opensources/book/raymond.html</a>.
+
+
+<p>
+[Schneier 2000]
+Schneier, Bruce.
+March 15, 2000.
+``Software Complexity and Security''.
+<i>Crypto-Gram</i>.
+<a href="http://www.counterpane.com/crypto-gram-0003.html">http://www.counterpane.com/crypto-gram-0003.html</a>
+
+
+<p>
+[Shankland 2000a]
+Shankland, Stephen.
+February 14, 2000.
+"Linux poses increasing threat to Windows 2000".
+CNET News.com.
+<a href="http://news.cnet.com/news/0-1003-200-1549312.html">http://news.cnet.com/news/0-1003-200-1549312.html</a>.
+
+
+<p>
+[Shankland 2000b]
+Shankland, Stephen.
+August 31, 2000.
+"Red Hat holds huge Linux lead, rivals growing".
+CNET News.com.
+<a href="http://news.cnet.com/news/0-1003-200-2662090.html">http://news.cnet.com/news/0-1003-200-2662090.html</a>
+
+<p>
+[Stallman 2000]
+Stallman, Richard.
+October 13, 2000
+"By any other name...".
+<a href="http://www.anchordesk.co.uk/anchordesk/commentary/columns/0,2415,7106622,00.html">http://www.anchordesk.co.uk/anchordesk/commentary/columns/0,2415,7106622,00.html</a>.
+
+<p>
+[Vaughan-Nichols 1999]
+Vaughan-Nichols, Steven J.
+Nov. 1, 1999.
+Can you Trust this Penguin?
+ZDnet.
+<a href="http://www.zdnet.com/sp/stories/issue/0,4537,2387282,00.html">http://www.zdnet.com/sp/stories/issue/0,4537,2387282,00.html</a>
+
+<p>
+[Wheeler 2000]
+Wheeler, David A.
+2000.
+<i>Open Source Software / Free Software References</i>.
+<a href="http://www.dwheeler.com/oss_fs_refs.html">http://www.dwheeler.com/oss_fs_refs.html</a>.
+
+<p>
+[Zoebelein 1999]
+Zoebelein.
+April 1999.
+<a href="http://leb.net/hzo/ioscount">http://leb.net/hzo/ioscount</a>.
+
+     
+
+<p>
+<i>
+This paper is (C) Copyright 2000 David A. Wheeler.
+All rights reserved.
+You may download and print it for your own personal use, and of course
+you may link to it.
+When referring to the paper, please refer to it as
+``Estimating GNU/Linux's Size'' by David A. Wheeler,
+located at
+<a href="http://www.dwheeler.com/sloc">http://www.dwheeler.com/sloc</a>.
+Please give credit if you refer to any of its techniques or results.
+</i>
+
+</body>
+</html>

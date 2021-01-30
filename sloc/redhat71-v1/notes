@@ -1,0 +1,184 @@
+
+Appendix:
+Details on Installing and Counting SLOC
+
+This appendix describes the basic steps I used to install and count
+the source lines of code (SLOC).
+More information about the general process can be found in my
+previous paper.
+
+I installed all the source RPMs for Red Hat Linux 7.1; note that
+Red Hat Linux 7.1 only contains source code relevant to one
+architecture (in my case, x86).
+This is different from Red Hat Linux 6.2, which included all the
+architecture source code (even for non-86s) in its source code CD.
+
+First, I installed all the "source RPMs" using the RPM program;
+this installs compressed binaries and a "spec" file.
+
+One complication should be mentioned here.
+Although the Red Hat Linux 7.1 package comes with a CD-ROM labelled
+"Source Code", the "Source Code" CD-ROM doesn't contain all the source code.
+Skipping the source code on the "binary" CD-ROM would produce an
+invalid count, because 224 source code packages are placed there
+(including important packages like ssl, perl, python, and samba).
+It's likely this was done because of CD-ROM space needs - there is so
+much source code that, even when compressed, it doesn't fit on one CD-ROM.
+
+Thus, the compressed source code was installed by inserting
+these two CD-ROMs in turn, and typing:
+
+   rpm -Uvh /mnt/cdrom/SRPMS/*.rpm
+
+
+I then searched for "old" versions of programs that were also included
+on the CD (so that the same program wouldn't be counted twice),
+or those required for non-Intel x86 operation (since these would not
+be fully counted anyway).
+I did this by examining any specification (in /usr/src/redhat/SPECS)
+with "compat" or "10" or "11" in its title
+(it turned out all of them were old and needed removing).
+I also examined anything ending in a digit or "x" followed by ".spec",
+which located qt1x.spec.  Through this process I removed:
+
+ compat-egcs.spec  compat-glibc.spec  compat-libs.spec  kde1-compat.spec
+ gtk+10.spec libxml10.spec x86-compat-libs.spec qt1x.spec
+
+I also removed any "beta" software (identified by having "beta"
+in the name), namely:
+
+  glib-gtkbeta.spec  gtk+-gtkbeta.spec pango-gtkbeta.spec
+
+I also removed "mysqlclient9.spec".
+This specification contained the older MySQL client library version 3.23.22,
+as shipped with Red Hat Linux 7, for use with applications linked against it.
+I did include "mysql.spec", which had the code for the newer version 3.23.36
+of MySQL (a relational datbase packae).
+
+
+Note that unlike Red Hat Linux 6.2, Red Hat Linux 7.1 didn't
+have two versions of bash or ncurses, so I didn't have to remove
+old versions of them.  I left db1, db2, and db3 in, because it can be argued
+that none necessarily replaces the others.
+
+One complication was in handling the graphical subsystem "XFree86".
+Version 4 of XFree86 was used for all client-side applications, but
+version 3 was used to implement X servers.  The XFree86 developers completely
+rebuilt XFree86, and Red Hat chose to stick with the older servers and
+the newer clients.  I looked at the XFree86 source package for version 4,
+and it turned out that server code was included in the package (although
+not used in the standard Red Hat distribution).  Rather than have
+XFree86 counted essentially twice (once as version 3, and another as version 4),
+I only counted the code in version 4 of XFree86.
+
+There was so much source code (once unpacked) that I had a separate
+partition set up just to store it;  on my system this was handled using:
+  umount /dev/sdb1 # Mounted on /usr/src/redhat/BUILD
+  /sbin/mkfs /dev/sdb1
+  mount /dev/sdb1 /usr/src/redhat/BUILD
+
+
+I then unpacked the source code by running code that in essence did this:
+
+  cd /usr/src/redhat/SPECS
+  rpm -bp *.spec
+
+
+This uncompresses the source code and applies all patches used by the
+actual system.  Since I wanted to count the amount of code actually included
+in the system, it was important to include the patches.
+
+The actual code to unpack the source code was more complex, because
+it also marked every unpacked directory (in the BUILD directory) to identify
+the spec file it came from and the license of the program.
+The license was determined by (1) looking at the "Copyright" and "License"
+fields of the spec file, and if that didn't work, (2) looking at various
+files in the build diretory, such as "LICENSE", "COPYING*", and "Artistic".
+Unfortunately, MIT-like and BSD-like licenses can be harder to detect
+(because their text can be varied), but many licenses (such as the GPL and
+LGPL) can be detected with great confidence.
+I used the "spec" file as the primary source, because this was placed by a
+human (who could better understand legal technicalities than a machine).
+Thus, I actually ran this command:
+  /root/rpm_unpacker > /root/build_report 2>&1 &
+
+I actually had to repeat the unpacking more than once; the RPM system
+would notice a missing dependency for building the software and protest.
+This required installation of the missing component
+(in some cases I didn't have to install the program and could
+have forced installation, but I did not want to risk corrupting the results
+by failing to install a package).
+
+A surprising development was that the packages "imap" and "samba"
+reported errors in unpacking.
+For imap, patch #5 (imap-4.7c2-flock.patch) and for samba,
+patch #21 (samba-ia64.patch of source/passdb/pass_check.c)
+would cause unpacking to halt.
+I unpacked the software and simply counted what was there; this is
+appears to be what the original developers did.
+
+I examined the reported license values, in particular for all code
+more than 100,000 source lines of code (as the largest components, wrong
+values for these components would be more likely to cause significant error).
+I found that Perl had been assigned "GPL" in its spec file, but this isn't
+the whole story; as documented in its README file, Perl can be used under
+either the GPL or Artistic license, so its license entry was changed to
+"GPL or Artistic".
+Mozilla's licensing situation is more complex; some portions of it
+are actually under a separate dual licensing scheme
+(licensed under both the GPL and Netscape Public License, i.e., NPL).
+However, labelling it as "MPL, NPL, and GPL" would probably overstate the
+amount of code licensed under the GPL, so I left its entry as the MPL license.
+
+Note that the unpacked source files (including source code, fonts,
+documentation, and so on) totalled more than 4.4 Gigabytes.
+
+I ran the analysis code as a normal user, so I first had to set
+the permissions:
+  chmod -R a+rX /usr/src/redhat/BUILD/
+
+I then reverted to normal user account, and
+used sloccount version 1.9 to measure the source code,
+using the following bash command:
+
+cd
+sloccount --multiproject /usr/src/redhat/BUILD > sloc-actions 2>&1 &
+
+Note that I did _not_ use the "--follow" option of sloccount.
+Some programs, notably pine, include a symbolic link to other directories
+such as /usr/lib. Thus, using --follow would have included files outside
+of the intended directory in the analysis.
+I looked over various error reports, and determined that none would
+fundamentally invalidate the results.
+There were several errors in the XFree86 source code involving strings -
+it appears that there are syntax errors in the code that are preprocessed away.
+I intend to report these problems to the XFree86 project.
+One program was a bash shell script that began with
+"#! /usr/bin/env bash", which sloccount did not correctly determine to be
+a bash script.  Thus, I modified sloccount to correctly detect it.
+
+Note that sloccount creates a large number of small files - which isn't
+normally a problem, but I found that I ran out of inodes quickly if I
+tried to store multiple copies of results.
+Those who try to duplicate this activity may want to specially format
+their filesystems to include more inodes.
+
+Once the analysis was complete, I recorded the results by executing:
+
+sloccount --cached --multiproject > summary
+sloccount --cached --details > details
+gzip -9 details
+
+I then analyzed the results to identify anything that would invalidate
+the results.  For example, the lack of Pascal code and ftp server code
+led me to the discovery of source code on binary disk #2.
+
+I also ran various other analyses to gain more insights:
+sloccount --cached --filecount > filecount    # Show counts of files
+get_sloc --sort cpp ~/.slocdata/* > cpp_sort  # sort by C++.
+
+mkdir ~/.kernel
+sloccount --datadir ~/.kernel /usr/src/redhat/BUILD/kernel-2.4.2/linux/* > kernel_sloc &
+
+In practice, I often used the "tail -f" command to watch the analysis progress.
+

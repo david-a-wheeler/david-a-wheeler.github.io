@@ -1,0 +1,1689 @@
+<html>
+<head>
+<title>More than a Gigabuck: Estimating GNU/Linux's Size</title>
+<meta name="description" content="This paper analyzes the amount of source code in GNU/Linux, using Red Hat Linux 7.1 as a representative GNU/Linux distribution.">
+<meta name="keywords" content="David, Wheeler, David A. Wheeler, open source, f
+ree software, GNU/Linux, Linux, GNU, SLOC, source lines of code, size, software, software size, gigabuck, Red Hat, COCOMO, languages">
+
+</head>
+<body bgcolor="#ffffff">
+<center><b><font size="+3">More Than a Gigabuck: Estimating GNU/Linux's Size</font><br>
+<font size="+2">David A. Wheeler (dwheeler&#64;dwheeler.com)</font><br>
+June 21, 2001<br>
+Version 1.02
+</b></center></font>
+
+<p>
+<i>
+This paper analyzes the amount of source code in GNU/Linux, using
+Red Hat Linux 7.1 as a representative GNU/Linux distribution, and
+presents what I believe are interesting results.
+<p>
+In particular, it would cost over $1 billion ($1,000 million - a Gigabuck)
+to develop this Linux distribution by conventional proprietary means
+in the U.S. (in year 2000 U.S. dollars).
+Compare this to the $600 million estimate for Red Hat Linux version 6.2
+(which had been released about one year earlier).
+Also, Red Hat Linux 7.1 includes over 30 million
+physical source lines of code (SLOC), compared to well over
+17 million SLOC in version 6.2.
+Using the COCOMO cost model,
+this system is estimated to have required about 8,000 person-years of
+development time (as compared to 4,500 person-years to develop version 6.2).
+Thus, Red Hat Linux 7.1 represents over a 60% increase in
+size, effort, and traditional development costs over Red Hat Linux 6.2.
+This is due to an increased number of mature and maturing
+open source / free software programs available worldwide.
+<p>
+Many other interesting statistics emerge.
+The largest components (in order) were the
+Linux kernel (including device drivers), Mozilla
+(Netscape's open source web system including a web browser,
+email client, and HTML editor),
+the X Window system (the infrastructure for the graphical user interface),
+gcc (a compilation system),
+gdb (for debugging),
+basic binary tools,
+emacs (a text editor and far more),
+LAPACK (a large Fortran library for numerical linear algebra),
+the Gimp (a bitmapped graphics editor), and
+MySQL (a relational database system).
+The languages used, sorted by the most lines of code, were
+C (71% - was 81%), C++ (15% - was 8%),
+shell (including ksh),
+Lisp, assembly, Perl, Fortran, Python, tcl, Java,
+yacc/bison, expect, lex/flex, awk, Objective-C, Ada, C shell,
+Pascal, and sed.
+<p>
+The predominant software license is the GNU GPL.
+Slightly over half of the software is simply licensed using the GPL,
+and the software packages using the copylefting licenses (the GPL and LGPL),
+at least in part or as an alternative, accounted for 63% of the code.
+In all ways, the copylefting licenses (GPL and LGPL) are the dominant licenses
+in this Linux distribution.
+In contrast, only 0.2% of the software is public domain.
+<p>
+This paper is an update of my previous paper on estimating GNU/Linux's size,
+which measured Red Hat Linux 6.2
+<a href="http://www.dwheeler.com/sloc">[Wheeler 2001]</a>.
+Since Red Hat Linux 6.2 was released in March 2000,
+and Red Hat Linux 7.1 was released in April 2001,
+this paper shows what's changed over approximately one year.
+More information is available at
+<a href="http://www.dwheeler.com/sloc">http://www.dwheeler.com/sloc</a>.
+</i>
+
+
+<h1>1. Introduction</h1>
+
+The GNU/Linux operating system (also called simply ``Linux'')
+has gone from an unknown to a powerful market force.
+One survey found that
+more Internet servers use Linux than any other operating system
+<a href="http://leb.net/hzo/ioscount">[Zoebelein 1999]</a>.
+IDC found that 25% of all server operating systems purchased in 1999
+were Linux, making it second only to Windows NT's 38%
+<a href="http://news.cnet.com/news/0-1003-200-1549312.html">[Shankland 2000a]</a>.
+
+<p>
+There appear to be many reasons for this, and not simply because
+Linux can be obtained at no or low cost.
+For example, experiments suggest that Linux is highly reliable.
+A 1995 study of a set of
+individual components found that the GNU and Linux
+components had a significantly higher reliability
+than their proprietary Unix competitors
+(6% to 9% failure rate with GNU and Linux, versus
+an average 23% failure rate with the proprietary software using
+their measurement technique)
+<a href="http://www.cs.wisc.edu/~bart/fuzz/fuzz.html">[Miller 1995]</a>.
+A ten-month experiment in 1999 by ZDnet
+found that, while Microsoft's Windows NT crashed every six weeks under a
+``typical'' intranet load, using
+the same load and request set the Linux systems (from two different
+distributors) <i>never</i> crashed
+<a href="http://www.zdnet.com/sp/stories/issue/0,4537,2387282,00.html">[Vaughan-Nichols 1999]</a>.
+
+<p>
+However, possibly the most important reason for Linux's popularity among
+many developers and users is that its source code is generally
+``open source software'' and/or ``free software''.
+A program that is ``open source software'' or ``free software'' is essentially
+a program whose source code can be
+obtained, viewed, changed, and redistributed without royalties or
+other limitations of these actions.
+A more formal definition of ``open source software'' is available
+from the Open Source Initiative
+<a href="http://www.opensource.org/osd.html">[OSI 1999]</a>,
+a more formal definition of ``free software'' (as the term is used
+in this paper) is available from the Free Software Foundation
+<a href="http://www.gnu.org/philosophy/free-sw.html">[FSF 2000]</a>,
+and other general information about these topics is available at
+<a href="http://www.dwheeler.com/oss_fs_refs.html">Wheeler [2000a]</a>.
+Quantitative rationales for using open source / free software is given in
+<a href="http://www.dwheeler.com/oss_fs_why.html">Wheeler [2000b]</a>.
+The Linux operating system is actually a suite of components,
+including the Linux kernel on which it is based,
+and it is packaged, sold, and supported by a variety of distributors.
+The Linux kernel is ``open source software''/``free software'',
+and this is also true for all (or nearly all)
+other components of a typical Linux distribution.
+Open source software/free software frees users from being captives of
+a particular vendor, since it permits users to fix any problems immediately,
+tailor their system, and analyze their software in arbitrary ways.
+
+<p>
+Surprisingly, although anyone can analyze Linux for arbitrary properties,
+I have found little published
+analysis of the amount of source lines of code (SLOC)
+contained in a Linux distribution.
+Microsoft unintentionally published some analysis dat in the
+documents usually called ``Halloween I'' and ``Halloween II''
+<a href="http://www.opensource.org/halloween/halloween1.html">[Halloween I]</a>
+<a href="http://www.opensource.org/halloween/halloween2.html">[Halloween II]</a>.
+Another study focused on the Linux kernel and its growth over time
+is by
+<a href="http://plg.uwaterloo.ca/~migod/papers/icsm00.pdf">
+Godfrey [2000]</a>;
+this is an interesting study but it focuses solely on the Linux kernel
+(not the entire operating system).
+In a previous paper, I examined Red Hat Linux 6.2 and
+the numbers from the Halloween papers
+<a href="http://www.dwheeler.com/sloc">[Wheeler 2001]</a>.
+
+<p>
+This paper updates my previous paper, showing
+estimates of the size of one of today's GNU/Linux distributions, and
+it estimates how much it would cost to rebuild
+this typical Linux distribution using
+traditional software development techniques.
+Various definitions and assumptions are included, so that others can understand
+exactly what these numbers mean.
+I have intentionally written this paper so that you do
+<i>not</i> need to read the previous version of this paper first.
+
+<p>
+For my purposes, I have selected as my ``representative'' Linux distribution
+Red Hat Linux version 7.1.
+I believe this distribution is reasonably representative for several reasons:
+<ol>
+<li>Red Hat Linux is the most popular Linux distribution sold in 1999
+according to IDC
+<a href="http://news.cnet.com/news/0-1003-200-2662090.html">[Shankland 2000b]</a>.
+Red Hat sold 48% of all copies in 1999; the next largest distribution
+in market share sales was SuSE (a German distributor) at 15%.
+Not all Linux copies are ``sold'' in a way that this study would count,
+but the study at least shows that Red Hat's distribution is a popular one.
+<li>Many distributions (such as Mandrake) are based on older
+versions of Red Hat Linux.
+<li>All major general-purpose distributions support (at least) the kind of
+functionality supported by Red Hat Linux,
+if for no other reason than to compete with Red Hat.
+<li>All distributors start with the same set of open source software projects
+from which to choose components to integrate.
+Therefore, other distributions are likely to choose the same
+components or similar kinds of components with often similar size
+for the same kind of functionality.
+</ol>
+
+<p>
+Different distributions and versions
+would produce different size figures, but I hope
+that this paper will be enlightening even though it doesn't
+try to evaluate ``all'' distributions.
+Note that some distributions (such as SuSE) may decide to add
+many more applications,
+but also note this would only create larger (not smaller)
+sizes and estimated levels of effort.
+At the time that I began this project,
+version 7.1 was the latest version of Red Hat Linux available,
+so I selected that version for analysis.
+
+<p>
+Note that Red Hat Linux 6.2 was released on March 2000,
+Red Hat Linux 7 was released on September 2000 (I have not counted its code),
+and Red Hat Linux 7.1 was released on April 2001.
+Thus, the differences between Red Hat Linux 7.1 and 6.2 show differences
+accrued over 13 months (approximately one year).
+
+<p>
+Clearly there is far more open source / free software available worldwide
+than is counted in this paper.
+However, the job of a distributor is to examine these various options and
+select software that they believe is both sufficiently mature
+and useful to their target market.
+Thus, examining a particular distribution results in a selective
+analysis of such software.
+
+<p>
+Section 2 briefly describes the approach used to estimate
+the ``size'' of this distribution (more details are in Appendix A).
+Section 3 discusses some of the results.
+Section 4 presents conclusions, followed by an appendix.
+
+
+<h1>2. Approach</h1>
+
+My basic approach was to:
+<ol>
+<li>install the source code files in uncompressed format; this requires
+carefully selecting the source code to be analyzed.
+<li>count the number of source lines of code (SLOC);
+this requires a careful definition of SLOC.
+<li>use an estimation model to estimate the effort and cost of
+developing the same system in a proprietary manner;
+this requires an estimation model.
+<li>determine the software licenses of each component and develop
+statistics based on these categories.
+</ol>
+
+<p>
+More detail on this approach is described in Appendix A.
+A few summary points are worth mentioning here, however.
+
+<h2>2.1 Selecting Source Code</h2>
+<p>
+I included all software provided in the Red Hat distribution, but note
+that Red Hat no longer includes software packages that only apply to
+other CPU architectures (and thus packages not applying to the x86 family
+were excluded).
+I did not include ``old'' versions of software, or ``beta'' software
+where non-beta was available.
+I did include ``beta'' software where there was no alternative, because
+some developers don't remove the ``beta'' label even when it's
+widely used and perceived to be reliable.
+<p>
+I used md5 checksums to identify and ignore duplicate files, so if the
+same file contents appeared in more than one file, it was only counted once
+(as a tie-breaker, such files are assigned to the first build package
+it applies to in alphabetic order).
+<p>
+The code in makefiles and Red Hat Package Manager (RPM)
+specifications was not included.
+Various heuristics were used to detect automatically generated code, and
+any such code was also excluded from the count.
+A number of other heuristics were used to determine if a language was
+a source program file, and if so, what its language was.
+
+<h2>2.2 Defining SLOC</h2>
+<p>
+The ``physical source lines of code'' (physical SLOC) measure was used
+as the primary measure of SLOC in this paper.
+Less formally,
+a physical SLOC in this paper
+is a line with something other than comments and whitespace (tabs and spaces).
+More specifically, physical SLOC is defined as follows:
+``a physical source line of code is a
+line ending in a newline or end-of-file marker, and which contains at least
+one non-whitespace non-comment character.''
+Comment delimiters (characters other than newlines
+starting and ending a comment) were considered
+comment characters.
+Data lines only including whitespace (e.g.,
+lines with only tabs and spaces in multiline strings) were not included.
+
+<p>
+Note that the ``logical'' SLOC is not the primary measure used here;
+one example of a logical SLOC measure would be the ``count of all terminating
+semicolons in a C file.''
+The ``physical'' SLOC was chosen instead of the ``logical'' SLOC
+because there were so many different languages that needed to be measured.
+I had trouble getting freely-available tools to work on this scale, and
+the non-free tools were too expensive for my budget
+(nor is it certain that they would have fared any better).
+Since I had to develop my own tools, I chose a measure that is much
+easier to implement.
+<a href="http://www.sei.cmu.edu/publications/documents/92.reports/92.tr.020.html">Park [1992]</a> actually recommends the use of the
+physical SLOC measure (as a minimum), for this and other reasons.
+There are disadvantages to the ``physical'' SLOC measure.
+In particular, physical SLOC measures are sensitive to how the code
+is formatted.
+However, logical SLOC measures have problems too.
+First, as noted, implementing tools to measure logical SLOC is more
+difficult, requiring more sophisticated analysis of the code.
+Also, there are many different possible logical SLOC measures,
+requiring even more careful definition.
+Finally, a logical SLOC measure must be redefined for every
+language being measured, making inter-language comparisons more difficult.
+For more information on measuring software size, including the
+issues and decisions that must be made, see
+<a href="http://sunset.usc.edu/research/CODECOUNT/documents/3rd_REVIC.pdf">Kalb [1990]</a>,
+<a href="http://sunset.usc.edu/research/CODECOUNT/documents/ispa.pdf">Kalb [1996]</a>,
+and
+<a href="http://www.sei.cmu.edu/publications/documents/92.reports/92.tr.020.html">Park [1992]</a>.
+
+<p>
+Note that this required that every file be categorized by language type
+(so that the correct syntax for comments, strings, and so on could be
+applied).
+Also, automatically generated files had to be detected and ignored.
+Thankfully, my tool ``sloccount'' does this automatically.
+
+<h2>2.3 Estimation Models</h2>
+<p>
+This decision to use physical SLOC
+also implied that for an effort estimator I needed to use the
+original COCOMO cost and effort estimation model
+(see Boehm [1981]), rather than the newer ``COCOMO II'' model.
+This is simply because COCOMO II requires logical SLOC as an input instead
+of physical SLOC.
+
+<p>
+Basic COCOMO is designed to estimate the time from product design
+(after plans and requirements have been developed) through detailed design,
+code, unit test, and integration testing.
+Note that plans and requirement development are not included.
+COCOMO is designed to include management overhead and the creation of
+documentation (e.g., user manuals) as well as the code itself.
+Again, see Boehm [1981] for a more detailed description of the
+model's assumptions.
+Of particular note, basic COCOMO does not include the time to develop
+translations to other human languages (of documentation, data, and
+program messages) nor fonts.
+
+<p>
+There is reason to believe that these models, while imperfect, are
+still valid for estimating effort in open source / free software projects.
+Although many open source programs don't need management of human resources,
+they still require technical management, infrastructure maintenance,
+and so on.
+Design documentation is captured less formally in open source projects, but
+it's often captured by necessity because open source projects
+tend to have many developers separated geographically.
+Clearly, the systems must still be programmed.
+Testing is still done, although as with many of today's
+proprietary programs, a good
+deal of testing is done through alpha and beta releases.
+In addition, quality is enhanced in many open source projects through
+peer review of submitted code.
+The estimates may be lower than the actual values because they don't include
+estimates of human language translations and fonts.
+
+<p>
+Each software source code package, once uncompressed, produced zero
+or more ``build directories'' of source code.
+Some packages do not actually contain source code
+(e.g., they only contain configuration information), and some packages are
+collections of multiple separate pieces (each in different build
+directories), but in most cases each package
+uncompresses into a single build directory containing the source code
+for that package.
+Each build directory had its
+effort estimation computed separately; the efforts of each were then totalled.
+This approach assumes that each build
+directory was developed essentially separately
+from the others, which in nearly all cases is quite accurate.
+This approach slightly underestimates the actual effort in the rare cases
+where the development of the code in separate build directories
+are actually highly interrelated;
+this effect is not expected to invalidate the overall results.
+
+<p>
+For programmer salary averages, I used a salary survey from the
+September 4, 2000 issue of ComputerWorld; their survey claimed that
+this annual programmer salary averaged $56,286 in the United States.
+I was unable to find a publicly-backed average value for
+overhead, also called the ``wrap rate.''
+This value is necessary to
+estimate the costs of office space, equipment, overhead staff, and so on.
+I talked to two cost analysts, who suggested that 2.4 would be a reasonable
+overhead (wrap) rate.
+Some Defense Systems Management College (DSMC) training material
+gives examples of 2.3 (125.95%+100%) not including general and administrative
+(G&amp;A) overhead, and 2.8 when including G&amp;A
+(125% engineering overhead, plus 25% on top of that amount for G&amp;A)
+<a href="http://portal.deskbook.osd.mil/reflib/DTNG/009CM/004/009CM004DOC.HTM">[DSMC]</a>.
+This at least suggests that 2.4 is a plausible estimate.
+Clearly, these values vary widely by company and region; the information
+provided in this paper is enough to use different numbers if desired.
+These are the same values as used in my last report.
+
+<h2>2.4 Determining Software Licenses</h2>
+
+A software license determines how that software can be used and reused,
+and open source software licensing has been a subject of great debate.
+Well-known open source licenses include the
+GNU General Public License (GPL),
+the GNU Library/Lesser General Public License (LGPL),
+the MIT (X) license, the BSD license, and the Artistic license.
+The GPL and LGPL are termed ``copylefting'' licenses, that is, the
+license is designed to prevent the code from becoming proprietary.
+See
+<a href="http://www.oreilly.com/catalog/opensources/book/perens.html">Perens [1999]</a> for more information.
+Obvious questions include
+``what license(s) are developers choosing when they release their software''
+and ``how much code has been released under the various licenses?''
+
+<p>
+An approximation of the amount of software using various licenses
+can be found for this particular distribution.
+Red Hat Linux uses the Red Hat Package Manager (RPM),
+and RPM supports capturing license data for each package
+(these are the ``Copyright'' and ``License'' fields in the specification file).
+I used this information to determine how much code was
+covered by each license.
+Since this field is simply a string of text, there were some variances
+in the data that I had to clean up, for example,
+some entries said ``GNU'' while most said ``GPL''.
+In some cases Red Hat did not include licensing information with a package.
+In that case, I wrote a program to attempt to determine the license
+by looking for certain conventional filenames and contents.
+<p>
+This is an imperfect approach.
+Some packages contain different pieces of code with difference licenses
+applying to different pieces.
+Some packages are ``dual licensed'', that is, they are released under
+more than one license.
+Sometimes these other licenses are noted, while at other times they aren't.
+There are actually two BSD licenses (the ``old'' and ``new'' licenses), but
+the specification files don't distinguish between them.
+Also, if the license wasn't one of a small set of common licenses,
+Red Hat tended to assigned nondescriptive phrases such as ``distributable''.
+My automated techniques were limited too, in particular, while some
+licenses (e.g., the GPL and LGPL) are easy to recognize automatically,
+BSD-like and MIT-like licenses vary the license text and so are
+more difficult to recognize automatically (and some changes to the
+license would render them non-open source, non-free software).
+Thus, when Red Hat did not identify a package's license,
+a program dual licensed
+under both the BSD and GPL license might only be labelled as having
+the GPL using these techniques.
+Nevertheless, this approach is sufficient to give some insight into
+the amount of software using various licenses.
+Future research could examine each license in turn and categorize them;
+such research might require several lawyers to determine when two licenses
+in certain circumstances are ``equal.''
+<p>
+One program worth mentioning in this context is Python, which
+has had several different licenses.
+Version 1.6 and later (through 2.1) had more complex licenses that the
+Free Software Foundation (FSF) believes were incompatible with the GPL.
+Recently this was resolved by another change to the Python license to make
+Python fully compatible with the GPL.
+Red Hat Linux 7.1 includes an older version of Python (1.5.2),
+presumably because of these licensing issues.
+It can't be because Red Hat is unaware of later versions of Python;
+Red Hat uses Python in its installation program (which it developed
+and maintains).
+Hopefully, the recent resolution of license incompatibilities
+with the GPL license will enable
+Red Hat to include the latest versions of Python in the future.
+In any case, there are several different Python-specific licenses,
+all of which can legitimately be called the ``Python'' license.
+Red Hat has labelled Python itself as having a
+``Distributable'' license, and package Distutils-1.0.1 is labelled with the
+``Python'' license; these labels are kept in this paper.
+
+<h1>3. Results</h1>
+
+Given this approach, here are some of the results.
+Section 3.1 presents the largest components (sorted by SLOC),
+section 3.2 presents results specifically from the Linux kernel's SLOC,
+section 3.3 presents total counts by language,
+section 3.4 presents total counts of files (instead of SLOC),
+section 3.5 presents total counts grouped by their software licenses,
+section 3.6 presents total SLOC counts, and
+section 3.7 presents effort and cost estimates.
+
+
+<h2>3.1 Largest Components by SLOC</h2>
+
+Here are the top 35 largest components (as measured by
+number of source lines of code), along with their licenses
+(see section 2.4 for how these license values were determined).
+In the language section,
+``ansic'' means C code, ``asm'' is assembly, ``sh'' is
+Bourne shell and related shells, and ``cpp'' is C++.
+
+<pre>
+SLOC	Directory	SLOC-by-Language (Sorted)
+2437470 kernel-2.4.2    ansic=2285657,asm=144411,sh=3035,perl=2022,yacc=1147,
+                        tcl=576,lex=302,awk=248,sed=72
+                        [GPL]
+2065224 mozilla         cpp=1279902,ansic=739470,perl=21220,sh=13717,asm=5212,
+                        java=3107,yacc=1831,lex=470,csh=271,sed=24
+                        [MPL]
+1837608 XFree86-4.0.3   ansic=1750460,asm=35397,cpp=20725,sh=14666,tcl=9182,
+                        yacc=3360,perl=1675,lex=1608,awk=393,csh=85,sed=57
+                        [MIT]
+984076  gcc-2.96-20000731 ansic=789901,cpp=126738,yacc=19272,sh=17993,asm=14559,
+                        lisp=7161,fortran=3814,exp=3705,objc=479,sed=310,perl=144
+                        [GPL]
+967263  gdb+dejagnu-20010316 ansic=871288,exp=58422,sh=12054,cpp=8252,yacc=5906,
+                        asm=5031,tcl=4477,lisp=1403,sed=248,awk=170,java=7,fortran=5
+                        [GPL]
+690983  binutils-2.10.91.0.2 ansic=489993,asm=161236,exp=13234,sh=12835,
+                        yacc=5665,cpp=4777,lex=1488,perl=776,sed=561,lisp=394,awk=24
+                        [GPL]
+646692  glibc-2.2.2     ansic=548722,asm=88413,sh=6036,perl=2120,awk=1037,
+                        yacc=315,sed=49
+                        [LGPL]
+627626  emacs-20.7      lisp=453898,ansic=169956,sh=2622,perl=884,asm=253,
+                        csh=9,sed=4
+                        [GPL]
+474829  LAPACK          fortran=473590,ansic=1239
+                        [Freely distributable]
+455980  gimp-1.2.1      ansic=427967,perl=17482,lisp=9648,yacc=502,sh=381
+                        [GPL, LGPL]
+402799  mysql-3.23.36   ansic=249350,cpp=84068,perl=25088,tcl=18980,sh=18323,
+                        asm=3987,awk=1436,java=1149,sed=418
+                        [LGPL]
+395194  tcltk-8.3.1     ansic=291457,tcl=84322,sh=12259,exp=5742,yacc=876,
+                        awk=273,perl=265
+                        [BSD]
+345949  kdebase-2.1.1   cpp=181210,ansic=158682,sh=4880,perl=1155,python=22
+                        [GPL]
+323730  Mesa-3.4        ansic=286437,cpp=18189,asm=10002,sh=7611,objc=1184,
+                        python=307
+                        [GPL/MIT]
+321123  perl-5.6.0      perl=146755,ansic=118233,sh=49377,lisp=5739,yacc=996,
+                        java=23
+                        [Artistic or GPL]
+318430  libgcj          ansic=191432,cpp=56843,java=41716,sh=15581,asm=11262,
+                        exp=841,perl=731,awk=24
+                        [GPL]
+304819  teTeX-1.0       ansic=223491,perl=49789,sh=17634,cpp=9407,pascal=1546,
+                        yacc=1507,awk=622,lex=323,sed=314,asm=139,csh=47
+                        [Distributable]
+298742  qt-2.3.0        cpp=259310,ansic=34578,yacc=2444,sh=1493,lex=480,
+                        perl=422,lisp=15
+                        [GPL]
+286113  postgresql-7.0.3 ansic=237184,java=17540,yacc=9740,sh=8975,tcl=7751,
+                        lex=1810,perl=1276,python=959,cpp=801,asm=70,csh=5,sed=2
+                        [BSD]
+283785  kdelibs-2.1.1   cpp=261334,ansic=17578,sh=1887,java=1538,perl=731,
+                        yacc=607,lex=110
+                        [LGPL]
+277502  xemacs-21.1.14  ansic=199927,lisp=73366,sh=2948,perl=930,asm=247,
+                        csh=62,sed=22
+                        [GPL]
+264528  gs5.50          ansic=259471,cpp=2266,asm=968,sh=823,lisp=405,perl=336,
+                        yacc=201,lex=58
+                        [GPL]
+227354  krb5-1.2.2      ansic=197886,exp=19124,sh=5140,yacc=2474,perl=1529,
+                        awk=393,python=348,lex=190,csh=147,sed=123
+                        [MIT]
+215473  vnc_unixsrc     ansic=212766,cpp=848,asm=780,perl=648,sh=431
+                        [GPL]
+213818  koffice-2.0.1   cpp=197637,sh=7296,yacc=3791,ansic=3213,perl=1801,
+                        lex=80
+                        [GPL]
+202842  openssl-0.9.6   ansic=131874,cpp=25744,perl=14737,asm=12428,python=10171,
+                        yacc=3297,sh=2641,tcl=1583,lisp=224,objc=143
+                        [BSD-like]
+200908  Python-1.5.2    python=101017,ansic=96521,lisp=2353,sh=673,perl=342,
+                        sed=2
+                        [Distributable]
+194799  bind-9.1.0      ansic=173830,sh=12101,yacc=6025,perl=2830,tcl=13
+                        [BSD-like]
+192394  xpdf-0.92       cpp=167135,ansic=21621,sh=3638
+                        [GPL]
+191379  php-4.0.4pl1    ansic=173334,cpp=7033,sh=6591,lex=1867,yacc=1569,
+                        java=437,awk=367,perl=181
+                        [PHP]
+190950  pine4.33        ansic=190020,sh=838,csh=62,perl=30
+                        [Freely distributable]
+173492  abi             cpp=159595,ansic=12605,perl=725,sh=550,python=17
+                        [GPL]
+167663  kdemultimedia-2.1.1 cpp=140731,ansic=23844,tcl=1004,sh=800,asm=598,
+                        lex=578,perl=106,awk=2
+                        [GPL]
+163449  4Suite-0.10.1   python=91445,ansic=72004
+                        [Apache-like]
+159301  linuxconf-1.24r2 cpp=142970,perl=6738,sh=3821,java=3074,ansic=2613,
+                        python=85
+                        [GPL]
+</pre>
+<p>
+Note that the operating system kernel (Linux) is the largest single
+component, at over 2.4 million lines of code (mostly in C);
+that compares to 1.5 million lines of code in Red Hat 6.2.
+See section 3.2 for a more detailed discussion about
+the Linux kernel.
+
+<p>
+The next largest component is Mozilla; this is large because it's
+really a suite of applications including a web browser, email reader,
+news reader, HTML editor, and so on.
+Mozilla is the basis for Netscape Navigator 6.0.
+Mozilla was not included at all in Red Hat Linux 6.2.
+
+<p>
+The next largest component is the X Window system, a critical part of the
+graphical user interface (GUI).
+Given the importance of GUIs, the long history of this program
+(giving it time to gain functionality and size), and
+the many incompatible video displays it must support,
+this is perhaps not surprising.
+
+<p>
+Next is the gcc compilation system, including the C and C++ compilers,
+the symbolic debugger,
+a set of utilities for binary files, and the
+C library (which is actually used by most other language libraries as well).
+Emacs is next largest,
+which should not be a real surprise; some users use nothing but
+emacs (e.g., reading their email via emacs), using emacs as a kind
+of virtual operating system.
+
+<p>
+Note that language implementations tend to be written in themselves,
+particularly for their libraries.
+Perl's implementation is written mostly in Perl, and
+Python is written mostly in Python.
+Intriguingly, this is not true for Tcl.
+
+<p>
+For a complete list of all components and their SLOC counts, see
+<a href="http://www.dwheeler.com/sloc/redhat71-v1/summary">
+http://www.dwheeler.com/sloc/redhat71-v1/summary</a>.
+
+<h2>3.2 Examination of the Linux Kernel's SLOC</h2>
+Since the largest single component was the Linux kernel
+(at over 2.4 million SLOC), I examined it further, to learn why it was
+so large and determine its ramifications.
+
+<p>
+I found that over 1,400,000 lines
+(57% of the Linux kernel) was in the ``drivers''
+subdirectory, thus, the primary reason the kernel is so large is that
+it supports so many different kinds of peripherals.
+No other subdirectory comes close to this size -
+the second largest is the ``arch'' directory (at over 446,000 SLOC, 18%
+of the kernel),
+which contains the architecture-unique code for each CPU architecture.
+Supporting many different filesystems also increases its size,
+but not as much as expected; the entire filesystem code
+is over 168,000 SLOC.
+
+<p>
+Richard Stallman and others have argued that the resulting system
+often called ``Linux'' should instead be called ``GNU/Linux''
+<a href="http://www.anchordesk.co.uk/anchordesk/commentary/columns/0,2415,7106622,00.html">[Stallman 2000]</a>.
+In particular, by hiding GNU's contributions (through not including
+GNU's name), many people are kept unaware of the GNU project and its purpose,
+which is to encourage a transition to ``free software'' (free as in the
+freedom to use, modify, and redistribute software for any purpose).
+Certainly, the resulting system was the intentional goal and result
+of the GNU project's efforts.
+Another argument used to justify the term ``GNU/Linux'' is that
+it is confusing if both the entire operating system and the 
+operating system kernel are both called ``Linux''.
+Using the term ``Linux'' is particularly bizarre for GNU/Hurd, which
+takes the Debian GNU/Linux distribution and swaps out one component:
+the Linux kernel.
+
+<p>
+The data here can be used to justify calling the
+system either ``Linux'' or ``GNU/Linux.''
+It's clear that the largest single component in the
+operating system is the Linux kernel, so it's at least understandable
+how so many people have chosen to name the entire system after
+its largest single component (``Linux'').
+It's also clear that there are many contributors, not just the GNU project
+itself, and some of those contributors do not agree with the GNU project's
+philosophy.
+On the other hand, many of the largest components of the system
+are essentially GNU projects: gcc, gdb, emacs, binutils
+(a set of commands for binary files), and glibc (the C library).
+Other GNU projects in the system include binutils, bash, gawk, make,
+textutils, sh-utils, gettext, readline, automake, tar, less, findutils,
+diffutils, and grep.
+This is not even counting GNOME, a GNU project.
+In short,
+the total of the GNU project's code is <i>much</i> larger than the
+Linux kernel's size.
+Thus, by comparing the total contributed effort,
+it's certainly justifiable to call the entire system ``GNU/Linux''
+and not just ``Linux.''
+
+For more information on the sizes of the Linux kernel components, see
+<a href="http://www.dwheeler.com/sloc/redhat71-v1/kernel_sloc">
+http://www.dwheeler.com/sloc/redhat71-v1/kernel_sloc</a>.
+
+
+<h2>3.3 Total Counts by Language</h2>
+<p>
+Here are the various programming languages, sorted by the total
+number of source lines of code (using the naming conventions of
+sloccount, the program used to count SLOC):
+<p>
+<table BORDER NOSAVE>
+<tr><td><b>Language</b></td><td><b>SLOC (%)</b></td></tr>
+<tr><td>C</td><td>21461450 (71.18%)</td></tr>
+<tr><td>C++</td><td>4575907 (15.18%)</td></tr>
+<tr><td>Shell (Bourne-like)</td><td>793238 (2.63%)</td></tr>
+<tr><td>Lisp</td><td>722430 (2.40%)</td></tr>
+<tr><td>Assembly</td><td>565536 (1.88%)</td></tr>
+<tr><td>Perl</td><td>562900 (1.87%)</td></tr>
+<tr><td>Fortran</td><td>493297 (1.64%)</td></tr>
+<tr><td>Python</td><td>285050 (0.95%)</td></tr>
+<tr><td>Tcl</td><td>213014 (0.71%)</td></tr>
+<tr><td>Java</td><td>147285 (0.49%)</td></tr>
+<tr><td>yacc/bison</td><td>122325 (0.41%)</td></tr>
+<tr><td>Expect</td><td>103701 (0.34%)</td></tr>
+<tr><td>lex/flex</td><td>41967 (0.14%)</td></tr>
+<tr><td>awk/gawk</td><td>17431 (0.06%)</td></tr>
+<tr><td>Objective-C</td><td>14645 (0.05%)</td></tr>
+<tr><td>Ada</td><td>13200 (0.04%)</td></tr>
+<tr><td>C shell</td><td>10753 (0.04%)</td></tr>
+<tr><td>Pascal</td><td>4045 (0.01%)</td></tr>
+<tr><td>sed</td><td>3940 (0.01%)</td></tr>
+</table>
+
+<p>
+Here you can see that C is pre-eminent (with over 71% of the code),
+followed by C++, shell, LISP, assembly, Perl, Fortran, and Python.
+Some of the languages with smaller counts
+(such as objective-C and Ada) show up primarily
+as test cases or bindings to support users of those languages.
+Nevertheless, it's nice to see at least some
+support for a variety of languages, since each language has some
+strength for some type of application.
+<p>
+C++ has about 4.5 million lines of code, a very respectable showing, but
+is far less than C (over 21 million SLOC).
+Still, there's increasing use of C++ code; in the last survey,
+C had 80.55% and C++ had 7.51%.
+There is slightly less C code in the total percentage of code,
+most of which is being taken by C++.
+One could ask why there's so much more C code,
+particularly against C++.
+One possible argument is that well-written C++ takes
+fewer lines of code than does C;
+while this is often true, that's unlikely to entirely explain this.
+Another important factor
+is that many of the larger programs were written before C++ became widely used,
+and no one wishes to rewrite their C programs into C++.
+Also, there are a significant number of software developers who prefer C
+over C++
+(e.g., due to simplicity of understanding the entire language), which
+would certainly affect these numbers.
+There have been several efforts in the past to switch from C to C++
+in the Linux kernel, and they have all failed (for a variety of reasons).
+<p>
+LISP continues to place very highly, far more than Perl, Python, Fortran,
+or Java.
+LISP is used in many components, but its
+high placement is due to the widespread use of emacs.
+Emacs itself is written in primarily in its own variant of LISP,
+and the emacs package itself accounts for 87%
+(627626/722430) of the LISP code.
+In addition, many languages include sophisticated (and large) emacs
+modes to support development in those languages.
+Perl includes 5739 lines of LISP, and
+Python includes another 2353 of LISP that is directly used to support
+elaborate Emacs modes for program editing.
+Other programs (such as the GIMP and Sawmill) also use LISP or one of
+its variants as a ``control'' language to control components built in other
+languages (in these cases C).
+LISP has a long history of use in the hacking
+(computer enthusiast) community, due to powerful influences such as
+MIT's old ITS community.
+For more information on the history of hackerdom, including the
+influence of ITS and LISP, see
+<a href="http://www.oreilly.com/catalog/opensources/book/raymond.html">[Raymond 1999]</a>.
+<p>
+Some may be surprised at the number of different languages, but I
+believe this should be considered not a weakness but a strength.
+This Linux distribution supports a wide number of languages, enabling
+developers to choose the ``best tool for the job.''
+
+<h2>3.4 Total Counts of Files</h2>
+
+Of course, instead of counting SLOC, you could count just the
+number of files in various categories, looking for other insights.
+<p>
+Lex/flex and yacc/bison are widely-used program generators.
+They make respectable showings when counting SLOC, but their
+widespread use is more obvious when examining the file counts.
+There are 94 different lex/flex files, and 138 yacc/bison files.
+Some build directories use lex/flex or yacc/bison more than once.
+<p>
+Other insights can be gained from the file counts.
+There were 352,549 files, of which
+130,488 were counted source code files (ignoring duplicate files
+and automatically generated ones).
+Not included in this count were 10,807 files which contained duplicate
+contents, and 1,587 files which were detected as being automatically generated.
+<p>
+These values can be used to compute average SLOC per file across the
+entire system.
+For example,
+for C, there was
+21,461,450 SLOC contained in 78,676 files,
+resulting in an ``average'' C file containing
+273 (14218806/52088) physical source lines of code.
+Intriguingly enough, Red Hat Linux 6.2 had essentially the same
+average number of physical lines of C code.
+
+
+<h2>3.5 Total Counts by License</h2>
+
+
+<p>
+Here are the various license types, sorted by the
+SLOC in the packages with those licenses
+(see section 2.4 for how these license values were determined):
+<pre>
+ 15185987 (50.36%) GPL
+  2498084 (8.28%)  MIT
+  2305001 (7.64%)  LGPL
+  2065224 (6.85%)  MPL
+  1826601 (6.06%)  Distributable
+  1315348 (4.36%)  BSD
+   907867 (3.01%)  BSD-like
+   766859 (2.54%)  Freely distributable
+   692561 (2.30%)  Free
+   455980 (1.51%)  GPL, LGPL
+   323730 (1.07%)  GPL/MIT
+   321123 (1.07%)  Artistic or GPL
+   191379 (0.63%)  PHP
+   173161 (0.57%)  Apache-like
+   161451 (0.54%)  OpenLDAP
+   146647 (0.49%)  LGPL/GPL
+   103439 (0.34%)  GPL (programs), relaxed LGPL (libraries),
+                   and public domain (docs) 
+   103291 (0.34%)  Apache
+    73650 (0.24%)  W3C
+    73356 (0.24%)  IBM Public License
+    66554 (0.22%)  University of Washington's Free-Fork License
+    59354 (0.20%)  Public domain
+    39828 (0.13%)  GPL and Artistic
+    31019 (0.10%)  GPL or BSD
+    25944 (0.09%)  GPL/BSD
+    20740 (0.07%)  Not listed
+    20722 (0.07%)  MIT-like
+    18353 (0.06%)  GPL/LGPL
+    12987 (0.04%)  Distributable - most of it GPL
+     8031 (0.03%)  Python
+     6234 (0.02%)  GPL/distributable
+     4894 (0.02%)  Freely redistributable
+     1977 (0.01%)  Artistic
+     1941 (0.01%)  GPL (not Firmware)
+      606 (0.00%)  Proprietary
+</pre>
+
+<p>
+These can be grouped by totalling up SLOC for licenses containing
+certain key phrases:
+
+<pre>
+ 16673212 (55.30%) GPL
+  3029420 (10.05%) LGPL
+  2842536 (9.43%)  MIT
+  2612681 (8.67%)  distributable
+  2280178 (7.56%)  BSD
+  2065224 (6.85%)  MPL
+   162793 (0.54%)  public domain
+</pre>
+<p>
+<!-- The grand total is (as shown elsewhere) 17,652,561 SLOC. -->
+From these numbers, you can determine that:
+<ol>
+<li>The GPL is far and away the most common license (by lines of code)
+of any single license.
+In fact, the category ``GPL'' (packages with only this one license)
+all by itself accounts for 50.36% of the packages.
+By totalling the SLOC for all packages that include "GPL" in the
+license text, the total rises to 55%.
+No matter how you look at it, the GPL is the dominant single license in this
+distribution.
+<li>The next most common licenses were the MIT, LGPL, MPL, and BSD licenses
+(in order).
+This is in line with expectations: the most well-known and well-used
+open source licenses are the GPL, MIT, LGPL, and BSD licenses.
+Although the MPL does well in terms of SLOC,
+there is only one program in this distribution that uses it - Mozilla.
+There is some use of the ``Artistic'' license, but its use is far less;
+note that papers such as
+<a href="http://www.oreilly.com/catalog/opensources/book/perens.html">Perens [1999]</a>
+specifically recommend against using the
+the Artistic license due to its legal ambiguities.
+<li>Very little software is released as public domain software
+(``no copyright'').
+In this distribution, only 0.2% of the software is in packages
+labelled as ``public domain'' (note that the 0.54% figure above includes
+the ``sane'' package which has documentation in the public domain).
+There may be several factors that account for this.
+First, if
+a developer wishes to get credit for their work, this is a poor ``license;''
+by law anyone can claim ownership of ``public domain'' software.
+Second, there may be a fear of litigation; both the MIT and BSD
+licenses permit essentially arbitrary use but forbid lawsuits.
+While licenses such as MIT's and BSD's
+are not proof against a lawsuit, they at
+least provide some legal protection, while releasing software to the
+public domain provides absolutely no protection.
+Finally, any software released into the public domain can be
+re-licensed under any other license, so there's nothing that keeps
+public domain software in the public domain - any of the other
+licenses here can ``dominate'' a public domain license.
+<li>There is a tiny amount of proprietary code, which is entirely in
+one component - Netscape Communicator / Navigator.
+This component uses the Motif toolkit (which is not open source)
+and has proprietary code mixed into it.
+As a result, almost none of the code for this package is
+is included on the CD-ROM - only
+a small amount of ``placeholder'' code is there.
+In the future it is expected that this component will be
+replaced by Mozilla.
+<li>The packages which are clearly
+MIT-like/BSD-like licenses (totalling the MIT, BSD, MIT-like, BSD-like, and
+none/public domain entries) total 4,742,021 SLOC (15.92%).
+It's worth noting that
+1,837,608 of these lines (39%) is accounted for by
+the XFree86 X server, an infrastructure component used for Linux's
+graphical user interface (GUI).
+<li>If the license types "distributable", "freely distributable", "MPL",
+"Free", "Artistic", "Apache", "Apache-like", and "IBM Public license"
+software was also
+considered MIT-like/BSD-like, the total SLOC would be
+7,954,474 (26%, down from 36%).
+Unfortunately, the information to determine which of these other packages
+are simply BSD-like/MIT-like licenses is
+not included in the specification files.
+<li>The packages which include copylefting licenses
+(GPL or LGPL) total 63%.
+Limiting to only those that are GPL, LGPL, or both yields 60%,
+the same percentage as in Red Hat Linux 6.2 and a clear majority.
+</ol>
+<p>
+It is quite clear that in this distribution the GPL is the dominant license
+and that copylefting licenses (the GPL and LGPL) significantly
+outnumber the BSD/MIT-style licenses.
+This is a simple quantitative explanation why several visible projects
+(Mozilla, Troll Tech's Qt, and Python) have changed their licenses
+so that they're compatible with the GPL.
+When there is so much GPL software, GPL compatibility is critically
+important to the survival of many open source projects.
+See the Free Software Foundation's information on
+<a href="http://www.gnu.org/philosophy/license-list.html">Various
+Licenses and Comments about Them [FSF 2001a]</a> for information on GPL
+compatibility, and the
+<a href="http://www.gnu.org/copyleft/gpl-faq.html">GPL FAQ [FSF 2001b]</a>
+for more information on the GPL in general.
+<p>
+The most common open source licenses in this
+distribution (by SLOC) are the GPL, MIT, LGPL, and BSD licenses
+(as well as the MPL, but note that it's only used by one project).
+Note that this is consistent with
+<a href="http://www.oreilly.com/catalog/opensources/book/perens.html">Perens [1999]</a>,
+who pleads that developers use an existing license instead
+of developing a new license where possible.
+
+<p>
+As of this writing, the GPL has received the most attention of
+these licenses, because Microsoft has specifically been attacking the
+GPL license.
+The GPL license permits commercial use of the program, but
+requires that distributors of modified versions of the program
+must also release the source code to their changes under the same terms.
+Therefore, software released under the GPL resists Microsoft's usual
+``embrace and extend'' approach to destroy competitors - Microsoft can
+use and change GPL'ed code, but it cannot make its changes to that
+code proprietary.
+As a counter-example,
+Kerberos (a security component
+released using an MIT license instead of the GPL)
+was recently incorporated by Microsoft into their products, and then
+extended in an incompatible way to prevent users from fully
+interoperating between products
+<a href="http://www.counterpane.com/crypto-gram-0003.html">[Schneier 2000]</a>.
+Had Kerberos been released under a GPL or LGPL license, this would have
+been much more difficult.
+The presence of so many GPL and LGPL components should make Linux distributions
+more resistant to being ``embraced, extended, and extinguished.''
+
+
+
+<h2>3.6 Total SLOC Counts</h2>
+Given all of these assumptions, the counting programs compute a total
+of 30,152,114 physical source lines of code (SLOC);
+I will simplify this to ``over 30 million physical SLOC''.
+This is an astounding amount of code; compare this to reported sizes
+of other systems:
+
+<table BORDER NOSAVE>
+<tr><td><b>Product</b></td><td><b>SLOC</b></td><tr>
+<tr><td>NASA Space Shuttle flight control</td> <td>420K (shuttle) + 1.4 million (ground)</td></tr>
+<tr><td>Sun Solaris (1998-2000)</td> <td>7-8 million</td></tr>
+<tr><td>Microsoft Windows 3.1 (1992)</td> <td>3 million</td></tr>
+<tr><td>Microsoft Windows 95</td> <td>15 million</td></tr>
+<tr><td>Microsoft Windows 98</td> <td>18 million</td></tr>
+<tr><td>Microsoft Windows NT (1992)</td> <td>4 million</td></tr>
+<tr><td>Microsoft Windows NT 5.0 (as of 1998)</td> <td>20 million</td></tr>
+<tr><td>Red Hat Linux 6.2 (2000)</td> <td>17 million</td></tr>
+</table>
+<p>
+These numbers come from
+Bruce Schneier's <i>Crypto-Gram</i>
+<a href="http://www.counterpane.com/crypto-gram-0003.html">[Schneier 2000]</a>,
+except for the Space Shuttle numbers which come from a
+National Academy of Sciences study
+<a href="http://www.nap.edu/html/statsoft/chap2.html">[NAS 1996]</a>
+and the Red Hat Linux 6.2 numbers which come from
+<a href="http://www.dwheeler.com/sloc">[Wheeler 2001]</a>.
+Numbers for later versions of Microsoft products are not shown here because
+their values have great uncertainty in the published literature.
+<!--  Schneier says:
+  "In 1998, Windows NT 5.0 was estimated to have 20 million lines of code;
+   by the time it was renamed Windows 2000 (in 1999) it had
+   between 35 million and 60 million lines of code,
+   depending on who you believe."
+-->
+The assumptions of most of these numbers are unclear
+(e.g., are these physical or logical lines of code?), but they are
+likely to be comparable physical SLOC counts.
+<p>
+Note that a deployed ``minimal system'' would have less code;
+see the paper analyzing Red Hat Linux 6.2 for more discussion
+about this
+<a href="http://www.dwheeler.com/sloc">[Wheeler 2001]</a>.
+<p>
+Note that the Red Hat Linux 7.1 system includes a number of
+applications - in many cases a choice for each category.
+There are two major desktop environments (GNOME and KDE), plus
+various lightweight options.
+There are two word processors (Abiword and KWord),
+two spreadsheets (Gnumeric and KSpread),
+two relational database systems (MySQL and Postgres),
+and two web servers (Apache and TUX).
+In short, Red Hat Linux 7.1 includes a large number of applications,
+many of which are not included in its Microsoft or Sun equivalents.
+<p>
+At first blush, this bundling of applications with the operating system
+might appear similar to Microsoft's policy of combining
+applications with operating systems (which got Microsoft into legal trouble).
+However, it's worth noting some differences.
+First, and most important legally, a judge has ruled that Microsoft is
+a monopoly, and under U.S. law monopolies aren't allowed to perform certain
+actions that other organizations may perform.
+Second, anyone can take Linux, bundle it with an application,
+and redistribute the resulting product.
+There is no barrier such as ``secret interfaces'' or relicensing costs
+that prevent anyone from making an application work on or integrate
+with Linux.
+Third, this distribution (and many others)
+include alternatives; users can choose
+between a number of options, all on the CD-ROM.
+Thus, while Linux distributions also appear to be going in the direction
+of adding applications to their system, they do not do so in a way that
+significantly interferes with a user's ability to select between alternatives.
+<p>
+It's worth noting that SLOC counts do not necessarily measure
+user functionality very well.
+For example, smart developers often find creative ways to
+simplify problems, so programs with smaller SLOC counts
+can sometimes
+provide greater functionality than programs with larger SLOC counts.
+However, there is evidence that SLOC counts correlate to effort
+(and thus development time), so
+using SLOC to estimate effort is still valid.
+<p>
+Creating reliable code can require
+much more effort than creating unreliable code.
+For example, it's known that the Space Shuttle code underwent rigorous
+testing and analysis, far more than typical commercial software undergoes,
+driving up its development costs.
+However, it cannot be reasonably argued that reliability differences between
+Linux and either Solaris or Windows NT would necessary cause Linux
+to take less effort to develop for a similar size.
+To see this, let's pretend that Linux had been developed
+using traditional proprietary means and a similar process
+to these other products.
+As noted earlier, experiments suggest that Linux, or at least
+certain portions of it, is more reliable than either.
+This would either cost more money (due to increased testing) or require
+a substantive change in development process (e.g., through
+increased peer review).
+Therefore, Linux's reliability suggests that developing Linux
+traditionally
+(at the same level of reliability) would have taken at least the same amount
+of effort if similar development processes were used as compared
+to similarly-sized proprietary systems.
+
+
+
+<h2>3.7 Effort and Cost Estimates</h2>
+
+Finally, given all the assumptions shown previously, the effort values are:
+
+<pre>
+Total Physical Source Lines of Code (SLOC)                   = 30152114
+Estimated Development Effort in Person-Years (Person-Months) = 7955.75 (95469)
+ (Basic COCOMO model, Person-Months = 2.4 * (KSLOC**1.05))
+Estimated Schedule in Years (Months)                         = 6.53 (78.31)
+ (Basic COCOMO model, Months = 2.5 * (person-months**0.38))
+Total Estimated Cost to Develop                              = $ 1074713481
+ (average salary = $56286/year, overhead = 2.4).
+</pre>
+
+<p>
+See appendix A for more data on how these effort values were
+calculated; you can retrieve more information from
+<a href="http://www.dwheeler.com/sloc">http://www.dwheeler.com/sloc</a>.
+
+
+<h1>4. Conclusions</h1>
+
+Red Hat Linux 7.1 includes over 30 million
+physical source lines of code (SLOC), compared to well over
+17 million SLOC in version 6.2 (which had been released about one year
+earlier).
+Using the COCOMO cost model,
+this system is estimated to have required about 8,000 person-years of
+development time (as compared to 4,500 person-years to develop version 6.2).
+<p>
+Had this Linux distribution been developed by conventional proprietary means,
+it would have cost over $1.08 billion (1,000 million)
+to develop in the U.S. (in year 2000 dollars).
+Compare this to the
+$600 million estimate for version 6.2.
+Thus, Red Hat Linux 7.1 represents over a 60% increase in
+size, effort, and traditional development costs over Red Hat Linux 6.2.
+This is quite extraordinary, since this represents approximately one year.
+<p>
+Many other interesting statistics emerge.
+The largest components (in order) were the
+Linux kernel (including device drivers), Mozilla
+(Netscape's open source web system including a web browser,
+email client, and HTML editor),
+the X Window system (the infrastructure for the graphical user interface),
+gcc (a compilation system),
+gdb (for debugging),
+basic binary tools,
+emacs (a text editor and far more),
+LAPACK (a large Fortran library for numerical linear algebra),
+the Gimp (a bitmapped graphics editor), and
+MySQL (a relational database system).
+Note that Mozilla and LAPACK were not included in Red Hat 6.2 at all.
+<p>
+The languages used, sorted by the most lines of code, were
+C (71% - was 81%), C++ (15% - was 8%),
+shell (including ksh),
+Lisp, assembly, Perl, Fortran, Python, tcl, Java,
+yacc/bison, expect, lex/flex, awk, Objective-C, Ada, C shell,
+Pascal, and sed.
+C is still the predominant language but less so, with
+C++ primarily taking the difference.
+This appears in part to reflect many programmers' choice of
+C++ over C for GUI development.
+The increased amount of Fortran is primarily due to the inclusion of LAPACK.
+<p>
+The predominant software license is the GNU GPL.
+Slightly over half of the software is simply licensed using the GPL,
+and the software packages using the copylefting licenses (the GPL and LGPL),
+at least in part, accounted for 63% of the code.
+In all ways, the copylefting licenses (GPL and LGPL) are the dominant licenses
+in this Linux distribution.
+In contrast, only 0.2% of the software is in the public domain.
+<p>
+Clearly, this demonstrates that it is possible
+to build large-scale systems using open source approaches.
+Back in 1976, Bill Gates published his ``Open Letter to Hobbyists'',
+claiming that if software was freely shared it would prevent the writing of
+good software.
+He asked rhetorically, ``Who can afford to do professional work for
+nothing?  What hobbyist can put three man-years into programming,
+finding all bugs, documenting his product, and distribute it for free?''
+He presumed these were unanswerable questions, and both he and others
+based an industry on this assumption [Moody 2001].
+Now, however, there are thousands of developers who are writing their
+own excellent code, and then giving it away.
+Gates was fundamentally wrong: sharing source code,
+and allowing others to extend it, is indeed a practical approach to
+developing large-scale systems - and its products can be more reliable.
+<p>
+It would be interesting to re-run these values on other
+Linux distributions (such as SuSE and Debian),
+and other open source systems (such as FreeBSD).
+SuSE and Debian, for example, by policy include many more packages, and
+would probably produce significantly larger estimates of effort
+and development cost.
+<p>
+As was noted in the previous paper,
+some actions by developers could simplify further similar analyses.
+The most important would be for programmers to always mark, at the top,
+any generated files (e.g., with a phrase like ``Automatically
+generated'').  This would do much more than aid counting tools -
+programmers are likely to accidentally manually edit such files unless
+the files are <i>clearly</i> marked as files that should not be edited.
+It would be useful if developers would use file extensions consistently
+and not ``reuse'' extension names for other meanings;
+the suffixes(7) manual page lists a number of already-claimed extensions.
+This is more difficult for less-used languages; many developers have no idea
+that ``.m'' is a standard extension for objective-C.
+It would also be nice to have high-quality open source tools for
+performing logical SLOC counting on all of the languages represented here.
+<p>
+It should be re-emphasized that these are <i>estimates</i>;
+it is very difficult to precisely categorize all files, and some files
+might confuse the size estimators.
+Some assumptions had to be made (such as not including makefiles)
+which, if made differently, would produce different results.
+Identifying automatically-generated files is very difficult, and it's
+quite possible that some were miscategorized.
+<p>
+Nevertheless, there are many insights to be gained from the
+analysis of entire open source systems, and hopefully this paper
+has provided some of those insights.
+It is my hope that, since open source systems make it possible for anyone
+to analyze them, others will pursue many other lines of analysis to
+gain further insight into these systems.
+<p>
+More information is available at
+<a href="http://www.dwheeler.com/sloc">http://www.dwheeler.com/sloc</a>.
+
+<p>
+<hr>
+<p>
+
+<h1>Appendix A. Details of Approach</h1>
+
+This appendix discusses some of the issues I had to deal with when
+performing the analysis, hopefully in enough detail that someone
+could repeat the effort.
+
+<p>
+In particular, installing the source code required two steps:
+<ol>
+<li>install the source code files (converting source RPM packages
+into "spec" files and compressed source files),
+<li>unpack the source code files (which generates uncompressed source code,
+and the licensing information),
+</ol>
+
+<p>
+I then ran sloccount version 1.9 to analyze the source code files, and
+examined the warning messages and fixed any serious problems that arose.
+This was not as easy as it sounds; the previous paper
+(analyzing Red Hat Linux 6.2) discusses this in more detail
+<a href="http://www.dwheeler.com/sloc">[Wheeler 2001]</a>.
+I've since released the tools I used to count code as the program
+sloccount, available at
+<a href="http://www.dwheeler.com/sloccount">http://www.dwheeler.com/sloccount</a>.
+
+<p>
+One complication should be mentioned here.
+Although the Red Hat Linux 7.1 package comes with a CD-ROM labelled
+"Source Code", the "Source Code" CD-ROM doesn't contain all the source code.
+Skipping the source code on the "binary" CD-ROM would produce an
+invalid count, because 224 source code packages are placed there
+(including important packages like ssl, perl, python, and samba).
+It's likely this was done because of CD-ROM space needs - there is so
+much source code that, even when compressed, it doesn't fit on one CD-ROM.
+
+<p>
+I then searched for "old" versions of programs that were also included
+on the CD (so that the same program wouldn't be counted twice),
+or those required for non-Intel x86 operation (since these would not
+be fully counted anyway).
+I did this by examining any specification (in /usr/src/redhat/SPECS)
+with "compat" or "10" or "11" in its title
+(it turned out all of them were old and needed removing).
+I also examined anything ending in a digit or "x" followed by ".spec",
+which located qt1x.spec.  Through this process I removed:
+<pre>
+ compat-egcs.spec  compat-glibc.spec  compat-libs.spec  kde1-compat.spec
+ gtk+10.spec libxml10.spec x86-compat-libs.spec qt1x.spec
+</pre>
+
+<p>
+I also removed any ``beta'' software which had a non-beta version
+available (beta software was identified by searching for ``beta''
+in the package or specification file name). This removed:
+<pre>
+  glib-gtkbeta.spec  gtk+-gtkbeta.spec pango-gtkbeta.spec
+</pre>
+
+<p>
+I also removed "mysqlclient9.spec".
+This specification contained the older MySQL client library version 3.23.22,
+as shipped with Red Hat Linux 7, for use with applications linked against it.
+I did include "mysql.spec", which had the code for the newer version 3.23.36
+of MySQL (a relational database package).
+
+<p>
+Note that unlike Red Hat Linux 6.2, Red Hat Linux 7.1 didn't
+have two versions of bash or ncurses, so I didn't have to remove
+old versions of them.  I left db1, db2, and db3 in, because it can be argued
+that none of these three necessarily replaces the other two.
+
+<p>
+One complication was in handling the graphical subsystem "XFree86".
+Version 4 of XFree86 was used for all client-side applications, but
+version 3 was used to implement X servers.  The XFree86 developers completely
+rebuilt XFree86, and Red Hat chose to stick with the older servers and
+the newer clients.  I looked at the XFree86 source package for version 4,
+and it turned out that server code was included in the package (although
+not used in the standard Red Hat distribution).  Rather than have
+XFree86 counted essentially twice (once as version 3,
+and another as version 4), I only counted the code in version 4 of XFree86.
+
+<p>
+I then unpacked the source code by running code that in essence did this:
+<pre>
+  cd /usr/src/redhat/SPECS
+  rpm -bp *.spec
+</pre>
+
+<p>
+This uncompresses the source code and applies all patches used by the
+actual system.  Since I wanted to count the amount of code actually included
+in the system, it was important to include the patches.
+The actual code to unpack the source code was more complex, because
+it also marked every unpacked directory (in the BUILD directory) to identify
+the spec file it came from and the license of the program.
+The license was determined by (1) looking at the "Copyright" and "License"
+fields of the spec file, and if that didn't work, (2) looking at various
+files in the build directory, such as "LICENSE", "COPYING*", and "Artistic".
+Unfortunately, MIT-like and BSD-like licenses can be harder to detect
+(because their text can be varied), but many licenses (such as the GPL and
+LGPL) can be detected with great confidence.
+I used the "spec" file as the primary source, because this was placed by a
+human (who could better understand legal technicalities than a machine).
+
+<p>
+I actually had to repeat the unpacking more than once; the RPM system
+would notice a missing dependency for building the software and protest.
+This required installation of the missing component
+(in some cases I didn't have to install the program and could
+have forced installation, but I did not want to risk corrupting the results
+by failing to install a package).
+
+<p>
+A surprising development was that the packages "imap" and "samba"
+reported errors in unpacking.
+For imap, patch #5 (imap-4.7c2-flock.patch) and for samba,
+patch #21 (samba-ia64.patch of source/passdb/pass_check.c)
+would cause unpacking to halt.
+I unpacked the software and simply counted what was there; this
+appears to be what the original developers did.
+
+<p>
+I examined the reported license values, in particular for all code
+more than 100,000 source lines of code (as the largest components, wrong
+values for these components would be more likely to cause significant error).
+I found that Perl had been assigned "GPL" in its spec file, but this isn't
+the whole story; as documented in its README file, Perl can be used under
+either the GPL or Artistic license, so its license entry was changed to
+"GPL or Artistic".
+Mozilla's licensing situation is more complex; some portions of it
+are actually under a separate dual licensing scheme
+(licensed under both the GPL and Netscape Public License, i.e., NPL).
+However, labelling it as "MPL, NPL, and GPL" would probably overstate the
+amount of code licensed under the GPL, so I left its entry as the MPL license.
+
+<p>
+Note that the unpacked source files (including source code, fonts,
+documentation, and so on) totalled more than 4.4 Gigabytes.
+
+<p>
+I ran the analysis code as a normal user, so I first had to set
+the permissions for users to read the code.
+I then reverted to normal user account, and
+used sloccount version 1.9 to measure the source code,
+using the following bash command:
+
+<pre>
+sloccount --multiproject /usr/src/redhat/BUILD > sloc-actions 2>&1 &
+</pre>
+
+<p>
+Note that I did _not_ use the "--follow" option of sloccount.
+Some programs, notably pine, include a symbolic link to other directories
+such as /usr/lib. Thus, using --follow would have included files outside
+of the intended directory in the analysis.
+
+<p>
+I looked over various error reports and determined that none would
+fundamentally invalidate the results. 
+For example,
+there were several errors in the XFree86 source code involving improperly
+formatted strings.
+It appears that these are syntax errors in the code that are preprocessed away
+(and thus not noticed by the compiler).
+I intend to report these problems to the XFree86 project.
+One program was a bash shell script that began with
+"#! /usr/bin/env bash", which sloccount's heuristics could not
+handle at the time.
+I then modified sloccount to correctly determine its type (it's
+a bash shell script).
+
+<p>
+Note that sloccount creates a large number of small files.
+This isn't fundamentally a problem,
+but because of the large scale of the system
+I found that I ran out of inodes if I
+tried to store multiple copies of results.
+Those who try to duplicate this activity may want to specially format
+their filesystems to include more inodes.
+
+<p>
+For a complete list of all components and their SLOC counts, see
+<a href="http://www.dwheeler.com/sloc/redhat71-v1/summary">
+http://www.dwheeler.com/sloc/redhat71-v1/summary</a>.
+
+
+<h1>References</h1>
+
+<p>
+[Boehm 1981]
+Boehm, Barry.
+1981.
+<i>Software Engineering Economics</i>.
+Englewood Cliffs, N.J.: Prentice-Hall, Inc.
+ISBN 0-13-822122-7.
+
+<p>
+[Dempsey 1999]
+Dempsey, Bert J., Debra Weiss, Paul Jones, and Jane Greenberg.
+October 6, 1999.
+UNC Open Source Research Team.
+Chapel Hill, NC: University of North Carolina at Chapel Hill.
+<a href="http://www.ibiblio.org/osrt/develpro.html">http://www.ibiblio.org/osrt/develpro.html</a>.
+
+<p>
+[DSMC]
+Defense Systems Management College (DSMC).
+<i>Indirect Cost Management Guide: Navigating the Sea of Overhead</i>.
+Defense Systems Management College Press, Fort Belvoir, VA 22060-5426.
+Available as part of the ``Defense Acquisition Deskbook.''
+<a href="http://portal.deskbook.osd.mil/reflib/DTNG/009CM/004/009CM004DOC.HTM">http://portal.deskbook.osd.mil/reflib/DTNG/009CM/004/009CM004DOC.HTM</a>.
+
+<p>
+[FSF 2000]
+Free Software Foundation (FSF).
+<i>What is Free Software?</i>.
+<a href="http://www.gnu.org/philosophy/free-sw.html">http://www.gnu.org/philosophy/free-sw.html</a>.
+
+<p>
+[FSF 2001a]
+Free Software Foundation (FSF).
+2001.
+<i>Various Licenses and Comments about Them</i>.
+<a href="http://www.gnu.org/philosophy/license-list.html">
+http://www.gnu.org/philosophy/license-list.html</a>.
+
+<p>
+[FSF 2001b]
+Free Software Foundation (FSF).
+2001.
+<i>General Public License (GPL) Frequently Asked Questions (FAQ)</i>
+<a href="http://www.gnu.org/copyleft/gpl-faq.html">
+http://www.gnu.org/copyleft/gpl-faq.html</a>.
+
+<p>
+[Godfrey 2000]
+Godfrey, Michael W., and Qiang Tu.
+Software Architecture Group (SWAG),
+Department of Computer Science, University of Waterloo.
+``Evolution in Open Source Software: A Case Study.''
+<i>2000 Intl Conference on Software Maintenance.</i>
+<a href="http://plg.uwaterloo.ca/~migod/papers/icsm00.pdf">
+http://plg.uwaterloo.ca/~migod/papers/icsm00.pdf</a>
+      
+
+
+
+<p>
+[Halloween I]
+Valloppillil, Vinod, with interleaved commentary by Eric S. Raymond.
+Aug 11, 1998.
+"Open Source Software: A (New?) Development Methodology"
+v1.00.
+<a href="http://www.opensource.org/halloween/halloween1.html">http://www.opensource.org/halloween/halloween1.html</a>.
+
+<p>
+[Halloween II]
+Valloppillil, Vinod and Josh Cohen,
+with interleaved commentary by Eric S. Raymond.
+Aug 11, 1998.
+"Linux OS Competitive Analysis: The Next Java VM?".
+v1.00.
+<a href="http://www.opensource.org/halloween/halloween2.html">http://www.opensource.org/halloween/halloween2.html</a>
+ 
+
+<p>
+[Kalb 1990]
+Kalb, George E.
+"Counting Lines of Code, Confusions, Conclusions, and Recommendations".
+Briefing to the 3rd Annual REVIC User's Group Conference,
+January 10-12, 1990.
+<a href="http://sunset.usc.edu/research/CODECOUNT/documents/3rd_REVIC.pdf">http://sunset.usc.edu/research/CODECOUNT/documents/3rd_REVIC.pdf</a>
+
+
+<p>
+[Kalb 1996]
+Kalb, George E.
+October 16, 1996
+"Automated Collection of Software Sizing Data"
+Briefing to the International Society of Parametric Analysts,
+Southern California Chapter.
+<a href="http://sunset.usc.edu/research/CODECOUNT/documents/ispa.pdf">http://sunset.usc.edu/research/CODECOUNT/documents/ispa.pdf</a>
+
+
+<p>
+[Masse 1997]
+Masse, Roger E.
+July 8, 1997.
+<i>Software Metrics:
+An Analysis of the Evolution of COCOMO and Function Points</i>.
+University of Maryland.
+<a href="http://www.python.org/~rmasse/papers/software-metrics">http://www.python.org/~rmasse/papers/software-metrics</a>.
+
+<p>
+[Miller 1995]
+Miller, Barton P.,
+David Koski, Cjin Pheow Lee, Vivekananda Maganty,
+Ravi Murthy, Ajitkumar Natarajan, and Jeff Steidl.
+1995.
+<i>Fuzz Revisited: A Re-examination of the Reliability of
+UNIX Utilities and Services</i>.
+<a href="http://www.cs.wisc.edu/~bart/fuzz/fuzz.html">http://www.cs.wisc.edu/~bart/fuzz/fuzz.html</a>.
+
+<p>
+[Moody 2001]
+Moody, Glyn.
+2001.
+<i>Rebel Code</i>.
+ISBN 0713995203.
+
+<p>
+[NAS 1996]
+National Academy of Sciences (NAS).
+1996.
+<i>Statistical Software Engineering</i>.
+<a href="http://www.nap.edu/html/statsoft/chap2.html">http://www.nap.edu/html/statsoft/chap2.html</a>
+
+
+<p>
+[OSI 1999].
+Open Source Initiative.
+1999.
+<i>The Open Source Definition</i>.
+<a href="http://www.opensource.org/osd.html">http://www.opensource.org/osd.html</a>.
+
+
+<p>
+[Park 1992]
+Park, R.
+1992.
+<i>Software Size Measurement: A Framework for Counting Source Statements</i>.
+Technical Report CMU/SEI-92-TR-020.
+<a href="http://www.sei.cmu.edu/publications/documents/92.reports/92.tr.020.html">http://www.sei.cmu.edu/publications/documents/92.reports/92.tr.020.html</a>
+
+<p>
+[Perens 1999]
+Perens, Bruce.
+January 1999.
+<i>Open Sources: Voices from the Open Source Revolution</i>.
+"The Open Source Definition".
+ISBN 1-56592-582-3.
+<a href="http://www.oreilly.com/catalog/opensources/book/perens.html">http://www.oreilly.com/catalog/opensources/book/perens.html</a>
+
+<p>
+[Raymond 1999]
+Raymond, Eric S.
+January 1999.
+``A Brief History of Hackerdom''.
+<i>Open Sources: Voices from the Open Source Revolution</i>.
+<a href="http://www.oreilly.com/catalog/opensources/book/raymond.html">http://www.oreilly.com/catalog/opensources/book/raymond.html</a>.
+
+
+<p>
+[Schneier 2000]
+Schneier, Bruce.
+March 15, 2000.
+``Software Complexity and Security''.
+<i>Crypto-Gram</i>.
+<a href="http://www.counterpane.com/crypto-gram-0003.html">http://www.counterpane.com/crypto-gram-0003.html</a>
+
+
+<p>
+[Shankland 2000a]
+Shankland, Stephen.
+February 14, 2000.
+"Linux poses increasing threat to Windows 2000".
+CNET News.com.
+<a href="http://news.cnet.com/news/0-1003-200-1549312.html">http://news.cnet.com/news/0-1003-200-1549312.html</a>.
+
+
+<p>
+[Shankland 2000b]
+Shankland, Stephen.
+August 31, 2000.
+"Red Hat holds huge Linux lead, rivals growing".
+CNET News.com.
+<a href="http://news.cnet.com/news/0-1003-200-2662090.html">http://news.cnet.com/news/0-1003-200-2662090.html</a>
+
+<p>
+[Stallman 2000]
+Stallman, Richard.
+October 13, 2000
+"By any other name...".
+<a href="http://www.anchordesk.co.uk/anchordesk/commentary/columns/0,2415,7106622,00.html">http://www.anchordesk.co.uk/anchordesk/commentary/columns/0,2415,7106622,00.html</a>.
+
+<p>
+[Vaughan-Nichols 1999]
+Vaughan-Nichols, Steven J.
+Nov. 1, 1999.
+Can you Trust this Penguin?
+ZDnet.
+<a href="http://www.zdnet.com/sp/stories/issue/0,4537,2387282,00.html">http://www.zdnet.com/sp/stories/issue/0,4537,2387282,00.html</a>
+
+<p>
+[Wheeler 2000a]
+Wheeler, David A.
+2000.
+<i>Open Source Software / Free Software References</i>.
+<a href="http://www.dwheeler.com/oss_fs_refs.html">http://www.dwheeler.com/oss_fs_refs.html</a>.
+
+<p>
+[Wheeler 2000b]
+Wheeler, David A.
+2000.
+<i>Quantitative Measures for Why You Should Consider Open Source /
+Free Software</i>.
+<a href="http://www.dwheeler.com/oss_fs_why.html">http://www.dwheeler.com/oss_fs_why.html</a>.
+
+<p>
+<a href="http://www.dwheeler.com/sloc">[Wheeler 2001]</a>.
+Wheeler, David A.
+May 9, 2001 (minor update from November 6, 2000).
+<i>Estimating Linux's Size</i>.
+Version 1.04.
+<a href="http://www.dwheeler.com/sloc">http://www.dwheeler.com/sloc</a>.
+
+
+<p>
+[Zoebelein 1999]
+Zoebelein.
+April 1999.
+<a href="http://leb.net/hzo/ioscount">http://leb.net/hzo/ioscount</a>.
+
+     
+
+<p>
+<i>Trademark owners own any trademarks mentioned.</i>
+
+<p>
+<i>This paper is (C) Copyright 2001 David A. Wheeler.
+All rights reserved.
+You may download and print it for your own personal use, and of course
+you may link to it.
+Talk to me to request republication rights.
+When referring to the paper, please refer to it as
+``More than a Gigabuck: Estimating GNU/Linux's Size'' by David A. Wheeler,
+located at
+<a href="http://www.dwheeler.com/sloc">http://www.dwheeler.com/sloc</a>.
+Please give credit if you refer to any of its techniques or results.</i>
+
+<!-- This HTML intentionally is limited so that it ports everywhere.
+It doesn't use "ldquo" and "rdquo" nor CSS because some browsers
+don't support it. -->
+
+</body>
+</html>
+
