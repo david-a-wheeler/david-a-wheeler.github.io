@@ -1,0 +1,260 @@
+% Use only LaTeX2e, calling the article.cls class and 12-point type.
+
+\documentclass[12pt]{article}
+
+% Users of the {thebibliography} environment or BibTeX should use the
+% gmucite.sty package.
+% This package should properly format in-text
+% reference calls and reference-list numbers.
+
+%\usepackage{gmucite}
+
+% Use times if you have the font installed; otherwise, comment out the
+% following line.
+
+\usepackage{times}
+
+% The following packages were added to assist with formatting
+
+\usepackage{lipsum}
+\usepackage{listings}
+\usepackage{xcolor}
+
+
+% The preamble here sets up a lot of new/revised commands and
+% environments.  It's annoying, but please do *not* try to strip these
+% out into a separate .sty file (which could lead to the loss of some
+% information when we convert the file to other formats).  Instead, keep
+% them in the preamble of your main LaTeX source file.
+
+
+% The following parameters seem to provide a reasonable page setup.
+
+\topmargin 0.0cm
+\oddsidemargin 0.2cm
+\textwidth 16cm 
+\textheight 21cm
+\footskip 1.0cm
+
+
+%The next commands set up an environment for the abstract to your paper, quotations, and coding.
+
+\newenvironment{gmuabstract}{%
+\begin{quote} \bf}
+{\end{quote}}
+
+
+\newenvironment{gmuquotation}{%
+\begin{quote} \it}
+{\end{quote}}
+
+\lstset{
+                breaklines=true,
+                numbersep=5pt,
+                xleftmargin=.5in,
+                xrightmargin=.25in,
+                belowskip=20pt
+} 
+
+
+% If your reference list includes text notes as well as references,
+% include the following line; otherwise, comment it out.
+
+\renewcommand\refname{References and Notes}
+
+% The following lines set up an environment for the last note in the
+% reference list, which commonly includes acknowledgments of funding,
+% help, etc.  It's intended for users of BibTeX or the {thebibliography}
+% environment.  Users who are hand-coding their references at the end
+% using a list environment such as {enumerate} can simply add another
+% item at the end, and it will be numbered automatically.
+
+\newcounter{lastnote}
+\newenvironment{gmulastnote}{%
+\setcounter{lastnote}{\value{enumiv}}%
+\addtocounter{lastnote}{+1}%
+\begin{list}%
+{\arabic{lastnote}.}
+{\setlength{\leftmargin}{.22in}}
+{\setlength{\labelsep}{.5em}}}
+{\end{list}}
+
+
+% Include your paper's title here
+
+\title{\color{blue} Title of your paper} 
+
+% Place the author information here.  Please hand-code the contact
+% information and notecalls; do *not* use \footnote commands.  Let the
+% author contact information appear immediately below the author names
+% as shown.  We would also prefer that you don't change the type-size
+% settings shown here.
+
+\author
+{Your name\\
+\textit{Date of this version (use YYYY-MM-DD, the ISO standard for dates)}}
+
+% Include the date command, but leave its argument blank for formatting.
+
+\date{}
+
+
+
+%%%%%%%%%%%%%%%%% END OF PREAMBLE %%%%%%%%%%%%%%%%
+
+
+
+\begin{document} 
+
+% Double-space the manuscript.
+%\baselineskip24pt
+
+% Make the title.
+
+\maketitle 
+
+
+
+% Place your abstract within the special {sciabstract} environment.
+
+\begin{gmuabstract}
+  Type your abstract here (note this falls within the \textit{gmuabstract} boundary.  \lipsum[1]
+\end{gmuabstract}
+
+
+
+% The \section command numbers corresponding sections for the paper.
+% Use the \subsection and \subsubsection command for managing
+% subsections within your paper.
+
+\section{Introduction}
+
+As per the requirements, this template provides a method to set the "paragraph type" of each paragraph correctly.  You should \textit{never} touch the font name, font size, or similar properties of ordinary paragraphs if your paper is longer than a page (aka "direct formatting"); you should \textit{only} set those kinds of properties of paragraph types.  This template provides several paragraph types, including: 
+
+\begin{itemize}
+    \item "Body Text" (Latex) for normal text 
+    \item "{\textbackslash}section" for level-1 headings 
+    \item "{\textbackslash}subsection" for level-2 headings 
+    \item "thebibliography" for endnote bibliography entries 
+    \item "lstlisting" (or similar) for code 
+    \item "gmuquotation" for quotations 
+\end{itemize}
+
+\subsection{More stuff}
+
+You might use numbered lists:
+
+\begin{enumerate}
+    \item \lipsum[1] 
+    \item \lipsum[2] 
+\end{enumerate}
+
+You might want a long quote; this uses the paragraph style \textit{gmuquotation}: 
+
+\begin{gmuquotation}
+    Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal. \cite{Lincoln:1863}
+\end{gmuquotation}
+
+Or code (this uses the \textit{lstlisting} paragraph type, just drop your code in): \\
+
+\begin{lstlisting}
+#include <stdio.h>
+
+int main() {} 
+
+\end{lstlisting} 
+
+You can switch back to "Body Text" when done. \\
+
+
+\section{Another top-level heading}
+
+Use author-date format for citations, e.g., there are many ways that Heartbleed could have been countered \cite{Wheeler:2014}.  Insert these citations into the thebibliography section found at the end of this text file.  Formatted examples are included.  If citations appear as "[?]" after running PDFLaTeX once, run PDFLaTeX a second time to fix the citation.\\
+
+Add new paragraph types if needed.  Always include a "{\textbackslash}{\textbackslash}" at the end of each paragraph to ensure spacing is correct. \\
+
+\lipsum[1]
+
+
+% Your references go at the end of the main text, and before the
+% figures.  For this document we've used BibTeX, the .bib file
+% gmubib.bib, and the .bst file GMUpaper.bst.  The package bibcite.sty
+% was included to format the reference numbers according to GMU
+% style.
+
+\section{References}
+
+
+
+%----------------------------------------------------------------------------------------
+%	BIBLIOGRAPHY
+%----------------------------------------------------------------------------------------
+
+\begin{thebibliography}{99} % Bibliography - this is intentionally simple in this template
+
+%\bibitem[Figueredo and Wolf, 2009]{Figueredo:2009dg}
+%Figueredo, A.~J. and Wolf, P. S.~A. (2009).
+%\newblock Assortative pairing and life history strategy - a cross-cultural
+%  study.
+%\newblock {\em Human Nature}, 20:317--330.
+
+
+\bibitem[Lincoln1863]{Lincoln:1863}
+Lincoln, Abraham. 
+\newblock {\em The Gettysburg Address}. 1863.
+
+\bibitem[Wheeler2014]{Wheeler:2014}
+Wheeler, David A..
+\newblock {\em How to Prevent the next Heartbleed}. 2014-10-20.
+\newblock URL: https://www.dwheeler.com/essays/heartbleed.html.
+\newblock {\em Accessed 10/31/15}
+
+%\bibitem[OWASP2009]{OWASP:2009}
+%The Open Web Application Security Project.
+%\newblock {\em Heap overflow}. 2009.
+%\newblock URL: https://www.owasp.org/index.php/Heap\_overflow.
+%\newblock {\em Accessed 9/22/15}
+
+%\bibitem[Conover1999]{Conover:1999}
+%Conover, Matt (A.K.A. Shok) and w00w00 Security Team.
+%\newblock {\em w00w00 on Heap Overflows}. 1999.
+%\newblock URL: http://www.cgsecurity.org/exploit/heaptut.txt.
+%\newblock {\em Accessed 9/22/15}
+
+%\bibitem[Prinz2005]{Prinz:2005}
+%Prinz, Peter and Crawford, Tony. 
+%\newblock {\em C in a Nutshell}. 2005.
+%\newblock  O'Reilly Media, Inc. ISBN-10 0596006977.
+
+%\bibitem[MITRE2014]{MITRE:2014}
+%MITRE.
+%\newblock {\em CWE-122: Heap-based Buffer Overflow}. 2014.
+%\newblock URL: http://www.cgsecurity.org/exploit/heaptut.txt.
+%\newblock {\em Accessed 9/22/15}
+
+
+\end{thebibliography}
+
+\clearpage
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
