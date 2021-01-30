@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>VirtualBox and Fedora Linux</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A few notes about Virtualbox and Fedora Linux">
+<meta name="keywords" content="Virtualbox, virtualization, Fedora, Linux">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Virtualbox and Fedora Linux</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2009-03-07</h2>
+
+<p>
+There are a number of good virtualization tools out there, including
+KVM, Xen, and so on.
+One virtualization program that doesn't get enough press is
+<a href="http://www.virtualbox.org">VirtualBox</a>, supported by Sun.
+
+<p>
+VirtualBox is quite easy to use out-of-the-box, and you can easily
+install Fedora Linux as a guest OS on top of VirtualBox.
+
+<p>
+VirtualBox has some "guest additions", which can make using the virtualized
+program more pleasant.
+However, when you do that with Fedora 10, suddenly the network "doesn't work".
+For example, trying to run "yum" will produce errors of the form
+"[Errno 4] IOError: <urlopen error (-3, 'Temporary failure in name resolution'".
+This is because the VirtualBox network stuff is <i>installed</i> but not
+properly <i>enabled</i> - here's how to fix that.
+First, run the Network Configuration program
+(with GHOME, choose System/ Administration/ Network).
+You'll see there's an "eth0" network adapter; double-click it.
+<i>TURN OFF</i> "Controlled by NetworkManager", and turn on
+"activate device when computer starts".
+Push the "OK" button.
+Now, with "eth0" still selected, press the big green "Activate" button
+(which you can now do,
+because you turned off "controlled by NetworkManager").
+Presto - working network.
+Now go to System/Administration/Services, and both disable and stop the
+"NetworkManager" service - this is the service that doesn't play nice
+with VirtualBox's guest additions.
+
+<p>
+VirtualBox is generally very easy to use, but it does have an odd bug:
+sometimes, when leaving it and trying to use other programs,
+the keyboard is stuck in a strange "shift key" mode.
+In this mode, you can't type numbers... it's as if they're always shifted.
+Pressing and releasing both the left and right "shift" keys seems to
+clear this up.
+Hopefully they'll fix this bug soon.
+
+
+<p>
+<hr>
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and by book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2008 David A. Wheeler.
+
+</body>
+</html>
+

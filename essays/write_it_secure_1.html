@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=windows-1252">
+<TITLE>Write It Secure: Format Strings and Locale Filtering</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<B><P>Write It Secure: Format Strings and Locale Filtering</P>
+</B><P>by David A. Wheeler</P>
+
+<P>[David is the author of the &quot;Secure Programming for Unix and Linux HOWTO&quot; available online at
+<A HREF="https://dwheeler.com/secure-programs">https://dwheeler.com/secure-programs</A>.
+He has been covering topics related to writing secure programs for many years.
+This article is published in E-Security Journal at
+<A HREF="http://www.eSecurityJournal.com">http://www.eSecurityJournal.com</A>.
+]</P>
+
+<P>&nbsp;</P>
+<P>The following is the first in a series of articles on how to write secure programs on Unix-like systems (e.g., Unix and Linux).
+Each article will cover some specific topic, with the goal of giving you the information needed to design fully functional yet secure programs. Hopefully, you'll find each of these articles interesting and useful.</P>
+
+<P>First, I should mention that these articles will emphasize how to write programs that are secure, not how to break into insecure programs – you will need to go elsewhere to get cookbook exploits. Also, I consider a &quot;secure program&quot; a program that must deal with users or data with on a different level of trust. That means that word processors must be secure programs when used to view data from the web - otherwise someone could post a document and &quot;take over&quot; someone else's machine. Are there programs that have such weaknesses? You know there are - and the fault for this is with the vendor and developer, not the user. &quot;Secure programs&quot; also include setuid/setgid programs, web applications (such as CGI scripts), and servers that respond to other users (locally or through a network). </P>
+
+<P>In this article, we will discuss a newly-identified set of problems: format strings and improper locale filtering. First, let's talk about format strings.</P>
+
+<P>Many computer languages include built-in capabilities to reformat data while they're outputting it. The formatting information is usually described in some sort of a string, called the &quot;format string.&quot; Unfortunately, a number of programmers have incorrectly used data from untrusted users as a format string. This is easier to show than explain, so here's an example in C:</P>
+
+<FONT FACE="Courier"><P>  /* WRONG: */</P>
+<P>  printf(string_from_untrusted_user);</P>
+
+<P>  /* BETTER - AVOIDS FORMAT STRING PROBLEM: */</P>
+<P>  printf(&quot;%s&quot;, string_from_untrusted_user);</P>
+</FONT>
+<P>The fundamental problem is that the first version allows an untrusted user to control how the output is formatted. How could that be a serious problem? Well, the formatting string is a mini-language - you are basically running a program provided by an untrusted user.</P>
+
+<P>A good paper describing some of these problems was posted by Pascal Bouchareine on July 18, 2000 in the &quot;Bugtraq&quot; (http://www.securityfocus.com) mailing list under the title &quot;[Paper] Format bugs.&quot; This paper shows how in C (and C derivatives like C++) such a capability can be lethal if employed using the printf() family of formats.</P>
+
+<P>For example, an attacker can give extra parameters (e.g., add extra &quot;%x&quot;s); since there's no corresponding data, on many systems (such as x86s) this enables the attacker to inspect the contents of the stack. If the attacker can find an input buffer (say using this first technique), he can then read arbitrary memory locations by placing the desired address in the format string, using an &quot;extra&quot; format string to use the address as the location to read data. Even worse, there's the obscure %n directive in C's printf() function that permits <B>overwriting</B> the function inputs (instead of outputting them). Basically, the %n directive takes an (int *) argument, and writes the number of bytes written so far to that location. By carefully using this &quot;write&quot; ability in a program where only reads are expected, one can overwrite values in extraordinary ways.</P>
+
+<P>Bouchareine does not mention it, but there are even more tricks to try. For example, you can specify an argument number for a nonexistant argument in a directive. You can also use attacks against saved data - sometimes formats are used to store data, and by changing the format you can manipulate how the data is read back later. The information can also be used to circumvent stack protection systems such as StackGuard; StackGuard uses constant &quot;canary&quot; values to detect attacks on the stack, but if the stack's contents can be displayed, the current value of the canary will be exposed and used to enable an attack.</P>
+
+<P>Where do you need to look for these problems? The answer is a surprisingly large number of places. In C, the most obvious example is the printf() family of routines (printf(), sprintf(), snprintf(), fprintf(), and so on). Other examples in C include syslog() (which writes system log information) and setproctitle() (which sets the string used to display process identifier information). Many programs and libraries define formatting functions, often by calling built-in routines and doing additional processing. glib's g_snprintf() routine is one example, and I'd suggest looking at functions with names beginning with &quot;err&quot; or &quot;warn&quot;, or containing &quot;log&quot; or &quot;printf&quot;. In Python, the &quot;%&quot; operation on strings controls formatting in a similar manner. CERT’s Advisory CA-2000-13 (http://www.cert.org) acknowledges the above as vulnerabilities.</P>
+
+<P>In theory, there's a simple solution to this: <B>never </B>use anything other than constants as string formatting parameters. When this problem started getting discussed (circa June-July 2000), many reviewers independently made a disturbing discovery: for a large number of programs this wasn't possible, because the strings were &quot;internationalized&quot;. That is, the strings were first sent to a function (such as gettext()) that, depending on the language and other information, would possibly return a different string.</P>
+
+<P>This was no accident. The combination of human language and other cultural issues is usually called a &quot;locale&quot;, and speakers of only one human language often do not understand how other languages and cultures differ. For example, for different locales it may be necessary to report data results in a different order, or to separate the values in different ways. A clever approach to resolving this was to support changing the formatting string itself based on the locale - that way, different ordering and separating could be handled easily. However, many of those interested in security began to perceive this as a bit <I>too</I> clever. Might there be a way to tell a program to switch to a locale that would give a user external control over the formatting string?</P>
+
+<P>Yes. And it did not take long for people to find it.</P>
+
+<P>In Unix-like systems, environment variables (such as LANG) are used to determine what locale is selected for local programs. This information is used to compute the directory used to retrieve the format strings used for a given user. Just place a few &quot;/..&quot; strings into the environment variable, and for many internationalization libraries you could quickly specify any file at all. Some libraries even let attackers pick a file without bothering with any tricks at all.</P>
+
+<!--
+<P>SIDEBAR</P>
+
+<P><I>In Unix-like systems, environment variables (such as LANG) are used to determine what locale is selected for local programs. This information is used to compute the directory used to retrieve the format strings used for a given user. Just place a few &quot;/..&quot; strings into the environment variable, and for many internationalization libraries you could quickly specify any file at all. Some libraries even let attackers pick a file without bothering with any tricks at all.</I></P>
+-->
+
+<P>Web applications (e.g., CGI scripts) weren't off the hook either. Internationalized web applications would accept locale specifications (after all, who else would know their locale?), and a clever attacker might be able to exploit this fact.</P>
+
+<P>In all cases, if an attacker could get a program to accept an arbitrary file for the format, he could then exploit all of the format string problems we just discussed. You can see more discussion about this in Bugtraq's vulnerability ID #1634 (http://www.securityfocus.com).</P>
+
+<P>How can you then protect yourself? One simple solution is to permit only legal locale values. This is all part of a normal secure program's job: you need to check all your inputs and only permit legal values. All too often people don't describe _how_ they do this; let me describe it by example.</P>
+
+<P>First, I searched the web and my own computers for documentation on what the legal values were; I especially looked for standards, as well as user or programmer documentation for a library or application using them. I found an IETF standard (RFC 1766), and the GNU info documentation for gettext (a library implementating internationalization) provided references to other standards. I also found that for local programs there exists quite a variance in internationalization libraries; depending on what I was doing and which libraries I was using, I might need to accept and check NLSPATH, LANGUAGE, LANG, LINGUAS, LC_ALL, LC_MESSAGES, LC_COLLATE, LC_CTYPE, LC_MONETARY, LC_NUMERIC, and LC_TIME. I am not sure how exploitable the last five are, but frankly I don't care - I'd rather filter them all to only permit legal values instead of wasting my time trying to figure out if there's an exploit.</P>
+
+<P>Next, I tried to devise a filter that would allow only legal locale values. For locales this is tricky; it turns out that there are several not-quite-compatible standards. After some re-reading, I came up with the following regular expression that any locale must match in totality (when a locale is specified):  [A-Za-z][A-Za-z0-9_,+@\-\.]*</P>
+
+<P>Finally, I mentally &quot;attacked&quot; the filter, trying to see if there were some known bad values that could get through. I always check any filter to see if the empty string, &quot;.&quot;, &quot;..&quot;, &quot;../&quot;, anything starting with &quot;/&quot;, or any control characters are acceptable, because those can often lead to problems. In this case, the filter prevents them all, which is encouraging.</P>
+
+<P>Note an important point, though - when checking input, list all the <B>legal</B> values and reject anything not matching them. Do <B>not</B> list &quot;all illegal values&quot; because you will usually miss an important case. Instead, identify values you know must be illegal, and use them to test the input filter you devise. If your filter (which identifies legal values) also correctly rejects the illegal values you know of, it is an indication that your filter is a good one.</P>
+
+<P>Format strings and locale filtering have only been identified recently as important security issues. The GNU C libraries (glibc) were recently modified to protect against these vulnerabilities. Actually, glibc already had some checks, but they weren't thorough; recently GNU glibc was modified to ensure that glibc does not allow certain settings of the locale variables LANG or LC_* if the program is setuid or setgid (for Red Hat Linux, see advisory RHSA-2000:057-04 for more information).</P>
+
+<P>Being a believer in &quot;defense in depth&quot; strategies, so I'm happy to see the glib modifications put in place. However, I am concerned that some people may think that this vulnerability is just some sort of &quot;library problem.&quot; This kind of filtering is not, to my knowledge, required by any standard. That means that other implementations may not have this kind of filtering, and it also increases the likelihood that the filtering won't work as intended. Look at what happened to glibc - some of its developers knew that this was a potential problem, but the filtering was not sufficient. Aside from that, note that this filtering only worked for setuid/setgid programs - it wouldn't help web applications, for example.</P>
+
+<P>In fact, even when something is specified by a standard, you should search for complete documentation (particularly security guidelines) that warns about them; some functions are known to be impossible to implement safely. The Single Unix Specification and upcoming C99 specification both define snprintf() (though unfortunately with different return semantics). snprintf() is useful for protecting against buffer overflow, since it limits the number of characters that can be written to a string. However, it is known that old Linux (using libc4) and old HP systems implemented snprintf() without actually performing this limit check - so if your programs have to run on such old systems, you can't trust the specification.</P>
+
+<P>In short, if you are writing a secure program, don't depend on some nonstandard scheme to save you. Protect yourself - assume that there are no protections other than those promised by both specifications and practice, and check everything else.</P>
+
+<P>So, here's the final word of advice:</P>
+
+<P>1. Make sure your formatting strings are constants or are internationalized &quot;constants&quot;</P>
+<P>2. In the latter case, make sure you check for legal locale values before using them</P>
+
+<P>&nbsp;</P>
+<P><FONT SIZE=1>(C) Copyright 2000 David A. Wheeler.
+All rights reserved.  You may view and print this article
+for your personal use,
+but you may not republish this article in any media.</FONT></P></BODY>
+</HTML>
+

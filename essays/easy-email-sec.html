@@ -1,0 +1,1019 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<title>Easier Email Security is on the Way?</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="keywords" content="DNSSEC/LDAP PKI Architecture, DNSSEC / LDAP, PKI, public key infrastructure, security, email, email security, LDAP, DNSSEC, DNS, IETF, S/MIME, OpenPGP, GnuPG, encrypt, encryption, authenticate, authentication, certificate, certificate authority, easy, easier, simpler, simple, open source, open source software, Wheeler, David Wheeler, David A. Wheeler, alice, bob">
+<meta name="description" content="This article will tell you about the growing convergence of various Internet security standards, and how they could finally make it possible to easily secure the world's email in the very near future.  This paper describes one particular approach that combines LDAP with an updated version of DNS security to make this possible.">
+
+</head>
+<body.
+
+<center>
+<b>Easier Email Security is on the Way?</b><br>
+<b>David A. Wheeler</b><br>
+<b>Original Version April 17, 2002</b><br>
+<b>Revision as of July 18, 2011</b><br>
+</center>
+
+<p>
+<i>This article will tell you about
+the growing convergence of various Internet security standards,
+and how they could finally make it possible to <b>easily</b>
+secure the world's email in the very near future.
+This paper describes one particular approach that combines LDAP with
+an updated version of DNS security to make this possible.
+Indeed, this approach could be used as a general
+Public Key Infrastructure (PKI).</i>
+
+<!-- I started writing this article, describing how a fixed DNSSEC
+     plus LDAP or other server could secure email, on April 10, 2002,
+     and extended it later. -->
+
+<p>
+Imagine that alice@foo.com wants to send an encrypted email
+to bob@bar.org, and that bob then wants to confirm that alice (and
+not someone else) sent the message.
+The technology and tools to do this exist now, e.g., through the
+S/MIME and OpenPGP standards and their implementations.
+Unfortunately, it's too hard for most people to
+correctly use such tools, even
+when they have fancy graphical interfaces, as shown by usability
+studies such as
+<!-- http://www.cs.cmu.edu/~alma/johnny.pdf -->
+<a href="http://www.gaudior.net/alma/johnny.pdf"><i>Why Johnny Can't Encrypt</i></a>.
+Even people who <i>can</i> use such tools and understand their
+concepts usually don't, because they're just too hard to use.
+
+<p>
+One of the main reasons the tools are hard to use is because most tools
+don't really solve the <i>key distribution</i> problem.
+That is, I can't encrypt or check authenticity without the other
+party's public key... but how can I be assured that I got their
+key (and not someone else's)?
+Techniques requiring a single Internet-wide server to serve all
+public keys don't scale well for an entire Internet.
+Distributed ``web of trust'' techniques work when you only talk with a
+few people, and many nontechnical people find these webs
+too complicated to use.
+Traditional certificate authority infrastructures appear to
+be quite difficult to implement and require trust agreements
+between organizations that are often difficult to establish.
+
+<p>
+What the world needs is a simple infrastructure that can automatically and
+securely get whatever public keys are needed, given only an arbitrary
+email address.
+This structure should be based on Internet standards
+(not proprietary products),
+reuse existing infrastructure, be supportable by
+<a href="https://dwheeler.com/oss_fs_refs.html">open source</a>
+software systems,
+and be highly scaleable (a single centralized public
+key repository won't work).
+
+<p>
+Thankfully, Internet standards are beginning to converge
+through various works in progress
+to make email security <i>significantly</i> easier.
+This article will tell you about
+the growing convergence of various Internet security standards,
+including works in progress and probable future work,
+and one way in which they could turn into a
+significant new capability for securing all of our email.
+The way I'll describe in detail involves combining the DNS security (DNSSEC)
+and LDAP standards in a way that is fairly obvious to those in
+the field and yet could have a powerful impact on all email users.
+The details below require some technical
+understanding of public key cryptography and
+the Internet architecture, including some details about how DNS works,
+but the summary is straightforward: with some
+small improvements to today's standards and systems, we could make it
+relatively easy for ordinary users to have secure Internet email.
+
+<p>
+The discussion below is grouped into the following categories:
+repairing DNS security, getting non-DNS keys from DNS,
+using DNS and LDAP or HTTP together,
+tool support, and organizational support;
+I then close with a section called ``wrap-up.''
+
+<!--
+Insert near here a brief description of public/private key crypto,
+DNS, DNS RRsets, etc.
+-->
+
+<p>
+<h1>Repairing DNS Security</h1>
+
+The Domain Name System (DNS) is a critical part of the Internet infrastructure;
+it's the service that takes names such as ``foo.com'' and returns
+important information about that name,
+such as the numeric (IP) address needed to actually communicate with foo.com.
+Because it's so important, strong security mechanisms are needed to protect it,
+and so a standard called
+DNS Security was created.
+
+<p>
+Unfortunately, the 1999 version of DNS security (DNSSEC), defined in
+<a href="http://www.ietf.org/rfc/rfc2535.txt">RFC 2535</a>
+prototyped in <a href="http://www.isc.org/products/BIND">BIND</a>,
+was a massive failure.
+As people began trying to deploy it widely they discovered that
+the first version of DNSSEC simply can't scale to today's Internet.
+For example, it turns out that in normal operation DNS servers normally
+get out of sync with their parents.
+This isn't usually a problem, but when
+DNSSEC is enabled, this out-of-sync data can have the effect
+of a major self-created denial of service.
+Also, public key changes can have absurd effects;
+for example, if the ".com" zone changed its public key, it would have to send
+22 million records (because it would need to update all of the signatures
+in all of its children).
+Thus, DNSSEC as currently defined just won't work.
+
+<p>
+The IETF has developed a major revision to DNSSEC, using the
+``delegation signer resource record'' approach,
+which is believed to finally solve this serious scaleability
+problem in DNSSEC.
+In the old DNSSEC
+approach, DNS child zones had to send all of their data up to the parent,
+have the parent sign each record, and then send those signatures back
+to the child (for the child to store in a ``SIG'' record).
+This required a complex six-message protocol and a lot of data transfers.
+In the new approach, when a child's master public key changes, instead of
+having to have six messages for every record in the child, there is
+one simple message: the child sends the new public key to its parent
+(signed, of course).
+Parents simply store one master public key for each child; this is much more
+practical.
+Thus, a little data is pushed to the parent, instead of massive amounts
+of data being exchanged between the parent and children.
+This does mean that user computers
+have to do a little more work when verifying keys.
+More specifically, verifying a DNS zone's KEY RRset requires two
+signature verification operations instead of the one required by RFC 2535
+(There is no impact on the number of signatures verified
+for other types of RRsets).
+However, since this changes DNS security from being impractical to being
+practical, that's a small price to pay.
+
+
+<p>
+So, what would be the result?
+This would mean that an Internet user could start from their local
+DNS server (which they have to use anyway)
+and find the DNS data from any other DNS server on the Internet.
+Once they do, they could use the trusted key that they have for their
+local server, and the trail of trusted
+public keys from other DNS servers,
+to determine that they did, indeed, get authoritative DNS results.
+This trail is sometimes called a ``chain of trust'', and the process
+of checking the chain of trust back to a trusted key
+is sometimes called ``verification.''
+
+<p>
+It's worth noting what is and is not being verified; all that's
+being verified is that certain data came from a given DNS name.
+If I verify that data came from ``ibm.com'', that doesn't
+(by itself!) prove that the data came from IBM, the company.
+I will somehow have to know that ``ibm.com'' really is the DNS name
+for IBM the company, and not for some other IBM that I actually
+wanted to contact.
+I need to make sure that the name being used isn't subtly
+different than the intended one;
+``1BM.COM'' is considered to be different by computers.
+If DNS is ever extended to support names in other languages, this
+could even be more serious (because some characters
+look essentially alike but are considered different).
+
+<p>
+These changes are currently being simultaneously defined and
+prototyped in the
+<a href="http://fmeshd.nge.isi.edu">Fault-Tolerant Mesh of Trust
+Applied to DNSSEC (FMESHD) project</a>
+by USC/ISI and NAI Labs, a DARPA project, in the open source program
+<a href="http://www.isc.org/products/BIND">BIND</a>.
+Their results may come to fruition by summer 2002.
+More information can be found by looking at the various IETF documents
+describing draft DNS extensions; you can find such information at
+<a href="http://www.ietf.org/ids.by.wg/dnsext.html">the IETF</a>
+or via
+<a href="http://community.roxen.com/developers/idocs/drafts/show_category.html?cat=dnsext">Roxen</a>.
+
+<p>
+An additional practical problem is being worked as well.
+This additional key information will increase the size of the DNS server
+responses, and some clients may not be prepared for the larger size.
+Thankfully, there are solutions for this as well.
+For example, David Conrad has suggested that a DNS client (resolver) could
+set a bit indicating that it could handle larger responses; that way,
+clients that aren't ready for the data won't have to handle it.
+<!-- Indicating Resolver Support of DNSSEC -->
+This issue may be resolved in other ways, but clearly there are solutions
+available.
+
+<p>
+Working out these issues is important, because DNS is a key Internet service.
+Once they're resolved, those who deploy these DNS security extensions
+can protect themselves from a number of attacks.
+
+<!--
+Emphasize terminology like:
+configured as trusted key, chain of trust, 
+lightweight trust mechanism
+-->
+
+<h1>Getting Non-DNS keys From DNS</h1>
+
+<p>
+Once you can use DNS to get public keys for other DNS servers,
+it seems obvious that you can use DNS to store non-DNS public keys as well...
+and use these new DNS security capabilities to show that those keys are
+authoritative as well.
+The IETF realized this (obvious) situation too, and designed DNSSEC
+so DNS could store non-DNS keys.
+<a href="http://www.ietf.org/rfc/rfc4398.txt">RFC 4398</a> has lots of
+details on how to get non-DNS certificates from DNS.
+
+<p>
+Unfortunately, it turns out that DNSSEC's original
+method for storing non-DNS keys has serious security problems.
+In the original DNSSEC, the KEY resource record can be an application public
+key as well as a public key for use by the DNS infrastructure.
+However, this meant that anyone with those non-DNS public keys can
+also control (forge) DNS entries;
+the problem was mixing two different kinds of public keys in the same field.
+
+<p>
+The IETF will easily solve this problem by defining
+different kinds of records for different kinds
+of public keys.
+In particular, a KEY will be required to be a DNS public key, and
+other public keys (to be defined) will have to be identified
+as being different resource records.
+In one way this is unfortunate - the IETF has to once again determine
+the naming conventions for storing non-DNS keys in DNS - but this is
+simply an issue of picking new conventions,
+and isn't anything fundamental.
+It will take time to agree on the new conventions, of course, but that's all.
+
+<p>
+There are several kinds of conventions they'll need to agree on.
+First, they'll need to agree on the DNS name to query on
+(e.g., for LDAP data, should you really ask x.com?
+Should you really ask ldap.x.com, or perhaps _ldap._tcp.x.com?)
+Also, should there be a general purpose ``other key'' type or should
+there be many different DNS record types for different keys?
+One reason to separate all these out is so that client queries can
+be precise; there are a <i>lot</i> of DNS queries that go over
+the web, so being able to respond with only the necessary data could
+save a lot of bandwidth.
+On the other hand, having lots of separate special-purpose types
+and names might make it harder to add new kinds of keys.
+
+<p>
+Once the new conventions are agreed upon,
+you'll be able to get trusted public keys for a service
+on any other computer on the Internet.
+This might mean public keys for the web server (http) key, SSH server,
+IPSEC (e.g., as a Virtual Public Network), ftp, SMTP, or
+some other service on that machine.
+This won't put companies that currently maintain web server public keys
+out of business; this won't work on old browsers, and many
+organizations may want to use a separately vetted key for certain purposes.
+However, this would be a great boon to the small organizations that can't
+afford costly registration methods for their public keys, and it's
+far more flexible as well.
+
+<p>
+This does mean that in the general case
+you have to trust the ``root'' of the DNS system...
+but Internet users have to trust the DNS root anyway.
+Clearly, systems that are compromised can give bogus information... but
+at least intermediaries will have a harder time attacking this.
+In reality, you only need to trust the ``common DNS parent'', so one
+user in ``a.b.gov'' only needs to trust ``.gov'' when contacting
+``e.f.gov''.
+And, if that's too trusting for your needs, you or your organization could
+store specific keys for those who you have special trustworthy information on.
+
+
+<h1>Using DNS and LDAP/HTTP Together</h1>
+
+So if we can get verifiable public keys about a computer's DNS service,
+and from that we can get verifiable public keys for a particular
+service on a computer (such as a web service), how could we
+get verifiable public keys for a particular person?
+Alice may be able to get information about bar.org, but she really
+wanted bob's public key, not just some public keys for his organization
+or a server in his organization.
+Clearly, we need a way to get information about an individual, given
+public keys from that individual's organization.
+
+<p>
+One approach would be to create a DNS naming convention... just
+create a bogus computer and computer entry for every person.
+For example, there might be a ``computer'' named bob._email.bar.org.
+This would be painful for DNS administrators to administrate, however,
+and there's a worse danger: spam.
+Such an approach would make it possible for an external user to get a list
+of every valid email address... and spammers would love that!
+Besides, nobody stores information about individuals in DNS today,
+so this would significantly increase administrative work.
+Instead, we should leverage what's already in place today.
+
+<p>
+And what's in place today?
+There are two obvious choices:
+Lightweight Directory Access Protocol (LDAP), and HTTP.
+Let's discuss LDAP first.
+
+<p>
+A ``directory'' is a server that provides mostly-read access to data,
+and supports flexible querying... which is exactly what we need.
+LDAP could easily store a set of certificates (containing public keys)
+for every user, so that
+others could ask the LDAP server for bar.org
+``please send me the certificate for bob@bar.org''.
+LDAP is already used by email browsers today, e.g., for
+determining the email address of someone given their full name, and there is an
+open source implementation,
+<a href="http://www.openldap.org">OpenLDAP</a>.
+In fact, if organizations chose to make naming information public
+using LDAP, they could even address a related thorny problem, namely,
+``how do I know that John Smith's email address at bar.org
+is really john.smith@bar.org''?
+A quick query would be able tell you, if
+bar.org wanted to make that information available to you.
+
+<p>
+An altnernative would be to use a web server - you could give a
+prefix, add the email address you're looking up, and the web server could
+provide the information you need.
+
+<p>
+There are certainly alternative approaches, for example, it's possible
+to use a specialized key server to get individual keys instead of LDAP,
+or use another general-purpose server (such as a web server or ftp server).
+In fact, there are even some conventions for using web servers or ftp
+servers for this purpose.
+However, since
+LDAP is specifically designed to support queries to data that is usually read
+like this, and it's already used for email data, there are many
+advantages to using LDAP.
+
+<p>
+So, let's pretend for a moment that the IETF decides to do things
+more-or-less the way described here, using an improved version of
+DNS security and LDAP.
+How can alice@foo.com send an encrypted email to bob@bar.org?
+First, alice's system in foo.com will have to get the DNS information
+about bar.org; this is something alice's system has to do today, in fact.
+Her system will ask foo.com for how to contact .com, then
+ask .com how to contact .org, and then ask .org how to contact
+bar.org, and then ask bar.org for its DNS information.
+What's new is that at each step her system will automatically
+get signatures that her system will then check for authenticity.
+Trust has to start somewhere in any approach to security; in this case,
+she is trusting her local DNS server and the chain that goes through the
+root of DNS.
+She has to trust this chain anyway to use the Internet,
+so this isn't a big change in terms of trust.
+As part of its response, the bar.org DNS server would have given
+alice's system a certificate for its corresponding LDAP server.
+Alice's system can then ask that
+LDAP server ``what is the key for bob@bar.org'';
+the LDAP server can reply with a signed key, and Alice can use the
+key from the DNS server to check the LDAP server's response.
+
+<p>
+I'm glossing over many details here, of course.
+One issue is that most people should have several public keys, not just one.
+Usually, an individual would want at least one key for encryption
+(used when people send encrypted messages to that individual), and
+one for authentication (when others want to authenticate that this
+individual sent this message).
+This is because they have different timescales; generally you'll want to
+change your encryption key far more often than your authentication key.
+Supporting more than two is important too; you may have
+older and newer keys, keys using different technology, or keys for
+different purposes.
+There might be a separate key used, for example, when signing for certain
+ranges of money.
+It would probably be best to start with simple standards identifying
+two ``default'' keys for email (one for ordinary signing/ authentication
+and one for ordinary encrypting),
+and then add more sophisticated
+approaches later (e.g., keys for ordinary web access,
+keys with special power such as spending authority, and so on),
+but clearly a naming convention is needed.
+
+<p>
+Thus, there are many issues that the IETF will need to agree on:
+how to identify public keys for various services,
+whether or not to use LDAP this way, and so on.
+The main issue here is that once DNSSEC has been confirmed as being
+repaired, the IETF working group will hopefully begin examining the
+various alternatives to making automatic acquisition of keys for
+individuals possible.
+Using a different kind of server (other than LDAP) wouldn't have a
+significant impact, as long as everyone agreed on the conventions for
+finding and validating these public keys.
+I believe that over the next few years the IETF
+will develop an automated and scaleable method
+for securely getting public keys given email addresses;
+they're quite close and the need is very great.
+Indeed, I think it's quite plausible that the IETF final result
+will look recognizably similar to what I've outlined here.
+
+
+<h1>Tool Support</h1>
+Of course, Alice won't actually do all this key acquisition
+and checking by hand.
+Her tools, such as her email program and DNS resolver library,
+will need to do this for her.
+The beauty of this approach is that
+the user interface for them can be pretty simple.
+Let's imagine what that might look like.
+<p>
+If you want to encrypt an email, you could just check a box on the
+side that says ``encrypt this message.''
+If you want to authenticate an email you just received, you could
+pull down an option that said ``authenticate this message.''
+The email program could even remember a list of people for whom
+any key was used... and once the operation was successful, automatically
+encrypt and authenticate any communication with that person
+(and that means automatically reacquiring keys, so if that person
+changes their keys, everything still works automatically).
+Thus, once you have successfully encrypted or authenticated with a person,
+all of your email with that person could be automatically authenticated
+and encrypted.
+Companies might even create company-wide defaults, e.g., they would want
+their email readers to automatically encrypt and authenticate all
+email inside their company, and/or between certain partners.
+<p>
+Sadly, you probably don't want to automatically authenticate every message.
+That's because spammers would set up bogus servers waiting for your
+program to authenticate the message
+(using a used-only-once sending email address),
+and add you to a ``valid email address'' list if you tried to authenticate it
+(and once on, you'll never come off the list no matter what they say).
+However, an obvious visual indicator when a message is authenticated would
+be quite helpful.
+Indeed, an email program could let you prioritize
+automatically authenticated messages first - that way, you could
+always start by reading email from the people or
+organizations you normally talk to... and eventually most
+of the rest of the messages are likely to be spam.
+<p>
+Most mailing lists only need to be authenticated, not encrypted.
+Such lists can simply sign any mailing using their own encryption key,
+and noted that they are the "Sender:"; receivers can then authenticate
+the "Sender:" instead of the "From:" address (the UI should note the
+difference).
+If you want to encrypt mailing lists (a rarer need),
+there are a number of techniques to make it possible.
+For example, mailing lists can encrypt a message using a symmetric
+key K, then when they send the message they can encrypt <i>just</I>
+the key K using the receiver's public key.
+Thus, they won't have to re-encrypt the entire message each time;
+they can encrypt the message once, and attach encrypted <i>key</i> instead.
+There are other more complex approaches, using group keys,
+that could be supported as well.
+<p>
+You could also imagine a few small additions that might be useful.
+For example, a dnssec: URL could be used to acquire specific DNS
+records securely in URL format.
+
+
+<h1>Organizational Support</h1>
+Although tool support is necessary to make this work, it won't work
+unless organizations are willing to set up their infrastructure so
+the various keys are available.
+<p>
+Organizations would have to set up their DNS servers to provide the DNS
+public keys and LDAP public keys.
+This shouldn't be too hard; practically every organization has a DNS
+server anyway, and these are typically maintained by an expert
+(possibly under contract, say, with the ISP or a local consultant).
+This would be primarily a small one-time event for a given organization,
+with occasional changes a few times a year to add new keys or
+switch keys.
+The system that has the private keys for DNS and LDAP should be a
+separate system, <i>not</i> connected to a network, and physically 
+protected.
+<p>
+To support this approach for email,
+organizations would also need to set up publicly-accessible LDAP
+servers with their user's public keys.
+Organizations won't do this immediately, of course.
+But small organizations can do this easily, and large organizations can
+start with a small subset.
+And organizations that want to keep some information secret would have an
+incentive; unencrypted email can divulge far too much.
+Organizations who are afraid of divulging too much information about
+their organizations could restrict who could query the LDAP server.
+They could even use this infrastructure to protect the LDAP data;
+if someone claiming
+to be bob@bar.com makes a request, and the organization
+determines that's okay, the organization could encrypt the results
+with bob@bar.com's public key for encryption... so only bob@bar.com could
+read the results!
+Of course, if the organization just wants to be sure that it's bob@bar.com
+that is making the request, then they can require that it be
+authenticated.
+<p>
+Even if only a few organizations do it at first, there would still be a reward:
+<i>anyone</I> could authenticate or send encrypted email to the people
+who <i>do</i> have such a setup.
+This would mean, for example, that you could verify that your vendor or
+CERT really did send you that advisory, even if you haven't set up any
+keys that are visible to the world.
+Since people can get some advantage even when the deployment is small,
+such an approach is more likely to succeed.
+<p>
+Clearly, LDAP information that's made available to the outside would be
+a small subset of the information that would be available inside
+most organizations.
+However, this is solvable; the same thing has been done in DNS for years.
+It'd be great if there was a standard secure way to update just specific LDAP
+records.
+However, in practice LDAP has to be managed by a central organization anyway,
+so simpler centralized methods would suffice for most
+(e.g., the organization could have a separate computer and trusted
+person manage a private copy, and then securely upload the database
+after the changes have been made).
+<p>
+One major issue that's both an organizational and tool issue
+is how to get the initial trusted key(s).
+Somehow the tools need to be configured with initial DNS keys that they
+trust to start this process.
+The major question is,
+do you start with a local DNS key or start at the root of DNS?
+One method would be to pre-load the clients with statically configured
+public keys for the DNS root, and perhaps all of its children
+(.com, .edu, .fr, and so on).
+This would generally be done by the operating system vendor, or
+possibly by the vendor of a major tool (e.g., web browser or email reader).
+The advantage of this approach is that users don't need to do anything
+at all; it ``just works'', and the same approach is used today by
+web browsers (which are have an initial configuration of keys for SSL).
+The problem, as noted by RFC 2535, is that this makes it
+difficult to change keys if one of those keys is compromised.
+<p>
+Another way is for organizations to distribute a trusted key for themselves
+to their own clients.
+There are <i>many</i> ways to do this.
+One way, of course, is for them to incorporate these keys when they
+install new systems.
+Another is to simply use shared read-only files that are already accessible
+by users; whether or not this is secure depends on how these files are
+authenticated (organizations that already have trusted methods for doing
+this can do this easily).
+Of course, if you're not worried about insider threats, this
+doesn't matter; just send out the key in any convenient way.
+Organizations who are worried that the common DNS root server isn't
+secure enough could pre-load public keys for those they work with, either
+at the clients' level or via their DNS servers.
+Also, organizations could deploy a number of detectors to retrieve
+or observe various keys as they're returned and make sure that what they get
+have the ``expected'' values.
+<p>
+One approach might be to set root public keys into operating systems with
+a time limit, and use them if no local DNS public key is set.
+This would allow the programs to ``just work'' for a while,
+until either an operating system update or a local DNS public key is set.
+Perhaps countries don't trust any single root public key; another
+approach would be to pre-load the public keys for each top-level domain.
+Again, the advantage would be that it ``just works,'' with the
+disadvantage of not noticing when the public key is changed.
+Again, the IETF should set guidelines for practical use.
+<p>
+Doing this is obviously not a trivial job.
+But every organization only has to place public keys on their public
+LDAP server only once for each person for it to begin working.
+The public keys for each person do not usually need to change often, so
+maintenance should not be that severe for most organizations.
+
+<h1>Comparison to Traditional PKI Approaches</h1>
+
+<p>
+If you're familiar with security terminology,
+this approach is basically a Public Key Infrastructure (PKI), using the
+DNS root as the PKI root.
+Indeed, this approach can be used as a general-purpose PKI,
+with all the uses of a PKI.
+I haven't described it that way here, because for many people the
+major problem they want to solve is getting certificates for email,
+and not a general PKI solution.
+
+<p>
+I think it's reasonable to use the DNS root as the PKI root;
+Internet users have to trust DNS anyway, so
+they're not trusting any new organization.
+And you only have to trust the common DNS server, e.g., those in
+the ``.gov'' domain only need to trust (at most) the ``.gov'' servers
+when talking with someone else in the ``.gov'' domain.
+Compromise of the DNS root's private key would be terrible,
+but not quite as bad as some other schemes.
+Just having the private key doesn't allow arbitrary decryption of
+messages traversing the Internet (without additional effort).
+It <i>would</i> allow spoofing of any other system, and through
+such spoofing an attacker could create a man-in-the-middle attack
+(decrypting what they want to decrypt or forging messages), but this is an
+active attack that might be detected by comparing keys with
+``correct'' values found through other channels.
+
+<p>
+Knowledgeable people may ask ``where's the Certificate Revocation List
+(CRL)?'', that is, a list of certificates that used to be valid but
+aren't any more.
+Well, a CRL could be added to this approach, but for a vast number
+of uses it won't be needed if the chain of keys is re-acquired often enough.
+DNS records already time out, and short timeouts periods are often used
+instead of CRLs because of the knotty problems involved with CRLs.
+No doubt this will be one of the issues the IETF will need to wrestle with.
+More importantly, domains are handled differently than individuals,
+making it easier to handle the case where an individual's certificates
+need to be revoked.
+
+<p>
+In this approach, each DNS server becomes the Certificate Authority (CA)
+for information relating to its zone, and only its zone.
+Since you already have to trust DNS servers anyway, this makes sense.
+
+<p>
+There are many others who have been working for years on deploying
+more traditional PKI approaches.
+Indeed, there is an
+<a href="http://www.ietf.org/html.charters/pkix-charter.html">
+IETF Public-Key Infrastructure (PKIX) working group</a>.
+And if you're interested in how PKI systems have been set up, you might
+look at
+<a href="http://csrc.ncsl.nist.gov/pki">NIST PKI program</a>
+and
+<a href="http://iase.disa.mil/pki/index.html">DISA's PKI program</a>.
+<a href="http://ospkibook.sourceforge.net">The Open Source PKI book</a>
+describes some of this work, including standards and open source
+implementations (such as <a href=" http://www.openca.org">OpenCA</a>).
+Web browsers already implement a limited form of traditional PKI approaches;
+today's web browsers include a set of public keys for Certificate
+Authorities (CAs) that they trust by default.
+Of course, their trust in these CAs is nearly absolute, and the true
+``root'' for the PKI is really the web browser vendor (who sets these values
+in the browser).
+
+<p>
+The approach outlined in this paper owes many of its components to
+these traditional PKI approaches, including the work that led to LDAP
+and the certificate formats that must be used to exchange public keys.
+However, the additional complexities of setting up separate specialized
+certificate authorities (CAs) for these PKI approaches
+and then setting up trust
+relationships between them have been problematic for many organizations,
+which is one reason they haven't been as widely deployed.
+Although it's not fundamental to traditional PKIs, many traditional
+PKI approaches designate some trusted third party as the absolute authority
+for keys that two sides must trust; the problem is often finding that
+third party.
+Newer PKI approaches then develop ``bridges'' which can resolve the
+problem but are more complex to understand and deploy.
+
+<p>
+The approach outlined here has a much simpler trust arrangement.
+Each organization trusts itself for its own public keys, it
+trusts the other organization to provide their public keys,
+and it trusts the DNS infrastructure to provide keys to validate
+the path between the two organizations.
+If the two organizations don't want to trust the DNS infrastructure,
+they can exchange keys directly through some other means, and user
+tools could transparently use those keys instead.
+And the two organizations only need to trust the part of the DNS
+infrastructure that they share in common; a ".gov" address talking
+to another ".gov" address doesn't necessarily need to trust
+the DNS root at all.
+
+<p>
+The approach outlined here also has some nice side-effects.
+For example, once you can use DNS security to create a validatable
+path through the Internet, you can use email addresses or
+URIs (including URLs) to identify where to get
+the current value of a public key.
+These public keys could be used for all sorts of purposes, e.g., for
+authentication (like a password), authorization, and so on.
+For example, instead of a hashed password, a system could store
+the URL for that user's public key; when the user tries to log in, the
+system could trace down the keys to determine if it was valid.
+Note that there is already a URL scheme for LDAP, so if a user has
+many keys exported by LDAP, an LDAP URL could be used to identify which key
+was being used.
+There are similar schemes for HTTP and FTP, so you don't even have to
+run an LDAP server to do this.
+And obviously a system that started as a mailing list but then wanted
+to add other services would find this helpful, because simply having
+the email address would be enough to authenticate its user.
+
+<p>
+It is true that for some circumstances you still want a
+trusted third party to provide public keys to both parties.
+The usual argument is that whoever holds the keys also has some
+power over the transaction.
+But in the approach described in this paper,
+keys are symmetrically stored at the respective publisher's sites,
+and the keys tracing between them <i>are</i> held by
+trusted third parties (namely, the DNS infrastructure).
+This approach doesn't counter some problems, for example,
+Alice could sign an email, let Bob validate the signature,
+then later claim ``someone stole my key''
+and have her organization remove the signing key.
+Bob can partially counter this by storing the chain of keys to show that
+at the time he authenticated the signature those keys were valid.
+However, this actually isn't a problem fully solved by third parties either;
+Alice could go to the third party and say ``someone stole my key'',
+and the trusted third party has relatively few options in this case anyway.
+
+
+<p>
+Perhaps traditional CAs would be
+used for higher-assurance situations, while the approach described
+in this article (using DNS security and LDAP) could be used as a
+``floor'' or ``default'' method for assurance.
+A really nice property of DNS and LDAP is that users <i>already</i>
+have to use these services in their email browsers, they will
+<i>have</i> to make changes to secure DNS in the future,
+and there's already a scaleable and global trust relationship
+embedded in DNS itself.
+My crystal ball is imperfect, of course;
+who knows, perhaps the traditional approach
+will win even for simple email transactions.
+My goal in this paper is to show that there's at least one way to go
+from our current circumstance to a world where most email can be
+easily protected, and if the actual result is different in detail,
+that's fine.
+
+<p>
+Another related system that has gotten a lot of press is
+Microsoft's ``Passport,'' which was designed to support single sign-on.
+Unfortunately, researchers have found a number of security
+problems and risks in Passport
+(e.g., see
+<a href="http://avirubin.com/passport.html">
+David P. Kormann and Aviel D. Rubin,
+Risks of the Passport Single Signon Protocol,
+Computer Networks, Elsevier Science Press, volume 33, pages 51-58, 2000</a>). 
+See also
+<a href="http://www.go-mono.com/passport.html">
+Miguel de Icaza's comments on Passport</a>.
+Passport, at least as originally defined, has a lot of problems.
+For example, it creates a single point of failure,
+it requires total trust in a single external company (Microsoft)
+for confidential information, and that total trust isn't really warranted
+(Microsoft has been broken into in the past).
+I think a DNSSec-based approach makes far more sense; it distributes
+information out to the organizations who can control those parts, and
+uses DNSSec simply as a way to create trusted paths from one organization
+to another.
+
+<p>
+In 2011 some people started to become interested in
+<a href="http://code.google.com/p/webfinger/">Webfinger</a>.
+Webfinger is simply a re-implementation of the old "finger" protocol
+(to allow queries about people), but using HTTP instead.
+This can help implement the
+<a href="https://wiki.mozilla.org/Labs/Identity/VerifiedEmailProtocol">
+Verified Email Protocol</a>, which lets people log into web sites
+(and other sites) by proving that they control a particular email address.
+It turns out that webfinger would be a fine way to get user keys,
+in the same way that LDAP was discussed above.
+After all, all you need is a way to get individual user keys, given an
+email address, and webfinger does that just fine.
+That would be a somewhat different approach than described here
+(webfinger is typically secured by SSL, not DNSSEC), but the basic
+idea is the same: With only an email address, you should be able to
+get the keys necessary to encrypt and authenticate messages to and from
+that address.
+
+
+<h1>Wrap-up</h1>
+
+<p>
+All of these components don't exist in the field today, but they're
+plausible extensions of what &nbsp;<i>is</i> available today.
+Basically, DNS's security standard, DNSSEC, will be fixed so that
+people can use cryptography to verify that the DNS data they get is
+authoritative.
+Once that capability is available, some
+naming conventions should make it possible
+to get public keys for other services via DNS; these services
+could include HTTP (the world wide web) and LDAP.
+Then, given the LDAP public key, it should be possible to get and
+verify public keys for any given user (given their email address).
+All of this checking can be done completely automatically if tools are
+extended slightly and organizations perform a few relatively simple actions
+(once the standards are in place).
+There are alternative approaches to doing this, but this
+seems (to me) to be a very plausible wave of the future.
+
+<p>
+There are key advantages to this approach.
+First, this approach takes advantage of existing services already
+in place.
+Second, each step in the process provides some advantages all by itself.
+These two factors make it much easier to implement each step;
+other approaches often require a suite of changes before anyone sees
+a benenfit.
+Here, incremental changes will yield incremental benefits.
+
+<p>
+So, does this solve <i>all</i> security problems? Of course not.
+Clearly, attacks against the email browser aren't handled by this approach,
+and an attacker could prevent users from getting their email through
+various denial-of-service attacks.
+And there are all sorts of ways attackers could attack the infrastructure
+described here to cause serious problems.
+That's assuming you need to attack infrastructure at all; simply giving
+an address that <i>looks</i> valid (but isn't) might fool a human.
+Still, I believe the right way to measure these ideas is
+to answer these questions: ``Is this an
+improvement from the current situation?
+Do these approaches make it harder for attackers to exploit email than now?''
+I believe the answer to those questions is ``yes.''
+This approach has been called a ``lightweight'' approach to security; I agree
+with that description, but lightweight is far better than the none
+we have now.
+
+<p>
+This approach is actually somewhat resilient to attacks on the DNS and
+LDAP servers,
+because many of the keys and signatures can be generally created off-line.
+That is, the servers that provide data shouldn't have
+the most critical private keys available to them.
+Thus, an attacker who attacks a server could prevent that server
+from providing data, or provide bogus data, but users could
+determine that the data it was providing is bogus.
+The systems with the private keys should not be connected to
+the Internet at all; for example, they might communicate
+using only floppy disks, and thus they would be far more difficult to attack.
+Of course, if an attacker gets control of the off-line system that
+<i>does</i> have the private keys, they gain control
+over that portion of the network... but only of that portion, so there
+is still some limit to the damage.
+If that's not secure enough for you, by all means store locally any
+keys that you have more trust in, or use a different approach.
+But for most of us, this new approach would be a big improvement.
+
+<p>
+But should email be protected?
+I believe the answer is yes.
+Yes, it's true that terrorists and criminal organizations could use these
+capabilities to hide some of their messages.
+But they can encrypt their messages already, they have more incentive
+to hide them (so they're more likely to do so), and it's easier for them
+because each evildoer has fewer people they must contact.
+In contrast, many legitimate organizations and governments are currently
+exposed to extremely serious problems because it's too hard to effectively
+protect their email; and protecting them will in many ways
+<i>improve</i> protection of the world's assets.
+For those who are more interested in murder or money,
+there are other mechanisms (such as
+keyboard sniffers and electromagnetic emission detection systems)
+that with a court order can be used to gain access to their data.
+But I will assume that most traffic is legitimate, and I believe
+making email more secure will, on the balance, be an improvement for the world.
+Evildoers can currently exploit the open email of the rest of the
+world, reading and then severely interfering with legitimate organizations until
+the legitimate organizations are protected.
+
+<p>
+In short, IETF standards are finally converging to the point where,
+within the near future, we may all be able to automatically
+encrypt and authenticate our email, using just our email addresses, and
+have many other services protected as well.
+All of this could be put in place by extending the tools
+organizations already have.
+Given how important the Internet is, including email,
+it's about time we finally secured it.
+
+<p>
+After I wrote this essay, it appears that others have picked up
+on this idea.
+Maryline Maknavicius-Laurent's
+<a href="http://www-lor.int-evry.fr/~maknavic/CADDISC/Caddisc-eng.html">
+CADDISC project</a>, and its follow-on the
+<a href="http://www-lor.int-evry.fr/~maknavic/VERICERT/VeriCert-eng.html">
+VERICERT project</a>,
+use DNSSEC and LDAP together to provide a PKI.
+These projects appear to have worked to develop the specific conventions
+to implement the idea, as well as create a sample implementation.
+(Note: Most of their technical documents are in French.)
+<p>
+M. Laurent-Maknavicius has more recently (2007)
+described this approach in
+<a href="http://www-lor.int-evry.fr/%7Emaknavic/articles/mlaurent-ecumn07.pdf">
+" A PKI approach targeting the provision of a
+minimum security level within Internet"</a>
+(<a href="http://www-lor.int-evry.fr/%7Emaknavic/articles/Pres-mlaurent-ECUMN07-PKI.pdf">slides for PKI approach</a>),
+Fourth European Conference ECUMN 2007, Toulouse, February 2007.
+She cites this page as one her sources; thank you!
+<p>
+<a href="http://brad.livejournal.com/2357444.html">A similar approach
+using OpenID has also been proposed</a>, though it gives up on DNSSEC
+and just presumes no one will attack DNS.
+<p>
+<a href="http://searchsecurity.techtarget.com/news/interview/0,289202,sid14_gci1360143,00.html">
+Dan Kaminsky</a> gets it.
+"DNSSEC is interesting because it allows us to start addressing core
+problems we have on the Internet in a systematic and scalable way.
+The reality is: Trust is not selling across organizational boundaries.
+We have lots and lots systems that allow companies to authenticate
+their own people, manage and monitor their own people and interact
+with their own people. In a world where companies only deal with
+themselves, that's great. We don't live in that world and we haven't
+for many years.  ....  One of the fascinating elements of the Verizon
+Data Breach Investigations Report is that if there was a hack, 40% of
+the time it was an implementation flaw, and 60% of the time it was an
+authentication flaw -- something happened with authentication credentials
+and everything blew up. At the end day, why do we use passwords? It's
+the only authentication technology that we have that even remotely
+works across organizational boundaries, and the only thing that scales
+today. Our existing ways of doing trust across organizational boundaries
+don't work. Passwords are failures; certificates that were supposed
+to replace passwords are not working -- period, end of discussion.
+DNS has been doing cross-organizational address management for 25 years;
+it works great. DNS is the world's largest PKI without the 'K.'All
+DNSSEC does is add keys. It takes this system that scales wonderfully
+and has been a success for 25 years, and says our trust problems are
+cross-organizational, and takes best technology on the Internet for
+cross-organizational operations and gives it trust. And if we do this
+right, we'll see every single company with new products and services
+around the fact that there's one trusted root, and one trusted delegating
+proven system doing security across organizational boundaries.  It's 2009
+and we don't have secure email. When we get DNNSEC, we will be able to
+build secure email and secure technology up and down the stack and it
+will scale. How many people bought products that worked great in the
+lab for a few groups, and once they try to scale it out, oops it doesn't
+work and they have to shelve it. I'm tired of that happening, tired of
+systems engineered just enough to make the sale. I want to see systems
+scale larger than the customers they're sold to. That's the problem with
+everything being engineered to single-organization boundaries. We don't
+live in a single-organization universe; everything is potentially huge
+and boundaries are boring. The idealized corporation is dead. We need
+this one class of problem to go away.
+The nice thing is that we have one fight and that one fight is the root,
+the DNS root. It's a single fight. Once that single fight is won, it's
+over. I think there's enough people who said, 'Look if we had done DNSSEC
+thing, Kaminsky's bug would not have mattered.' They're right. They're
+not wrong.
+The groundwork is done for the root and very large top-level domains
+need to be signed. Once we get those signed, the market can take over
+and you're in a situation where a single action a company takes, and
+all of these products magically can work. You can say, 'As part of
+deploying this project, deploy DNSSEC on your name servers.' It's a
+requirement, a one-time thing, and the work amortizes across 100 other
+projects. That's the thing security hasn't really taken into account;
+there's not an infinite budget either in time or straight dollars for
+security. People will deploy insecure solutions if it's too expensive
+to deploy what is theoretically correct.
+DNSSEC has no insignificant costs, but costs can amortize across
+products that will be policy, compliance and revenue sensitive for the
+organization. We can have the number of authentication bugs out there,
+we can eliminate 30% of the hacks Verizon saw. That's huge. There's ROI
+right there. Right now, we don't have scalable ways to make authentication
+work cross-organizationally, therefore it costs money. If we fix this
+problem, money is saved. It's called a business model, it's a good thing."
+
+<p>
+If you wish, you can see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+
+</body>
+</html>
+
+<!--
+http://seifried.org/security/cryptography/20011108-sslssh-followup.html
+"The End of SSL and SSH? Follow-up."
+by Kurt Seifried, kurt@seifried.org
+
+NL Netlabs' DNSSEC work:
+http://www.nlnetlabs.nl/dnssec/index.en.html
+
+Long list of interesting PKI hypertext links is at:
+ http://mujweb.atlas.cz/veda/gcucmp/zdroje/zdrojee.html
+
+The DNS Today Are we Overloading the Saddlebags on an Old Horse?
+http://www.psg.com/~randy/001213.ietf-dns/
+ Randy Bush 
+
+IETF RFC's specific to security are listed in:
+ http://www.robohoo.com/seclist.html
+
+http://www.gnupg.org/">GnuPG</a>
+
+Thanks to Dan Massey for some useful technical clarifications about DNSSEC.
+Thanks to Clyde Roby for editorial help.
+
+-->
+

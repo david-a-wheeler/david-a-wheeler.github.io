@@ -1,0 +1,80 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Making First-Order Logic Useful</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Making first-order logic (predicate calculus) useful for the 'real world'">
+<meta name="keywords" content="first order, logic, predicate calculus, prover9, David, Wheeler, David A. Wheeler, David Wheeler">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Making First-Order Logic Useful</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">November 30, 2005</h2>
+
+<p>
+In general, make the input language as "nice" as you can, while staying
+within limits of prover algorithm.
+
+
+
+Build in equality (x=x.).  Crazy not to.
+(Otter didn't.  prover9, thankfully, does).
+
+Traditional Infix notation. Infix +,-,*,/, comparisons,
+with standard precedence.  Prefix - (negate) at least.
+(prover9 builds in +, *, etc., but has the wrong precedence.)
+
+if-then-else, returning a term.  ite().
+
+if-then-else, all boolean. if().
+(originally I had the roles of ite/if reversed, but the SMT-LIB spec
+does it this way, and I thought it'd be best to be consistent with that).
+
+exists exactly 1 (exists! or exists1).
+
+exists between X and Y...
+
+NOTICE when constant integers equal/not equal.
+Required by TPTP syntax version 3:
+http://www.cs.miami.edu/~tptp/TPTP/SyntaxBNF.html
+Easy; just require that
+any term beginning with a digit MUST be a number.
+For integers, just say what starts with a 0 MUST be 0, and 1-9
+begin a sequence of 1+ digits.  If all base 10, can simply examine first
+character of term to see if a constant integer, and compare as two
+strings to see if equal.
+(Doesn't support bases, decimals, fractions, etc.; could add but more
+complex.)
+MUST be in engine!
+
+Add: notice when pair of constant non-fraction
+integers relate in expected binary-operation ways, and replace with
+calculated constant.
+So: 1+1 is 2.
+Use +,-,*,&lt;, &lt;=, &gt;, &gt;=.
+(= and != covered above).
+Bonus points: inc. negative numbers, division.
+(Note: Can add axioms for relations when necessary,
+like "for all x, x+1 &gt; x", but you can't really add handling these
+functions that way in the general case.)
+
+Macros/Definitions
+(see D-logic).
+
+
+<p>
+<hr>
+<p>
+
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+<p>
+
+</body>
+</html>
+

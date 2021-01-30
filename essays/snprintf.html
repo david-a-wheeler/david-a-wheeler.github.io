@@ -1,0 +1,313 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>???</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="???">
+<meta name="keywords" content="???">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">???</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2011-??-??</h2>
+
+
+<p>
+<hr>
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2011 David A. Wheeler.
+
+</body>
+</html>
+
+
+
+
+<!--
+
+From dalias@aerifal.cx Wed Sep 03 01:32:38 2014
+Return-path: <dalias@aerifal.cx>
+Received: from [10.9.9.207] (helo=mailfront03.runbox.com)
+	by takara.runbox.com with esmtp  (Exim 4.69)
+	id 1XOxZ0-0004dJ-TG
+	for dwheeler@runbox.com; Wed, 03 Sep 2014 01:32:38 +0200
+Received: from exim by mailfront03.runbox.com with sa-scanned  (Exim 4.76)
+	id 1XOxZ4-0005OM-Bf
+	for dwheeler@runbox.com; Wed, 03 Sep 2014 01:32:43 +0200
+X-Spam-Checker-Version: SpamAssassin 3.3.1 (2010-03-16) on kvik.runbox.com
+X-Spam-Level: 
+X-Spam-Status: No, score=-98.0 required=4.0 tests=RDNS_DYNAMIC,TVD_RCVD_IP,
+	USER_IN_WHITELIST autolearn=disabled version=3.3.1
+Received: from 216-12-86-13.cv.mvl.ntelos.net ([216.12.86.13] helo=brightrain.aerifal.cx)
+	by mailfront03.runbox.com with esmtp  (Exim 4.76)
+	id 1XOxYu-0005Io-9t
+	for dwheeler@dwheeler.com; Wed, 03 Sep 2014 01:32:34 +0200
+Received: from dalias by brightrain.aerifal.cx with local (Exim 3.15 #2)
+	id 1XOxYs-0008Ps-00
+	for dwheeler@dwheeler.com; Tue, 02 Sep 2014 23:32:30 +0000
+Date: Tue, 2 Sep 2014 19:32:30 -0400
+From: dalias <dalias@libc.org>
+To: "David A. Wheeler" <dwheeler@dwheeler.com>
+Subject: Re: Using snprintf to counter buffer overflows
+Message-ID: <20140902233230.GL12888@brightrain.aerifal.cx>
+References: <E1XOWYT-0001Do-LU@rmm6prod02.runbox.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <E1XOWYT-0001Do-LU@rmm6prod02.runbox.com>
+User-Agent: Mutt/1.5.21 (2010-09-15)
+Sender: Rich Felker <dalias@aerifal.cx>
+
+On Mon, Sep 01, 2014 at 02:42:17PM -0400, David A. Wheeler wrote:
+> I'm trying to write up the "best idiom available with snprintf" for
+> fixed-size buffers, with rationale... and including the useful spec
+> pointers you provided (thanks!).
+
+Sorry for taking a while to get back to you. I didn't have time to
+think about the issue right away, and it _IS_ a hard issue, as you'll
+see below I think...
+
+> VERSION 1.
+> Since snprintf returns an int, which is the length of what WOULD
+> have been written or negative on error, the obvious solution is:
+> len = snprintf(buf, sizeof buf, "%s", src);
+> if (len < 0 || len >= sizeof addrbuf) ... // Truncation or error
+
+This is completely valid, but requires that the caller have a temp
+variable "len" with the right type, int. It's error-prone because
+programmers who do not understand the subtleties of types could fail
+to realize that the type is important and use something wrong:
+
+- size_t, which, if smaller than int, could map a negative value to
+  something smaller than sizeof buf.
+
+- unsigned int, which, if it has the same range as the positive values
+  of signed int, could also map a negative value to something smaller
+  than sizeof buf.
+
+These issues are extremely unlikely to arise in the real world because
+they require pathological type definitions, but in some ways that's
+worse because the "bug" (only a bug if you care about crazy systems)
+is more subtle and undetected.
+
+> This should catch all errors. In particular, the case where the
+> length of "src" is aburdly long (e.g., longer than INT_MAX) seems to
+> be covered. That's because the C 2011 specification (INCITS/ISO/IEC
+> 9899-2011[2012]) section 7.21.6.5 (The snprintf function) says that,
+> "The snprintf function returns the number of characters that would
+> have been written had n been sufficiently large, not counting the
+> terminating null character, or a negative value if an encoding error
+> occurred. Thus, the null-terminated output has been completely
+> written if and only if the returned value is nonnegative and less
+> than n." The POSIX 2013 spec (Base Specifications, Issue 7, 2013
+> Edition) section fprintf (dprintf, fprintf, printf, snprintf,
+> sprintf) starting page 900 is even clearer, because it specifically
+> adds that it must return an error "EOVERFLOW" if "The value to be
+> returned is greater than {INT_MAX}." - so any POSIX-compliant system
+> MUST CLEARLY return an error (a negative value).
+
+I agree with your interpretation for what happens when src is
+"absurdly long" -- both standards require this case to be an error. C
+is not explicit about it though; it's hidden in the text you quoted.
+
+> VERSION 1A.
+> If you want to limit the number of character read in, and the max
+> length to be read (usually the destination buffer length or less) <=
+> INT_MAX, change:
+> len = snprintf(buf, sizeof buf, "%s", src);
+> into:
+> len = snprintf(buf, sizeof buf, "%.*s", (int) sizeof buf, src);
+> 
+> The "int" cast is necessary since there's no guarantee that type
+> "size_t" (sizeof's result type) and "int" are the same. As long as
+> the destination buffer's length isn't longer than INT_MAX there is
+> no issue.
+
+Yes, this is correct.
+
+> VERSION 2. Let's tweak version 1 to create a shorter version (esp.
+> if we just want to detect if an error occurred). This becomes:
+>   if ((unsigned) snprintf(buf, sizeof buf, "%s", src) >= sizeof buf)  // Truncation or error
+> 
+> This conversion to unsigned int before checking should always work.
+> If the source length >= INT_MAX it should return an error (a
+> negative int). Converting any negative int to unsigned int produces
+> a value >= INT_MAX on a two's complement (or one's complement)
+> machine.
+
+This assumes UINT_MAX > INT_MAX. While I agree this is a reasonable
+assumption on sane systems, it's not guaranteed by the language, and
+it could be false on weird DSP implementations where signed and
+unsigned int are both implemented on top of an underlying floating
+point type.
+
+As long as INT_MAX is strictly less than the max value for the
+destination type, the conversion to the destination type is
+one-to-one, i.e. negative int values have to convert to values
+distinct from any non-negative int.
+
+My solution of using uintmax_t "avoids the problem" simply by the fact
+that UINTMAX_MAX >= 2^64-1, a number which you "cannot count to". But
+it's not a problem you can really fix unless you're willing to assume
+one-to-one mappings into an unsigned type exist.
+
+> VERSION 2A.
+> Similarly, to limit read length and detect trunction or errors:
+>   if ((unsigned) snprintf(buf, sizeof buf, "%.*s", (int) sizeof buf, src) >= sizeof buf) 
+>     // Truncation or error
+> 
+> 
+> Is this correct? If not, what am I missing?
+
+The same issues apply as for version 2.
+
+So I'm not really sure what to tell you for "best practices". I'm
+perfectly happy with the ">=sizeof..." approach I use on the types of
+systems I program for, since it's completely unreasonable for size_t
+to be smaller than int on them. But I can see how it's very confusing
+to people not used to unsigned conversion rules. The uintmax_t
+approach seems "safe anywhere real" but it requires an extra header.
+
+An alternative approach that's fully safe, but which I don't like
+because it requires "boilerplate code", is wrapping the call with a
+function which converts return values:
+
+if (remap(snprintf(buf, sizeof buf, ...)) >= sizeof buf) ...
+
+where remap is:
+
+static size_t remap(int x)
+{
+	if (x<0 || x>SIZE_MAX) return SIZE_MAX;
+	else return x;
+}
+
+But this kind of thing still might be preferable to requiring the
+caller to make an object with the correct type (int) as in your
+version 1.
+
+I'll keep thinking and see if I come up with any better ideas for what
+to recommend. Let me know if you have others you'd like me to review.
+
+Rich
+
+
+
+
+
+
+
+
+Time: 	Mon, 01 Sep 2014 14:42:17 -0400 (EDT)   	 
+  	From: 	"David A. Wheeler" <dwheeler@dwheeler.com> [Add to Contacts] 	  [Whitelist sender] [Block sender] [Block domain] 	 
+  	To: 	"dalias" <dalias@libc.org>  	 
+  	Subject: 	Using snprintf to counter buffer overflows   	 
+  	Tags 	
+  	I'm trying to write up the "best idiom available with snprintf" for fixed-size buffers, with rationale... and including the useful spec pointers you provided (thanks!).
+
+Could you please tell me if I'm correct or not? Here I'll assume that we have some automatically-allocated buffer, e.g., "char buf[100];", and if necessary, an int named "len". I'll use "sizeof buf" everywhere for the length of the destination; that would need replacing if buf is just a POINTER to a buffer.
+
+In particular, as I try to rigorously walk through the arguments, I don't see why a simple cast is a problem, why casting to uintmax_t is needed (why not just unsigned?). You noted that there are "no systems anyone is interested in where size_t has rank lower than int", but I'm starting to think that maybe that doesn't matter. I fear I'm missing something obvious; if you could point out the errors of my ways, I'd appreciate it!
+
+
+VERSION 1. Since snprintf returns an int, which is the length of what WOULD have been written or negative on error, the obvious solution is:
+len = snprintf(buf, sizeof buf, "%s", src);
+if (len < 0 || len >= sizeof addrbuf) ... // Truncation or error
+
+This should catch all errors. In particular, the case where the length of "src" is aburdly long (e.g., longer than INT_MAX) seems to be covered. That's because the C 2011 specification (INCITS/ISO/IEC 9899-2011[2012]) section 7.21.6.5 (The snprintf function) says that, "The snprintf function returns the number of characters that would have been written had n been sufficiently large, not counting the terminating null character, or a negative value if an encoding error occurred. Thus, the null-terminated output has been completely written if and only if the returned value is nonnegative and less than n." The POSIX 2013 spec (Base Specifications, Issue 7, 2013 Edition) section fprintf (dprintf, fprintf, printf, snprintf, sprintf) starting page 900 is even clearer, because it specifically adds that it must return an error "EOVERFLOW" if "The value to be returned is greater than {INT_MAX}." - so any POSIX-compliant system MUST CLEARLY return an error (a negative value).
+
+
+VERSION 1A.
+If you want to limit the number of character read in, and the max length to be read (usually the destination buffer length or less) <= INT_MAX, change:
+len = snprintf(buf, sizeof buf, "%s", src);
+into:
+len = snprintf(buf, sizeof buf, "%.*s", (int) sizeof buf, src);
+
+The "int" cast is necessary since there's no guarantee that type "size_t" (sizeof's result type) and "int" are the same. As long as the destination buffer's length isn't longer than INT_MAX there is no issue.
+
+
+VERSION 2. Let's tweak version 1 to create a shorter version (esp. if we just want to detect if an error occurred). This becomes:
+if ((unsigned) snprintf(buf, sizeof buf, "%s", src) >= sizeof buf) // Truncation or error
+
+This conversion to unsigned int before checking should always work. If the source length >= INT_MAX it should return an error (a negative int). Converting any negative int to unsigned int produces a value >= INT_MAX on a two's complement (or one's complement) machine.
+
+
+VERSION 2A.
+Similarly, to limit read length and detect trunction or errors:
+if ((unsigned) snprintf(buf, sizeof buf, "%.*s", (int) sizeof buf, src) >= sizeof buf)
+// Truncation or error
+
+
+Is this correct? If not, what am I missing?
+
+Thanks!
+
+--- David A. Wheeler
+
+
+
+
+
+avid A. Wheeler wrote:
+
+    I'd like to convince you to think about *risk*.
+
+I had already thought about it. There's no evidence that using strlcpy
+reduces risk significantly, compared to spending an equivalent amount of
+effort using standard alternatives. If anything, the little evidence
+we've seen indicates the contrary.
+
+Most of your email was about *style*, not about *risk*. Style arguments
+are a recipe for endless dispute, which I'd rather avoid; so I'll let
+you have the last word on style preferences. Going onto the technical
+points:
+
+>>> addrmatch.c:321:
+    The spec says snprintf can return <0, which this code fails to handle.
+
+In general snprintf can return <0, but this call won't. And even if it
+did, it wouldn't be a problem in practice, as Rich Felker mentioned.
+
+>>> auth.c:486:
+>>> strlcpy(buf, cp, sizeof(buf));
+>>> ... So.. do you really believe that MAXPATHLEN really is the max length?
+>>
+
+>> ... this use of strlcpy has undefined behavior ...
+
+    I don't think so. strlcpy is required to copy the source left-to-right
+
+The OpenBSD man page for strlcpy disagrees with you; see
+<http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man3/strlcpy.3>,
+which says "If the src and dst strings overlap, the behavior is
+undefined." If strlcpy were standardized no doubt the same language
+would apply, as it's de rigueur for the string functions.
+
+For the other three calls to strlcpy, you raised only style-based
+objections.
+
+So, on a technical basis we have the same results as before: of the five
+strlcpy calls you brought up, one call can have undefined behavior, one
+call does silent truncation, and the other three do not fix any bugs
+compared to using standard routines.
+
+To be honest, I was surprised by these results: I didn't think strlcpy
+would be this strikingly bad.
+
+
+
+

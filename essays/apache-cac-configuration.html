@@ -1,0 +1,627 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Configuring Apache for Client Certificates (such as DoD CAC cards) on Red Hat Linux/CentOS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Explain how to configure the Apache web server to accept client certificates, such as DoD CAC cards or ECA certificates, OR username/password, on Red Hat Linux/CentOS">
+<meta name="keywords" content="DoD, CAC card, ECA, Apache, RHEL, Red Hat Linux, CentOS, certificates, SSL, authentication, authorization, web server, web browser, certificate authority, CRL, username, password, virtualhost, virtualhosts, virtual host, server name indication, spoofing">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Configuring Apache for Client Certificates (such as DoD CAC cards) on Red Hat Linux/CentOS</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2012-06-26</h2>
+
+<p>
+Here is how to configure the Apache web server on
+Red Hat Enterprise Linux (RHEL)/CentOS so that it
+will accept <i>either</i> client-side certicates
+(particularly U.S. DoD CAC cards) <i>or</i> username/passwords.
+This is simply a combination of material available elsewhere, in
+a convenient form.
+This focuses on U.S. DoD CAC cards, but most of this material
+is the same for any client-side certificate.
+With some variation it would apply to many similar circumstances.
+The latest versions of the encryption protocol SSL is actually named TLS, but
+I'll call it SSL here.
+<p>
+NOTE: This page does <i>not</i> discuss how to configure a client
+(such as a web browser or email client) to use client certificates.
+Other pages go through the details; a key is that you need to configure them
+to load
+<a href="http://dodpki.c3pki.chamb.disa.mil/rootca.html">
+the DoD root certificates</a>.
+<p>
+First, you need to set up the Certificate Authority (CA) certificates
+so that Apache can validate that client certificates
+(such as CAC cards) are signed by the proper authorities.
+Then, you need to configure the web pages so that they require the
+right kind of authentication, in this case, to accept either client side
+certificates (CAC cards) <i>or</i> username/password.
+<p>
+But first, if you use VirtualHosts (multiple web sites on a single system),
+you should be aware of important SSL-related issues.
+<p>
+<h1>VirtualHosts and SSL</h1>
+<p>
+A single Apache server can serve many virtual hosts, using its
+VirtualHost block directive.
+If you are using virtual hosts, read this section first, because there
+are important issues involving VirtualHosts and SSL.
+<p>
+If you use SSL, in practice you need to
+have a separate IP address for each virtual host that uses SSL.
+The Apache 2.2 documents baldly say that
+<a href="http://httpd.apache.org/docs/2.2/vhosts/name-based.html">
+"name-based virtual hosting cannot be used with SSL secure servers
+because of the nature of the SSL protocol."</a>
+The problem is the original SSL (TLS) specification itself; when using SSL,
+Apache must quickly switch to using SSL <i>before</i> it finds out
+the name of the webserver, but it needs to know what certificate to use
+before it can switch to SSL.
+<p>
+There is relief on the way.
+The
+<a href="http://www.ietf.org/rfc/rfc3546.txt">IETF RFC 3546</a>
+specification section 3.1 adds the "Server Name Indication (SNI)" extension
+to the TLS security protocol, and this extension makes it
+possible to configure named-based virtual hosts.
+Problem is, <i>both</i> the web server <i>and</i> every
+web client that uses that web server must support SNI for this to work.
+The web server side isn't so bad;
+<a href="http://blogs.techrepublic.com.com/opensource/?p=987">
+Apache version 2.2.12</a> and later include built-in support for SNI
+(you also have to use OpenSSL 0.9.8f or later, and have support for it
+compiled into Apache).
+For older versions of Apache (e.g., the one in RHEL5), you can instead use
+the Apache module mod_gnutls
+(<a href="http://www.g-loaded.eu/2007/08/10/ssl-enabled-name-based-apache-virtual-hosts-with-mod_gnutls/">here's a discussion on mod_gnutls and why you
+might use it</a>).
+<p>
+Many web browsers support SNI, but not all, and that is the real problem.
+<a href="http://blogs.techrepublic.com.com/opensource/?p=987">
+Web browsers that support SNI</a> include
+Firefox 2.0 or later, Opera 8.0 or later,
+Internet Explorer 7.0 or later (unfortunately, only on Vista),
+Google Chrome, and Safari 3.2.1 (unfortunately only on OS X 10.5.6 or later).
+But note that this does not include many browsers still in use.
+What's worse,
+users will not understand why they can't access the server.
+Server Name Indication (SNI) is a great improvement, but I suggest
+not depending on it for now.
+Techrepublic says that
+"In practical terms, this means that for a serious e-commerce Web
+site or one that needs to have broad appeal,
+this solution won’t work &mdash; yet."
+<p>
+So presuming that you have a different IP address for every
+web address that uses SSL, how can you avoid repeating information?
+You don't want to have to repeat all the configurations in each case,
+so use "include" files to avoid repeating yourself.
+E.G., do something like this, so that MY_HOSTNAME.conf has all the
+common configuration stuff that would be true for users using either
+http (port 80) or https (port 443):
+<pre>
+&lt;VirtualHost MY_IP_ADDRESS:80&gt;
+    Include conf/MY_HOSTNAME.conf
+&lt;/VirtualHost&gt;
+&lt;VirtualHost MY_IP_ADDRESS:443&gt;
+    Include conf/MY_HOSTNAME.conf
+    Include conf/ssl-common.conf
+    SSLCertificateFile    [Filename for server certificate]
+    SSLCertificateKeyFile [Filename for server certificate private key]
+    SSLCertificateChainFile /etc/pki/tls/certs/verisign-intermediate.crt
+    SSLCARevocationFile /etc/pki/tls/certs/CRL-bundle.crl
+    ... and other SSL-specific commands, if any.
+&lt;/VirtualHost&gt;
+</pre>
+<p>
+The sections below will talk more about how to set up some of this,
+especially the CRL-bundle.
+
+<p>
+<h1>Setting up certificates</h1>
+<p>
+First, some absolutely necessary terminology.
+Server certificates authenticate the server to the client.
+Client certificates authenticate the client to the server.
+Both server and client certificates can be signed by third parties,
+which also have certificates;
+a third party that signs certificates is a Certificate Authority (CA).
+In practice, there is often a chain of CA certificates.
+In most cases you want both server certificates and client certificates
+signed by at least one CA.
+There's no requirement that server certificates and client certificates
+be signed by the same CA, in fact, they are often different.
+
+<p>
+<h2>Loading Certificate Authority (CA) certificates into Apache</h2>
+<p>
+There are various instructions for configuring Apache web servers so you can
+use U.S. Department of Defense (DoD) CAC cards, and these
+will tell you how to get the DoD certificate authority (CA) certificates
+(you need this information so that you can determine if client certificates
+were actually signed by a DoD CA).
+<a href="http://techmiso.com/1856/howto-configure-apache-for-ssl-with-dod-cac-authentication-on-ubuntu-904/">
+Here is documentation for Ubuntu</a>, but it doesn't directly apply to CentOS.
+<a href="https://software.forge.mil/sf/projects/community_cac">
+Forge.mil's info on CAC cards</a>, including
+<a href="https://software.forge.mil/sf/wiki/do/viewPage/projects.community_cac/wiki/CACEnableApacheViaSSL">CAC enabling Apache</a>,
+also has some useful info.
+
+
+<p>
+<a href="http://www.eperezdesigns.com/tag/cac/">
+Red Hat Enterprise Linux (RHEL)/CentOS instructions</a> are
+available, and are close, but as of 2011-01-19 they are a little old.
+To use them, you need to make many changes
+(change "/etc/ssl/certs" to "/etc/pki/tls/certs" (its current name),
+note that private keys are stored in "/etc/pki/tls/private/" instead,
+beware that the "greater than" symbol is corrupted in the directions,
+and add support for the new dodeca2.cac certificate).
+<p>
+An updated sequence (based on that page) for loading the
+<a href="http://dodpki.c3pki.chamb.disa.mil/rootca.html">
+DoD root Certificate Authority (CA) certificates</a> is:
+<pre>
+TDIR=~/CAC
+rm -fr "$TDIR" ; mkdir "$TDIR" ; cd "$TDIR"
+# Get certificates files, one at a time, from: https://crl.gds.disa.mil/
+# wget http://dodpki.c3pki.chamb.disa.mil/rel3_dodroot_1024.p7b
+# wget http://dodpki.c3pki.chamb.disa.mil/rel3_dodroot_2048.p7b
+# wget http://dodpki.c3pki.chamb.disa.mil/dodeca.p7b
+# wget http://dodpki.c3pki.chamb.disa.mil/dodeca2.p7b
+# Handle p7b format
+for f in *.p7b ; do # Convert .p7b to PEM:
+  openssl pkcs7 -inform DER -outform PEM -in $f -out ${f%.p7b}.pem -print_certs
+done
+# Handle .cer format
+for f in *.cer ; do
+ openssl x509 -inform DER -outform PEM -in "$f" -out "${f%.cer}.pem"
+done
+rm -f dod-root-certs.pem
+# Old way:
+# cat rel3_dodroot_1024.pem rel3_dodroot_2048.pem \
+#    dodeca.pem dodeca2.pem &gt; dod-root-certs.pem
+# /bin/cp -p -f *.pem /etc/pki/tls/certs/
+cat *.pem &gt; dod-roots
+mv dod-roots /etc/pki/tls/certs/dod-root-certs.pem
+</pre>
+
+<p>
+The "wget" commands above always work, but because they use
+unsecured http:, they risk a man-in-the-middle replacing them.
+Thus, you need to verify these files
+(or get them from another more trustworthy source).
+One way is to compare these certificates from a source you can trust.
+Another is to use the
+<a href="https://crl.gds.disa.mil/">DoD PKI Management site</a>.
+If you have a CAC card you can go to the 
+<a href="https://id-sw.c3pki.chamb.disa.mil/ca/">
+DoD PKI Certificate Manager</a>, select Retrieval, and then use
+"Import CA Certificate Chain" to get them.
+You can even use multiple methods to verify them.
+
+<!--
+
+<p>
+<h2>Do you Need intermediate certificates?</h2>
+<p>
+In most cases, the above just works.
+However, I've had a few cases where it doesn't, and to be honest,
+I'm still tracking down the problem.
+Some have told me that the problem is that some CAC cards are misconfigured,
+and as a result, the server needs to be configured with
+a lot of intermediate certificates.
+If that's true, that's awful!
+
+<p>
+I welcome suggestions on how to track down the problem,
+or how to fix it.
+For now, here are some notes that MIGHT help.
+
+<p>
+If the problem is that you need to load intermediate certificates,
+I'm guessing that the following might work.
+You could go to the
+<a href="https://crl.disa.mil/">DoD PKI Management DISA site</a>
+to get the certificates.
+They don't have an easy way to download all the intermediate certificates,
+which is extremely annoying
+(You can load them each, one by one, using the GUI; ugh.)
+The certificates do all have the form
+"https://crl.disa.mil/getsign?DOD+CA-20" (where DOD+CA-20 varies)
+but it turns out to not be so simple to get the files.
+This will leave you with a bunch of normal X.509 binary certs
+(you can
+see their contexts with:
+<tt>openssl x509 -text -noout -inform DER -in FILENAME.cer</tt>).
+
+<p>
+I presume that this kind of approach would then work, which basically
+loads all these intermediate certs into the same space:
+<pre>
+for f in *.cer ; do # Convert to PEM:
+  openssl x509 -inform DER -outform PEM -in "$f" -out "${f%.cer}.pem"
+done
+rm -f dod-other-certs.pem
+cat *.pem &gt; dod-other-certs.pem.new
+mv dod-other-certs.pem.new dod-other-certs.pem
+/bin/cp -p -f *.pem /etc/pki/tls/certs/
+</pre>
+
+-->
+
+
+<p>
+<h2>Getting the CA Revocation List</h2>
+<p>
+You should also get the CA revocation list (CRL); this is a list of
+certificates that a CA has signed but are no longer valid.
+You need to update this (which will repeat some steps).
+
+For the DoD, the
+<a href="https://crl.gds.disa.mil/">DoD PKI Management site</a>
+has a CRL you can get.
+Let's say you get "ALLCRLZIP.zip" (which zips up a bunch of .crl files)
+and put it in the same $TDIR directory
+(you can
+<a href="https://crl.disa.mil/getcrlzip?ALL+CRL+ZIP">get the ALLCRLZIP.zip file directly</a>).
+
+<p>
+Again, you need to convert them to PEM, put them into a bundle, and put
+the bundle in a useful place:
+
+<pre>
+unzip ALLCRLZIP.zip
+rm -f CRL-bundle.crl # Remove any pre-existing one.
+for f in *.crl ; do  # Convert to PEM format.
+  openssl crl -inform DER -outform PEM -in "$f" -out "${f%.crl}.pem_crl"
+done
+cat *.pem_crl &gt; CRL-bundle.crl
+mv CRL-bundle.crl /etc/pki/tls/certs/
+</pre>
+
+<p>
+Note: This will produce a big file as the bundle!
+Also, note that the option in openssl below is "crl"; if you
+incorrectly give "pkcs7" you'll get weird errors.
+
+<p>
+Modify the Apache configuration (under /etc/httpd/conf/)
+so that it will check against this file, by including this line
+in the relavant SSL-specific section:
+<pre>
+ SSLCARevocationFile /etc/pki/tls/certs/CRL-bundle.crl
+</pre>
+
+<p>
+Unfortunately, because this is such a large CRL bundle, this can slow
+starting the web server (it can take 5-10 seconds for it to load this file
+during web server startup).
+
+<!--
+If you verify individual users anyway, handling the CRL might be deemed
+less important.
+-->
+
+<p>
+<h2>Setting up the server certificate</h2>
+<p>
+<a href="http://www.eperezdesigns.com/tag/cac/">Eperezdesigns' CAC info</a>
+also shows how to create a certificate request, so that
+you could get your server certificate signed by the DoD
+certificate authority.
+If you're trying to get your server certificate signed by the DoD,
+it basically needs to be a DoD machine (.mil/.smil);
+there is a procedure that the DoD uses to ensure that you're
+a legitimate requestor.
+If you're not configuring such a machine, then don't bother,
+DoD will not sign server certificates of other machines (ones outside
+.mil or .smil).
+You can still use the setup above to confirm DoD CAC cards, though.
+To get your <i>server</i> certificate signed, simply
+use a standard commercial server certificate
+to prove to users that you are who you say you are (that works!).
+
+<p>
+To set up your server certificate, make one as described in the
+Apache documents and set up your configuration like this
+(again, in the SSL-specific section for the entire host):
+<pre>
+    # Server Certificate:
+    SSLCertificateFile /etc/pki/tls/certs/MYCERT.crt
+    #   Server Private Key - do NOT let anyone else see this:
+    SSLCertificateKeyFile /etc/pki/tls/private/MYCERT.key
+    #   Server Certificate Chain (file that contenates Certificate Authority
+    #   certificates), e.g. for Verisign:
+    SSLCertificateChainFile /etc/pki/tls/certs/verisign-intermediate.crt
+</pre>
+
+<p>
+If you're going to accept client-side certificates such as
+CAC cards, you should also configure Apache to log each client username
+(technically SSL_CLIENT_S_DN_CN) with each request.
+You can do this by modifying /etc/httpd/conf/ssl-common.conf
+(or some other configuration file) to record them, like this:
+<pre>
+CustomLog logs/ssl_request_log \
+ "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%{SSL_CLIENT_S_DN_CN}x\" \"%r\" %b"
+</pre>
+
+
+<p>
+<h1>Configure Apache so either client-side certificate or username/password works</h1>
+<p>
+Now configure Apache to authenticate with client-side certificates
+(such as CAC cards).
+The
+<a href="http://httpd.apache.org/docs/2.2/ssl/ssl_howto.html">
+Apache SSL Howto</a>
+has some nice examples.
+
+<p>
+Generally, you modify the Apache configuration file to identify
+areas that are to be private, like this:
+<pre>
+   &lt;Directory "/var/www/private"&gt;
+        AllowOverride None
+        Options None
+        AuthName "Restricted Access"
+        ... [commands that give the rules for access]
+    &lt;/Directory&gt;
+</pre>
+
+<p>
+Now, where should we put these commands?
+If you're using a virtual host as described above, you should probably
+put them in "conf/MY_HOSTNAME.conf" or equivalent.
+That way, the rules will apply regardless of whether they try to
+access it using SSL or not.
+
+<p>
+You now need to give the specific authentication and authorization rules,
+where the "..." are above.
+If you only need them once, just put the rules at the "..." place.
+However, if you need the same rules many times, create yet another file
+to be included.
+Then, for each "...", replace that with
+"Include conf/SEPARATE_FILENAME"
+That will eliminate repetition.
+
+<p>
+Here are rules that allow <i>either</i> username/password <i>or</i> specific
+CAC cards (if the users are listed):
+<pre>
+# Require either (1) Client certificates (e..g, CAC card) for *specific*
+# CAC card users, OR (2) Username/password.
+# NOTE: If a card user forgets to insert their card, they will
+# be presented with a username/password query instead.
+# If this happens, the user just needs to stick in the card and try again.
+# For more info, see http://httpd.apache.org/docs/2.2/ssl/ssl_howto.html
+
+# SSL is required, in part because it protects username/password,
+# but also because anything with these restrictions
+# probably shouldn't be visible to the Internet while in transit.
+SSLRequireSSL
+
+SSLVerifyClient      optional
+SSLVerifyDepth       5
+SSLCACertificateFile /etc/pki/tls/certs/dod-root-certs.pem
+
+SSLOptions           +FakeBasicAuth
+SSLRequire           %{SSL_CIPHER_USEKEYSIZE} &gt;= 128
+
+# Couple with HTTP Basic Authentication via FakeBasicAuth
+# so that only certain users are authorized:
+AuthType             Basic
+AuthBasicProvider    file
+AuthUserFile         /etc/httpd/userlist.txt
+Require              valid-user
+</pre>
+
+<p>
+<h1>Adding a user</h1>
+<p>
+You can add a regular username/password using the usual approach:
+<pre>
+ htpasswd -b /etc/httpd/userlist.txt USERNAME PASSWORD
+</pre>
+Be sure to replace USERNAME and PASSWORD as appropriate
+(don't use "password" or other easy passwords as the PASSWORD).
+
+<p>
+To add a CAC user, you can ask them to run a program to get their
+distinguished name (DN) aka CAC username as described in the document above.
+If you don't want to do that,
+an alternative approach is to have them first log into the system
+(this will fail, since they don't have an account).
+Then look at the logged attempt, e.g.,
+<pre>
+ tail -40 /var/log/httpd/ssl_request_log
+</pre>
+
+<p>
+Look for their distinguished name (DN) - which is basically
+their CAC username - and check that the username,
+time, and IP address are correct.
+Check to make sure no one is trying to spoof that username.
+
+<p>
+Once you know the DN, you can 
+Now add them to the list of users using:
+<pre>
+ htpasswd -b /etc/httpd/userlist.txt DN password
+</pre>
+Replace "DN" with the user's DN surrounded by double-quotes
+(you must enclose the DN with double-quotes because it embeds a space).
+The DN <i>must</i> begin with "/"; do <i>not</i> add a client certificate
+username if it does not begin with "/".
+Also, do NOT replace "password" with some special password; it must be
+the literal word "password".
+Thus, CAC card authentications will look like this:
+<pre>
+ htpasswd -b /etc/httpd/userlist.txt "/C=US/O=U.S. Government/OU=DoD/OU=PKI/OU=CONTRACTOR/CN=LASTNAME.FIRSTNAME.MIDDLENAME.NUMBER" password
+</pre>
+
+
+<p>
+<h1>Doesn't this enable spoofing?</h1>
+<p>
+You might think that this is insecure from a spoofing attack.
+After all, CAC card users all
+have the password set to the literal "password", we also allow
+username/password entry, and there's only one database of
+usernames with their passwords.
+At first it appears that someone could reuse a
+known client certificate name and the password "password", and get in.
+Client certificate names (as reported in %{SSL_CLIENT_S_DN_CN}) aren't
+secret, after all.
+<p>
+However, Apache username/password authentication implements a special
+check that makes this okay for security.
+When FakeBasicAuth is used,
+Apache will automatically reject
+the password "password" for a user-entered username/password entry
+if the certificate username (SSL_CLIENT_S_DN_CN)
+begins with "/" (as they do on CAC cards).
+This special check makes it possible to
+securely have both username/password and CAC card authentication, even
+when using a single simple username/password database... so while it
+feels a little hackish, there is a certain simplicity to it too.
+Jared Jennings showed in a MIL-OSS posting (on 1/18/2011 6:47PM)
+that this check is implemented in
+httpd-2.2.3-45.el5.src.rpm, httpd-2.2.3/modules/ssl/ssl_engine_kernel.c,
+around line 877:
+<pre>
+   /*
+    * Make sure the user is not able to fake the client certificate
+    * based authentication by just entering an X.509 Subject DN
+    * ("/XX=YYY/XX=YYY/..") as the username and "password" as the
+    * password.
+    */
+   [...]
+           if ((username[0] == '/') &amp;&amp; strEQ(password, "password")) {
+               ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+                   "Encountered FakeBasicAuth spoof: %s", username);
+               return HTTP_FORBIDDEN;
+           }
+</pre>
+<p>
+The Apache documents don't mention this at this time.
+Nevertheless, this is why it's okay to mix CAC certificates and
+normal usernames into a single user database and use "password" as the
+CAC user passwords; this password cannot be used for the same usernames
+in the typical username/password log in.
+
+<p>
+<h1>Fixing clients</h1>
+<p>
+If CAC cards do not work on some client machine, but work elsewhere,
+then clearly that client machine has a misconfiguration.
+<a href="http://militarycac.com/">MilitaryCAC</a> has lots of hints.
+<p>
+However,
+here are two steps that are likely to help (at least on Windows):
+<ol>
+
+<li>Re-install the client CAC card driver
+software (e.g., ActivClient Agent on Windows).
+I think ActivClient is terrible software; it's always getting patches
+(this kind of software should <i>never</i> need to change).
+
+<li>Reconfigure Internet Explorer (this will also fix Chrome).
+This is especially likely to help if Firefox works but the other two do not.
+See
+<a href="http://militarycac.com/files/Making_AKO_work_with_Internet_Explorer_color.pdf">Making AKO work with Internet Explorer</a>
+for how to do so.
+The key is on slide 14, which removes
+some intermediate certificate authorities (CAs).
+If the client software has intermediate CAs installed
+(such as "Common Policy" issued by "Common Policy"),
+these intermediate CAs are added to the certificate chain sent to the server,
+potentially confusing the server.
+By removing certain intermediate CAs from the client, the confusion disappears.
+
+
+<li>
+Firefox uses a slightly different CAC/ECA configuration approach from
+Internet Explorer and Chrome, which means
+it is quite possible for Firefox to work (while Chrome does not), or
+vice-versa.
+The key is to configure Firefox to use the correct library
+(DLL in Windows) to access the CAC card or ECA certificate.
+This library may change (and need to be reconfigured) if you update 
+the CAC driver software.
+The
+<a href="http://militarycac.com/firefox2.htm">Firefox information page on MilitaryCAC.com</a> and the
+<a href="http://militarycac.com/files/Tech_Note_Firefox_CAC_Authentication.pdf">Firefox Tech Note</a>
+give step-by-step instructions for doing this.
+For CAC card access, these involve setting the configuration under
+tools/options/advanced tab/security devices.
+
+</ol>
+<p>
+If you want to see if extraneous intermediate CAs on the client are
+causing trouble, here are some symptoms:
+<ol>
+<li>On the client end, check the certificate path.
+For Internet Explorer, once you see the "Windows Security" window saying
+"Select a Certificate", click on "Click here to view certificate properties"
+and select the "Certification Path" tab.
+If you see a short, simple 3-level path like "DoD Root CA 2" to
+"DOD CA-25" to name-of-person, you're fine.
+If you see a long path like "Common Policy" (representing the whole US),
+then "SHA-1 Federal Root CA" (representing the US government), then
+"DoD Interoperability Root CA 1" (representing the connection between
+the federal government and DoD), and then the rest as before
+(e.g., "DoD Root CA 2", "DOD CA-25", and name-of-person), then it
+may not work properly.
+<li>
+On the server end, the log files may note that re-negotiation was attempted,
+and that in the end,
+"re-negotiation handshake failed: Not accepted by client!?".
+</ol>
+<p>
+<b>WARNING</b>: Many kinds of updates can mess this up.
+Microsoft will sometimes update its certificate authority (CA) list
+as a patch; if this update is installed, these problematic intermediate
+CAs get re-installed.
+Updating browsers can screw up their connection with the underlyind drivers,
+too.
+Thus, you may have to re-do the steps above after some software updates.
+
+
+<p>
+<h1>Logging usernames: Apache bug</h1>
+<p>
+Apache, at least version 2.2.3, has a minor bug in how it writes logs.
+If the username has a space (which it does for all SSL certificates
+signed by the "U.S. Government" including CAC cards),
+then that space isn't escaped in the log.
+The result is weirdness in the logs, because the log fields are
+space-separated.
+I've reported this
+<a href="https://issues.apache.org/bugzilla/show_bug.cgi?id=51543">
+Apache bug (failure to escape spaces in log files) as
+Apache bug 51543</a>.
+If you are hit by this bug, you can work around this by removing the space
+in "U.S. Government" - a space cannot occur in recorded URLs, because those
+are escaped (as %20).
+
+<p>
+The
+<a href="http://iase.disa.mil/pki-pke/interoperability/Pages/index.aspx">DISA page on External and Federal PKI Interoperability</a>
+shows how various US federal government PKIs work together.
+
+<p>
+<a href="http://creativecommons.org/publicdomain/zero/1.0/">
+This HTML page is released to the public domain</a>.
+
+
+</body>
+</html>
+

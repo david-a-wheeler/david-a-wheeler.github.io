@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Subversion of bootstrap-sass</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="???">
+<meta name="keywords" content="???">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Subversion of bootstrap-sass
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2019-05-02 (original 2019-04-10)</h2>
+
+<p>
+A
+<a href="https://snyk.io/blog/malicious-remote-code-execution-backdoor-discovered-in-the-popular-bootstrap-sass-ruby-gem/"
+>malicious backdoor has been found in the popular open source software
+library <tt>bootstrap-sass</tt></a>.
+This subversion was done by someone who created an
+unauthorized updated version of the software on
+the <a href="https://rubygems.org">RubyGems</a> software hosting site.
+The good news is that it was
+<a href="https://lwn.net/Articles/785386/"
+>quickly detected (within the day) and updated</a>, and that
+limited the impact of this subversion.
+The backdoored version (3.2.0.3) was only downloaded 1,477 times.
+For comparison, as of April 2019
+the previous version in that branch (3.2.0.2) was
+downloaded 1.2 million times, and the following version 3.2.0.4 (which
+duplicated 3.2.0.2) was downloaded 1,700 times (that’s more than the
+subverted version!).  So it is likely that almost all subverted systems
+have already been fixed.
+</p>
+
+<p>
+That said, there's clearly room to improve.
+I believe that every time a bad thing happens we should try to find out
+how it happened, and then see if there are reasonable steps
+that can be taken to reduce the risk.
+This paper is part of my
+essay suite <a href="learning-from-disaster.html">Learning from Disaster</a>,
+which applies this approach to various past problems.
+</p>
+
+<p>
+With that in mind, here are a few thoughts
+on how to reduce the risk of a similar problem in the future:
+</p>
+
+<ol>
+<li><b>Use 2FA</b>.
+It appears that an attacker got the RubyGems password of
+a maintainer.
+If you maintain a package on a package hosting site (like RubyGems,
+PyPI, or node.js) or a source code hosting site (like GitHub),
+use two-factor authentication (2FA) to authenticate yourself on them.
+In the long term, perhaps some of them should require 2FA.
+Using 2FA would greatly reduce this risk in general and might have
+completely countered this particular attack.
+Similarly, if you use such packages, encourage the package maintainers
+to use 2FA.
+I’ll note that the <a
+href="https://bestpractices.coreinfrastructure.org/">CII best practices
+badge project</a> (which I lead) requires 2FA at the gold level, see: <a
+href="https://github.com/coreinfrastructure/best-practices-badge/blob/master/doc/other.md#require_2FA">require_2FA</a>.
+<li><b>Briefly delay non-security updates</b>.
+Don't update your dependencies in the same day they're released
+unless the update fixes a vulnerability or something else vitally important
+to your project.
+Instead, wait a few days.
+That gives other people (such as the authorized developers)
+time to notice and respond to unexpected changes.
+Unfortunately some package managers do not make this easy for indirect
+(transitive)
+dependencies, but you can at least do this easily for direct dependencies.
+In the longer term, it'd be great if package managers could do this
+automatically (including distinguishing between security updates and
+normal updates).
+<li><b>Require a reproducible build</b>.
+The attackers subverted the <i>distributed</i> package on RubyGems
+without first posting the corresponding source code in its official source
+code repository on GitHub.  That’s a big red flag.  I believe package
+repositories should verify that code distributed can be reproducibly
+regenerated from its putative source.  Such an approach would have
+prevented this attack, and also made the previous “event-stream”
+incident far more visible than it was.  They don't need to change their
+inputs; accept a build, and check that the regenerating the build will
+produce the same thing.  Package distribution systems could make it
+possible to enable this on a per-package basis, so this can be done
+incrementally. It will take a while to make this happen, but the first
+step is to agree to work towards it.  For more about reproducibility,
+see the <a href="https://reproducible-builds.org/">reproducible-builds.org
+website</a>.
+</ol>
+
+<p>
+No doubt there are many more ways to reduce risks like this.
+This is, fundamentally, a software supply chain attack.
+But since most software is reused, not custom-written,
+software supply chain attacks are a real risk and
+they need to be addressed.
+</p>
+
+<p>
+<hr>
+<p>
+If you enjoyed this paper, you might also enjoy the entire
+suite of related papers in
+my essay suite <a href="learning-from-disaster.html">Learning from Disaster</a>.
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2019 David A. Wheeler.
+Released under
+<a href="https://creativecommons.org/licenses/by-sa/3.0/">Creative Commons
+Attribution-ShareAlike version 3.0 or later
+(CC-BY-SA-3.0+)</a>.
+
+</body>
+</html>

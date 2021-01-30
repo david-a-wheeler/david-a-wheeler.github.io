@@ -1,0 +1,99 @@
+<head>
+<title>Linux kernel requirements for Software Configuration Management
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+(SCM) tools</title>
+</head>
+<body>
+<h1>Linux kernel requirements for Software Configuration Management
+(SCM) tools</h1>
+In April 2005, Linus Torvalds announced that he would no longer use
+BitMover's BitKeeper as an SCM tool, and that he was investigating his
+alternatives.  Since that time, there have been many discussions on what
+the requirements of that new tool should be.
+<p>
+Torvalds and others have been working on a tool named "git", which
+is at least a current stand-in, and may grow into the SCM tool he uses.
+For more information on git, see
+<a href="http://lwn.net/Articles/131657/">the guts of git</a>,
+the <a href="http://vger.kernel.org/vger-lists.html#git">git mailing list</a>,
+and the
+<a href="http://pasky.or.cz/~pasky/dev/git/">pasky git distribution site</a>
+(here's the
+<a href="http://lwn.net/Articles/131312/">original announcement of git</a>).
+<p>
+This article summarizes some of the SCM tool requirements that have
+been implied, mentioned, or discussed.  It's primarily from the Linux
+kernel mailing list; it's not a complete list, and there are probably
+mistakes here too.  But I suspect many will find this summary helpful.
+This article is intended for Linux kernel developers (who may note
+additional requirements) and for SCM tool developers (who can adjust
+their tools to better meet these requirements.  Meeting this set does not
+guarantee that the SCM tool will be selected by the kernel developers;
+the kernel developers will decide what tools they'll use.
+<p>
+So, here's a short list:
+<ol>
+<li>Available May through June 2005.  (Torvalds said "1-2 months").
+<li>Open Source Software / Free Software (OSS/FS).  Some kernel developers
+don't care if the tool is OSS/FS, but others passionately do.
+<li>Distributed SCM (<i>not</i> a centralized SCM).  Developers need to
+be able to work independently, and then push/pull their work to others.
+??? See subversion URL.
+<li>Key operations must be very fast at the (large) scale of the Linux
+kernel.  These should be O(1) compared to the number of previous patches.
+These key operations arecheck-in and check-out (locally) include show
+differences with a previous version, and accepting patches/merges
+(Torvalds has to process a tremendous number of patches).
+<li>Storage and exchange formats should be be very simply, maximizing
+the use of existing tools. For example, see Torvalds' "git" -- it stores
+files as constant values (so rsync can be used), gzip compression, sha1sum
+for SHA-1.  ASCII representations and standard formats are a big plus.
+<li>Integrity and data recovery mechanisms are <i>critical</i>.  Data loss
+is horrific and needs to be minimized -- include some redundancy so that
+if things go terribly wrong, at least some data can be recovered. E.G.,
+"git" stores some header information so that trees can be reconstructed.
+<li>Storage is cheap, so feel free to waste some local space to meet other
+requirements. Network bandwidth is not cheap, however; approaches need to
+not be bandwidth hogs. And if you can reduce storage requirements easily,
+that's good.
+<li>
+Require cryptographic signatures of results only when you're "done",
+not for intermediate check-ins (this is an issue with Monotone).
+<li>
+Must be able to "throw away"  local branches if they turn out to  be
+ineffective.  Sometimes you start an approach and it just turns out to
+be useless.
+<li>
+Support easily reordering/reorganizing patches locally, and splitting
+changes into multiple trees that can be separately pulled.  In short,
+make sure that it's easy for developers to export trees  that are "clean".
+Earlier on, cherry-picking was considered important to the developers.
+This has turned out to be less important, because downstream integrators
+who start cherry-picking find management too hard.  It's better to insist
+that upstream developers create clean trees, and help those developers
+create the clean trees. This distributes the problem of creating clean
+trees, than requiring the central integrators to try to "clean up"
+trees later.
+<li>
+Make it easy to post changed trees, list the changes available but not
+yet pulled, and easily pull changes.
+<li>
+Annotation / blame doesn't need to be fast. It's a relatively rare
+operation.
+<ol>
+<p>
+For more information see
+<a href="https://dwheeler.com/essays/scm.html">
+Comments on Open Sources Software / Free Software (OSS/FS) Software
+Configuration Management</a>
+and
+<a href="https://dwheeler.com/esasys/scm-security.html">Software
+Configuration Management security</a>.
+<p>
+Please
+<a href="https://dwheeler.com/contactme.html">contact me if you see
+changes that need to be made in this list</a>.
+
+</body>
+</html>
+

@@ -1,0 +1,479 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Sony Pictures, Lax Security, and Passwords</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="What went wrong at Sony Pictures? Lax security, especially passwords. Others can do better.">
+<meta name="keywords" content="Sony, Sony Pictures, Sony Pictures Entertainment, security, passwords, encryption, control, controls, SANS, 800-53, Wheeler, David A. Wheeler">
+<meta name="author" content="David A. Wheeler">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Sony Pictures, Lax Security, and Passwords</h1>
+<h2 class="author"><a href="https://dwheeler.com/">David A. Wheeler</a></h2>
+<h2 class="date">2015-04-18 (originally 2014-12-20)</h2>
+
+<p>
+Sony Pictures Entertainment (SPE)
+has endured a disastrous computer security breach.
+As a result, a lot of damaging information has been revealed,
+and thousands of its computers have been rendered inoperable.
+Employees and former employees have had health records and private
+emails revealed.
+<a href="http://www.nytimes.com/2014/12/20/technology/google-attorney-general-jim-hood-lawsuit.html?">Some emails showed</a>
+&#8220;how the movie industry... had hired the former attorney general from Mississippi... to put pressure on
+[Mississippi Attorney General Jim] Hood to go after [Google, and]
+orchestrated [a] lobbying campaign to press state attorneys general
+not only to question Google, but to subpoena and perhaps sue the company.&#8221;
+<!--
+(&#8220;Sued by Google, a State Attorney General Retreats&#8221;
+by Eric Lipton and Conor Dougherty, Dec. 19, 2014, NY Times).
+-->
+Some of it is so ironic that you just have to laugh.
+<a href="http://www.dailydot.com/politics/sony-pirated-book-pdf/">SPE
+even had pirated ebooks on its servers</a>.
+That is notable because, as the Daily Dot explained,
+&#8220;Sony has engaged in aggressive and even illegal anti-piracy actions
+in the past&#8221; - and to increase the irony, the pirated books
+are educational books about cyber attacks.
+
+<p>
+However, until recently there has been little information about
+<i>how</i> their 2014 security disaster happened.
+That matters, because it&#8217;s important for people
+to learn from past problems, and we can only learn when there is enough
+<i>detailed</i> information about what happened.
+<p>
+We now know more.
+It now appears that Sony was
+remarkably lax about its security, in particular how it handled
+authentication information (such as passwords).
+Sony is now reaping the results of its lax security posture.
+<p>
+I think it is important to examine what we know, in particular
+<a href="#attack">what the attack was</a> and
+<a href="#why-damaging">why it was so damaging</a>, so that the
+<a href="#lessons-learned">rest of us can learn from their woes</a>.
+This paper is part of the
+essay suite <a href="learning-from-disaster.html">Learning from Disaster</a>.
+
+<h1 id="attack">What was the attack?</h1>
+<p>
+We finally have
+<a href="https://www.us-cert.gov/ncas/alerts/TA14-353A">US-CERT alert
+TA14-353A</a>.
+They did not mention Sony Pictures by name, but this alert
+is obviously about them.
+This alert was described further in
+<a href="https://www.securityweek.com/hackers-used-sophisticated-smb-worm-tool-attack-sony">SecurityWeek</a>.
+This material reveals that Sony Pictures was attacked (at least in part)
+using an &#8220;SMB Worm Tool&#8221; with multiple modules.
+Many of its modules could perform attacks once privileges were granted,
+including destruction of data on hard drives.
+But how were those privileges gained in the first place?
+A key mechanism the tool uses for gaining privileges is
+&#8220;a brute force authentication attack to propagate
+via Windows SMB shares...
+[it] attempts to guess passwords for SMB connections.
+If the password is correctly guessed, a file share is established and
+file is copied and run on the newly-infected host.&#8221;
+In short, a key part of the attack was simple password guessing.
+This may not be the full story, but this is the best information
+available, and it is consistent with what is known elsewhere.
+<p>
+To me, this is immediately interesting.
+Such an attack would not work well in an environment with good basic
+countermeasures such as requiring strong passwords,
+requiring good protections of authentication mechanisms (like passwords),
+and stronger authentication mechanisms (like two-factor mechanisms)
+when important information is involved.
+Gaining passwords should be hard, and should not get everything anyway.
+There should also have been
+damage reduction mechanisms (like encryption) to prevent
+revelation of the most sensitive materials.
+In addition, there should have been detection and response
+mechanisms to detect and counter such a massive exfiltration.
+Why did Sony Pictures endure so much damage?
+<p>
+We also got an interesting discussion of the poor quality of the
+attack code itself from
+<a href="http://arstechnica.com/security/2014/12/state-sponsored-or-not-sony-pictures-malware-bomb-used-slapdash-code/">Ars Technica&#8217;s review of the malware</a>, in particular an analysis by researchers at
+Cisco&#8217;s Talos Security Intelligence and Research Group.
+They found that the attack software was
+&#8220;full of bugs and anything but sophisticated&#8221;,
+&#8220;the software equivalent of a crude pipe bomb&#8221;,
+the &#8220;code is simplistic, not very complex, and not very obfuscated&#8221;,
+the code was of an &#8220;unprofessional nature&#8221;
+and &#8220;looks like something hobbled together
+from a well-worn malware kit bought off an underground web forum&#8221;.
+But this raises even more questions; why should such a simple
+attack system cause so much damage?
+
+
+<h1 id="why-damaging">Why was it so damaging?</h1>
+
+<p>
+By connecting up the new information on the tools used, with public
+information about Sony itself, we can suddenly get an interesting
+(and disturbing) view of what happened, and why it was so damaging.
+<p>
+It appears that Sony Pictures has been extraordinarily lax in its
+computer security, making them an especially easy target that was
+relatively easy to penetrate, stay undetected, and that Sony
+did not have effective ways to limit their damage.
+In particular, Sony (overall) has a long history of being
+bad at managing passwords and other critical data.
+<p>
+<a href="http://fusion.net/story/31469/sony-pictures-hack-was-a-long-time-coming-say-former-employees/">Kashmir Hill&#8217;s &#8220;Sony Pictures hack was a long time coming, say former employees&#8221;</a>
+states that former employees report that
+Sony Pictures has had a &#8220;long-running lax attitude toward security&#8221; -
+employees even
+&#8220;highlighted specific vulnerabilities on
+company websites and systems that were never addressed&#8221;.
+For example,
+there was a case where they were
+&#8220;collecting personally identifying information
+without encrypting it.&#8221;
+In particular, Sony did not seem to treat any authentication
+mechanisms with care.
+People routinely stored passwords online, with filenames containing
+&#8220;password&#8221;.
+Their information security team is small and top-heavy;
+out of 7,000 employees they had three information security analysts,
+even though their primary business involves information.
+Those three were overseen by three managers, three directors,
+one executive director and one senior-vice president (!).
+</p>
+<p>
+<a href="http://mashable.com/2014/12/02/sony-hack-passwords/">Mashable listed some of the passwords used at Sony Pictures</a>.
+They snarkily noted,
+&#8220;if you&#8217;re working at a high-profile studio like Sony, perhaps you should choose a better password than &#8216;s0ny123&#8217; or &#8216;password&#8217;&#8221;.
+In a few cases critical files were encrypted with passwords, but the
+passwords were sometimes stored as plaintext in files in same directory,
+often with filenames containing the word password.
+Some passwords are not important (and thus not worth protecting),
+but if you care enough about a file to <i>encrypt</i> it, then its
+decryption keys need to be elsewhere and better-protected.
+<p>
+<a href="http://gizmodo.com/sony-execs-knew-about-extensive-it-flaws-two-months-bef-1670203774">Gizmodo&#8217;s &#8220;Sony Execs Knew About Extensive IT Flaws Two Months Before Leaks&#8221;</a>
+reported that an internal IT assessment, dated 2014-09-25 (two months
+before all this data was exposed), showed that its internal security
+was in shambles.
+They had a &#8220;plague&#8221; of unmonitored devices and a serious
+lack of accountability.
+One problem was that until September 2013 (the year before),
+Sony Pictures Entertainment had
+&#8220;outsourced its IT security to a third party security service...
+[but in 2013 they]
+decided to put its Global Security Incident Response Team (GSIRT)
+in charge of overseeing core responsibilities and general monitoring for
+the company&#8217;s various subsidiaries, including Sony Pictures.
+While GSIRT would monitor security overall,
+the third-party team that SPE had been
+using was still responsible for implementing various security measures
+(firewalls, intrusion prevention systems, etc.)...&#8221;
+Sony was aware that they left a significant number of devices unmonitored,
+yet they did not rapidly reconcile them or establish a process to
+prevent its recurrence.
+As Gizmodo noted, even though these problems existed and were known,
+&#8220;Sony was so slow to react to them [that it]
+indicates a culture that failed to prioritize information security.&#8221;
+<a href="http://gizmodo.com/sony-kept-thousands-of-passwords-in-a-document-marked-1666772286">Gizmodo also noted that
+Sony stored thousands of passwords in a document named &#8220;passwords&#8221;</a> -
+not just low-value passwords, but important ones
+like major motion picture social accounts.
+
+<p>
+This laxness has been going on for a long time.
+<a href="http://www.cio.com/article/2439324/risk-management/your-guide-to-good-enough-compliance.html">In 2007 Jason Spaltro,
+then executive director of information security
+at Sony Pictures Entertainment, crowed to CIO magazine</a>
+about &#8220;good-enough compliance&#8221;.
+He <i>specifically</i> crowed that when
+a Sarbanes-Oxley audit had found insufficiently strong access controls,
+and in particular that they used poor passwords
+(many passwords were easy to guess), that he had fought the auditor.
+After some debate,
+the auditor agreed not to note &#8220;weak passwords&#8221; as a Sox failure.
+Requiring good passwords is relatively <i>easy</i> to do;
+their cost is relatively trivial,
+while the damage caused by total exfiltration of all that data is massive.
+Jason Spaltro not only stayed, but
+<a href="http://fusion.net/story/31469/sony-pictures-hack-was-a-long-time-coming-say-former-employees/">his 2014 salary is now well over $300,000</a>.
+<p>
+Haven&#8217;t we heard about Sony and bad password management before?
+Yes, we have - the disastrous PlayStation Network breach.
+In April 2011 the PlayStation Network was attacked (using SQL injection,
+a well-known attack type that is trivially countered by prepared statements).
+As noted by
+<a href="http://www.cnet.com/news/the-playstation-network-breach-faq/">Cnet</a>
+and
+<a href="http://blog.us.playstation.com/2011/05/02/playstation-network-security-update/">Sony</a>,
+user passwords were stored as <i>unsalted</i> cryptographic hashes.
+This was absurdly bad, and is not much different than storing
+passwords as cleartext.
+Attackers can easily take a database like this and use brute-force
+attacks (along with dictionaries and rainbow tables)
+to quickly find an astonishing number of passwords.
+Any password database (as I teach my students) must be, at a bare minimum,
+stored using cryptographic hashes with <i>per-user salt</i>.
+Indeed, they should be using stronger hash functions
+(such as bcrypt or PBKDF2) and a large number of rounds,
+as noted by
+<a href="https://isis.poly.edu/~jcappos/papers/tr-cse-2013-02.pdf">Dennis Mirante and Justin Cappos</a>.
+<p>
+<a href="https://isis.poly.edu/~jcappos/papers/tr-cse-2013-02.pdf">Dennis Mirante and Justin Cappos</a> also note that different units of Sony have had many
+serious problems with securing user information and
+passwords, and should have learned something before 2014:
+<ol>
+<li>Sony PlayStation Network (between April 17 and 19, 2011):
+LulzSec group, using a SQL injection attack,
+obtained and dumped password database online.
+Sony stated passwords were &#8220;transformed using a cryptographic hash function&#8221;,
+but as noted above, Sony failed to apply per-user salt, so
+it was easy for attackers to find many passwords.
+<li>Sony Online Entertainment (May 2, 2011): LulzSec group
+used an undisclosed attack method to obtain an old password database.
+Sony claimed that the passwords were &#8220;hashed and salted&#8221;,
+though it was criticized for leaving this old data around.
+<li>Sony Pictures (June 2, 2011): LulzSec used a SQL Injection to obtain and
+dump user information.
+In this case, the passwords were plaintext (as opposed to using
+per-user salt and cryptographically hashed); this was confirmed by
+Mirante and Cappos.
+You would think Sony Pictures would have learned from this in particular.
+</ol>
+<p>
+Sony Pictures hired Kevin Mandia (CEO of Mandiant)
+to investigate the breach, and then produced this statement
+from him as a result:
+&#8220;This attack is unprecedented in nature.
+The malware was undetectable by industry standard antivirus software...&#8221;
+But that is rediculous.  Most malware is not detectable
+at first by &#8220;industry standard antivirus software&#8221;!
+Forbes immediately came to the conclusion that,
+&#8220;Mr. Mandia was simply providing a carefully worded statement to a fat
+client who was looking for cover and believing the rest of the world
+would take him at face value&#8221;
+(see <a href="http://www.forbes.com/sites/jodywestby/2014/12/17/sony-earns-cyber-troglodyte-award/">Forbes&#8217; article &#8220;Instead Of A Real Response, Perennially Hacked Sony Is Acting Like A Spoiled Teenage&#8221;</a>).
+It appears that Sony Pictures thinks that
+&#8220;industry standard antivirus software&#8221; is a sufficient
+defense against attackers - or that at least many others might think that.
+Of course, that is rediculous, and it
+suggests that they do not understand even the basics of
+how to secure their organization.
+<p>
+This lax security was further hobbled by Sony Pictures&#8217;
+<a href="http://arstechnica.com/security/2014/12/state-sponsored-or-not-sony-pictures-malware-bomb-used-slapdash-code/">thin level of internal IT staff</a>.
+There had been a &#8220;reduction in the amount of IT support from corporate parent Sony Corporation of America and poor support team training&#8221;, and they
+were already having repeated problems with just their email service
+on their heavily outdated Microsoft Exchange 2007 infrastructure.
+
+<p>
+I do want to make something else clear:
+I think this incident does <i>not</i> meet the definition of
+&#8220;use of force&#8221; under the UN charter and international law, at
+least not as the US government has typically defined it.
+Here I depend on a widely-cited US Department of State definition given in
+<a href="http://www.state.gov/s/l/releases/remarks/197924.htm">2012 by
+Harold Hongju Koh (Legal Advisor to the U.S. Department of State)
+at the USCYBERCOM Inter-Agency Legal Conference</a>,
+who stated that
+&#8220;Cyber activities may in certain circumstances constitute uses of
+force within the meaning of Article 2(4) of the UN Charter and customary
+international law. In analyzing whether a cyber operation would constitute
+a use of force, most commentators focus on whether the direct physical
+injury and property damage resulting from the cyber event looks like
+that which would be considered a use of force if produced by kinetic
+weapons. <i>Cyber activities that proximately result in death, injury,
+or significant destruction would likely be viewed as a use of force</i>...
+if the physical consequences of a cyber attack work the kind of physical
+damage that dropping a bomb or firing a missile would, that cyber attack
+should equally be considered a use of force&#8221;
+(emphasis mine).
+Since there was no death, injury, or significant destruction,
+by many definitions this Sony incident was not a &#8220;cyber attack&#8221;.
+As
+<a href="http://nationalinterest.org/commentary/keep-cyberwar-narrow-8459">Panayotis A. Yannakogeorgos noted in &#8220;Keep Cyberwar Narrow&#8221;</a>,
+people often conflate &#8220;cyber attack&#8221;
+with &#8220;cyber exploitation&#8221; or &#8220;denial of service disruption&#8221; -
+but such broad definitions
+risk &#8220;treating crime and espionage as threats to peace&#8221;.
+<!-- See: Multinational Experiment 7 -->
+
+
+<h1 id="lessons-learned">What should you do?</h1>
+<p>
+Sony is a victim; their poor security practices do not justify the attack.
+So it is absolutely true that we should not
+&#8220;blame the victim&#8221; for an attack performed by someone else.
+<p>
+However, attacks are inevitable; complaining that there are attackers
+does not eliminate them.
+Organizations need to step up to
+(1) prevent attacks from succeeding (where they can),
+(2) detect successful attacks or malicious attacks when they happen, and
+(3) reduce damage when they are not prevented or detected in time.
+Below are a few simple steps that I think would have helped.
+I map these steps to the
+<a href="https://www.sans.org/critical-security-controls/">SANS Critical
+Security Controls (CSC) version 5</a>,
+a short list of critical controls.
+NIST 800-53 is a more comprehensive set of controls;
+what is disturbing is that even just the shorter
+critical subset identified by SANS is likely to have helped
+counter the attack or reduced its damage,
+never mind a comprehensive set of controls.
+</p>
+<p>
+So here are a few obvious steps that are likely to have
+prevented (by countered the attack or reducing damage),
+detected, and/or responded to the attack,
+along with a mapping to the SANS list of controls:
+<ol>
+<li><b>Require strong passwords for important tasks (such as login) when passwords are used</b>.
+A SOX audit found this problem in Sony Pictures years ago;
+the person who was supposed to lead their security crowed about this,
+instead of fixing it.
+Computer systems (at least important ones) should normally prevent setting
+bad passwords, and force users to use good ones.
+This is part of
+<a href="https://www.sans.org/critical-security-controls/control/16">SANS CSC #16, &#8220;account monitoring and control&#8221;</a> (especially CSC 16-8).
+<li><b>Use multi-factor identification for important privileges</b>.
+Passwords will not disappear any time soon,
+because they are cheap and portable.
+But passwords are also easier to compromise.
+For important functions, use multi-factor identification
+(say, a smartcard and a PIN).
+This is part of
+<a href="https://www.sans.org/critical-security-controls/control/16">SANS CSC #16, &#8220;account monitoring and control&#8221;</a> (especially CSC 16-14).
+<li><b>Keep patches up-to-date</b>.
+I have heard unsubstantiated claims that Sony Pictures did a really
+bad job keeping patches up-to-date.
+Since they couldn&#8217;t seem to do other simple basic tasks
+(like run an email server), that seems plausible, but I have yet
+to find any direct source to justify this.
+In any case, keeping systems up-to-date is important for making systems
+harder to attack.
+<li><b>Have stronger protections for important data</b>.
+In many cases the &#8220;crown jewels&#8221; should not be on the normal
+network at all; isolated networks are best.
+If you cannot fully isolate the networks, isolate them
+to the maximal extent (e.g., with containers, restricted accounts, and so on).
+Encrypt your crown jewels, both in motion and at rest,
+and make sure their passwords are not stored with them.
+Specifically looking for efforts to exfiltrate important data is helpful too.
+This is part of
+<a href="https://www.sans.org/critical-security-controls/control/17">SANS CSC #17, &#8220;Data Protection &#8220;</a> (especially CSC 17-3).
+<li><b>Maintain backups</b>.
+Sony may have been doing this, but it&#8217;s worth emphasizing.
+<li><b>Have a working detection and response process in place</b>.
+Someone should be monitoring your network; it should be hard
+to exfiltrate over a terabyte of data without detection and examination.
+You should know what is expected, and be suspicious of the rest.
+There should be all sorts of alarms for suspicious activity.
+I am a big fan of honeypot-like systems (e.g., bait):
+include in your environment
+some honeypots (unused systems that if used indicate attack),
+bogus/bait users (bogus users that no one should be logging in as), and
+bogus/bait data (data that no one should be trying to load/read).
+Then have several responses ready if something really bad is detected.
+This is part of
+<a href="https://www.sans.org/critical-security-controls/control/14">SANS CSC #14, &#8220;maintenance, monitoring, and analysis of audit logs&#8221;</a>.
+</ol>
+<p>
+Of course, I can only comment on publicly-available information.
+Sony Pictures may have been doing many (or all) of these things,
+and perhaps all of them would not have been enough.
+But the information publicly available strongly suggests that they
+were extremely lax about security, especially about passwords.
+It is certainly clear that a lot of damage was done because of what
+they chose to <i>not</i> do.
+The
+<a href="https://www.us-cert.gov/ncas/alerts/TA14-353A">US CERT has a
+longer list of suggestions</a>.
+I note the
+<a href="https://www.sans.org/critical-security-controls/">SANS Critical
+Security Controls</a> (CSC) list in part because it is <i>not</i> comprehensive.
+The CSC is merely intended to be a &#8220;must do first&#8221; list for organizations.
+An organization like Sony Pictures, whose primary focus is information,
+should be beyond these basics.
+<p>
+The
+<a href="http://www.fbi.gov/news/pressrel/press-releases/update-on-sony-investigation">US FBI stated on 2014-12-19 that the North Korean
+government is responsible</a>,
+and lists some evidence for it.
+If this is true, then this is a concerning turn of events.
+In the end, few or no companies can withstand a direct attack
+from a nation-state if the nation-state truly puts its full strength into it.
+Indeed, cyberattacks are the only kind of attack I know of where
+we expect that private companies will be able to defend against
+nation-states.
+To be fair, a lot of people are skeptical that North Korea was involved.
+But that in <i>itself</i> is interesting;
+as Bruce Schneier points out,
+&#8220;What&#8217;s both amazing - and perhaps a bit frightening...
+[is that] we&#8217;re living in a world where we
+can&#8217;t easily tell the difference between a couple of guys
+in a basement apartment and the North Korean government
+with an estimated $10 billion military budget.&#8221;
+<p>
+But nation-states, just like everyone else, have limited resources.
+Specific cyberattacks often stop being effective once they are used,
+so attackers need to choose their attacks carefully.
+No matter who the attacker was,
+all the evidence available suggests that this attack
+did not require the resources of a nation-state.
+The publicly-available data suggests that
+Sony made themselves an easy target, and that the attackers
+(possibly North Korea) simply took advantage of them.
+And, since Sony was woefully unprepared for attacks (including successful
+attacks), the damage was unusually severe.
+No one is invulnerable to attack.
+They key is that
+organizations should not make attacks easy, or let the damage be so severe.
+
+<p>
+The steps to counter these attacks are not new.
+Steps like &#8220;require good passwords&#8221; are considered
+the basics at most organizations.
+Sadly, it appears that Sony&#8217;s lax security posture led
+to unusually grave consequences.
+My hope is that others will learn from Sony Pictures&#8217; misfortune.
+
+
+<p>
+<hr>
+<p>
+If you enjoyed this paper, you might also enjoy the entire
+suite of related papers in
+my essay suite <a href="learning-from-disaster.html">Learning from Disaster</a>.
+This includes similar papers on
+<a href="heartbleed.html">Heartbleed</a>,
+<a href="shellshock.html">Shellshock</a>,
+<a href="poodle-sslv3.html">POODLE</a>, and the
+<a href="apple-goto-fail.html">Apple goto fail vulnerability</a>.
+
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<!--
+https://www.schneier.com/blog/archives/2014/12/lessons_from_th_4.html
+-->
+
+<p>
+(C) Copyright 2014 David A. Wheeler.
+
+</body>
+</html>
+

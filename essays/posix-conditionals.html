@@ -1,0 +1,368 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>POSIX Conditionals</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="???">
+<meta name="keywords" content="???">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">POSIX Conditionals</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2011-09-24</h2>
+
+<h1>Introduction</h1>
+
+<p>
+<a href="http://austingroupbugs.net/view.php?id=375">
+Austin Group defect report 0000375
+("Extend test/[...] conditionals: ==, &lt;, &gt;, -nt, -ot, -ef")</a>
+proposed extensions to POSIX "test".
+It proposed adding certain widely-implemented and widely-used extensions
+of "test" to the POSIX standard.
+
+<p>
+This defect report was discussed at the September 8, 2011 teleconference meeting,
+and it was agreed that the submitter should
+"produce a whitepaper expanding the proposal (similar
+to proposals made in the past, for example the LFS proposal,
+http://www.unix.org/version2/whatsnew/lfs20mar.html)"
+(<i>Adding Support for Arbitrary File Sizes to the
+Single UNIX Specification</i>).
+
+<p>
+This is that whitepaper.
+It attempts to expand the proposal so that it can be
+"widely circulated amongst all interested parties
+to look for consensus".
+It attempts to respond to standards developers recommendations,
+in particular, to pay
+"particular attention to note 670."
+
+<p>
+<i>This is an early draft</i>.
+As it is spread more widely, it is expected to change.
+The intent is to provide a single location where the issues
+can be discussed in an organized fashion.
+
+<p>
+To the extent possible under law, the contributors to this document have waived all copyright and related or neighboring rights to this work and released it to the copyright public domain, under the terms of the
+Creative Commons CC0 waiver: http://creativecommons.org/choose/zero/waiver
+This way, any of its material can be used by the standards developers
+(or others) in any way they desire.
+
+
+
+</body>
+</html>
+
+Note: One issue that needs discussion is if "<" and ">" should be affected by the current locale's collation sequence (LC_COLLATE if set, else LANG/LC_ALL).
+
+The GNU bash and ksh93 documentation lead me to believe that they IGNORE the collation settings in "test" and "[".  GNU bash 4 *does* pay attention to the collation setting if you use its nonstandard "[[" extension, but not with "test" itself.  A quick test of GNU bash leads me to believe that its documentation (http://www.gnu.org/software/bash/manual/bashref.html) is correct.
+
+If the POSIX group that this operator should match historical precedent, then this should be specifically documented.  E.G., for both "<" and ">", add: "This test operates as if LC_COLLATE is set to POSIX."
+
+It *would* make sense if the proposed "<" and ">" would be affected by the current locale's collation sequence (LC_COLLATE if set, else LANG/LC_ALL).  If a shell implementer doesn't want to include a collation library in their shell, yet "test" is a built-in, their shell could implement "<" and ">" as a call out to the 'test' command (and then have *test* implement the collation defined by the locale).
+
+However, this would be a *change* to current behavior, requiring implementations switch their behavior, and for applications who care to switch to notations like this:
+  if LC_COLLATE=POSIX [ "$string1" '<' "$string2" ]
+
+I don't know how the shell implementors feel about changing the semantics of "<" of test to pay attention to the locale, or how much that would affect real code.
+
+
+
+====================
+
+This may be slightly different from current practice for GNU bash and ksh, at least if their documentation is accurate.
+
+For GNU bash, http://www.gnu.org/software/bash/manual/bashref.html
+says that "When used with ‘[[’, The ‘<’ and ‘>’ operators
+sort lexicographically using the current locale." which seems to imply
+that they do NOT use the current locale normal test or [.
+
+Similarly, ksh93 (version 20100621, release 2.13)'s man page says:
+string1 < string2
+  True, if string1 comes before string2 based on  ASCII  value  of
+  their characters.
+string1 > string2
+  True,  if  string1  comes  after string2 based on ASCII value of
+  their characters.
+
+
+
+
+--- David A. Wheeler
+
+
+
+Austin Group Defect Tracker
+Aardvark Mark III
+Logged in as: dwheeler (David A. Wheeler - reporter)	2011-09-25 00:36 UTC	
+Project: RSS
+Main | My View | View Issues | Report Issue | Docs | My Account | Logout	
+  
+Recently Visited: 0000375
+
+Viewing Issue Simple Details [ Jump to Notes ] 	[ Issue History ] [ Print ]
+ID 	Category 	Severity 	Type 	Date Submitted 	Last Update
+0000375 	[1003.1(2008)/Issue 7] Shell and Utilities 	Objection 	Enhancement Request 	2011-02-07 18:34 	2011-09-25 00:36
+Reporter 	dwheeler 	View Status 	public 	 
+Assigned To 	ajosey
+Priority 	normal 	Resolution 	Open 	 
+Status 	Under Review 	  		
+Name 	David A. Wheeler
+Organization 	
+User Reference 	
+Section 	test
+Page Number 	3224-3225
+Line Number 	107503-107513
+Interp Status 	---
+Final Accepted Text 	
+Summary 	0000375: Extend test/[...] conditionals: ==, <, >, -nt, -ot, -ef
+Description 	Many implementations of "test" (aka "["), including shell built-ins, implement conditionals beyond those specified in the current version POSIX. What's more, many extant programs rely on these extensions. I recommend formally adding these widely-implemented extensions to the POSIX specification itself, as these extensions have become widespread and are ready to be standardized.
+
+Specifically, add:
+* "s1 == s2" as a synonym for "s1 = s2". Since "=" is used for "assignment" in shell scripts, the spelling "==" is a clearer/less-ambiguous way to state that this is a test and not an assignment. This is already implemented in bash, ksh, and busybox sh.
+* "s1 < s2" and "s1 > s2" for lexicographic comparison. Users must quote "<" and ">", but even so, it's a useful operation. Alternatives tend to be ugly, e.g., awk -v v1="1" -v v2="fcd" 'BEGIN{exit !(v1 "" < "" v2)}' This is implemented in bash, dash, busybox sh, and ksh.
+* "pathname1 -nt pathname2" and "pathname1 -ot pathname2" - newer than/older than, comparing modification times. You can work around this by using expressions such as [ "$(find 'file1' -prune -newer 'file2')" ], but this is ugly compared to a straightforward test. Determining if something should be done, based on whether or not one file is newer than another, is a common operation, and thus makes sense to include. Implemented in ksh, bash, and busybox sh. The semantics when the files don't exist appear to be the same between bash and ksh, so I've included those semantics in the "desired action" below.
+* "pathname1 -ef pathname2". True if pathname1 and pathname2 are hard linked (refer to the same device and inode numbers). Implemented in bash, ksh, and busybox sh.
+
+Some are identified as "bashisms" in places like http://mywiki.wooledge.org/Bashism [^] but in fact these are widely implemented and/or depended upon. But because they're not in the POSIX specification, they can't be universally depended upon, and I think that needs to change.
+Desired Action 	Add to the list of primaries for "test" (circa page 3224):
+
+* s1 == s2 True if the strings s1 and s2 are identical; otherwise, false. This primary is equivalent to s1 = s2.
+* s1 < s2 True if the string s1 is lexicographically less than s2; otherwise, false.
+* s1 > s2 True if the string s1 is lexicographically greater than s2; otherwise, false.
+* pathname1 -nt pathname2 True if pathname1 exists and pathname2 does not, or if pathname1 is newer than pathname2 according to their modification times; otherwise, false. If pathname1 does not exist, the result is false.
+* pathname1 -ot pathname2 True if pathname2 exists and pathname1 does not, or if pathname1 is older than pathname2 according to their modification times; otherwise, false. If pathname2 does not exist, the result is false.
+* pathname1 -ef pathname2 True if pathname1 and pathname2 are hard linked, that is, refer to the same file. See section 3.191 {the section number defining "hard link".}
+Tags 	No tags attached.
+Attach Tags 	(Separate by ",")
+Attached Files 	
+			
+			
+
+- Relationships
+
+- Upload File
+Select File
+(Max. size: 5,000k) 	
+
+-  Notes
+(0000666)
+dwheeler (reporter)
+2011-02-07 18:49
+
+	Since this is a request for new functionality in the specification, I believe "Severity" should be "Objection" (not "editorial") and "Type" should be "Enhancement Request" (not "Clarification requested"). Sorry for the confusion.
+(0000667)
+Don Cragun (manager)
+2011-02-07 20:23
+edited on: 2011-02-07 22:22
+
+	Severity, Type, Description, and Desired Action changed as requested by submitter.
+
+(0000668)
+dwheeler (reporter)
+2011-02-07 21:56
+
+	Note: In the "Desired Action" text above, "file1" and "file2" should be "pathname1" and "pathname2" respectively.
+(0000669)
+dwheeler (reporter)
+2011-02-07 22:50
+
+	One issue that needs discussion is if "<" and ">" should be affected by the current locale's collation sequence (LC_COLLATE if set, else LANG/LC_ALL). Unfortunately, historical implementations seem to ignore the collation setting. So I recommend a compromise position, adding to each operator the statement that "The effective collation sequence must be set to POSIX or C; whether or not another setting is applied is implementation-defined." Other options are certainly possible; Here's the background.
+
+
+The GNU bash and ksh93 documentation lead me to believe that they IGNORE the collation settings when using "<" or ">" inside "test" and "[". GNU bash 4 documentation suggests that it *does* pay attention to the collation setting if you use its nonstandard "[[" extension, but not with "test" or "[". A quick test of GNU bash leads me to believe that its documentation (http://www.gnu.org/software/bash/manual/bashref.html) [^] is correct - LC_COLLATE is ignored by these two operators.
+
+If the POSIX group decides that these operators should match historical precedent, then this should be specifically documented. E.G., for both "<" and ">", add: "This test operates as if LC_COLLATE is set to POSIX." That's the *easy* thing to do.
+
+Now, it *would* make sense if the proposed "<" and ">" primitives were affected by the current locale's collation sequence (LC_COLLATE if set, else LANG/LC_ALL). If a shell implementer doesn't want to include a collation library in their shell, yet "test" is a built-in, their shell could implement "<" and ">" as a call out to the 'test' command (and then have *test* implement the collation defined by the locale). You could make the case that ignoring these settings is a bug in current implementations, as "<" and ">" are fundamentally collation comparisons.
+
+However, this would be a *change* to current behavior. It would require implementations to change their behavior, and for applications who care to switch to notations like this:
+  if LC_COLLATE=POSIX [ "$string1" '<' "$string2" ]
+I don't know how the shell implementers feel about changing the semantics of "<" or ">" in test to pay attention to the locale, or how much that would affect real code.
+
+A useful compromise could be that "<" and ">" could only have a defined meaning when the effective collation (as determined by LC_COLLATE and friends) are POSIX or C. This would mean that technically you'd have to set LC_COLLATE to do the comparison. This would grandfather existing code, and create a transition process so that eventually paying attention to the collation would be required. Basically, to meet the POSIX spec, application authors would know that they should add LC_COLLATE=... to their code, and then it'd be easier to add support for LC_COLLATE.
+
+So I suggest adding the following to "<" and ">":
+"The effective collation sequence must be set to POSIX or C; whether or not another setting is applied is implementation-defined."
+
+If no consensus can be reached on these two primitives (< and >), I'd still like to see the others added.
+(0000670)
+eblake (manager)
+2011-02-07 23:13
+
+	Due to the fact that < and > must be quoted with test (or [), and in light of the issues of some current test implementations failing to implement locale-specific collation, I'd much rather see an effort made to standardize [[ (where < and > do not have to be quoted, and where collation must be done according to lcale), than to standardize < and > for test with loose semantics. But adding the other four operators (==, -ot, -nt, -ef) make sense, although I think the wording for -ef should be "names the same file" rather than "are hard links", seeing as how 'touch a; ln -s a b; test a -ef b' sets $? to 0 on at least bash, coreutils, and ksh.
+(0000688)
+dwheeler (reporter)
+2011-03-08 03:15
+
+	FYI, here's a (partial) report on implementation effort, specifically on adding "==" to the test/[ implementation in dash.
+
+It turns out to be trivial to modify dash to support "==". It's 1 line, plus a few lines to update comments and documentation. Here is the patch:
+http://permalink.gmane.org/gmane.comp.shells.dash/498 [^]
+
+I do not know if the dash project will add this functionality; that's up to them. However, several have commented that they'd prefer to add this (or just about any other functionality) only if it's specifically added to POSIX. There *did* seem to be universal agreement that they would *definitely* add this functionality if "==" was in the newer POSIX spec, at least, that's how I understand the comments.
+
+As noted earlier, "==" is *already* in bash, busybox ash, and ksh, so it requires nothing to add to them. I now also know that it'd be trivial to add to dash, and based on that experience, it'd probably be trivial to add "==" to other shells as well. And, as I noted earlier, "==" is *already* in wide use in shell scripts. Not all "trivial to add" and "already in wide use" capabilities are added to the POSIX spec, but they *are* reasonable reasons to add something to the POSIX spec.
+
+Thanks.
+(0000754)
+jsonn (reporter)
+2011-04-24 13:16
+
+	I don't see any value in adding "==". The only reason why it is used by a bunch of scripts is because some popular shells like GNU bash accept it (even in POSIX mode). As such this only legalises the dependency of completely redundant vendor extensions. The GNU toolchain is not even consistent in this regard, since GNU coreutils has a test that doesn't support ==.
+(0000755)
+dwheeler (reporter)
+2011-04-24 19:01
+
+	Why add "=="? The issue is that "=" is already used for shell variable assignment. Using the SAME spelling for both "is-equal-to" and "assignment" is confusing, and thus is something that *MANY* languages avoid. Many languages that use "=" for assignment use a SEPARATE "==" operator for comparison; this includes C, C++, Java, C#, Python, and Perl. Many languages (like Pascal) that use "=" for comparison use another spelling like ":=" for assignment, again, to keep their spellings separate. In some cases these languages can always disambiguate from context, and even then, they intentionally do NOT use the same spelling. It is inconsistent and misleading that the shell, unlike all these other languages, conflates the spellings of assignment and is-equal-to. I think it's too late to get rid of "=" for comparison, but it's easy to add "==" as a synonym, which is what is proposed.
+
+In short, adding "==" (1) clarifies whether assignment or comparison is being used, and (2) improves consistency between shell and the MANY other languages that use "=" for assignment.
+
+It's true that many shell scripts use "==" and that a lot of popular shell implementations support "==". But that is not an argument against standardization; that is an argument *FOR* standardization. If a lot of implementations support it (they do), and a lot users use it (they do), then I think that's a pretty good argument that it should be added to the standard. This is EASY for implementations to add, it takes a trivial amount of space (even Busybox, which is for embedded systems, has it), and it's easy to add to the standard, too.
+
+As far as GNU coreutils' test goes, FSF's development version of test added "=="
+support on 2011-03-22. So yes, the current GNU toolchain doesn't support "==", but that will be fixed soon. So GNU test is an argument *FOR* adding support for "==".
+
+Here's the current state of "==" in some implementations of sh and test that I know of; there's a lot of support for it, and it'd be easy to add to others:
+* (GNU) bash: Supports ==.
+* pdksh (public domain korn shell): Supports ==. See: http://web.cs.mun.ca/~michael/pdksh/pdksh-man.html [^]
+* mksh (MirBSD(TM) Korn Shell): Supports ==. See http://www.mirbsd.org/mksh.htm [^]
+* GNU coreutils test: Added on 2011-03-22.
+* Official ksh: N/A; Official ksh from AT&T doesn't have test/[ built-in. I originally said that ksh supports "==", but it turns out I was actually testing a pdksh that was named ksh, so my comments were really about pdksh noted above. Its "[[" condition DOES now support "==" as a synonym for "=", and "=" is considered obsolete.
+* NetBSD: Doesn't support "==", but a patch has been submitted to add it. The last comment (2011-03-18) on it was positive, but I don't know what they will do about it (http://gnats.netbsd.org/cgi-bin/query-pr-single.pl?number=44733l) [^]
+http://gnats.netbsd.org/cgi-bin/query-pr-single.pl?number=44733 [^]
+* dash: Does not support "==", but doing so is a one-line patch. Patch submitted 2011-03-06. Developers seemed to agree that if POSIX added "==" as a requirement, dash would implement it.
+* OpenBSD's /bin/sh supports "==" (it's not documented, but it DOES work).
+* FreeBSD-current's /bin/sh and /bin/test have recently added "==". See http://svn.freebsd.org/base/head/bin/test/test.c. [^]
+* busybox ash: Supports ==.
+
+This is such a common vendor extension that I think it's proved itself; it's time to standardize it.
+
+*ALL* of the implementations agree that "==" is a synonym for "=", so there's no question about "different semantics so which one should we implement?". Indeed, a good reason to add this to the standard is to make sure that everyone else does the same thing in the future.
+(0000756)
+jsonn (reporter)
+2011-04-24 21:48
+
+	The "=" looks like an assignment is bogus. Contrary to C, Python, Pascal or any other language in this league, you can not write "test $a=foo" or "test $a==foo" and expect it to work. On the same line of reasoning, "a = foo" doesn't work either. The chance of mixing both up is a sign of not knowing the shell language at all.
+
+OpenBSD's /bin/sh is a ksh. FreeBSD added == for compatibility with bash etc. None of this make a good reason reason other than "people don't know how to write portable scripts". With that argument, bash could just be declared the standard, since that's what everyone is using after all...
+(0000758)
+dwheeler (reporter)
+2011-04-25 20:45
+
+	See part 2 of my argument, namely, that adding == would improve "consistency between shell and the MANY other languages that use '=' for assignment". There's value to working WITH "muscle memory" and having consistency with other languages when it's easy to do so. C, C++, Objective-C, Python, Perl, PHP, C#, Java, and many other languages that use "=" for assignment also use "==" for is-equal-to. It is inconsistent that test does not, which is why this addition is implemented so widely.
+
+There are now at least 6 implementations of sh or test that accept "==" by my count; bash is only one of them. Most standards organizations prefer to only standardize stuff that's implemented at least once, and prefer to standardize something that's implemented more widely. This is already implemented widely, and that should be a point in its favor.
+
+As far as "legalising the dependency of completely redundant vendor extensions", I disagree. Redundancy for backwards-compatibility is perfectly reasonable, first of all, and while the semantic is the same, the spelling is different. And as far as extensions go, I believe POSIX has always permitted extensions and that each version of POSIX has taken some vendor extensions and pulled them into the specification itself. It's the usual way to get better ideas tried out before they're standardized, and once they're in the standard, they aren't "vendor extensions" - they ARE part of the standard.
+
+Anyway, I hope that clarifies things.
+(0000759)
+markh (reporter)
+2011-04-26 09:25
+
+	There are many variants of is-equal-to. "==" is commonly used to test for numeric equality, which is -eq in "test". Some languages have one equality operator that tests for either string or numeric equality depending on the types of the operands ("test" obviously does not fall into that category since it is not typed) and in that case "==" may also be used to test for string equality.
+
+Because "test" has separate operators for numeric and string equality, it seems particularly confusing to make "==" an alias for the string equality operator "=". In other languages, including C and Perl which also have separate numeric and string equality operators, "==" is used for numeric value comparisons. So if someone familiar with these languages sees the "==" they are more likely to incorrectly interpret it as a numeric comparison. For someone writing a shell script, it would seem to be better if their implementation did not support the "==" extension and instead produced an error. Besides the minor benefit of helping them to write more portable shell scripts (even if the standard is changed, "=" is portable even to older implementations), it would also help those familiar with "==" from other languages to avoid a programming error. Since the standard string comparison operator is "=", someone using "==" may do so because they are familiar with C/Perl and intended to write a numeric comparison (-eq), or because they are familiar with a language that uses "==" for both numeric and string comparisons and did not think about what kind of comparison they actually wanted, so they may end up unintentionally using the wrong comparison without realizing it.
+(0000760)
+wpollock (reporter)
+2011-04-26 09:57
+
+	I disagree with those who think adding == will make shell scripts less clear and more error prone. Nearly every popular language uses == for equality testing: C, C++, C#, PHP, Java, JavaScript, Ruby, Python, ... , and many modern shells. It is true that many languages support several equality tests, but there is no good reason to break shell by redefining == and -eq to match e.g. perl.
+
+What I wonder is, should expr allow == as well, for consistency? Note awk already uses ==.
+(0000761)
+jsonn (reporter)
+2011-04-26 10:36
+
+	I am not arguing that adding == makes shell script less clear. I am arguing that it is completely redundant and therefore without merits. Please sit down for a moment and go back to the start. Imagine for a moment that GNU bash wouldn't silently provide this "feature" even in /bin/sh mode. The basic result would be that noone would use it and we would not have this discussion about adding a redundant operator.
+
+Note that I don't have a problem with the other operators. I would suggest being consistent and having -nte etc too. I am not sure about the mnemonic behind -ef and "<" and ">" begs for a string name, but all those operators add value.
+(0000967)
+ajosey (manager)
+2011-09-22 08:59
+
+	This defect report was discussed at the September 8 teleconference meeting.
+
+It was agreed that the best way to progress this would be for the
+submitter to produce a whitepaper expanding the proposal (similar
+to proposals made in the past, for example the LFS proposal,
+http://www.unix.org/version2/whatsnew/lfs20mar.html). [^]
+
+This could then be widely circulated amongst all interested parties
+to look for consensus.
+
+The standard developers recommend that the white paper should pay
+particular attention to note 670.
+(0000974)
+dwheeler (reporter)
+2011-09-25 00:36
+
+	That sounds very reasonable. I will create a first draft and post its URL here for discussion.
+
+- Add Note
+Note 	
+
+- Issue History
+Date Modified 	Username 	Field 	Change
+2011-02-07 18:34 	dwheeler 	New Issue 	
+2011-02-07 18:34 	dwheeler 	Status 	New => Under Review
+2011-02-07 18:34 	dwheeler 	Assigned To 	=> ajosey
+2011-02-07 18:34 	dwheeler 	Name 	=> David A. Wheeler
+2011-02-07 18:34 	dwheeler 	Section 	=> test
+2011-02-07 18:34 	dwheeler 	Page Number 	=> 3224-3225
+2011-02-07 18:34 	dwheeler 	Line Number 	=> 107503-107513
+2011-02-07 18:49 	dwheeler 	Note Added: 0000666 	
+2011-02-07 20:23 	Don Cragun 	Interp Status 	=> ---
+2011-02-07 20:23 	Don Cragun 	Note Added: 0000667 	
+2011-02-07 20:23 	Don Cragun 	Severity 	Editorial => Objection
+2011-02-07 20:23 	Don Cragun 	Type 	Clarification Requested => Enhancement Request
+2011-02-07 21:56 	dwheeler 	Note Added: 0000668 	
+2011-02-07 22:20 	Don Cragun 	Description Updated 	
+2011-02-07 22:20 	Don Cragun 	Desired Action Updated 	
+
+
+
+Adding Support for Arbitrary File Sizes to the Single UNIX Specification
+1.0 Overview
+1.1 The Large File Problem
+1.2 Requirements
+1.3 Importance
+1.4 Concepts
+1.5 Changes and Additions
+1.6 Conformance
+2.0 Changes to the Single UNIX Specification
+2.1 Changes to CAE Specification System Interface Definitions, Issue 4, Version 2
+2.2 Changes to CAE Specification System Interfaces and Headers, Issue 4, Version 2
+2.2.1 Changes to System Interfaces
+2.2.2 Changes to Headers
+2.3 Changes to CAE Specification Commands and Utilities, Issue 4, Version 2
+3.0 Transitional Extensions to the Single UNIX Specification
+3.1 Transitional Extensions to CAE Specification System Interfaces and Headers, Issue 4, Version 2
+3.1.1 Transitional Extensions to System Interfaces
+3.1.2 Transitional Extensions to Headers
+3.2 Transitional Extensions to the mount Utility
+3.3 Accessing the Extensions to the SUS
+
+Appendix A: Rationale and Notes
+A.1 Overview
+A.1.1 Guiding Principles
+A.1.2 Concepts
+A.2 Changes to the Single UNIX Specification
+A.2.1 Changes to CAE Specification System Interfaces and Headers, Issue 4, Version 2
+A.2.1.1 Changes to System Interfaces
+A.2.2 Changes to CAE Specification Commands and Utilities, Issue 4, Version 2
+A.3 Transitional Extensions to the Single UNIX Specification
+A.3.1 Transitional Extensions to CAE Specification System Interfaces and Headers, Issue 4, Version 2
+A.3.1.1 Transitional Extensions to System Interfaces
+A.3.1.2 Transitional Extensions to Headers
+A.3.2 Accessing the Transitional Extensions to the SUS
+

@@ -1,0 +1,1420 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Cloud Security: Virtualization, Containers, and Related Issues</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Basic overview of cloud computing and security, covering virtualization, containerization, and so on.">
+<meta name="keywords" content="cloud, cloud computing, security, virtualization, hardware virtualization, hypervisor, virtual machine monitor, containers, containerization, OpenShift, OpenStack, VMWare, LXC, Xen, VirtualBox, Docker, Rocket">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Cloud Security: Virtualization, Containers, and Related Issues</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2019-06-23 (originally 2014-12-02)</h2>
+
+<p>
+There seems to be a lot of confusion about security fundamentals
+of cloud computing (and other utility-based approaches).
+For example, many people erroneously think hardware virtualization is required
+for clouds (it is not), or that hardware virtualization and containerization
+are the same (they are not).
+<p>
+Here is a quick <a href="#what-is-cloud">introduction to clouds</a>,
+followed by a contrast of
+<a href="#isolation">some security isolation mechanisms
+that could be used to implement them</a>:
+<a href="#physically-separate">physically separate machines</a>,
+<a href="#hardware-virtualization">hardware virtualization</a>,
+<a href="#containerization">containerization (OS-level virtualization)</a>,
+and
+<a href="#multi-user">traditional multi-user accounts</a>.
+I also discuss
+<a href="#cloud-supplier">cloud supplier issues</a>,
+especially
+<a href="#supplier-trustworthiness">supplier trustworthiness</a>
+and
+<a href="#lock-in">vendor lock-in</a>.
+<p>
+In this paper I will sometimes contrast the needs of systems
+with extremely strong security requirements, compared to others with
+less critical requirements; people with different requirements
+often do not appreciate the needs of others, and are then surprised
+when someone with different needs accepts a different approach.
+I will list examples; there&#8217;s no way I can list them all, but examples
+help, and I&#8217;ll especially emphasize open source software implementations
+(you can try them out and examine them to your heart&#8217;s content).
+I also point out some origins and history; many people have no idea
+that much of this is decades old.
+This paper necessarily omits a lot; this is big and active area.
+For example,
+<a href="https://snyk.io/blog/serverless-security-implications-from-infra-to-owasp/">"Serverless Security implications-from infra to OWASP" by
+Guy Podjarny</a> has a post that compares serverless
+(what I call cloud) security implications from a broader perspective than
+just the different isolation mechanisms that I focus on here.
+Here, I just try to focus on some fundamentals.
+In cloud,
+<a href="http://www.infoworld.com/article/3030138/cloud-computing/13-ways-the-cloud-has-changed-since-last-you-looked.html">things are changing
+all the time</a> - but the fundamentals do not.
+
+<h1 id="what-is-cloud">What is a cloud?</h1>
+<p>
+&#8220;The NIST Definition of Cloud Computing&#8221;
+officially defines what &#8220;cloud computing&#8221;
+means to the U.S. federal government
+<a href="http://csrc.nist.gov/publications/nistpubs/800-145/SP800-145.pdf">[Mell2011]</a>,
+and this is the definition we&#8217;ll use here.
+Cloud computing is
+&#8220;a model for enabling ubiquitous, convenient, on-demand network access
+to a shared pool of configurable computing resources
+(e.g., networks, servers, storage, applications, and services) that
+can be rapidly provisioned and released
+with minimal management effort or service provider interaction.&#8221;
+NIST identifies five essential characteristics:
+On-demand self-service, broad network access,
+resource pooling, rapid elasticity, and measured service.
+NIST identifies three service models:
+<ul>
+<li><i>Infrastructure as a Service (IaaS)</i>:
+&#8220;The capability provided to the consumer is to provision
+processing, storage, networks, and other
+fundamental computing resources where the consumer
+is able to deploy and run arbitrary software, which can include operating
+systems and applications....&#8221;
+IaaS typically provides you computers, which may be virtual,
+and you can choose an operating system to run on it and do what you want
+with them.
+A popular example of IaaS is Amazon Web Services (AWS), including
+its Amazon Elastic Compute Cloud (EC2)
+that provides scalable virtual private servers using Xen.
+Other examples include Windows Azure, Google Compute Engine,
+and Rackspace Open Cloud.
+OpenStack is open source software that lets you implement your own IaaS.
+<li><i>Platform as a Service (PaaS)</i>:
+&#8220;The capability provided to the consumer is to deploy onto the cloud
+infrastructure consumer-created or acquired applications...
+The consumer does not manage or control
+the underlying cloud infrastructure including network, servers,
+operating systems, or storage,
+but has control over the deployed applications and possibly
+configuration settings for the application-hosting environment.&#8221;
+Here you are provided an operating system (and typically services on
+top of them); you then provide the application(s) to run.
+Examples include Google App Engine,
+Red Hat OpenShift (built on OpenShift Origin),
+Heroku, and Windows Azure Cloud Services.
+Amazon Web Services (AWS) also provides support as a PaaS.
+OpenShift Origin is open source software that lets you implement your
+own PaaS.
+<li><i>Software as a Service (SaaS)</i>:
+&#8220;The capability provided to the consumer is to use
+the provider&#8217;s applications running on a cloud infrastructure...&#8221;.
+Here you are just using (via a network) an application
+that can very rapidly scale.
+Examples include SalesForce and Google docs.
+</ul>
+<!--
+Confirmed examples with:
+http://www.tomsitpro.com/articles/cloud-computing-solutions,1-1755.html
+-->
+<!-- Use "center" tag to work around browser CSS bugs -->
+<p>
+The figure below illustrates this.
+The orange rectangles
+show the parts that the user is responsible for,
+while the blurred gray regions show the services that are
+provided by a cloud computing service.
+The parentheses give examples; examples of infrastructure
+are computer hardware (which may be virtualized), and
+examples of a platform include the operating system
+and middleware (runtimes are also potentially part of a platform).
+The SaaS figure shows that <i>Data</i> may even be provided by a service;
+users normally provide data in all cases,
+but a SaaS provider may also provide a significant amount of data
+(such as international tax tables or large datasets)
+or metadata
+(e.g., data schemas that implement the services it provides).
+<p>
+<center>
+<img class="center" src="service-types.svg" alt="Comparison of traditional, IaaS, PaaS, and SaaS approaches.  Each approach increases the number of activities performed by the service provider." width="90%">
+<br>
+Figure 1. Comparison of traditional, IaaS, PaaS, and SaaS approaches
+</center>
+<p>
+NIST identifies several deployment models: private cloud, community cloud,
+public cloud, and hybrid cloud.
+For example, in a hybrid cloud some services might depend
+on a private cloud while other services depend on a public cloud.
+(see my later discussion on <a href="#others-access">who has access</a>).
+<p>
+Cloud computing is the natural evolution of
+utility-based computing ideas that have been around for a long time.
+In 1961, John McCarthy said,
+&#8220;Computing may someday be organized as a public utility
+just as the telephone system is a public utility...
+Each subscriber needs to pay only for the capacity he actually uses...&#8221;
+<a href="http://www.technologyreview.com/news/425623/the-cloud-imperative/">[Garfinkel2011]</a>.
+Project Multiple Access Computing (MAC) was officially started on July 1, 1963,
+which had the long-range objective to support
+&#8220;evolutionary development of a computer system
+easily and independently accessible to a large number of people
+and truly flexible and responsive to individual needs&#8221;
+<a href="http://www.multicians.org/project-mac.html">[VanVleck]</a>.
+Project MAC developed MULTICS, specifically to provide
+large-scale shared computing;
+MULTICS greatly influenced the later development of Unix and Linux.
+Another precursor is the idea of a shared network in the
+&#8220;intergalactic computer network&#8221; concept of J.C.R. Licklider;
+he pressed development of the
+ARPANET (Advanced Research Projects Agency Network) in 1969 that later
+became the Internet.
+<!--
+Source:
+http://www.computerweekly.com/feature/A-history-of-cloud-computing
+-->
+
+<p>
+What is different today is the widespread availability of
+technology (including computing power) that makes these ideas much
+easier and cheaper to implement and apply
+<a href="http://www.technologyreview.com/news/425623/the-cloud-imperative/">[Garfinkel2011]</a>.
+Anyone with a credit card can immediately get access to a <i>lot</i> of
+computing power.
+For example,
+in October 2014, &#8220;Databricks participated in the Sort Benchmark
+and set a new world record for sorting 100 terabytes (TB) of data,
+or 1 trillion 100-byte records.
+The team used Apache Spark on 207 EC2
+virtual machines and sorted 100 TB of data in 23 minutes.  In comparison,
+the previous world record set by Hadoop MapReduce used 2100 machines in
+a private data center and took 72 minutes&#8221;
+<a href="http://opensource.com/business/15/1/apache-spark-new-world-record">[Xin2015]</a>.
+Both <a href="http://hadoop.apache.org/">Apache Hadoop MapReduce</a> and
+<a href="http://spark.apache.org/">Apache Spark</a>
+are open source software that greatly
+simplify software development for analyzing data
+using multiple machines.
+Since they are both designed to simplify developing distributed systems,
+in many cases both make it easier to use cloud-based systems to
+analyze large or complex datasets.
+<a href="http://www.infoworld.com/article/3030138/cloud-computing/13-ways-the-cloud-has-changed-since-last-you-looked.html">"13 ways the cloud has changed (since last you looked)" by Peter Wayner (InfoWorld)</a>
+describes some of the many variations in configurations and pricing;
+the good news is that there are many options, the challenge is to find
+the best option for a given purpose.
+<a href="https://github.com/open-guides/og-aws">The Open Guide to Amazon Web Services</a>
+provides a nice survey of the many services in Amazon Web Services (AWS),
+including tips, notes about vendor lock-in, and providing names
+for alternative services.
+<a href="https://www.schneier.com/blog/archives/2015/06/should_companie.html">Bruce Schneier&#8217;s &#8220;Should Companies Do Most of Their Computing in the Cloud?&#8221;</a>
+discusses many of the issues involved in cloud computing, including
+economic and legal issues, and emphasizes that you need
+to weigh the benefits against the risks.
+
+
+<p>
+Note that:
+<ol>
+<li><i>Hardware virtualization is not required for a cloud</i>.
+The NIST definition never mentions hardware virtualization at all, for example.
+Hardware virtualization is a <i>technology</i> often used to create clouds,
+and vendors selling virtualization-based systems certainly emphasize
+hardware virtualization, but hardware
+virtualization is merely <i>one</i> way to get there.
+Indeed,
+<a href="http://csrc.nist.gov/publications/nistpubs/800-146/sp800-146.pdf">NIST SP 800-146</a> mentions cloud security issues that arise
+&#8220;when [the] providers offer computing resources in the form of
+[virtual machines]&#8221;
+(section 9.4, virtual machines) -
+this text presumes virtual machines are not always involved in clouds
+because they use the word &#8220;when&#8221; and not &#8220;because&#8221;.
+The fact that clouds do not require virtualization was also noted in
+<a href="http://www.iaeng.org/publication/WCECS2011/WCECS2011_pp61-66.pdf">[Chandersekaran2011]</a>.
+<li><i>Clouds need not be public</i>.  Private clouds are perfectly acceptable.
+Private clouds often cost much more than public clouds
+(due to reduced sharing), but
+if you have very serious security requirements,
+private clouds may be worth investigating
+(see <a href="#others-access">who has access</a>).
+</ol>
+
+
+<h1 id="isolation">Isolation mechanisms</h1>
+<p>
+For cloud computing (or any shared system) to work, you need to have
+some technology to implement it.
+Since workloads are using shared resources, one of most important issues
+in implementing a cloud is the isolation mechanism used to
+separate the workloads.
+<p>
+There are many ways to isolate workloads;
+common ones (in order of decreasing security isolation) are
+<a href="#air-gapped">air-gapped physically separate machines</a>,
+<a href="#physically-separate">physically separate machines</a>,
+<a href="#hardware-virtualization">hardware virtualization</a>,
+<a href="#containerization">containerization (OS-level virtualization)</a>,
+and
+<a href="#multi-user">traditional multi-user accounts</a>.
+Most of
+these are not mutually exclusive; you can use hardware virtualization on
+physically separate machines, or run containers inside hardware virtualization.
+That said, it is the <i>strongest</i> isolation
+mechanism in use that matters most.
+It is important to understand the basic mechanisms in use,
+because they affect the underlying security.
+In particular, it is important to understand the limitations of
+any isolation mechanism.
+
+<h2 id="air-gapped">Air-gapped physically separate machines</h2>
+<p>
+A strong form of isolation is to <i>not</i> connect machines
+at all through any network.
+This has its advantages for security.
+It means that the vulnerabilities in an computer, or an operating system's
+networking stack, or the OS low-level services,
+cannot be exploited over a network.
+Many computers have mechanisms that will surprise you, for example,
+computers with
+<a href="https://en.wikipedia.org/wiki/Intel_Active_Management_Technology">Intel Active management technology (AMT)</a>
+can be remotely controlled over a network, even if computer is turned off
+(a computer that is "off" with AMT has a separate powered computer
+that obeys commands over a TCP/IP network).
+<p>
+There are many ways to leak data even with an air gap.
+Air-gapped systems can still have information exfiltrated from them
+using mechanisms such as
+<a href="https://arxiv.org/abs/1804.04014">power line use by computers</a>,
+<a href="https://www.helpnetsecurity.com/2014/11/04/extracting-data-from-air-gapped-computers-via-mobile-phones/">mobile phones to monitor radio frequencies</a>,
+<a href="https://www.helpnetsecurity.com/2015/03/24/hack-air-gapped-computers-using-heat/">heat</a>,
+<a href="https://www.helpnetsecurity.com/2016/06/24/air-gapped-computers-fan-speed/">fan speed</a>, and
+<a href="https://arxiv.org/abs/1802.02700">low frequency magnetic radiation (this propagates though the air, and can be generated by a CPU
+by a normal user process)</a>.
+Indeed, radio emission issues have been known about for many decades
+(look up TEMPEST).
+Electromagnetic emissions can be shielded, and the other issues can be
+countered by larger physical separation, but note how hard an attacker
+has to work if the defender is serious about separation.
+In practice, air-gapped systems have to have occasional communication
+(e.g., by inserting a USB stick), and those provide
+rich opportunities for attack.
+Air gapping can be helpful when security is critical, but it's no guarantee
+by itself.
+<p>
+Besides, if the machine is air-gapped from all other machines, I think it
+doesn't really meet the definition of cloud computing.
+Thus we don't need to belabor this option
+(I'll basically ignore it from here on).
+It's possible to air-gap a network of machines from wider networks,
+and then apply cloud techniques,
+but network-based attacks will obviously work within that network.
+So let's look for other isolation techniques that provide some security
+with less pain.
+
+<h2 id="physically-separate">Physically separate machines (for &#8220;bare metal clouds&#8221;)</h2>
+<p>
+Some systems may be the direct target
+of strong persistent attacks, e.g., from a nation state or other
+advanced persistent threat.
+In addition, in some systems,
+any security breach may directly lead to harsh consequences
+(such as the death of many people
+or the loss of hundreds of millions of dollars).
+In these situations you may need high assurance that a
+system will <i>never</i> have a breach.
+In these cases common cost reduction approaches to implement clouds
+may create unjustifiable and dangerous risks.
+These approaches include
+(1) depending on
+hardware virtualization to isolate multiple virtual machines
+running on a single real machine, and
+(2) multi-tenancy.
+<p>
+Not everyone is subject to these kinds of attacks or impacts.
+But part of the problem today is that people do not appreciate
+situations people are in, and want &#8220;one size fits all&#8221;.
+In general, <i>any</i> sharing (such as sharing of the same computer)
+is much more risky from a security
+point-of-view compared to using separate machines.
+<p>
+For example,
+If you don&#8217;t use physically separate machines, then you are
+depending (in part) on software to keep machines isolated.
+However, attackers have always found
+vulnerabilities in the isolation software
+(there is the possible exception of formally-proved separation software,
+but such software is really rare today).
+For some situations any break at all is a disaster;
+since software (other than formally-proven software)
+cannot make those kinds of guarantees, using software for separation
+is inappropriate when a break-in is a disaster.
+<p>
+Besides, some attacks are (in my opinion)
+impractical to counter without physically separate machines.
+Perhaps the most obvious problem are covert channels,
+a common problem in shared systems that is well-known by
+experts in computer security.
+A covert channel is the ability to transfer information
+between processes that are not supposed to be allowed to communicate.
+For example, imagine that a system has really sensitive data,
+and has been tricked into running malicious code.
+You might imagine that putting the system
+into an isolated virtual machine that
+cannot send network traffic would solve the problem, but you would be wrong.
+If you want to prevent a subverted system from leaking data at all,
+preventing its network traffic from escaping and having
+virtual machines that cannot talk directly to each other is <i>not</i> enough.
+A subverted system could try to transmit data to another
+supposedly-separate process on the same machine by computing hard
+(meaning a 1), or not computing hard (meaning a 0), to leak data to
+another virtual machine that can observe these shifts.
+Similarly, a subverted system could use the
+floating-point register (meaning 1), or not use it (meaning 0), and
+again leak data to another virtual machine that could observe it.
+Or it could use a memory region to keep it in cache (meaning 1), or
+ignore it so it will leave the cache and take longer to access (meaning 0).
+It is absurdly difficult for developers to even determine how much time
+things take on a modern CPU;
+<a href="http://blog.erratasec.com/2015/03/x86-is-high-level-language.html#links">x86 machine code is now a high-level language</a>.
+You would think this couldn&#8217;t leak much information,
+but modern error-correction systems, compression algorithms,
+and high-performance systems mean that covert channels are disturbingly fast.
+In my opinion it is impractical today
+to build software that fully prevents covert channels on the same processor;
+there are just too many shared components (channels) to deal with.
+It is much cheaper and easier to provide each process their own processor,
+and then devise your network so that networks have isolated channels
+(e.g., by using fixed allocations).
+<p>
+Another example is defects in hardware protection mechanisms.
+Computer hardware is complicated, and some of its defects are
+security-relevant.
+For example,
+Google&#8217;s Project Zero team posted in 2015 a description of how to
+<a href="http://googleprojectzero.blogspot.com/2015/03/exploiting-dram-rowhammer-bug-to-gain.html">exploit the DRAM Rowhammer bug to gain kernel privileges</a>.
+In short, the Rowhammer attack enables programs to change the
+values in <i>other</i> programs (including the operating system kernel)
+on a number of systems.
+In
+<a href="http://arstechnica.com/security/2016/03/once-thought-safe-ddr4-memory-shown-to-be-vulnerable-to-rowhammer/">2016 it was found that even
+DDR4 memory, once considered safe, was vulnerable to Rowhammer</a>.
+Google demonstrated that this could be exploited on a variety of systems.
+Other examples are Spectre and Meltdown.
+Systems that do not share hardware are immune to failures in the hardware
+sharing mechanism.
+<p>
+You can still build systems that meet the
+NIST definition of cloud computing, even if you cannot risk
+sharing computer hardware or software between different projects
+at the esame time.
+Simply require that each executing machine be allocated, at any one time,
+to a single (dedicated) real machine.
+You can <i>use</i> hardware virtualization or containerization
+for some purposes (e.g., to simplify migration), without depending on
+their isolation properties
+to allow you to use a single computer to run multiple virtual machines
+or multiple containers.
+This approach is sometimes called a
+<a href="http://www.computerworlduk.com/blogs/infrastructure--operations/bare-metal-clouds-3591315/">bare metal cloud</a>.
+Obviously you still need to manage things, and you need to protect
+the management system;
+you could do this with a separate physically-isolated network,
+which reduces opportunities for access
+(just presume that all systems being managed are malicious).
+(If even that is too risky, perhaps a cloud isn&#8217;t appropriate
+for your problem at all.)
+Some people use this approach purely for performance reasons,
+in addition or instead of its advantages for isolation.
+<p>
+This approach is typically more expensive than other isolation mechanisms,
+but in some cases this extra expense is worth it.
+The good news is that modern computer systems are <i>much</i> cheaper
+than decades ago, so you can simply buy (or have someone trusted buy)
+many computers with much less money than in the past.
+In a number of cases this extra cost is quite doable.
+An example of this kind of architecture is given in
+&#8220;High Assurance Challenges for Cloud Computing&#8221;
+<a href="http://www.iaeng.org/publication/WCECS2011/WCECS2011_pp61-66.pdf">[Chandersekaran2011]</a>,
+which won the award
+&#8220;Certificate of Merit for International Conference
+on Computer Science and Applications 2011&#8221;.
+I know the authors; Sekar Chandersekaran sadly passed away in May 2014,
+but I think his insight that clouds do <i>not</i> require
+hardware virtualization needs to be understood more widely.
+
+<p>
+From a security point of view, physically separate machines are better
+than depending on mechanisms like
+hardware virtualization to provide security isolation.
+You can still use hardware virtualization to ease migration, but that
+is a separate issue.
+On the other hand, they require far more resources than directly
+depending on hardware virtualization for security, so let us
+describe that next.
+
+<h2 id="hardware-virtualization">Hardware virtualization</h2>
+<p>
+In hardware virtualization (aka virtualization) you use software - called a
+&#8220;virtual machine manager&#8221; (VMM) or &#8220;hypervisor&#8221; - to
+create a &#8220;virtual machine&#8221; that acts like a real computer.
+You can then install an operating system on each virtual machine.
+Each virtual machine is called a guest, while the underlying system
+that enables virtual machines (including the hypervisor)
+is called the &#8220;host&#8221;.
+In many cases multiple virtual machines execute on a single real machine, and
+many VMMs support migration of a virtual machine to a different real machine
+when more resources are needed.
+This is an obvious way to implement an IaaS.
+<p>
+There are many ways to implement a host.
+You can implement the VMM:
+<ol>
+<li>Underneath the operating system,
+as if it were a tiny operating system itself.
+Examples include VMware vSphere (also called &#8220;ESXi&#8221;) and Xen.
+<li>As part of the operating system kernel.  Linux&#8217;s
+Kernel-based Virtual Machine (KVM) is an example.
+<li>On top of the operating system as an application.
+VirtualBox is an example.
+</ol>
+
+<p>
+If you want to scale up to using these mechanisms, you typically
+want management software to automatically manage and scale up
+these mechanisms.
+CloudForms, Red Hat Enterprise Virtualization, and even OpenStack
+provide mechanisms for managing hypervisors.
+<!-- "OpenShift is more like a container management system
+and has no interaction with the underlying VMM provisioning system." -->
+
+<p>
+These are, of course, old ideas.
+The term &#8220;virtualization&#8221; stems from work by IBM in the 1960s,
+especially the CP-40 mainframe originally developed in 1964.
+However, CPUs and networks have become much more capable,
+making virtualization cost-effective in many more situations.
+Virtualization is often mentioned in wider society, for example,
+<a href="http://dilbert.com/2008-02-12/">Dilbert of 2008-02-12</a>
+mentions it.
+
+<p>
+In many cases VMMs can share memory pages across VMs as an efficiency measure.
+When properly implemented these should not have many security
+implications, but of course, the trick is getting them
+&#8220;properly implemented&#8221;.
+A proper VMM implementation should ensure that pages always have useless data
+(usually zeros) before handing a new page to a virtual machine, and this
+eliminates most problems.
+Shared pages may be read-only, while others may be copy-on-write.
+Read-only pages are easier to implement correctly, so they have a lower
+implementation error risk.
+Shared memory pages create covert channels, but as I noted earlier,
+if you&#8217;re worried about covert channels in a VMM, you are probably
+the wrong approach anyway (you should be using physically separate machines).
+(My thanks to Gunnar Hellekson who suggesting talking about
+VMMs sharing memory pages.)
+
+<p>
+Hardware virtualization typically provides better isolation than
+OS-level containerization, but at higher costs in startup time and
+resources.
+<a href="https://clearlinux.org/features/clear-containers">Intel has been
+developing &#8220;Clear Containers&#8221; </a>
+(with more detail on
+<a href="https://lwn.net/Articles/644675/">Clear Containers on LWN.net</a>)
+that try to optimize hardware virtualization so thoroughly that
+they have similar start-up times and resource uses as compared to
+OS-level containerization.
+This is pretty clever; they use a tiny mini-hypervisor to boot
+straight into the Linux kernel, optimize Linux kernel boot time
+for a kernel designed for this use,
+and use various tricks to do zero-copy no-memory cost access for
+the operating system code and data.
+
+<p>
+From a security point of view, hardware virtualization is
+better (it provides more isolation) than containerization, but it
+provides less isolation than if you used physically separate hardware
+to perform isolation.
+The reason is that the attack surface is fundamentally different in each case.
+
+<p>
+Some people mistakenly think that hardware virtualization is
+somehow a security guarantee.
+It is not.
+If a vulnerability is found in the CPU or VMM (hypervisor),
+or a vulnerability is found that that can be exploited through the VMM,
+then the system can be subverted.
+And yes, VMMs have vulnerabilities.
+For more about the kinds of vulnerabilities in VMMs, see
+<a href="http://caslab.eng.yale.edu/people/jakub/papers/scc2013.pdf">[Perez-Botero2013]</a>.
+Modern hypervisors are typically written to emphasize
+convenience and shared performance, and aren't designed
+to counter powerful attacks.
+For example,
+modern hypervisor systems generally have a huge 'trusted computing base' (TCB),
+which makes them very difficult to secure and makes
+many high security approaches (like formal methods) impractical to apply
+<a href="http://dl.acm.org/citation.cfm?id=2043575">[Colp2011]</a>.
+<a href="https://www.youtube.com/watch?v=zHwErzJ1udc">Rafal Wojtczuk</a>
+states in his Black Hat 2014 presentation that
+"we make a fact based argument that many hypervisors
+aren't designed with security in mind"; the problem is that
+if the goal of a virtualization system is to maximize features,
+the attack surface grows.
+In addition, cryptographic side-channel attacks can
+allow a guest to derive a secret key belonging to
+a different guess via the
+CPU cache [Pratiba2015] or the CPU pipeline [D’Antoine2015].
+<!--
+[Pratiba2015] Pratiba, B. and Shobha, G. and Tandon, Sonali and B, Srushti S and Vartika. Cache based Side Channel Attack on AES in Cloud Computing Environment. In Proceedings of the International Journal of Computer Applications. 2015.
+[D’Antoine2015] D’Antoine, Sophia M. Exploiting Processor Side Channels to Enable Cross VM Ma-licious Code Execution. Master of Science Thesis. Rensselaer Polytechnic Institute. Troy, New York. 2015.
+-->
+On the other hand, the attack surface
+for a VMM is <i>much</i> less than for containers, because
+VMMs provide relatively few services to directly attack compared
+to a container.
+
+<h2 id="containerization">Containerization (OS-level virtualization)</h2>
+
+<p>
+Containerization, also called
+<a href="http://en.wikipedia.org/wiki/Operating_system%E2%80%93level_virtualization">operating system-level virtualization</a>,
+occurs when the operating system kernel
+&#8220;allows for multiple isolated user space instances,
+instead of just one&#8221;.
+The instances are often called containers, and appear
+to be isolated separate systems (at least via the filesystem).
+Since containers share a single operating system kernel, and
+typically easily share files as well, they are typically
+much more efficient than full hardware virtualization.
+Note, however, that all systems use the same underlying kernel, so
+you cannot use different operating systems on the same underlying platform
+(without additional mechanisms).
+Containers provide less security isolation than hardware virtualization,
+as I will describe in a moment.
+Indeed, containers often don&#8217;t fully provide security isolation at all;
+depending on the technology and threat,
+you often need to combine them with other mechanisms
+if you want secure isolation.
+This is an obvious way to implement a PaaS, though there are limits
+to the security it can provide.
+
+<p>
+Historically, one of the most widespread mechanisms
+for containerization is <i>chroot</i>, which creates restricted views of
+the filesystem.
+<a href="http://en.wikipedia.org/wiki/Chroot">Chroot was included
+in version 7 Unix, which was released by Bell Labs in 1979</a>;
+it was added to BSD by Bill Joy in 1982, and
+today is in most Unix and Unix-like kernels including the Linux kernel.
+A short explanation may help for those not familiar with it.
+On Unix and Linux all files start from the root of a filesystem
+named &#8220;/&#8221;.
+The &#8220;chroot&#8221; privileged system call changes the directory referred to by &#8220;/&#8221;,
+making it possible to create separate filesystem views for
+a process and its descendants.
+The implementation of this is remarkably simple: every process includes
+a pointer to what <i>it</i> considers the root of the filesystem, and
+all processes created by that process inherit this value.
+The chroot mechanism
+creates an isolated instance that simply cannot see the files created
+outside of its chroot region.
+Many tools, including mock and pbuilder, are built on top of chroot.
+In short, chroot is very useful and widely used.
+However, chroot only isolates filesystems; it does not isolate
+networking, process lists, or many other system capabilities.
+Also, chroot cannot effectively isolate privileged users (in particular root);
+in most implementations a process with root privileges
+can trivially break out of a chroot environment.
+
+<p>
+Many operating systems have added more capable mechanisms than chroot
+to support containerization.
+These isolated regions are often called containers or jails.
+These mechanisms at least isolate filesystems, just like chroot,
+but they try to perform other functions as well.
+Typically they implement at least network isolation, some
+other kinds of namespace isolation (e.g., isolating processes so one
+container cannot see the processes in other containers),
+perform copy-on-write
+(an optimization that grealy speeds startup and reduces storage needs),
+and let organizations define quotas for each container
+(e.g., for storage or CPU).
+Some also attempt to limit what privileged users (in particular
+the &#8220;root&#8221; user) is allowed to do inside it, though this is
+harder to do than you might think.
+Because it is difficult to do,
+even systems that <i>try</i> to limit root privileges in containers
+have a non-trivial risk that mistakes could lead to vulnerabilities.
+Examples of these more capable containerization mechanisms
+include FreeBSD jail, Solaris containers, HP-UX containers,
+and Parallels Virtuozzo / OpenVZ containers.
+<a href="http://en.wikipedia.org/wiki/LXC">In 2008
+the Linux kernel added support for
+Linux containers (LXC)</a>.
+
+<p>
+<a href="http://en.wikipedia.org/wiki/Docker_%28software%29">Docker</a>
+has rapidly become popular as a way to simplify creating and sharing containers.
+Docker builds on various existing kernel mechanisms
+to make containers much easier to create and apply.
+Historically Docker used Linux Containers (LXC) as its lower-level
+mechanism; more recently
+it switched to <a href="https://github.com/opencontainers/runc">runC</a>
+(formerly libcontainer) to run containers.
+<a href="http://www.projectatomic.io/">Project Atomic</a>
+provides tools designed to deploy and manage Docker containers.
+Project Atomic Host, in particular,
+is a lightweight operating system assembled out of upstream RPM packages
+designed to run applications in Docker containers.
+<a href="http://www.projectatomic.io/docs/cockpit/">Cockpit</a>
+from project Atomic
+is a kind of minimum container management tool
+that supports &#8220;atomic&#8221; update and rollback
+for applications and host.
+<!--
+Gunnar:
+Kube (OpenShift) is what I would describ as an end-to-end method for deploying containers.
+-->
+
+<p>
+<a href="https://coreos.com/blog/rocket/">Rocket</a> is a more recently-created
+alternative container format and system developed by
+<a href="https://coreos.com/">CoreOS</a>.
+The CoreOS developers were originally involved in developing Docker,
+and Brandon Philips (co-founder/CTO of CoreOS) was a top Docker
+contributor.
+However, the CoreOS developers wanted a simple composable building block
+that &#8220;we can all agree on&#8221;.
+The CoreOS developers are concerned that Docker development is
+&#8220;creating a monolithic binary that runs primarily as root&#8221;
+(a design that has many security weaknesses and concerns).
+<a href="https://coreos.com/blog/rocket/">Rocket</a> is an alternative
+container runtime, built by people who were originally Docker contributors,
+that focuses on &#8220;creating simple reusable container
+suite of tools designed to make it easy to create and use containers&#8221;.
+CoreOS plans to continue to ship Docker, but also to develop
+Rocket as a smaller and simpler alternative.
+Rocket is new (as is Docker), so it&#8217;s difficult to really
+compare them security-wise;
+simpler systems (like Rocket) are often easier to analyze, and thus
+potentially easier to secure, but you need to actually
+<i>examine</i> software for security weaknesses (and fix them)
+before the advantages of simplicity really pay off.
+
+<p>
+The
+<a href="https://www.opencontainers.org/">Open Container Initiative (OCI)</a> is a &#8220;lightweight, open governance structure, to be formed under the auspices of the Linux Foundation, for the express purpose of creating open industry standards around container formats and runtime.&#8221;
+
+<p>
+Docker and other container approaches have
+become very popular, but people often misunderstand
+their security capabilities.
+Dan Walsh has written a two-part series about the security
+of Docker containers, and he explains that
+&#8220;Some people make the mistake of thinking of containers
+as a better and faster way of running virtual machines.
+From a security point of view, containers are much weaker...
+[when using containers, you should]
+Drop privileges as quickly as possible;
+Run your services as non-root whenever possible;
+Treat root within a container as if it is root outside of the container...
+Only run containers from trusted parties.&#8221;
+Fundamentally, not everything in Linux is namespaced, so
+Linux does not provide the level of isolation that hardware virtualization does.
+There are definitely mechanisms that help isolate containers
+to reduce their risks, especially SELinux, and containers can make it
+easier to determine where to put the boundaries.
+Still, the risks are greater compared to hardware virtualization
+or physically separate machines
+<a href="http://opensource.com/business/14/7/docker-security-selinux">[Walsh2014a]</a>
+<a href="http://opensource.com/business/14/9/security-for-docker">[Walsh2014b]</a>
+<a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Resource_Management_and_Linux_Containers_Guide/sec-Secure_Containers_with_SELinux.html">[RedHat]</a>
+<a href="http://www.projectatomic.io/docs/docker-and-selinux/">[ProjectAtomic]</a>.
+Dan Walsh has some simple summaries: &#8220;containers do not contain&#8221;;
+&#8220;docker pull is in the same class as yum install&#8221;
+(do not run untrusted Docker images); and
+&#8220;Treat a Docker image the same way you would treat other software
+you install on your machine&#8221;
+<a href="http://www.projectatomic.io/blog/2014/11/docker-s-new-security-advisories-and-untrusted-images/">[Walsh2014c]</a>.
+In addition,
+<a href="http://opensource.com/business/14/12/steps-to-initiate-docker-pull">a &#8220;docker pull&#8221; both fetches and unpacks a container image in one step. There is no verification step</a>.
+That means that malformed packages can compromise a system even if the
+container itself is never run.
+In addition,
+<a href="https://titanous.com/posts/docker-insecurity">Jonathan Rudenberg&#8217;s
+post on 2014-12-23</a> explained why Docker&#8217;s &#8220;verification&#8221; of
+the time didn&#8217;t verify anything; untrusted input should not be processed
+without verifying its signature, yet Docker failed to do so.
+My personal opinion is that while Docker has lots of rich features,
+it&#8217;s been developed in a hurry as a large monolithic system;
+hurried monoliths are usually hideously insecure.
+Thus, I think that if you use Docker you
+should also use other mechanisms (like SELinux or AppArmor)
+for actually enforcing isolation that are specifically designed for security
+and have a longer track record,
+and you should be selective of what software is run in these containers.
+I think my opinion is shared by others.
+
+<p>
+Now to be fair, some Linux container mechanisms (e.g., in lxc and libvirt)
+can use user namespaces so that the &#8220;root&#8221; privileged user in a container
+is actually a different unprivileged user in the overall host system.
+My thanks to Serge E. Hallyn for pointing out this important clarification.
+That said, the user accounts have to be set up this way, and the programs
+they run have to work when configured this way
+(if the program is unprivileged in the larger context,
+it may be unable to perform its intended function).
+These sorts of details are important, but they also make it really hard
+to make simple overall statements about security and containers.
+
+<p>
+OpenVZ came before LXC in Linux, and is very featureful.
+However, the OpenVZ developers
+made the mistake of not getting their work into the mainline
+Linux kernel at an early date.
+As a result, LXC (built into the Linux kernel) quickly gained popularity.
+<a href="https://lwn.net/Articles/627986/">In December 2014 Parallels announced</a> that
+it will be merging its open-source OpenVZ and
+proprietary Parallels Cloud Server projects into an open source
+&#8220;Virtuozzo Core&#8221;.
+That said, OpenVZ still has significant use, and the competition
+between them will probably be good for both.
+
+<p>
+<a href="https://www.nccgroup.trust/globalassets/our-research/us/whitepapers/2016/june/container_whitepaperpdf/">"Abusing Privileged and Unprivileged Linux Containers" by Jesse Hertz (2016)</a>
+examines some of the security mechanisms behind containers and shows
+how they can be exploited.
+Basically, it can be challenging to configure containers to be secure.
+That paper focuses on Linux, LXC, Docker, and AppArmor,
+but many of the techniques apply to any Linux container system.
+
+<p>
+From a security point of view, containers have the potential to be
+better than a simple multi-user shared server,
+because they can provide more isolation.
+They isolate the filesystem at least, and modern containerization
+systems isolate many other parts such as the network and process lists.
+In particular, using chroot (a weak form of containerization) is
+well-understood and has a long history of use as an isolation mechanism.
+If the design and code were absolutely and totally perfect,
+and containers were designed to fully contain privileged users,
+then containerization could be just as secure as hardware virtualization.
+<p>
+However, real-world code is <i>not</i> perfect.
+Containers share the operating system kernel, and thus, <i>any</i>
+vulnerability in the operating system kernel
+can lead to subversion of the entire system (including all
+its containers).
+Since operating system kernels directly provide much more functionality than
+hypervisors (e.g., they implement filesystems, application process controls,
+and networking), container-based systems fundamentally have a much larger
+attack surface.
+In practice,
+modern full-featured kernels always have some vulnerabilities,
+and containerization directly exposes the kernel to a program,
+so containerization is fundamentally less able to isolate components
+than hardware virtualization does.
+<p>
+In practice, containerization is not even as strong it could be
+theoretically; most containers
+have all sorts of namespace leaks.
+Some systems, such as Solaris, have undergone significant analysis
+of their container system, and as a result are much lower risk.
+However, many other systems
+have had relatively little security analysis of how well containers
+limit processes for security,
+especially for privileged accounts.
+<p>
+In particular, Linux containers (currently the most common kind)
+were not particularly designed to be used for security containment.
+Thus, when using Linux containers you often need to use other mechanisms
+that are specifically designed for security isolation
+(such as SELinux, seccomp, and separate user accounts),
+and you need to assume that
+privileged accounts are not isolated by containers.
+Gunnar Hellekson put it this way:
+&#8220;containers are a way to manage resources on a machine, and create a
+logical separation of workloads.
+Any security benefits are accidental and unintended.&#8221;
+<p>
+That does not mean that containerization is useless!
+Containers are extremely useful,
+and currently a lot of work is going into improving their security.
+For example, see
+<a href="https://unit42.paloaltonetworks.com/making-containers-more-isolated-an-overview-of-sandboxed-container-technologies/"
+>"Making Containers More Isolated: An Overview of Sandboxed Container Technologies" by Jay Chen (June 6, 2019)</a>.
+Chen says, "traditional containers such as Docker, Linux Containers
+(LXC), and Rocket (rkt) are not truly sandboxed as they share the
+host OS kernel. They are resource-efficient, but the attack surface
+and the potential impact of a breach are still large, especially in
+a multi-tenant cloud environment that co-locate containers belonging
+to different customers. The root of the problem is the weak separation
+between containers... [this] covers four unique projects from IBM, Google,
+Amazon, and OpenStack, respectively, that use different techniques to
+achieve the same goal, creating stronger isolation for containers."
+
+<p>
+If the containers are used to ease software management,
+instead of trying to separate different tenants
+in a multi-tenant system, then containers work very well today
+<a href="http://opensource.com/business/14/7/docker-security-selinux">[Walsh2014a]</a>.
+Google runs all their VMs inside containers
+so they can have a uniform mechanism for resource limits.
+<!-- Source for Google note: Gunnar Hellekson -->
+
+<p>
+Containers do provide <i>some</i> security isolation,
+especially if care is taken to ensure
+that the processes in the container are not given any privileges,
+and if either (1) the containerization system is designed for security
+(as is true for Solaris containers) or
+(2) another mechanism that <i>is</i> designed for security is used with it
+(as is typically done with Linux containers).
+My point is just that containers have inherent limitations for security,
+in particular, they are always subject to kernel vulnerabilities.
+Containers do not provide as strong an isolation as hardware virtualization
+even when supplemented with security isolation mechanisms
+(as is typically done with Linux containers).
+However, containers are far more efficient than full hardware virtualization;
+the lower cost from higher efficiency is compelling in many cases.
+
+<h2 id="multi-user">Traditional multi-user accounts</h2>
+<p>
+Traditional multi-user accounts also provide some isolation.
+Some people would not use the term &#8220;cloud&#8221; for systems
+using this isolation mechanism, but nothing in the
+NIST definition forbids it.
+In any case,
+most would be willing to call such systems &#8220;utilities&#8221;.
+Historically Unix systems were often shared systems that different
+people could simultaneously log in to and use.
+Different people had different user identifiers, every file was owned
+by a user, and owners could then set the privileges to determine
+what other users could do with their files.
+Multi-user account isolation is very well understood, baked into current
+designs, and heavily tested;
+as a result, this mechanism tends to be very strong for its intended purpose.
+It is easier for me to describe multi-user account access as separate
+from other mechanisms like containers, but this is really a false dichotomy;
+containers and multi-user accounts actually work well together.
+<p>
+Multi-user account mechanisms still work today, and they are in active use.
+Some shared web systems, for example, use multi-user accounts as their
+isolation mechanism.
+Android uses these mechanisms in an interesting way:
+each application on an Android device is assigned a different user id.
+Apple iOS technically does not use multi-user accounts to separate
+applications, but its mechanism for separating applications has many
+similarities.
+Some systems that use chroot also use a dedicated user,
+combining multi-user account isolation (which has had long analysis)
+with the file namespace isolation provided by chroot.
+Cloud-based systems, particularly those that are software as a service,
+could also use these mechanisms to implement limited isolation
+(especially if they are a SaaS)...  but they often will not.
+<p>
+These mechanisms do provide some separation, but they
+also potentially expose much more information to other users.
+It is easy to see what others are doing, and small mistakes can lead
+to the revelation of much more information to others.
+In most systems these access controls are discretionary; a malicious
+program or misconfiguration can leave the barn door open.
+Thus, in some sense they provide even less isolation than containers.
+So while this <i>can</i> be used as an isolation mechanism,
+other mechanisms will often make more sense when implementing a cloud,
+possibly in combination with this one.
+<p>
+That does not make these kinds of mechanisms useless for security.
+However, where these mechanisms are used there are often other
+mitigations or environmental situations that reduce risk.
+Historically multi-user isolation mechanisms were often used when all users
+were in the same organization or at least
+had established business relationships (and thus were easier to
+track down if they intentionally performed an attack).
+On a smartphone users typically choose what applications
+to install (instead of just running arbitrary programs sent to them).
+Many modern systems (including smart phones and modern Linux systems)
+primarily install programs from
+distribution repositories and application stores, which also
+reduce the risk of installing and running malicious applications
+(since these intermediaries have a chance to analyze the program).
+I could imagine a SaaS provider using multi-user accounts
+as an isolation mechanism, because the system will only be running
+software selected or developed by the cloud supplier.
+<p>
+In contrast, Iaas or PaaS cloud suppliers
+must be able to run software supplied by different users,
+generally without prefiltering them.
+As a result they will almost certainly
+want stronger mechanisms than multi-user accounts,
+especially if they are public clouds.
+
+<h1 id="cloud-supplier">Cloud supplier issues</h1>
+<p>
+There are many potential issues with the supplier of the cloud,
+including the
+<a href="#supplier-trustworthiness">trustworthiness of the supplier</a>,
+<a href="#others-access">who else has access
+(public vs. limited community vs. private cloud)</a>,
+and <a href="#lock-in">vendor lock-in</a>.
+I feel I should at least mention cloud technical management as well.
+
+<h2 id="supplier-trustworthiness">Cloud supplier trustworthiness</h2>
+<p>
+The cloud supplier has direct access and control of all
+data and processes in their cloud.
+This introduces many possible risks.
+The supplier organization may be malicious,
+one or more of its employees may be malicious
+(perhaps because they are bribed or extorted),
+or the supplier&#8217;s system may be subverted.
+
+<p>
+In many cases there are easy mitigations that are adequate for the purpose.
+Backups sent outside the cloud, as always, can counter the risk of data loss;
+this is especially true if you can easily move elsewhere
+(see the text on <a href="#lock-in">vendor lock-in</a>).
+Selecting reputable suppliers can help a great deal as well.
+Many cloud suppliers are willing to agree to certain stipulations
+and accreditations that reduce risk, too.
+For example, the US government&#8217;s
+<a href="http://cloud.cio.gov/fedramp/">Federal Risk and Authorization Management Program (FedRAMP) process</a>
+was established with the purpose of creating
+&#8220;transparent standards and processes for
+security authorizations and allowing agencies to
+leverage security authorizations on a government-wide scale&#8221;
+and includes
+<a href="http://cloud.cio.gov/fedramp/3pao">Third Party Assessment Organizations (3PAOs)</a>.
+Many cloud suppliers have a financial incentive to counter subversion,
+since that could risk their business,
+and good suppliers have teams focused on securing their systems.
+
+<p>
+You also have to realistically consider your alternatives:
+A good cloud provider (public or private) with a strong security team
+may be much better overall
+than an internal set of single-use servers
+that have little security investment due to inadequate budget.
+
+<p>
+There are stronger mitigations available as well.
+You can choose to store indexes to data, or hash values of data,
+instead of the data itself
+(e.g., store &#8220;employee numbers&#8221;
+but not the names and other information
+about the employee).
+You can also store encrypted values (without the keys), and then
+extract data from the cloud to use it in certain ways.
+Attackers cannot get what is not there.
+<p>
+That said, using clouds - especially public clouds - is a trade-off,
+and sometimes the trade-off is inappropriate.
+That&#8217;s especially an issue if you have very high-value systems or information,
+such as many military systems.
+<a href="http://www.politico.com/morningcybersecurity/0215/morningcybersecurity17258.html">Tal Kopan stated in Politico (2015-02-26)</a>
+that the &#8220;cyber line of the day award&#8221;
+went to Rep. Jim Cooper (Tennessee Democrat),
+who quipped during an Armed Services hearing that the computer cloud
+might as well stand for &#8220;the Chinese Love Our Uploaded Data.&#8221;
+&#8220;Cooper said he believes we&#8217;re &#8216;already in a cyber war&#8217;
+and sought assurances from military CIOs that they&#8217;re taking
+proper steps to secure DoD networks.&#8221;
+
+<p>
+An intriguing new approach in development is
+<a href="http://en.wikipedia.org/wiki/Homomorphic_encryption">homomorphic encryption</a>,
+where computations can be directly applied to encrypted data and
+produce an encrypted result so that the decrypted result
+matches the result of the original operation on the unencrypted result.
+In this approach, a cloud provider could perform the computation yet
+be unable to reveal what the results meant.
+Fully homomorphic encryption can handle any computation, but
+all known solutions today are many orders of magnitude slower.
+I am somewhat skeptical that fully homomorphic encryption
+will be practical in anything other than extremely specialized uses,
+at least for the next decade.
+Partially homomorphic encryption can handle only some kinds of
+computation, but has a smaller performance impact.
+Current partially homomorphic encryption mechanisms still take
+substantially more computing resources than doing the computing directly,
+but they are much closer to being practical, especially
+if hardware assistance can be developed.
+There are some specialized applications where this approach
+seems especially promising.
+It remains to be seen how widely partially homomorphic encryption
+could be used; I am slightly skeptical, but intrigued, and
+I could imagine this becoming useful in some circumstances
+(especially as research continues and/or hardware to support it becomes
+more available).
+
+<p>
+Whether or not the remaining risks are acceptable today
+depends on your situation.
+In many cases you can find an acceptable level of risk;
+after all, you cannot eliminate all risks.
+In some cases, this is not enough, or the only way to make risks acceptable
+is to spend more money for a more specialized solution.
+
+<p>
+<h2 id="others-access"><span id="private">Who else has access (private vs. public)?</span></h2>
+<p>
+Whenever you use a cloud, you are sharing resources with others.
+So not only are you potentially at risk from the
+<a href="#supplier-trustworthiness">cloud supplier</a> -
+you are also at risk from attacks via those others you share resources with
+(i.e., the other tenants).
+<p>
+A cloud supplier must support many tenants.
+The other organizations who share the cloud service have
+some kind of access... and may be able to exploit system vulnerabilities
+to get more (or total) access.
+It may not even be direct; if you share a cloud with another organization
+that develops a vulnerable service, a malicious organization can exploit
+those vulnerabilities to gain a foothold, and then use that foothold
+to attack your system.
+Public clouds are especially subject to this problem, since they can have
+practically any tenant.
+This is a typical rationale for choosing a
+private or limited community cloud, because reducing the sharing reduces
+where attacks can easily come from.
+<p>
+I&#8217;ve been focusing on technical means to limit access, but
+all technology has limits.
+Potential users of cloud computing must to determine if the
+protection mechanisms of their cloud computing supplier is enough,
+including physical protection and isolation mechanisms.
+The issue is determining the risk of the
+cloud system failing to adequately isolate
+your service from malicious attackers.
+Obviously, if the technical measures are adequate for need, that&#8217;s fine.
+The countermeasures discussed above regarding
+<a href="#supplier-trustworthiness">cloud suppliers</a> may also
+adequately reduce the risks.
+All approaches have risks, the question is, are they acceptable?
+
+<p>
+A non-technical approach is to simply not use cloud services that
+share resources with other organizations you don&#8217;t trust.
+Instead, you can focus on 
+limited community clouds, private clouds, or simply no cloud at all.
+When you use a private or limited community cloud
+you can still get commercial support
+(for both proprietary and open source software solutions),
+but reducing what is shared can reduce the risk of some kinds of attacks.
+In some cases these approaches may be the best course... but they&#8217;re
+often much more expensive, so count the cost.
+
+
+<h2 id="lock-in">Vendor lock-in</h2>
+<p>
+A different potential security issue with cloud computing
+is the risk of vendor lock-in.
+<a href="http://en.wikipedia.org/w/index.php?title=Vendor_lock-in&amp;oldid=636489547">Wikipedia defines vendor lock-in</a> as a situation which
+&#8220;makes a customer dependent on a vendor for products and services,
+unable to use another vendor without substantial switching costs.&#8221;
+Some people don&#8217;t consider vendor lock-in a security issue,
+but I disagree.
+Security is all about preventing other people from controlling you,
+and vendor lock-in definitely allows others to control you.
+If you&#8217;re locked into a vendor, then you are powerless if
+the vendor decides to ignore security issues or
+stop supporting the service, or substantially raise the rents.
+Suppliers have strong financial incentives to eventually raise
+rates to the highest value you can accept, once you are locked in,
+and it is typically easy to tell if a customer is locked in.
+<p>
+Having suppliers is not the problem - we <i>need</i> suppliers -
+the problem is excessive dependency on suppliers.
+<p>
+There is a simple way to measure vendor lock-in: the switching cost.
+Continuously determine what it would cost to switch to another vendor.
+If the cost of switching to a different vendor
+is low, then you have no or little lock-in.
+If it is high, or will become high, then you are at risk; you should be
+investigating ways to reduce your switching costs.
+Using standards and open source software are excellent
+ways to reduce vendor lock-in,
+but these are means to an end; the key is to determine
+if your switching costs are high.
+<p>
+Lock-in is a general issue whenever you have suppliers, but
+it is even more important for services like cloud services.
+The cloud supplier can choose to stop providing services, raise rates
+arbitrarily, or delete your data at will -
+even if there are pieces of paper promising otherwise.
+Even reputable suppliers might be bought out, have a catastrophic
+failure, or in other ways stop providing services you depend on.
+In short,
+if your cloud provider said, &#8220;pay us ten times as much next month
+or we&#8217;ll erase everything,&#8221; would you have a workable alternative?
+Your answer should be &#8220;yes&#8221;.
+(For more discussion, see
+<a href="http://www.antipatterns.com/vendorlockin.htm">[Antipatterns]</a>.)
+<p>
+In addition, lock-in prevents the use of some security mechanisms that
+derive from having diverse heterogenous suppliers.
+It is often useful to have multiple suppliers act as a check on
+each other, to more easily detect problems in one;
+<a href="/trusting-trust/">my dissertation on countering the trusting trust
+attack</a> is one of many papers that uses that strategy.
+It is also an ancient battle strategy to use constant movement
+to strengthen defense;
+<a href="http://classics.mit.edu/Tzu/artwar.html">Sun Tzu&#8217;s &#8220;Art of War&#8221;</a>
+states that
+&#8220;you may retire and be safe from pursuit
+if your movements are more rapid than those of the enemy&#8221;.
+For example, in some situations you can create a shifting attack surface
+by constantly migrating ephemeral workloads between different suppliers.
+
+<p>
+I think SaaS is often an especially high risk, because there is often
+no effective way to move all the data and processes out to a
+different system.
+But any service is at risk, and there are many ways to mitigate those risks.
+For example, if you can extract all your data into an
+open standard, that greatly reduces your risk.
+If you can move your data to an open source software implementation
+(and thus control it yourself if necessary), that reduces your risk even
+further.
+<!--
+Perhaps reference:
+http://iamondemand.com/blog/the-cloud-lock-in-part-1-public-iaas-is-great/
+http://www.iamondemand.com/post/9039434445/the-cloud-lock-in-part-1-public-iaas-is-great
+http://iamondemand.com/blog/the-cloud-lock-in-part-3-saas-is-really-nice/
+http://www.redhat.com/en/about/blog/keep-the-cloud-user-in-charge
+-->
+
+<h2>Handling security updates</h2>
+<p>
+In all of these situations, you need to make sure that necessary
+security updates (patches) are applied, and that secure configurations
+are used.
+In physically separate systems and hardware virtualization this is
+fundamentally the same as it has been historically.
+<p>
+One challenge is that many cloud providers want to provide the
+&#8220;same&#8221; image everywhere, or in the case of containerized systems,
+the image is &#8220;fixed&#8221;.
+The technology itself can support updates just fine, but there is
+a temptation to leave things unchanged even when they <i>need</i> to
+be changed.
+Thus, you should examine to make sure that security updates will be
+applied in a timely way, or that you can force the issue.
+
+<p>
+<h2 id="cloud-technical-management">Cloud technical management</h2>
+<p>
+Clouds work by pooling resources together so that they can be shared;
+this volume creates the opportunities.
+But of course this pooling creates a much stronger need for technical
+<i>management</i> all these resources to serve the cloud
+provider&#8217;s customers.
+<p>
+So clearly you need tools to manage these resources.
+These can include tools like Chef and Puppet, which let you
+configure many different (virtual) systems.
+From a security point-of-view, what is especially key is that these
+tools let you rapidly apply security updates (patches) and
+configuration changes that harden systems against attack
+(or counter an ongoing attack).
+Of course, these rapid automation tools can also be used to rapidly
+<i>attack</i> and <i>subvert</i> systems, so these management tools
+themselves need to be hardened (including being hardened from attacks by
+the systems the tools are supposed to be controlling).
+<p>
+Frankly, this is a whole topic by itself, so I will stop here.
+
+
+<h2>Other issues</h2>
+<p>
+Of course there are many other potential cloud supplier issues
+that need addressing.
+They include physical access (can you audit them?),
+data breach processes, and legal jurisdiction.
+Which ones matter depends on your circumstance; it&#8217;s best
+to identify the issues that matter to you, then determine which
+approaches adequately resolve them.
+<p>
+If you are interested, take a look at
+<a href="http://csrc.nist.gov/publications/nistpubs/800-146/sp800-146.pdf">NIST SP 800-146</a>,
+&#8220;Cloud Computing Synopsis and Recommendations&#8221;,
+which discusses various issues in cloud computing security.
+The U.S.
+<a href="http://iase.disa.mil/cloud_security/Documents/u-cloud_computing_srg_v1r1_final.pdf">Department of Defense (DoD) Cloud Computing
+Security Requirements Guide (SRG) (January 2015)</a>
+and
+<a href="http://cloud.cio.gov/action/secure-your-cloud">FedRAMP
+&#8220;Secure Your Cloud&#8221;</a> information may also be of interest.
+
+
+<!--
+E.G., DoD CIO memorandum "Supplemental Guidance
+for the Department of Defense’s Acquisition and Secure Use of Commercial Cloud Services,” December 16, 2013.
+-->
+
+
+<h1 id="conclusions">Conclusions</h1>
+<p>
+In conclusion, cloud computing is a <i>model</i> of how to share
+resources, and it can be implemented in many ways.
+You do <i>not</i> need to use hardware virtualization for cloud computing;
+that is just one way to do it.
+What makes sense depends on many factors, including
+your risk tolerance and costs you are willing to bear.
+Obviously details and execution matter.
+A VMM has a smaller attack surface
+than a component system, but a poorly-maintained and poorly-monitored
+VMM will typically have a higher risk than anything that is
+well-maintained and monitored.
+Still, it&#8217;s important to understand the basics so you can understand
+the trade-offs involved.
+<p>
+Of course, this paper cannot possibly cover everything about
+cloud security.
+<i>Really</i> securing a cloud, just like securing any system,
+requires attention to a whole host of factors.
+But it is much easier to understand those factors once you understand
+the basics... and I hope this helps.
+
+<h1 id="references">References</h1>
+
+<p>
+<a href="http://www.antipatterns.com/vendorlockin.htm">[Antipatterns]</a>
+Vendor Lock-In.
+Antipatterns.com.
+<a href="http://www.antipatterns.com/vendorlockin.htm">http://www.antipatterns.com/vendorlockin.htm</a>
+
+<p>
+<a href="http://www.iaeng.org/publication/WCECS2011/WCECS2011_pp61-66.pdf">[Chandersekaran2011]</a>
+Chandersekaran, Coimbatore, William R. Simpson, and Ryan Wagner.
+&#8220;High Assurance Challenges for Cloud Computing&#8221;.
+<i>Lecture Notes in Engineering and Computer Science, Proceedings World Congress on Engineering and Computer Science 2011</i>, Volume I, pp. 61-66.
+Berkeley, CA.
+October 2011.
+<a href="http://www.iaeng.org/publication/WCECS2011/WCECS2011_pp61-66.pdf">http://www.iaeng.org/publication/WCECS2011/WCECS2011_pp61-66.pdf</a>
+
+
+<p>
+<a href="http://www.technologyreview.com/news/425623/the-cloud-imperative/">[Garfinkel2011]</a>.
+Garfinkel, Simson.
+The Cloud Imperative.
+<i>Technology Review</i>.
+2011-10-03.
+<a href="http://www.technologyreview.com/news/425623/the-cloud-imperative/">http://www.technologyreview.com/news/425623/the-cloud-imperative/</a>
+
+
+<p>
+<a href="http://csrc.nist.gov/publications/nistpubs/800-145/SP800-145.pdf">[Mell2011]</a>
+Mell, Peter and Timothy Grance.
+<i>The NIST Definition of Cloud Computing</i>.
+National Institute of Standards and Technology (NIST).
+September 2011.
+NIST SP 800-145.
+<a href="http://csrc.nist.gov/publications/nistpubs/800-145/SP800-145.pdf">http://csrc.nist.gov/publications/nistpubs/800-145/SP800-145.pdf</a>
+
+<p>
+<a href="http://caslab.eng.yale.edu/people/jakub/papers/scc2013.pdf">[Perez-Botero2013]</a>.
+Perez-Botero, Diego, Jakub Szefer, and Ruby B. Lee.
+&#8220;Characterizing Hypervisor Vulnerabilities in Cloud Computing Servers&#8221;.
+<i>CloudComputing &#8216;13</i>,
+Hangzhou, China.
+2013-05-08.
+<a href="http://caslab.eng.yale.edu/people/jakub/papers/scc2013.pdf">http://caslab.eng.yale.edu/people/jakub/papers/scc2013.pdf</a>
+
+<p>
+<a href="http://www.projectatomic.io/docs/docker-and-selinux/">[ProjectAtomic]</a>.
+Project Atomic.
+<i>Docker and SELinux</i>.
+<a href="http://www.projectatomic.io/docs/docker-and-selinux/">http://www.projectatomic.io/docs/docker-and-selinux/</a>
+
+<p>
+<a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Resource_Management_and_Linux_Containers_Guide/sec-Secure_Containers_with_SELinux.html">[RedHat]</a>
+Red Hat.
+&#8220;Secure Containers with SELinux&#8221;.
+<a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Resource_Management_and_Linux_Containers_Guide/sec-Secure_Containers_with_SELinux.html">https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Resource_Management_and_Linux_Containers_Guide/sec-Secure_Containers_with_SELinux.html</a>
+
+<p>
+<a href="http://www.multicians.org/project-mac.html">[VanVleck]</a>.
+Van Vleck, Tom.
+<i>History of Project MAC</i>.
+Multicians.org.
+<a href="http://www.multicians.org/project-mac.html">http://www.multicians.org/project-mac.html</a>
+
+<p>
+<a href="http://opensource.com/business/14/7/docker-security-selinux">[Walsh2014a]</a>
+Walsh, Daniel J.
+&#8220;Are Docker containers really secure?&#8221;
+<i>Opensource.com</i>.
+2014-07-22.
+<a href="http://opensource.com/business/14/7/docker-security-selinux">http://opensource.com/business/14/7/docker-security-selinux</a>
+
+<p>
+<a href="http://opensource.com/business/14/9/security-for-docker">[Walsh2014b]</a>
+Walsh, Daniel J.
+&#8220;Bringing new security features to Docker&#8221;.
+<i>Opensource.com</i>.
+2014-09-03.
+<a href="http://opensource.com/business/14/9/security-for-docker">http://opensource.com/business/14/9/security-for-docker</a>
+
+<p>
+<a href="http://www.projectatomic.io/blog/2014/11/docker-s-new-security-advisories-and-untrusted-images/">[Walsh2014c]</a>
+Walsh, Dan.
+Docker&#8217;s New Security Advisories and Untrusted Images.
+2014-11-25.
+
+<p>
+<a href="http://opensource.com/business/15/1/apache-spark-new-world-record">[Xin2015]</a>
+Xin, Reynold.
+&#8220;World Record set for 100 TB sort...&#8221;.
+Opensource.com.
+2015-01-15.
+<a href="http://opensource.com/business/15/1/apache-spark-new-world-record">http://opensource.com/business/15/1/apache-spark-new-world-record</a>.
+
+<p>
+My thanks to those who provided me helpful feedback including
+Randy Simpson, Amy Henninger, Gunnar Hellekson, and Serge E. Hallyn.
+Errors are my own; please let me know of any.
+
+<!--
+http://www.zdnet.com/blog/hinchcliffe/comparing-amazons-and-googles-platform-as-a-service-paas-offerings/166
+-->
+
+
+<p>
+<hr>
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+These are my personal opinions,
+and not endorsed by my employer, government, or guinea pig.
+
+<p>
+(C) Copyright 2014 David A. Wheeler.
+<!-- My thanks to Randy Simpson, who provided comments to me 2014-12-05.
+     Amy Henninger provided comments 2014-12-10.  -->
+
+</body>
+</html>
+
+<!--
+http://www.slideshare.net/jpetazzo/docker-linux-containers-lxc-and-security
+
+https://www.usenix.org/conference/lisa13/secure-linux-containers
+Dan Walsh 2013
+
+http://mjg59.dreamwidth.org/33170.html
+Matthew Garrett
+Linux Container Security
+Oct. 23rd, 2014 08:44 am
+[personal profile] mjg59
+
+http://developerblog.redhat.com/2014/09/30/overview-storage-scalability-docker/
+-->

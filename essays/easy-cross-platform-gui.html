@@ -1,0 +1,454 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Easy and Cross-Platform GUI development FLOSS tools with Unix/Linux support</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Lists some ways to create GUIs in an easy and/or cross-platform way that works on Unix/Linux/POSIX">
+<meta name="keywords" content="GUI, easy, cross-platform, open source software, free software, FLOSS, David, Wheeler, David A. Wheeler, David Wheeler">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Easy and Cross-Platform GUI development FLOSS tools with Unix/Linux support</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2009-02-24</h2>
+
+<p>
+There are <i>lots</i> of different ways to build programs with
+graphical user interfaces (GUIs).
+Here are a few of the "more major" ways that are
+<a href="https://dwheeler.com/oss_fs_why.html">
+(1) Free-libre / Open Source Software (FLOSS)</a>,
+(2) have Unix/Linux support, and (3) are either
+(a) exceptionally easy and/or (b) cross-platform.
+
+<p>
+There's no way I can summarize all the info on the net, and there's
+much I've had to omit.
+But there's so much out there that I ended up writing notes on the options
+I found... and here they are.
+I've divided into the easy/trivial (single-question) case, the
+full cross-platform toolkits, and the "in between" options.
+
+<p>
+<h1>Easy/Trivial</h1>
+<p>
+Are your GUI needs are very simple/trivial, i.e.,
+you just need to get a single question answered via a GUI?
+If so, there are some some simple dialog programs
+that simply ask the question using a GUI, get the answer, and return it.
+That makes them really easy to put into a script, though this approach
+can't support more complex approaches
+(which generally require event-driven development approaches).
+The two most common options on Unix/Linux are:
+<p>
+<ul>
+<li>Zenity, which uses the GNOME/GTK+ toolkit. (An alternative is gdialog).
+<a href="http://www.linuxjournal.com/content/make-your-scripts-user-friendly-zenity">Linux Journal</a> and
+<a href="http://www.freesoftwaremagazine.com/columns/saving_my_sanity_zenity_shell_script_interaction_gui">Free Software Magazine</a> both praise Zenity.
+<li>Kdialog, which uses the Qt toolkit (used by KDE).
+</ul>
+<p>
+There are some other "dialog" programs too, including the text-only dialog.
+Zenity "works" in its non-native environment, but not as
+pretty in the "wrong" one.
+(<a href="http://www.mail-archive.com/debian-jr@lists.debian.org/msg01627.html">
+kdialog can "hang" in the "wrong" environment</a>).
+There really should be a single dialog program, with a single interface,
+that calls out to the "right" program based on the active environment.
+Perhaps it should be added to
+<a href="http://portland.freedesktop.org/wiki/XdgUtils">XdgUtils</a>,
+just like xdg-open and so on (call it "xdg-dialog").
+This has been discussed
+<a href="http://lists.freedesktop.org/archives/portland/2006-April/000380.html">by the Portland group in 2006</a>, and
+<a href="http://www.mail-archive.com/desktop_architects@lists.linux-foundation.org/msg00207.html">by Dan Kegel in 2008 via the Linux Foundation mailing list</a>.
+<!--
+https://lists.linux-foundation.org/pipermail/desktop_architects/2008-February/002583.html
+Xdialog depends on gtk and seems abandoned.
+
+https://lists.linux-foundation.org/pipermail/desktop_architects/2008-February/002583.html
+says zenity for GNOME, kdialog for KDE,
+"xmessage" is available for the rest but ugly/fragile result.
+
+"Thunar" is a file manager; you can create "custom actions" in it:
+  http://thunar.xfce.org/pwiki/documentation/custom_actions
+which is hobbled by the lack of a standard dialog:
+  http://ubuntuforums.org/showthread.php?t=435800
+
+-->
+The Perl <a href="http://cpansearch.perl.org/src/KCK/UI-Dialog-1.08/README">
+UI-Dialog</a> does this, but it requires perl and perl programming
+(instead of a simple command-line interface).
+<!--
+Perl module can use:
+  (with DISPLAY env): Zenity, GDialog, XDialog, KDialog
+  (without DISPLAY): CDialog, Whiptail, ASCII
+
+-->
+<!--
+Note: kdialog will hang for a long time when run on a non-KDE desktop,
+because it's waiting for dcopserver. A solution is to test for dcopserver,
+and if not there, start kdeinit.
+
+http://www.mail-archive.com/debian-jr@lists.debian.org/msg01627.html
+-->
+<p>
+<a hre="http://easygui.sourceforge.net/">easygui</a> does the same
+kind of thing with Python.
+
+<p>
+<h1>Cross-Platform Toolkits</h1>
+<p>
+If those approaches are inadequate, you'll be doing more work, at which
+point you'll probably be interested in cross-platform GUI toolkits
+(so you don't have to re-do the work).
+There are many options, which can be grouped on the basic toolkit or language,
+as shown below.
+Once you pick a toolkit/language, there are often lots of choices
+related to it... with the result that choosing can get complicated.
+
+<p>
+Note: Many people recommend using GUI user interface designers
+(aka GUI builders/designer)
+that generate a bunch of data files; these files describe forms and what
+function/method to call given various events.
+Then, you create a very small program that loads and implements them.
+This makes it much easier to change the user interface,
+as well as being able to support more programming languages.
+(Glade does this for GTK+, for example).
+
+<p>
+Here are some of the options available, with the first few being
+especially relevant:
+<ol>
+<li><a href="http://wxwidgets.org">wxWidgets</a>:
+This is the cross-platform GUI library I hear the most about.
+This supports Unix/Linux (using GTK+), MS Windows, and MacOS X.
+wxWidgets maximally uses the "native" platform widgets,
+so the generated applications "look" right to end-users.
+You can also access platform-specific capabilities when you want to.
+It's implemented in C++, but there are bindings to other languages.
+In particular, the
+<a href="http://www.wxpython.org/">wxPython interface</a>
+lets you use Python (which is <i>much</i> simpler to use);
+if you use wxPython, read the
+<a href="http://wiki.wxpython.org/wxPython%20Style%20Guide">
+wxPython Style Guide</a>.
+For wxWidgets UI building, there's
+<a href="http://wxformbuilder.org/">wxFormBuilder</a>;
+and wxGlade.
+Both can generate "XRC" files (an XML format that is a standard
+part of wxWidgets)
+that can be later loaded to generate a form.
+has some limitations on its XRC support.
+wxGlade was inspired by Glade, but doesn't share any code with Glade.
+<a href="http://sturlamolden.blogspot.com/2008/03/howto-using-wxformbuilder-with-wxpython.html">This page
+provides "HelloWorld" for Python + wxFormBuilder + wxWidgets</a>.
+<a href="http://wiki.wxpython.org/index.cgi/XRCTutorial">Here's more about
+wxPython + XRC (XML Resource)</a>.
+<a href="http://wiki.wxpython.org/XrcStartingPoints">Here's a simple
+sample Python program that loads the GUI defined using XML</a>.
+<a href="http://www.xminc.com/linux/wxpython.html">Many people, after
+looking around, end up with wxWidgets + wxPython</a>.
+If you want a full IDE that supports wxPython,
+PythonCard and spe do that (and there are yummable Fedora packages).
+PythonCard says that it is "for you if you want to develop
+graphical applications quickly and easily with a minimum of effort and coding."
+There's also
+<a href="http://boa-constructor.sourceforge.net/">Boa Constructor</a>,
+which supports wxPython, but there's no Fedora package.
+<!--
+http://pythoncard.sourceforge.net/
+PythonCard is a GUI construction kit built on wx, tries to make simple
+things simple, HyperCard-like.  Project seems stalled; last change 2006.
+-->
+
+<li>GTK+:
+GTK+ is the basis of GNOME, so GTK+ applications look 100% at home on GNOME
+(the default UI of Fedora and Ubuntu).
+GTK+ applications work on KDE but can look odd.
+GTK+ applications also run on Windows and MacOS.
+Historically, GTK+ didn't use many native widgets, but that seems to have
+changed;
+also, MacOS X originally required X (making it very odd-looking), but again,
+this seems to have changed.
+It's built with C, but of course there are lots of
+<a href="http://www.gtk.org/language-bindings.html">GTK+ language bindings</a>
+(including PyGTK for Python).
+In the GTK+ world,
+<a href="http://www.micahcarrick.com/12-24-2007/gtk-glade-tutorial-part-1.html">
+Libglade to GtkBuilder F.A.Q.</a> explains that libglade is getting
+replaced by gtkbuilder.
+Basically, libglade's dynamic loading capability is getting moved into GTK+
+itself as <a href="http://blogs.gnome.org/johan/2007/06/15/gtkbuilder-has-landed/">GtkBuilder</a>, so GTK+ will have a standard format for loading
+GUI builder files... and some cleanup was done for the transition.
+<a href="http://glade.gnome.org">Glade</a>
+will eventually generate gtkbuilder XML directly, but in the meantime, you need
+to run a converter program (not a big deal).
+<a href="http://www.micahcarrick.com/12-24-2007/gtk-glade-tutorial-part-1.html">Here's a GTK+ and Glade tutorial</a>.
+<a href="http://gazpacho.sicem.biz/">Gazpacho</a> is an alternative to Glade.
+<a href="http://www.gtk-server.org/">GTK-server</a>
+offers a stream-oriented interface to the GTK+ libraries, which could be
+very useful (especially for shell scripts).
+
+<!-- http://crow-designer.sourceforge.net/  Crow Designer - not
+under active development, according to its website. -->
+<!--
+"guiloader" is a small program that loads an XML description and creates
+the necessaries in GTK+.
+
+http://www.gnope.org/
+GNOPE combined PHP and GTK+
+
+"EasyGtk" is a thin wrapper on the C interface; appears dead.
+-->
+<li>Qt:
+Qt is a toolkit that works across many platforms, and is the basis of KDE.
+Qt has had licensing issues in the far past, and more recently was
+a dual license (GPL or proprietary, the latter for a fee).
+It's to be released under the LGPL, which I applaud.
+Qt is implemented in C++ with several non-standard extensions (so isn't
+really a standard language at all);
+I really dislike this implementation approach, but many others are
+fine with it.
+Historically, Qt emulated the native look (leading to discrepancies), but
+more recent versions of Qt tend to use native widgets.
+"Qt Jambi" is an interface to Qt for Java.
+<li>Java: Java has some extra decisions.  For Java-native interfaces
+you can choose Swing (reference GUI for J2SE)
+or Standard Widget Toolkit (SWT), developed by IBM as part of Eclipse.
+There's also the older AWT, though that's much less capable.
+<a href="http://www.developer.com/java/other/article.php/2179061">
+Here is developer.com's comparison of SWT and Swing</a>, and
+<a href="http://www.ibm.com/developerworks/grid/library/os-swingswt/">
+IBM developerWorks' article on SWT, Swing, and AWT</a>.
+SWT tries to be close to the native platform; Swing tries to abstract
+away from it.
+AWT is much older; it's a simple toolkit with limited capabilities, but
+it does have the advantage of stability.
+<a href="http://www.thinlet.com/index.html">Thinlet</a> (GPLv3)
+is a GUI toolkit for J2SE.
+<li><a href="https://developer.mozilla.org/en/XULRunner">Mozilla's XULRunner</a>, which is used by Firefox and Thunderbird (among others).
+XULRunner separates the run-time infrastructure
+of programs like Firefox and Thunderbird
+so you can build your own apps with them.
+Firefox and Thunderbird are clear demonstrations that this works;
+anyone who has Firefox already has XULRunner installed.
+<a href="https://developer.mozilla.org/en/Getting_started_with_XULRunner">
+Here's how to get started with XULRunner</a>.
+<li>Tk (often combined with the language Tcl).
+Many years ago, this is what you'd probably use to create a
+cross-platform GUI app.
+Tk still works, and it's a relatively easy toolkit to use.
+However, Tk hasn't gotten as much support recently.
+It doesn't use many native widgets, so resulting applications
+don't look "native" on any platform; indeed, they tend to look
+ugly and dated.
+There are bindings to Tk to lots of languages (including Python).
+Though it's not required, Tk is often used with Tcl.
+Tcl is a remarkably simple language (and thus its implementation is tiny),
+but that has its downsides;
+it parses each command at a time (so errors aren't noticed ahead of time), yet
+it re-parses them each time (making it slow).
+Richard Stallman famously wrote "Why you should not use Tcl", kicking off a
+<a href="http://www.vanderburg.org/OldPages/Tcl/war/">Tcl war</a>.
+<li><a href="http://www.fltk.org/">Fast Light Toolkit (FLTK)</a> is a small
+cross-platform C++ GUI toolkit for Unix/LInux, MS Windows, and MacOS X.
+It's small enough that the library is often included statically in
+an executable, so if that's important, that's a big plus.
+On the negative side, it is completely its own toolkit, so resulting
+applications don't look native on <i>any</i> platform
+(unless only FLTK is used).
+<li><a href="http://www.fox-toolkit.org/goals.html">Fox toolkit</a> (LGPL).
+This does <i>not</i> wrap native toolkits.
+<li><a href="http://www.gnustep.org/">GNUstep</a> (LGPL).
+This is based on the Cocoa API (Formerly OpenStep) originally
+created by NeXT (now Apple), it has a large library of reusable components.
+<a href="http://www.gnustep.it/Renaissance/index.html">GNUstep
+Renaissance</a> is a development framework, emphasizing human-editable XML.
+Applications run on Linux, Unix, Windows, MacOS.
+<li>HTML.
+Just a reminder - perhaps you should be writing a web application instead.
+Then you don't have to deal with this at all :-).
+XForms is a newer approach for HTML forms, which might be useful.
+</ol>
+
+<p>
+There are lots of data sources on the topic.
+<a href="http://www.geocities.com/SiliconValley/Vista/7184/guitool.html">
+Here's a painfully comprehensive list of GUI toolkits</a>.
+Here's a
+<a href="http://www.free-soft.org/guitool/">GUI toolkit, framework page,
+emphasizing Free software</a>.
+<a href="http://www.awaretek.com/toolkits.html">Choose your GUI toolkit</a>
+has another list.
+<a href="http://linuxfinances.info/info/xlibs.html">
+Christopher Browne has a list of X development tools</a>.
+
+
+<!--
+
+Mono/.NET
+
+Prima does cross-platform development for Perl:
+  http://www.prima.eu.org/
+
+JUCE (Jules' Utility Class Extensions) is an all-encompassing C++ class library for developing cross-platform applications. GPL or closed-source license:
+http://rawmaterialsoftware.com/juce/index.php
+
+http://www.uxpython.com/
+Python cross-platform library.
+MPL license (GPL-incompatible, ugh.)
+
+http://students.ceid.upatras.gr/~sxanth/twgui/
+"TwiLight GUI is a high level python GUI library which at the moment is
+a wrapper for PyGTK (GTK), PyQT (QT), wxPython (wxWidgets) and Tkinter
+(Tcl/Tk). This means that an application using TG to construct its
+window will run on a system that has at least one of the three wrapped
+toolkits. The *user* selects the toolkit and not the programmer.
+The wrapper files are very small and it's possible to distribute them
+along with your app instead of requiring from the user to download and
+install TG or for TG to become a standard python module. If the files
+wrap_pygtk, wrap_pyqt and wrap_wxpython are available, our application
+can begin like this..."
+Seems to have stalled, but still an interesting project!
+
+
+
+Here's a rant related to Ruby, but probably obsolete:
+ http://wonko.com/post/a_brief_comparison_of_cross-platform_gui_toolkits_from_rubys_per
+<p>
+There are some interesting older pages available on cross-platform GUI toolkits,
+including
+<a href="http://www.atai.org/guitool/">this list at atai.org</a>
+<a href="http://ask.slashdot.org/comments.pl?cid=1011628&amp;sid=5809&amp;tid=156">This Slashdot comment</a>.
+One thing that everyone agreed on was that you should look at
+<a href="http://wxwindows.org/">wxWindows</a> if you're doing it.
+(for Python, see <a href="http://www.linux.com/feature/145949">this article</a>) are two approaches.
+For more sophisticated needs,
+glade (possibly combined with
+<a href="http://autoglade.sourceforge.net/">autoglade</a>) can help.
+-->
+
+<p>
+<h1>In-Between</h1>
+<p>
+For many circumstances, you'd like to create an input form that people
+can fill in, and then when they accept the form something happens.
+(all the values get returned, or a command line program is run with various
+option flags set).
+Ideally, you'd fill in the information or use a GUI form builder to
+create an XML form.
+Then, an "executor" would run the form, and when 'go' is pressed, run
+the command.
+The existing GUI desigers/builders already provide much of this functionality.
+<p>
+Surprisingly, I don't see much that does this exactly.
+A close one is
+<a href="http://kommander.kdewebdev.org/">Kommander</a>, which <i>appears</i>
+to only work with KDE (corrections wanted) and thus not really
+cross-platform.
+It uses the Qt toolkit.
+<p>
+<a href="http://everygui.sourceforge.net/index.html">EveryGUI</a>
+gets close to this too; it's based on the GTK+ toolkit.
+"EveryGui is an attempt at being a GTK+ Graphical User Interface for
+'Everything' (involving command line programs) on UNIX systems. This
+goal is achieved by providing two powerful applications:
+<ol>
+<li>
+Chameleon, which is a dynamic GUI for virtually any tool or OS command. It
+loads config files of tools which are chosen from a list, and dynamically
+creates widgets reperesenting the tools' options. Not only does it
+execute the commands, but it can save a batch of commands into a shell
+script for later/repeated use.
+<li>
+And Designer, which is a visual environment for creating/editing
+config files that determine Chameleon's different behaviours for each
+tool/command. Designer feels like a cross between QT Designer and Glade,
+but requires no coding at all to get the functionality working (that's
+Chameleon's job to do it automagically)."
+</ul>
+
+<p>
+<a href="http://commandlinegui.codeplex.com/">Command line GUI project</a>
+at complex may get there, though there's no release (since October 2006!)
+and it may be Windows-only if it ever is.
+"Before the Command Line Gui application can present you the input fields for a command line executable it needs to know all about that executable and its command line arguments. Details about the command line arguments of the executable in question are stored in an xml file. This file contains information about the location of the executable, the command line arguments that can be used and binding directions how to represent them in the Gui. You can put one or more executables in one xml file and have multiple xml files to choose from. For now the xml file has to be created by hand."
+<p>
+<a href="http://easygui.sourceforge.net/">EasyGui</a> is a Python
+library built on top of Tk that lets you create a form, have the user
+fill it out, and then return.
+It support
+"quick and dirty GUI features (for)
+GUI capabilities that don't require any knowledge of Tkinter, frames,
+widgets, callbacks or lambda... all GUI interactions are invoked
+by simple function calls.
+EasyGUI is different from other GUIs in that EasyGUI is NOT event-driven.
+It allows you to program in a traditional linear fashion, and to
+put up dialogs for simple input and output when you need to."
+<a href="http://showmedo.com/videos/series?name=IwrOgqPc9">There
+are videos showing how to do this</a>.
+<p>
+In Perl, the perl-Getopt-GUI-Long uses an interesting approach - it's
+a getopt()-like library that automatically creates a (simple) GUI
+for setting options.
+<a href="http://mail.python.org/pipermail/getopt-sig/2002-April/000140.html">
+Automatically creating a GUI from Python's getopt was also briefly
+discussed</a>, and
+<a href="http://jonebird.com/2006/04/18/getopts-morphed-into-a-gui/">
+other people have had this idea too</a>.
+<p>
+<a href="http://ask.slashdot.org/article.pl?sid=00/08/11/2052243&mode=thread">
+Here's a discussion about making a GUI pipe</a>.
+<p>
+Such a tool could proabably built quickly from other tools, particularly
+by generating XML and then writing a simple standard "driver" program that
+ran the XML.
+Ideally, it'd use a really small/simple scripting language, and
+would work without a lot of bigger programs, so that you could quickly
+install the driver on many different systems.
+
+<p>
+<a href="http://estron.alioth.debian.org/">Estron (formerly DWI)</a>
+is a platform for making GUI applications using SQL eaiser.
+Based on GTK+ and Glade.
+"Estron is a fairly simple environment for quickly creating data-driven applications, that is, graphical applications that manipulate and show info from a database. This environment differs from others in that it is focused on native GTK/Gnome support through the Glade GUI designer, and thus allows you to build user interfaces as elegant as you can make them in Glade."
+
+<p>
+<h1>Other Stuff</h1>
+<p>
+<a href="http://www.cs.cmu.edu/~bam/uicourse/830fall04/centgraf.EasyToolkitsLecture.ppt">
+'Easy' GUI Toolkits by Peter Centgraf</a> has a nice discussion about
+approaches for creating GUIs, pointing out major themes
+(edit visually, simplify the model, and use a high-level language).
+<p>
+<a href="http://hotwire-shell.org/">Hotwire</a>
+is an "object-oriented hypershell", and tough to explain without using it.
+<a href="http://www.linux.com/feature/121743">This Linux.com article
+explains Hotwire through examples</a>.
+The Hotwire site explains that it is a (command) shell "designed
+for systems programming (files, processes), and thus it is
+in the same conceptual category of software as the Unix shell+terminal
+and Windows PowerShell..
+The goal of the Hotwire project though is to create a
+better systems programming shell than both Unix and PowerShell.
+We call it a hyper-shell because Hotwire blends the concepts of a systems-oriented shell with a modern graphical user interface display.
+It takes advantage of your desktop environment rather than being a text box.
+It retains some advantageous attributes of a shell such as
+keyboard command orientation, interactivity, completion, and scripting."
+<p>
+<a href="http://www.appcelerator.com/">Appcelerator</a>
+(Apache 2.0 license) lets you build native applications for both
+mobile apps and desktop apps.
+
+<p>
+<hr>
+<p>
+Hope that helps!
+
+</body>
+</html>
+

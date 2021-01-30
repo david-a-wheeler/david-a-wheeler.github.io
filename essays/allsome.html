@@ -1,0 +1,768 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>The Allsome Quantifier</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="This essay proposes the allsome quantifier, aka all some quantifier, to make it easier to formally express some statements and avoiding various errors.">
+<meta name="keywords" content="allsome, all some, quantifier, universal quantifier, formal notation, defect, vacuously true">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">The Allsome Quantifier</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2020-03-16 (originally 2018-10-20)</h2>
+
+<p>
+<i>
+It is easy to mistranslate informal statements into formal logic,
+and these errors can cause serious problems (potentially including
+property damage, maiming, and loss of life).
+For example, in formal logic,
+&#8220;All Martians are green&#8221; would often be represented
+as &forall;x&nbsp;(&phi;&rarr;&psi;),
+while &#8220;All Martians are not green&#8221;
+would often be represented
+as &forall;x&nbsp;(&phi;&rarr;&not;&psi;).
+In formal logic both statements are simultaneously true
+if there are no Martians.
+However, informal statements with this format often embed the assumption
+that there is at least one case where the antecedent is true
+(that is, that there is at least one Martian).
+This essay proposes a new formal logic quantifier called
+&#8220;allsome&#8221; (aka &#8220;all some&#8221;) that is designed
+to make some of these mistranslations less likely.
+The allsome quantifier, abbreviated &forall;!,
+simultaneously expresses for all (&forall;)
+and there exists (&exist;) in a way that models many informal
+statements.
+It has two syntactic forms, formally defined as follows:
+&forall;!&nbsp;x&nbsp;(&phi;&rarr;&psi;) &equiv;
+&forall;&nbsp;x&nbsp;(&phi;&rarr;&psi;)&nbsp;&and;&nbsp;&exist;&nbsp;x&nbsp;&phi;
+and
+&forall;!&nbsp;x&isin;A&nbsp;&phi; &equiv;
+(&forall;&nbsp;x&isin;A&nbsp;&phi;)&nbsp;&and;&nbsp;&exist;&nbsp;x&nbsp;x&isin;A.
+We have implemented this construct in the Metamath proof system and
+formally proven that it counters this well-known problem.
+We also compare this approach to alternative countermeasures in PVS and SPARK.
+We hope that this new quantifier will
+help reduce the risk of mistranslations of informal statements into
+formal expressions, and that
+others will eventually agree that allsome is awesome.
+</i>
+
+<p>
+<h1 id="problem">The problem</h1>
+<p>
+Modern formal logic notation can represent many statements
+with great precision.
+This is very valuable, because formal logic can be verified by
+computers to ensure that certain claims can be proven from other claims,
+including those that can prevent loss of life.
+Unfortunately, 
+it is easy to mistranslate informal statements
+into current formal logic notation,
+resulting in &#8220;proofs&#8221; that in fact do not prove anything important.
+That could be a disaster, because sometimes proofs are used to model systems
+to ensure that they do not damage property, maim, or kill.
+Even in pure mathematics we would like to ensure that what was proved is
+what we <i>thought</i> was proved.
+We should prefer notations that are unlikely to misunderstood,
+yet today some common constructs are easy to get wrong.
+This is especially true when material implication (&rarr;)
+is combined with the for-all quantifier (&forall;).
+
+<p>
+This is perhaps best explained using an example.  The sentence
+&#8220;All Martians are green&#8221; would typically be represented formally using the
+expression &forall;<i>x</i>&nbsp;(&phi;&rarr;&psi;),
+which means for all <i>x</i>, if &phi; is true then &psi; is true.
+In this example expression &phi; is true
+if and only if (iff) <i>x</i> is a Martian and
+&psi; is true iff <i>x</i> is green.
+Similarly, &#8220;All Martians are not green&#8221;
+would typically be represented
+as &forall;<i>x</i>&nbsp;(&phi;&rarr;&not;&psi;), that is,
+for all <i>x</i>, if &phi; is true then &psi; is not true
+(we will use the traditional symbols &not; for &#8220;not&#8221;,
+&and; for &#8220;and&#8221;, and
+&or; for &#8220;or&#8221;).
+
+<p>
+The problem happens if there are no Martians.
+In formal logic, this can be represented as &not;&exist;<i>x</i>&nbsp;&phi;
+(&#8220;it is not true that there exists an <i>x</i> that is a Martian&#8221;).
+If there are no Martians, then
+the statements &#8220;All Martians are green&#8221; <i>and</i>
+&#8220;All Martians are not green&#8221; are <i>both true</i>.
+That is
+surprising to the inexperienced, because the two expressions seem to be
+the opposite of each other.
+The reason this occurs in formal (classical) logic is because
+the implication (&phi;&rarr;&psi;) is equivalent to
+&not;&phi;&nbsp;&or;&nbsp;&psi;.
+When &phi; is always false,
+&not;&phi; is always true, and an <i>or</i> with true is always true.
+You can see a detailed formal proof of this in the Metamath proof of
+<a href="http://us.metamath.org/mpeuni/alimp-surprise.html">alimp-surprise</a>,
+and a proof of a similar problem at
+<a href="http://us.metamath.org/mpeuni/empty-surprise.html">empty-surprise</a>.
+
+<p>
+In short: expressions that use for-all and
+implication (such as &forall;<i>x</i>&nbsp;(&phi;&rarr;&psi;)) have
+surprising results to non-experts
+if the implication&#8217;s antecedent is never true.
+This also affects expressions that use for-all and a variable that ranges
+over a restricted set, since that is simply an abbreviation of a for-all
+with implication.
+Statements like this are sometimes called &#8220;vacuously true&#8221;
+statements.
+
+<p>
+(Brief aside: We use Martians in our examples due to a vague sense of convention
+and because at the time of this writing there are no known Martians.
+If it is widely known that there are Martians in the time you are reading
+this, use some other set that is not certain to be inhabited.)
+
+<p>
+<h1 id="solution">A solution: the allsome quantifier</h1>
+<p>
+In this author&#8217;s experience, the problem stems from a disconnect
+between informal language and formal logic notation.
+In informal language, when we say that all <i>X</i> is <i>Y</i>, there is often
+an assumption that at least one <i>X</i> exists.
+This goes back to at least [Aristotle], who expressly and intentionally
+excluded empty sets from his logic system
+[<a href="http://www.iep.utm.edu/aris-log/">Groarke</a>].
+It is possible to state that something exists in modern formal logic notation,
+in addition to saying that they all do it if they exist,
+but in typical formal logic notation this requires using
+two different quantifiers.
+There is no way to simply express this common informal statement
+in formal logic notation when using a single standard quantifier.
+This lack of a simple way to formally represent a common kind of
+informal statement can hide a lot of mischief.
+
+<p>
+Here we propose the &#8220;allsome&#8221;
+(aka &#8220;all some&#8221;) quantifier,
+a convenient shorthand that
+combines the &#8220;for all&#8221; quantifier (&forall;)
+with an &#8220;exists&#8221; quantifier (&exist;).
+This new quantifier directly represents the common informal statement pattern
+that simultaneously asserts that some assertion is true of all <i>X</i>s
+<i>and</i> that there is at least one <i>X</i>.
+We have chosen &#8220;&forall;!&#8221; as the allsome symbol,
+with two syntactical patterns: a more general case that applies to
+a top-level implication, and a shorthand case that is applied to all
+members of a class.
+Here are their formal definitions:
+
+<ol>
+<li>&forall;!&nbsp;<i>x</i>&nbsp;(&phi;&rarr;&psi;) &equiv;
+&forall;<i>x</i>&nbsp;(&phi;&rarr;&psi;)&nbsp;&and;&nbsp;&exist;<i>x</i>&phi;
+&nbsp;&nbsp;[<a href="http://us.metamath.org/mpeuni/df-alsi.html">df-alsi</a>]
+<li>&forall;!&nbsp;<i>x</i>&isin;<i>A</i>&nbsp;&phi; &equiv;
+(&forall;<i>x</i>&isin;<i>A</i>&nbsp;&phi;)&nbsp;&and;&nbsp;&exist;<i>x</i>&nbsp;<i>x</i>&isin;<i>A</i>
+&nbsp;&nbsp;[<a href="http://us.metamath.org/mpeuni/df-alsc.html">df-alsc</a>]
+</ol>
+
+<p>
+For example, if we now write &#8220;All Martians are green&#8221; as
+&forall;!&nbsp;<i>x</i>&nbsp;(&phi;&rarr;&psi;),
+we are simultaneously asserting that all Martians are green
+<i>and</i> that there is at least one Martian, which is almost
+certainly what the speaker actually meant.
+
+<p>
+The terminology and symbol are carefully chosen.
+The term &#8220;allsome&#8221; was chosen because it&#8217;s short,
+easy to say, and
+clearly hints at the two concepts it combines (&forall; and &exist;).
+The alternative &#8220;allexist&#8221; takes longer to say
+(three syllables instead of two) and is also more challenging to say due to
+the large sound shift between its vowels.
+We chose the term &#8220;allsome&#8221; instead of
+&#8220;someall&#8221; because we expect it to be used in cases where
+the human is focusing on the notion of &#8220;all&#8221; - so it made
+sense to emphasize that.
+The symbol &forall;! was chosen since there is already a &exist;! symbol
+that suggests that it is some variant of &exist;
+(so there is precedence for combining an explanation mark with a quantifier).
+In addition, this sequence when used as a symbol
+does not require that a new Unicode character
+be created and implemented before the symbol can be used.
+It might be useful to create a new Unicode character for it in the future,
+but it will be easier to make that argument once the symbol attains
+broader use.
+
+<p>
+This new quantifier does not eliminate the traditional for all (&forall;)
+quantifier, in fact, allsome is defined using for all.
+Instead, this new quantifier makes it easier to express a common
+circumstance, and perhaps more importantly, it reduces the risk of
+dangerous misstatements (which could lead to property destruction,
+maiming, or death if you are depending on the proofs to prevent that).
+
+<p>
+We have received a number of interesting comments from Yannick Moy;
+one was that this &#8220;might be overkill in some occasions, because it&#8217;s
+more difficult to prove than a simple &#8216;for all&#8217; quantification, and
+it&#8217;s likely to be less automated because automatic provers are bad with
+exhibiting witnesses.&#8221;
+A &#8220;witness&#8221; is simply an example that shows that something exists.
+We agree that sometimes automatic provers are bad at finding them today,
+but we expect that they are going to get better at them over time.
+Humans are usually pretty good about providing them, or at least identifying
+an example that the prover can relatively easily prove, so we don&#8217;t
+think this is such a big problem.
+More importantly, if you care whether or not something is true, you
+should specify
+what you actually require; otherwise, the specification can be very misleading
+(you may think you&#8217;re proving something you aren&#8217;t).
+If you intend for something to exist, then you should specify it.
+
+<p>
+We have implemented the &#8220;allsome&#8221; quantifier in the
+<a href="http://us.metamath.org/mpeuni/mmset.html">Metamath Proof Explorer</a>,
+including some formal proofs about its properties, and it works
+exactly as you would expect.
+For example, we can prove that
+&forall;!&nbsp;<i>x</i>&nbsp;(<i>x</i>&isin;<i>A</i>&rarr;&psi;)
+&harr;
+&forall;!&nbsp;<i>x</i>&isin;<i>A</i>&nbsp;&psi;
+[<a href="http://us.metamath.org/mpeuni/alsconv.html">alsconv</a>].
+Perhaps even more importantly, we can prove that the &#8220;surprise&#8221;
+shown earlier cannot ever happen with allsome, specifically, we can prove that
+&not;(&forall;!&nbsp;<i>x</i>&nbsp;(&phi;&rarr;&psi;) &and;
+&forall;!&nbsp;<i>x</i>&nbsp;(&phi;&rarr;&not;&psi;))
+[<a href="http://us.metamath.org/mpeuni/alsi-no-surprise.html">alsi-no-surprise</a>].
+Thus, the &#8220;allsome&#8221; quantifier is already implemented and
+has been rigorously proven to have the properties it was designed to have.
+
+<h1 id="other-than-material-implication">Road rarely travelled: Dropping material implication</h1>
+<p>
+The problem stems from how the logic operation material implication (&rarr;)
+sometimes differs from informal language.
+It is possible to drop the normal logic operation called material implication,
+but most people (including me) believe dropping material implication
+would not be an improvement.
+
+<p>
+[Suber1997] notes that in English
+there are &#8220;many kinds of implication...
+the first step in becoming comfortable with material implication is to
+realize that, precisely because it&#8217;s just one kind of implication, it
+cannot capture every use of the English &#8216;if...then&#8217; or
+&#8216;implies&#8217;...
+Material implication sometimes violates our intuition, but
+it is valuable because it creates a
+&#8216;truth-functional kind of implication&#8217;
+which brings many substantial benefits.&#8221;
+
+<p>
+This debate about the meaning of implication is an old debate.
+Philo the Dialectician (who flourished around 300 BC)
+was a dialectic Greek philosopher of the Megarian school.
+(The Megarian school was a predecessor to and
+influencer of later Stoic logic; Zeno, who founded Stoicism, was
+a friend and admirer of Philo.)
+Philo interpreted the conditional (&#8220;if... then&#8221;)
+as material implication:
+&#8220;the conditional is true when it does not begin with a true proposition
+and finish with a false one, so that a conditional, according to him,
+is true in three ways and false in one way.&#8221;
+[Empiricus, 2.113].
+Philo&#8217;s teacher, the Greek philosopher Diodorus (died c. 284BC),
+disagreed with Philo.
+Diodorus said that &#8220;a conditional is true which neither was nor is able to
+begin with a true one and finish with a false one&#8221;.
+Thus, a statement like
+&#8220;If it is day, I am having a discussion&#8221; when it is day
+would be true for Philo but
+&#8220;false according to Diodorus. For it is able to begin with the true
+&#8216;It is day&#8217;
+and finish with the false &#8216;I am having a discussion&#8217;
+(when I have become
+quiet), and it was able to begin with a true one and finish with the false
+&#8216;I am having a discussion.&#8217; &#8221;
+[Empiricus, 2.115].
+So even around 300 BC there was a debate about this,
+and Sextus Empiricus could point to this disagreement as an
+unresolved debate around the second century AD
+[Empiricus, 2.113-2115].
+
+<!--
+"Against the Logicians" by Sextus Empiricus
+TRANSLATED AND EDITED BY
+RICHARD BETT
+
+(From the Introduction by Bett):
+"The two books Against the Logicians are part of a larger work by Sextus
+Empiricus, the best known ancient Greek skeptic and the only one from
+whom we possess complete texts, as opposed to fragments or second-hand
+summaries.
+...
+The evidence suggests that he lived in the second century [AD], but
+it is not clear that we can fix his dates with any more precision than that...
+
+Described in outline, Sextus’ method is simply to subject to scrutiny
+the views of the dogmatists in these areas. This means that, in addition
+to his own criticisms and counter-arguments, Against the Logicians (like
+most of Sextus’ works) contains a considerable amount of summary of
+other people’s views. The most extensive case of this is the long historical
+survey that makes up roughly the first half of the discussion of the
+criterion of truth (1.46-260). Sextus describes all the earlier views that
+might be thought to bear on this subject (even though the Hellenistic
+term “criterion of truth” postdates most of the thinkers in question). As a
+result, this passage is a mine of information about ideas that in many cases
+are otherwise poorly recorded. But there are numerous other passages of
+the same kind throughout both books. Outside the first half of Book , it
+is the Stoics, always for Sextus the preeminent dogmatists, whose views
+receive the most scrutiny, and therefore the most summary. This is particularly
+true on technical logical matters, where the Stoics are almost the
+only school represented; the most obvious exception is the views on the
+truth-conditions for conditionals held by Philo and Diodorus (2.113-117,
+cf. 265) – but even these are closely associated with the Stoics, since the
+founder of Stoicism, Zeno of Citium, studied logic with them (Diogenes
+Laertius 7.16, 25). It is striking that Aristotle and the Peripatetics, whose
+formal logic was the main rival to that of the Stoics
+(and was far more influential
+beyond antiquity), are never mentioned in this context in Against the
+Logicians. Nor, for that matter, does Aristotle’s theory of demonstration,
+elaborated in the Posterior Analytics, receive any attention in the section
+of Book 2 devoted to that subject. But these are just extreme cases of a
+general phenomenon – namely, Sextus’ comparative lack of interest in
+Aristotle’s philosophy and his heavy concentration on Stoicism. Again,
+one fortunate by-product of this preference is that Sextus supplies many
+details about Stoic philosophy that we would not otherwise have.
+A cursory reading of Against the Logicians might leave one with the
+impression that Sextus’ goal is to show that the dogmatists are wrong
+about the issues addressed: for example, that there is no such thing as a
+criterion of truth. But this would be a mistake. It is true that a great deal
+of the argumentation takes the formof undermining the dogmatists’ pretensions
+to knowing the answers in these areas. But Sextus several times
+takes the trouble to make clear that his aim is something other than this
+might suggest ... In keeping with what
+was explained in the previous section, he intends to bring us to a position
+of suspension of judgment on the topics in question, such as whether or
+not there is a criterion of truth. This is to be accomplished by juxtaposing
+the positive arguments of the dogmatists with the critical arguments supplied
+by himself, resulting in a situation of “equal strength” (isostheneia)
+between the opposing arguments. “Equal strength” is best understood as a
+psychological notion; it is not that both or all of the opposing positions are
+rationally justified to an equal degree (which would require endorsement
+of theoretical notions that would themselves be objectionably dogmatic),
+but simply that one is supposed to find them equally persuasive – in which
+case, according to Sextus, suspension of judgment inevitably results.
+"
+
+QUOTE from "Against the Logicians" by Sextus Empiricus:
+
+Descriptions of and difficulties surrounding non-simple propositions (108-
+129) (108) Now that we have a feel (up to a point) for the dialecticians’
+laying down of the law with respect to simple propositions, let us move
+on to that of the non-simple ones. Now, non-simple propositions are
+the ones mentioned above, which are constituted from a differentiated
+proposition or from different propositions and in which a conjunction
+or conjunctions prevail. (109) Out of these let us take for the present the
+so-called conditional. This, then, is constituted from a differentiated
+proposition or from different propositions by means of the conjunction “if
+[ei]” or “if indeed [eiper].” For instance, from a differentiated proposition
+and the conjunction “if,” a proposition like this is constituted: “If it is
+day, it is day”; (110) and from different propositions and the conjunction
+“if indeed,” we get one of this character: “If indeed it is day, it is light.”
+Of the propositions in the conditional, the one in the position after the
+conjunction “if” or “if indeed” is called both “leader” and “first,” and
+the other one “finisher” and “second,” even if the whole conditional
+is expressed the other way round, like this: “It is light, if indeed it is
+day.” For in this case, too, “It is light” is called “finisher” although it
+was expressed first, and “It is day” is called “leader” although it is spoken
+second, because of being in the position after the conjunction “if indeed.”
+(111) In concise terms, then, the composition of the conditional is like
+this, and a proposition of this kind seems to promise that the second one
+within it follows from the first one within it, and that if the leader is so,
+the finisher will be so. Hence, if such a promise is kept, and the finisher
+follows from the leader, the conditional becomes true; but if it is not
+kept, it is false. (112) And so, starting from this, let us look at whether
+any conditional can be found that is true and that keeps the promise just
+mentioned.
+All the dialecticians in common say that a conditional is sound when
+its finisher follows from its leader. But on the question of when it follows,
+and how, they disagree with one another and lay out competing criteria of
+following. (113) Philo, for example, said that the conditional is true when
+it does not begin with a true proposition and finish with a false one, so
+that a conditional, according to him, is true in three ways and false in one
+way. For when it begins with a true one and finishes with a true one, it
+is true, as in “If it is day, it is light.” And when it begins with a false one
+and finishes with a false one, it is again true – for example, “If the earth
+flies, the earth has wings.” (114) In the same way, too, the conditional that
+begins with a false one and finishes with a true one is true, such as “If the
+earth flies, the earth is.” But it is false only when it begins with a true one
+and finishes with a false one, as does “If it is day, it is night.” For when
+it is day, “It is day” is true, while “It is night,” which was the finisher, is
+false. (115) Diodorus, on the other hand, says that a conditional is true
+which neither was nor is able to begin with a true one and finish with a
+false one – which conflicts with Philo’s position. For a conditional such
+as “If it is day, I am having a discussion,” when it is day at present, and I
+am having a discussion, is true according to Philo, since it begins with the
+true “It is day” and finishes with the true “I am having a discussion,” but
+false according to Diodorus. For it is able to begin with the true “It is day”
+and finish with the false “I am having a discussion” (when I have become
+quiet), and it was able to begin with a true one and finish with the false “I
+am having a discussion.” (116) For before I began having a discussion, it
+began with the true “It is day” and finished with the false “I am having
+a discussion.” Again, one of this character – “If it is night, I am having
+a discussion” – when it is day and I am silent, is in the same way true
+according to Philo (for it begins with a false one and finishes with a false
+one), but false according to Diodorus. For it it is able to begin with a true
+one and finish with a false one, when night has come, and when, further,
+I amnot having a discussion but am quiet. (117) But in addition, “If it is
+night, it is day,” when it is day, is true according to Philo for this reason:
+that it begins with the false “It is night” and finishes with the true “It is
+day”; whereas according to Diodorus it is false for this reason: that it is
+able, when night takes over, to begin with the true “It is night” and finish
+with the false “It is day.”
+(118) Since there is this kind of opposition, then – to speak by way of
+example – among the criteria for the conditional proposition, it may be
+that the distinguishing of the sound conditional is intractable. In order for
+us to learn this, the dispute among the dialecticians about its soundness
+needs first of all to be decided on. And to the extent that that is not decided
+on, it too is bound to remain in suspension of judgment. (119) And this
+makes sense. For either we will pay attention to all the dialecticians’ criteria
+or to one of them. But it is not possible to pay attention to all of them.
+For they conflict, as I have shown in the case of the two spoken of before,
+and things that are in conflict cannot be equally trustworthy. But if we pay
+attention to one of them, we will pay attention to it either all by itself and
+without judgment, or with reasoning that shows that this kind of criterion
+is sound. (120) And if we assent to some criterion without judgment and
+all by itself, why will we assent to this one rather than that one? And this
+amounts to assenting to none of them, because of the conflict. But if it is
+with reasoning that shows that the criterion of the conditional accepted
+by us is sound, this reasoning either is inconclusive and non-terminating
+or conclusive and terminating. (121) But if it is inconclusive and
+non-terminating, it is untrustworthy and bad for preferring some criterion
+of the conditional. But if it is conclusive, it is surely conclusive for
+this reason, that the consequence follows from the premises, so that it is
+itself certified through a certain following. (122) But the following that
+was sought from the beginning in the case of the conditional should have
+been certified by reasoning. This, therefore, amounts to falling into the
+reciprocal mode. For in order for us to learn about the conditional, which
+needs to be certified as a result of its following, we have to resort to some
+reasoning, and in order for this reasoning to be sound, its following, from
+which it is judged that it is sound, has to have been previously confirmed.
+(123) If, then – at least on the basis of this kind of impasse – we do not
+have the sound conditional, nor will we have conclusive reasoning. But
+if we do not have this, nor will we have demonstration; for demonstration
+is conclusive reasoning. But if demonstration is not real, dogmatic
+philosophy is done away with.
+-->
+
+<p>
+Some logicians have been disturbed by material implication, so
+they &#8220;have developed so-called &#8216;relevance logics&#8217; in which the
+antecedent and consequent of conditionals must somehow bear on the
+same subject.&#8221;
+However, while interesting, relevance logic has not widely caught on.
+As Suber notes,
+&#8220;(1) The perversity of material implication is deliberate, for it is the
+only way to get truth-functionality. (2) But the perversity violates
+only our ordinary expectations, not any logical principles. (3) For
+material implication, despite its perversity, suffices to capture the
+logically essential core of meaning in ordinary uses of implication.
+The nuances of English that it does not translate do not affect validity
+(in standard logic). (4) Hence, the price is worth paying, for the
+counter-intuitive material implication distorts nothing essential and,
+because it is truth-functional, allows us to test the validity of
+arguments that contain implication statements.&#8221;
+He also notes that in English there are &#8220;many kinds of implication...
+[so] no other specific version of implication can [express
+English statements precisely] either.&#8221;
+
+<p>
+There has been work to define and model causality
+(as opposed to material implication).
+This work is important in the real world, but also complex.
+The book <a
+href="https://www.cs.cornell.edu/home/halpern/papers/causalitybook-ch1-3.html"
+><i>Actual Causality</i> [Halpern 2016]</a>
+discusses (real-world) actual causality and proposes a family of definitions
+for actual causality.
+It is interesting, but the fact that it takes a whole book to deal with it
+suggests that there are good reasons mathematicians would choose something else.
+
+<p>
+As [Edgington] notes,
+&#8220;The truth-functional theory of the conditional was integral to Frege&#8217;s
+new logic (1879).
+It was taken up enthusiastically by Russell (who
+called it &#8220;material implication&#8221;), Wittgenstein in the Tractatus, and
+the logical positivists, and it is now found in every logic text.
+It is the first theory of conditionals which students encounter.
+Typically, it does not strike students as obviously correct.
+It is logic&#8217;s first surprise.
+Yet, as the textbooks testify, it does a creditable job in
+many circumstances.
+And it has many defenders.
+It is a strikingly simple
+theory: &#8220;If A, B&#8221; is false when A is true and B is false.
+In all other cases, &#8220;If A, B&#8221; is true.&#8221;
+
+<p>
+Thus, I don&#8217;t think we should drop material implication.
+Instead, we should try to find one or more ways to keep material implication
+while making it less likely to be misused.
+
+<h1 id="alternatives">Alternative Solutions</h1>
+
+<p>
+Of course, we are not the first to notice this problem.
+Here we note two alternative approaches to counter this problem
+while retaining material implication.
+
+<h2 id="pvs">PVS TYPE+</h2>
+<p>
+Prototype Verification System (PVS) was developed
+for the development and analysis of formal specifications, and
+it has special abbreviations to declare non-empty types.
+An uninterpreted type or subtype declarations introduced with the keyword TYPE
+may be empty, while an
+uninterpreted type declarations introduced with the keyword NONEMPTY TYPE or
+simply TYPE+ are assumed to be nonempty.
+Uninterpreted subtype declarations introduced with the keyword NONEMPTY TYPE
+or TYPE+ are assumed to be nonempty, as long as the supertype is nonempty.
+This means that simply adding + after the word TYPE eliminates possibility
+of that type being empty.
+For more information, see
+<a href="http://pvs.csl.sri.com/doc/pvs-language-reference.pdf"
+>[Owre&nbsp;2001]</a> section 3.1.5.
+<p>
+However, this PVS mechanism <i>only</i> works for that specific type, and if an
+expression does not use such a type for its antecedent, this approach
+does not help.
+So while it can deal with a few narrow situations, it is not as
+general an approach as allsome.
+<!--
+If the type T is empty, then the following two equivalences hold:
+(FORALL (x: T): p(x)) IFF TRUE, (EXISTS (x: T): p(x)) IFF FALSE
+-->
+
+<h2 id="spark">SPARK dead branch warning</h2>
+
+<p>
+<a href="https://www.adacore.com/about-spark">SPARK</a> is a
+programming language, verification toolset, and a design method which
+together &#8220;ensure that ultra-low defect software can be deployed in
+application domains where high-reliability must be assured, for example
+where safety and security are key requirements&#8221;.
+This is especially useful in embedded systems where performance is critical.
+<a href="https://learn.adacore.com/courses/intro-to-spark/index.html"
+>Intro to SPARK</a> is an interactive introduction to it.
+SPARK makes it possible to mathematically prove that a program
+will do certain things given certain assumptions.
+Of course, if the specification is wrong, then what it proves won&#8217;t
+be what was intended.
+
+<p>
+In 2018
+SPARK implemented a warning that can often detect that a
+&#8220;branch&#8221; in a logical formula is &#8220;dead&#8221; - including when an implication
+in a for-all has an antecedent can never occur.
+This warning (when enabled) is implemented by calling SMT provers
+to detect the potential problem; they are given a 1 second timeout
+and only report when they can prove that that there is a dead branch.
+
+<p>
+Yannick Moy developed and sent me a little specification in November 2018
+that specifies the Martian propositions in SPARK
+(see <a href="./martians.ads">martians.ads</a>).
+As expected, when sent the Martian propositions SPARK can easily prove them:
+<pre>
+martians.ads:10:19: info: assertion proved
+martians.ads:11:19: info: assertion proved
+</pre>
+
+<p>
+However, when SPARK is given the switch
+&#8220;--proof-warnings&#8221; to activate the warnings, SPARK also reports:
+<pre>
+martians.ads:10:66: warning: unreachable branch
+martians.ads:11:66: warning: unreachable branch
+</pre>
+
+<p>
+This warning mechanism has many advantages:
+<ul>
+<li>It works with existing quantifiers.
+<li>It can detect other kinds of problems where something is unreachable.
+<li>It technically has no false positives.
+The warning &#8220;is only triggered if the prover can prove that a branch
+is dead. So you&#8217;ll still get false positives in the sense that people
+may not be interested in that specific warning (&#8220;OK it&#8217;s dead for that
+configuration but not another one&#8221; for example), but it will always
+point to an actual dead branch.&#8221; (Yannick Moy).
+</ul>
+
+<p>
+However, it also has disadvantages:
+<ul>
+<li>There is no <i>guarantee</i> that it will report a problem.
+The warning is only reported when it can guarantee that there is a dead
+branch, and in more complex circumstance this may not be detected.
+In short, there are no false positives (all reports are real), but there
+can be false negatives (some problems might not be reported).
+<li>Enabling these warnings takes a noticeable amount of time on larger
+programs, and thus is not the default.
+Yannick Moy reports,
+&#8220;there is a price to pay for such a proof-based warning: calling a
+prover. Right now we make this quite small, with 1 second timeout only
+for these special calls, but this is still noticeable on large programs
+with many branches to check (plus we already have in fact a few others
+of these proof-based warnings, on preconditions or postconditions that
+are always false and dead code after loops). This is why we&#8217;ve not made
+it the default but a separate switch. The customer who asked for this
+feature has made it the default configuration of the tool.&#8221;
+<li>In general, the warning is not as powerful as allsome in cases where
+allsome is useful - there is no guarantee that the warning will show in
+dangerous cases, while allsome formally specifies that something must exist.
+</ul>
+
+<h2 id="together">Working together</h2>
+
+<p>
+There isn&#8217;t any need to pick just one approach or the other.
+The allsome quantifier can provide guarantees for certain circumstances.
+Techniques like the one used in PVS
+can expressly state that certain types exist.
+Warnings that try to detect common mistakes
+(without guaranteeing their detection),
+such as those that can be provided by SPARK,
+can help detect problems in many other circumstances.
+Countering defects requires a range of approaches, not any one;
+all of these approaches can work together.
+
+<h1 id="conclusions">Conclusions</h1>
+
+<p>
+Specification errors can be a serious problem, so we think that systems
+should use a variety of mechanisms to reduce the likelihood of errors.
+Those include providing notation that more closely maps to common informal
+constructs and detecting constructs that are likely to be misstatements.
+
+<p>
+The new allsome quantifier does not eliminate all specification errors
+by itself, but it does help counter one common kind of mistake by providing
+notation that more directly represents a common informal construct.
+We expect that the allsome quantifier would be part of a larger
+suite of measures to counter common mistakes.
+Here are some examples of other mistakes and ways they can be countered:
+
+<ul>
+<li>Another common kind of error is using implication directly within an
+exists quantifier (the form &exist;&nbsp;<i>x</i>&nbsp;(&phi;&rarr;&psi;)).
+This is almost always a mistake.
+Usually the implication &rarr; should be
+logical conjunction aka &#8220;and&#8221; aka &and;, so what was intended was
+&exist;&nbsp;<i>x</i>&nbsp;(&phi;&and;&psi;).
+In classical logic, (&phi;&rarr;&psi;)
+is identical to (&not;&phi;&or;&psi;)
+so that entire expression is another way to write
+&exist;&nbsp;<i>x</i>&nbsp;(&not;&phi;&or;&psi;) ... an entirely
+different expression.
+Thankfully, this common error is much easier to detect.
+Both Why3 and SPARK already have a built-in warning if there is
+an implication used directly within an exists quantifier.
+This check does not even need to be built-in;
+a separate style checker could warn when this particular
+combination (&exist; with &rarr;) occurs
+since it is practically never intended.
+<li>Paul E. Black noted that an implementation is typically checked
+against a specification by proving that the implementation implies the
+specification; this ensures that the implementation only has behaviors
+allowed by the specification, but it does not require the
+implementation to have any behavior at all.
+He suggests that correctness statements have two parts,
+corresponding to liveness and safety. Safety shows that the implementation
+implies an &#8220;allowed-behavior&#8221; specification, while liveness shows that a
+&#8220;required-behavior&#8221; specification implies the implementation.
+For more, see
+<a href="https://hissa.nist.gov/~black/Papers/tphols99.html">[Black 1999]</a>.
+</ul>
+
+<p>
+But again, the allsome quantifier does not need to solve all common mistakes.
+Instead, we hope that the allsome quantifier would be part
+of a larger suite of measures to counter common mistakes.
+
+<p>
+We hope that this new allsome quantifier will help
+reduce the risk of creating formal expressions
+that appear to be correct but in fact are mistranslations.
+In addition,
+we hope that others will eventually agree that allsome is awesome.
+
+<h1 id="references" class="unnumbered">References</h1>
+
+<ul>
+<li>[Aristotle]
+Aristotle, <i>Posterior Analytics</i>, II.7.92b6-8 (translation by Mure),
+c. 300s BC.
+<li>[Black 1999]
+<a href="https://hissa.nist.gov/~black/Papers/tphols99.html">Black, Paul E.,
+&#8220;Is &#8216;Implementation Implies Specification&#8217; Enough?&#8221;,
+presentation to 12th International Conference on Theorem Proving in
+Higher Order Logics (TPHOLs&#8217;99), Nice, France, (September 1999)</a>.
+<li>[Edgington]
+Edgington, Dorothy, The Stanford Encyclopedia of Philosophy,
+<a href="https://plato.stanford.edu/archives/win2008/entries/conditionals/"
+>&#8221;Conditionals&#8221;</a>,
+2008.
+<li>[Empiricus] Empiricus, Sextus, <i>Against the Logicians</i>,
+written c. second century AD,
+Translated and edited by Richard Bett, 2005.
+<li>[Groarke]
+<a href="http://www.iep.utm.edu/aris-log/">Groarke</a>,
+&#8220;Aristotle: Logic&#8221;,
+<i>Internet Encyclopedia of Philosophy (IEP)</i>.
+</a>
+<li><a
+href="https://www.cs.cornell.edu/home/halpern/papers/causalitybook-ch1-3.html"
+>[Halpern 2016]</a>
+Halpern, Joseph Y., 2016,
+<i>Actual Causality</i>.
+<li>[Owre&nbsp;2001]
+<a href="http://pvs.csl.sri.com/doc/pvs-language-reference.pdf"
+>S. Owre, S., N. Shankar, J.M. Rushby, and D.W.J. Stringer-Calvert,
+<i>PVS Language Reference Manual</i></a>,
+Version 2.4, November 2001,
+section 3.1.5 (Empty versus Nonempty Types).
+<li>[Suber 1997]
+<a href="https://legacy.earlham.edu/~peters/courses/log/mat-imp.htm">
+Suber, Peter, 1997, &#8220;Paradoxes of Material Implication&#8221;
+(an electronic hand-out for the course <i>Symbolic Logic</i>)</a>.
+</ul>
+
+<p>
+<hr>
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2018 David A. Wheeler.
+Released under
+<a href="https://creativecommons.org/licenses/by-sa/3.0/">Creative Commons
+Attribution-ShareAlike version 3.0 or later
+(CC-BY-SA-3.0+)</a>.
+
+</body>
+</html>

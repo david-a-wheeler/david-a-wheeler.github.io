@@ -1,0 +1,739 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Software Configuration Management (SCM) Security</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A discussion on security requirements for software configuration management systems">
+<meta name="keywords" content="David, Wheeler, David A. Wheeler, David Wheeler, software configuration management, SCM, security, SCM security, software configuration management security, non-repudiation, authentication, version control, secure version control, version management, git, Perforce, operation Aurora">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+<h1 class="title">Software Configuration Management (SCM) Security</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2015-12-23 (originally released 2004-03-13)</h2>
+
+<h1>Introduction</h1>
+<p>
+Software development is often supported by specialized programs called
+"Software Configuration Management" (SCM) tools, aka
+"version control" tools.
+SCM tools often control can read and modify the source code of a program,
+keep history information (so that people can find out what changed
+between versions, and who changed them), and generally
+help developers work together to improve a program under development.
+Examples include git, Perforce, subversion, and many others.
+<p>
+Problem is, the people who develop SCM tools often don't think about
+what kind of security requirements they need to support.
+This mini-paper describes briefly the kinds of security requirements
+an SCM tool should support (or at least consider supporting).
+Not every project may need everything, but it's easy to not notice
+some important requirements if you don't think about them.
+There are two basic types of SCM tools, "centralized" and "distributed";
+the basic security needs are the same, but how these needs can be
+handled are different between the two different types.
+I'm primarily concentrating on basic SCM tools (like git, mercurial,
+Perforce, Subversion, CVS, GNU Arch, Bitkeeper, and so on).
+Clearly related tools include build tools, automated (regression) test tools,
+bug tracking tools, static analysis tools, process automation tools,
+software development tools (such as editors, compilers, and IDEs), and so on.
+
+
+<h1>The Security Requirements (for SCM tools)</h1>
+<p>
+Fundamentally, there are some basic (potential) security requirements
+that any system needs to consider, and specifics
+related to SCM tools.
+These are:
+<ol>
+<li>confidentiality: are only those who should be able to
+read information able to do so?
+<li>integrity: are only those who should be able to write/change
+information able to do so?
+This includes not only limiting access rights for writing, but 
+also protecting against repository corruption (unintentional or malicious).
+Changesets must be made atomically;
+if 3 files change in a changeset, either all or none should be committed.
+<li>availability: is the system available to those who need it?
+(I.E., is it resistant to denial-of-service attacks?)
+<li>identification/authentication: does the system safely authenticate
+its users?  If it uses tokens (like passwords), are they protected when
+stored and while being sent over a network, or are they exposed as cleartext?
+<li>audit: Are all relevant actions recorded?
+<li>non-repudiation: Can the system "prove" that a certain user/key
+did an action later?  In particular, given an arbitrary line of code,
+can it prove who was the individual that made that change and when?
+Can it show all those who approved/accepted it, as a path?
+<li>self-protection: Does the system protect itself, and can its
+own data (like timestamps, changesets, other data) be trusted?
+<li>trusted paths: Can the system make sure that its communication with
+users is protected?
+<li>resilience to security algorithm failures:
+If a given security algorithm fails
+(such as the hash function or encryption), can the algorithm
+be easily replaced to protect past and future data?
+(Added 2005-03-02, after the revelation of serious problems in SHA-1).
+<li>privacy: Is the system designed so it's not possible to retrieve
+information that users want to protect?
+For example, spamming is a serious problem; it may be desirable to
+NOT record real email addresses, at least in some circumstances.
+If there is a "secret branch" where security patches are located, try
+to not store its location in the dataset.
+This is similar to confidentiality, but you might not even
+trust an administrator... the notion is to NOT store or depend on data
+you don't want spread.
+</ol>
+<p>
+An SCM has several assets to protect.
+It needs to protect "current" versions of software, but it must do
+much more.
+It needs to make sure that it can recall any previous version of software,
+correctly.
+It also needs a verifiable audit trail of exactly
+<i><b>who</b> made <b>what</b> change <b>when</b></i>.
+In particular, an SCM has to keep the history <i>immutable</i> -
+once a change is made, it needs to stay recorded.
+You can undo the change, but the undoing needs to be recorded
+separately.
+Very old history may need to be removed and archived, but that's
+different than simply allowing history to be deleted.
+<p>
+Again: An SCM must record
+<i><b>who</b> made <b>what</b> change <b>when</b></i>
+in some sort of verifiable immutable audit trail, even if the
+system is attacked.
+
+
+<h1>The Threats</h1>
+<p>
+Okay, so what are the potential threats?
+These vary, and not all projects will worry about all threats.
+Nevertheless, it's easier to provide a list of threats and the
+counter-measures an SCM should support.
+<p>
+Individual projects may choose to not employ a given counter-measure,
+since they may decide that's not a threat for them.
+For example, open source software (OSS) projects may decide that there's
+no "threat" of unauthorized reading of software, since the code is open
+to reading by all.
+However, that may not always be true - many OSS projects hide changes
+that reveal security vulnerabilities until the new version is ready for
+deployment.
+Thus, it's difficult to make simple statements like "projects of type X
+never need to worry about threat Y".
+Instead, it's simpler to list some potential threats, and then
+projects can decide which ones apply to them
+(and configure their SCM system to counter them).
+
+<h2>Outsiders without privileges</h2>
+<p>
+An outsider (not a developer or administrator) may 
+try to read or modify assets (software source code or history information)
+when they're not authorized to do so.
+SCM systems should support authorization (like login systems),
+and support a definition of what unauthorized users can do.
+An SCM system should support configurations that
+allow anonymous reading of a project
+and/or its history, since there are many cases where that's useful.
+However, SCMs should also support forbidding anonymous read access.
+That's even true for OSS projects, since as I noted above, sometimes
+OSS projects want to hide security fixes until they're ready for deployment.
+<p>
+Normally unauthorized users shouldn't be allowed to
+modify a source repository, so
+an SCM should support that (and should make that the default).
+In rare cases, it's possible to imagine that even this constraint isn't
+true, especially if the SCM tool is designed to be used for resources
+other than source code.
+Most Wiki systems such as <a href="http://www.wikipedia.org">Wikipedia</a>
+allow anonymous changes; they work instead by protecting
+the <i>history</i> of changes so that everyone will know exactly what's
+changed, instead of preventing writing of the primary data.
+Such approaches are rare for software code; for example,
+the Wikipedia software itself (as stored in its trusted repository)
+can only be changed by a few privileged developers.
+However, it is conceivable that software documentation and code would
+be maintained by the same SCM software, and perhaps a few projects
+would allow anyone to update the documentation as long as all changes
+were tracked and could be easily reversed.
+<p>
+The underlying identification and authentication system
+(the login system) can use intrusion detection systems to
+detect likely attempts to forge privileges (e.g., by detecting
+password guessing attacks, or detecting improbable locations of a login).
+The underlying login system could also support enabling limits
+(e.g., delays after X login attempts, or only permitting logins from
+certain Internet Protocol address ranges for certain developers).
+However, these mechanisms need to not create a denial-of-service attack;
+otherwise, an attacker might try to forge logins not to actually log in,
+but to prevent legitimate users from doing so.
+
+
+<h2>Non-malicious developers with privileges</h2>
+<p>
+An SCM system should support protected logins (e.g., if it uses passwords,
+it should protect passwords during transit and while they're stored).
+Once users are authenticated, an SCM system should be able to
+limit what users can do based on the authorization that's implied.
+<p>
+SCM systems could usefully limit reading to particular projects, say.
+Limiting reading of specific files inside a project can be useful, but
+it often isn't as useful inside a branch developers must access
+because developers often need the entire set of
+files to develop (e.g., to recompile something).
+But limiting who can read changes in certain branches
+could be vital for some projects.
+For example, it is common for security vulnerabilities to be reported to
+a smaller group of people than the entire development staff, and for the
+patch to be developed by specially trusted developers
+without full knowledge of all developers.
+This is particularly true for open source software projects, but it's
+also sometimes true for other projects.
+This kind of functionality can also be important for projects such as
+military projects with varying degrees of confidentiality;
+most of the program may be "unclassified", but with a poor or stubbed
+algorithm; there may be a better classified algorithm, but it will need
+to be maintained separately.
+Ideally, the SCM should be trustworthy enough to protect that data, though
+in practice such trust is rarely granted;
+an SCM should instead gracefully handle importing the
+"unclassified" version and automatically merging the "classified" data
+on equipment trusted to do so.
+<p>
+Limiting writing of specific files inside a project can be much more
+useful, since in some projects some users "own" certain files.
+In many situations it doesn't make sense either, but an SCM
+system should still support limiting which developers
+can make which changes.
+
+<h2>Malicious developers with privileges (and attackers with their credentials)</h2>
+<p>
+An area often forgotten by SCM systems is handling <i>malicious</i>
+developers.
+You know, the ones who intentionally insert Trojan horses into programs.
+Denying they exist doesn't help; they <i>do</i> exist.
+And even if they didn't, there's no easy way for an SCM to tell the
+difference between an authorized malicious developer and
+an attacker who's acquired an authorized developer's credentials.
+<p>
+A malicious developer might even try to make it appear that some <i>other</i>
+developer has done a malicious deed (or at least make it untraceable).
+They can use their existing privileges to try to gain more privileges.
+A malicious developer might try to modify the data used by a CM
+system so that it looks like someone else made the change
+(e.g., provide someone else's name in a ChangeLog entry).
+A malicious developer might try to modify a CM "hook" to make it appear
+that some other developer has inserted malicious code
+(perhaps to avoid blame or frame the other developer).
+A malicious developer might modify the build process, e.g., so that
+when another developer builds the software, the build system attempts to
+steal credentials or harm the developer.
+<p>
+Since developers have the privileges to read and change data,
+malicious developers (and attackers with their credentials) are
+harder to counter.
+But there <i>are</i> counter-measures that can be used against them.
+Here are some reasonable measures:
+<ol>
+<li>Make sure that developers can't corrupt the repository.
+As a counter-example, GNU Arch allows developers to share a
+writeable directory as a repository.
+That's very convenient, but if you're worried about malicious developers,
+that's not enough; a malicious developer could easily remove data or
+corrupt it in such a way that it'd be hard to tell who caused the problem
+(there's current effort to create an "archd" server that would probably
+counter this problem).
+<li>Make sure that all developer actions are logged in a
+non-repudiable, immutable way.
+That way, even if someone makes a change, it's easy to see who
+made what changes, in any time in the future.
+That "someone" may be a malicious developer, or an attacker
+with the credentials (e.g., cryptographic keys) of a developer -- but
+in either case, once you find out who did a malicious act, the SCM
+should make it easy to identify all of their actions.
+In short, if you make it easy to catch someone, you increase the
+attackers' risk... and that means the attacker is less likely to do it.
+In practice, this can be done by requiring that all changes be
+cryptographically signed by each developer (at the <i>developer's</i> side).
+You can't just make people log into a central server and trust its
+results, or have a central server sign everything; if the server
+is subverted you won't be able to trust any of that data.
+(Note that that simply requiring authenticated pushes
+in git isn't enough; a developer can create a data structure that makes it
+look like some other developer inserted some malicious code, and
+if the commits aren't signed, it's hard to prove who actually committed
+the change.)
+Immutable backups also help; that way, if history is changed, it can
+be easily detected.
+Implied here is that there is a relatively easy way to undo changes
+in a later version;
+after all, if it's easy to identify exactly what a developer did, those
+changes can be undone.
+<li>Make sure all developer actions can be easily reviewed later.
+A simple action to show exactly what's been changed recently will
+make it easy for new changes to be reviewed - and possibly set off alarms.
+<li>Have tools to record and/or require others' review.
+If you really want to make sure that malicious code doesn't get
+through, the best method known is to make sure that some other person
+(who is unlikely to be colluding) reviews the code.
+Thus, ways to cryptographically sign that a person reviewed anothers'
+changes can be helpful, as long as the reviewer's signature can't be
+forged, and as long as the signature clearly indicates what was reviewed.
+A review could be at a brief "I briefly scanned for malicious code"
+all the way to "I deeply analyzed every line for correctness",
+so the SCM tool should support recording to what level the review occurred too.
+Note that the Linux kernel development process now has people adding
+a "Signed-off-by:" tag to each changeset;
+this is primarily for licensing reasons, but still, it's helpful in
+identifying all the other parties who
+looked it at so that how the change got there (but note that in
+Signed-off-by, a person may or may not change it further).
+<li>Support automated checking before acceptance, including
+detection of suspicious/malicious changes.
+An SCM system should make it possible to enforce certain rules before
+accepting a change (at some level):
+such as enforcing formatting rules, requiring a clean compile, and/or
+requiring a clean run of a regression test suite (in a suitably
+protected environment).
+It should be possible to watch changes to find "suspicious" changes:
+the first time that developer has modified a given file,
+code that looks a like a Trojan horse,
+formatting/naming style that's significantly different than this
+developer's normal material,
+attempts to send email or other network traffic during
+a code build, and so on.
+This is basically intrusion detection at the code change level.
+It should also be possible for an automated process to quickly
+check for hints of "stolen" code before accepting anything
+(e.g., to detect copyright-encumbered code), by calling to programs such
+as Eric S. Raymond's
+<a href="http://www.catb.org/~esr/comparator">comparator</a>.
+<li>Support authentication/cryptographic signature key changes and re-signing.
+No matter what protection is put in place, a developer's
+secrets (e.g., their login passwords or private keys) may be
+acquired by an attacker.
+Thus, an SCM (along with its support environment) need to support
+changing such secrets.
+In particular, it may be useful to "cycle" developer private keys,
+having developers switch to new private keys, ensuring that the
+old keys will not be accepted for newer changes, and possibly destroying
+all copies of the older private keys (so that they cannot be stolen by anyone).
+Since private keys may be compromised, once such a compromise has been
+detected, it should be possible to invalidate the compromised keys
+and re-sign data (once it's checked) with new cryptographic keys.
+This is yet another reason to support multiple signature keys
+(in addition to supporting multi-person review).
+<li>On login, acquisition, and commit, report the "last time" and
+source location (e.g., IP address) where reading
+and writing (committing) were performed.
+Although this doesn't deal with a malicious developer, it does
+increase the likelihood that an attack using stolen credentials will
+be detected.
+After all, the developer is mostly likely to know the last time that they
+read from and wrote to some repository, so they'll be able to
+detect when someone else forges their identity.
+Ideally, this would be resistant to repository attacks.
+</ol>
+
+<p>
+<!-- Thanks to cabo, at, informatik.uni-bremen.de. -->
+On April 11, 2004, Dr. Carsten Bormann from the University of Bremen
+sent me an email about a specialized attack that he terms the
+"encumbrance pollution attack".
+In an encumberance pollution attack, the attacker inserts material
+that cannot be legally included.
+To understand it, first
+imagine an SCM with perfectly indestructible history.
+The attacker steals developer credentials, or is himself a malicious
+developer, and checks in a change that contains some encumbered material.
+"Encumbered" material is simply material which cannot be legally included.
+Examples include child pornography, slanderous/libelous statements, or
+code which has copyright or patent encumberances.
+This could be very advantageous, for example, a company
+might hire a malicious developer to insert that company's code into a
+competing product, and then sue the competitor for copyright infringement,
+knowing that their SCM system "can't" undo the problem.
+Or a lazy programmer might copy code that they have no right to copy
+(this is rare in open source software projects, because every line of code
+and who provided it is a matter of public record, but it proprietary
+projects do have this risk).
+Any SCM can record a change that essentially undoes a previous change,
+but if the history is indestructable and viewable by all, then
+you can't get rid of the history.
+This makes your SCM archive irrevocably encumbered.
+This can especially be a problem if the SCM is indestructably recording
+proposals by outsiders!
+An SCM system could be designed so that a special privilege allowed someone
+to completely deletion the history data of illegal changes, of course.
+However, if there are special privileges to delete history data,
+it might be possible to misuse those privileges to cause other problems.
+<p>
+One mechanism for dealing with an encumberance pollution attack
+is to allow specially-privileged
+accounts to "mask" history elements; i.e., preventing access to
+certain material by normal developers so that it's no longer available,
+so that the material isn't included in later versions
+(essentially it work like an "undo" against that change).
+However, a "mask" would still record the event in some way
+so that it would be possible to prove that the event occurred at a later time.
+Perhaps the system could record a hash of the encumbered change,
+allowing the encumbered material to be removed from the normal
+repository yet proving that, at one time, the material was included.
+A "masking" should include a cryptographic signature of whoever
+did the masking.
+This mechanism in particular requires careful design, because the
+mechanism should be designed so that it doesn't permit other attacks.
+
+<p>
+Most SCM systems have multiple components, say, a client and server.
+Even GNU arch, which can use a simple secure ftp server as a shared
+repository, has a possible server (the ftp server).
+Clients and servers should resist attack from other potentially subverted
+components, including loss of SCM data.
+
+
+<h2>Repository attacks</h2>
+<p>
+Many repositories have themselves undergone attack,
+including the Linux CVS mirror, Savannah, Debian, and
+Microsoft (attackers have acquired, at least twice, significant portions
+of Windows' code).
+In 2011, <a href="https://lwn.net/Articles/457312/">kernel.org</a>
+was subverted.
+Thus, a good SCM should be able to resist attack, even when the
+repository it's running on subverted
+(through malicious administrators of a repository, attacker
+root control over a repository, and so on).
+This isn't just limited to centralized SCM systems;
+distributed SCM systems still have the problem that an attacker may
+take over the system used to distribute someone's changes.
+<a href="http://www.thehackernews.com/2011/09/kernelorg-server-rooted-and-448-users.html">In 2011, attackers subverted Linux's kernel.org site, but
+it's believed there was little damage to the source code repositories
+due to the nature of git</a>.
+<p>
+An SCM should be able to prevent read access, even if the repository
+is attacked.
+The obvious way to do this is by using encrypted archives.
+But there are many variations on this theme, primarily in where the
+key(s) are stored for decryption.
+If the real problem is just to make sure that backup media or transfer
+disks aren't easily read, the key could simply be stored on a separate
+(more protected) media.
+The archive keys might only be stored in RAM, and required on bootup;
+this is more annoying for bootup, and an attacker is likely to be able
+to acquire the data anyway.
+The repository might not normally have the keys necessary to decrypt the
+archive contents at all;
+it could require the developer to provide those keys, which it uses
+and then destroys.
+This is harder to attack, but a determined adversary could
+subvert the repository program (or memory) and get the key.
+Another alternative is to arrange for the
+repository to <i>not</i> have the keys necessary to decrypt the
+archive contents at any time.
+In this case, developers must somehow be provided with the keys necessary to
+do the decryption, and essentially the repository doesn't really
+"know" the contents of the files it's managing!
+<p>
+Preventing write access when an attacker controls a repository
+is a difficult challenge,
+especially since you still want to permit legitimate changes by
+normal developers.
+Since the attacker can modify arbitrary files in this case,
+the goal is to be able to quickly detect any such changes:
+<ol>
+<li>
+Cryptographic signing of changes can help significantly here, since
+this makes it possible to detect changes by anyone other than the
+authorized developers.
+Clearly, the list of public keys needs to be protected; this can be
+protected in part by ensuring that the list is visible to all developers,
+and having tools automatically check that the public listed key is correct
+(each developer's tool checks that the key listed is really that
+developer's key).
+<li>
+Changeset chaining can help detect problems (including unintentional ones).
+Basically, as changes are made, a chain recording those changes can be
+recorded and later checked.
+This is typically done using cryptographic hashes, possibly signed
+so you know who verified the chain.
+Note that this is also useful for detecting accidental corruption.
+<li>
+Automated tools to detect if "my" change has been altered.
+Any given developer will know what changes <i>they</i> checked in.
+So, record that information locally/separately, and check it later.
+That way, someone can modify the repository to remove the latest
+security fix, but the developer of the change can quickly tell that
+it's been removed.
+<li>
+Immutable backups, and tools to check them, can help as well.
+If a repository's history is changed, that change can be compared
+with backups.
+Be careful that a corrupted tool won't create misleading backups, and
+make sure that the repository can't give one view to backup tools, and
+another view to whoever actually takes and uses the program.
+<li>
+Simple, transparent formats can help make it harder to hide attacks.
+Data that is stored in simple, well-understood formats that can be analyzed
+independently (e.g., a signed tarfile of patches) tend to be more resistant to
+attack than data structures that presume that no other process
+will manipulate the data contents (e.g., typical databases).
+</ol>
+
+<h1>Related Work</h1>
+
+<p>
+There only seems to be a little related work available on the topic.
+
+<p>
+<h2>General discussion</h2>
+<p>
+Lynzi Ziegenhagen wrote a Master's thesis for the
+Naval Postgraduate School about revision control tools for
+"high assurance" (a.k.a. secure) software development projects:
+<a href="http://library.nps.navy.mil/uhtbin/hyperion-image/03Jun_Ziegenhagen.pdf">
+<i>Evaluating Configuration Management Tools for
+High Assurance Software Development Projects</i></a>
+(<a href="http://www.stormingmedia.us/77/7757/A775714.html">
+also available at StormingMedia</a>).
+A <a href="http://www.opencm.org/ziegenhagen-response.html">commentary
+on that paper</a> is also available.
+The
+<a href="http://www.opencm.org/docs.html">OpenCM project</a>
+has published some papers, including
+Jonathan S. Shapiro and John Vanderburgh's
+<a href="http://www.opencm.org/papers/usenix-sec2002.pdf">
+Access and Integrity Control in a Public-Access, High-Assurance
+Configuration Management System</a>
+(Proc. 11th USENIX Security Symposium, 2002, San Francisco, CA, 2002).
+
+<p>
+Another related paper is
+<a href="http://theses.nps.navy.mil/04Mar_Gross.pdf">
+"Configuration Management Evaluation Guidance for High Robustness Systems"</a>
+by Michael E. Gross (Lieutenant, United States Navy),
+March 2004.
+<!--
+Configuration Management (CM) plays a vital role in the development of
+trusted computing systems.  The Common Criteria (CC) provides a
+framework for performing Information Technology (IT) security
+evaluations of these systems and further emphasizes CM's role in the
+development and evaluation process by specifying a minimum set of CM
+qualities for each Evaluated Assurance Level (EAL).  As an evaluation
+guide, the Common Methodology for Information Technology Security
+Evaluation, Part 2:  Evaluation Methodology (CEM), recommends a set of
+minimum CM guidelines which can be used by evaluators in the performance
+of a CM evaluation at the lower Evaluated Assurance Levels.  Evaluators
+and developers will quickly note the CEM's lack of recommended CM
+guidelines at the higher assurance levels.
+
+Thorough study of the listed references supports the hypothesis for this
+work:  Configuration Management guidelines are useful in the evaluation
+of trusted computing systems.  As an assurance mechanism, complete CM
+guidance helps users of high assurance products obtain a degree of
+confidence the system security requirements operate as intended and do
+not contain clandestine code.  Complete CM guidance provides evaluators
+with a "completed assurance scale" and ensures only authorized changes
+were made to the TOE during development.
+-->
+<p>
+The Trusted Software Methodology included a number of configuration
+management requirements; in particular, its upper level requirements
+were specifically designed to counter malicious developers.
+See "Trusted Software Methodology Report" (TSM), CDRL A075, July 2, 1993,
+and in particular its appendix A (which defines the trust principles).
+The Common Criteria includes a number of configuration management requirements
+(see in particular part 3 in the ACM section).
+
+<p>
+<a href="http://www.cs.ucdavis.edu/~devanbu/files/tcm.pdf">
+Security for Automated, Distributed Configuration Management</a>
+by Devanbu, Gertz, and Stubblebine examine a completely
+different problem (one which is important, but not the one in view here).
+
+<p>
+Jeronimo Pellegrini's
+<a href="http://aleph0.info/apso/">Apso</a>
+(prototype software) is a framework
+for adding secrecy to version control systems (currently for Monotone).
+In 2006 a conference paper was published that described it.
+<!-- j_p@aleph0.info sent me email in 2011. -->
+In 2011 he mentioned that he hasn't had much time to work on it any more,
+but the ideas may be of interest to others.
+
+<p>
+There is a vast amount of literature about SCM systems,
+as well as papers discussing or evaluating particular systems.
+That includes my own
+<a href="https://dwheeler.com/essays/scm.html">
+Comments on OSS/FS Software Configuration Management (SCM) Systems</a>.
+
+
+<p>
+<h2>Operation Aurora</h2>
+<p>
+In 2009 there was an attack called "operation Aurora".
+It targeted over 30 companies including
+Google, Adobe, Yahoo, Symantec, Juniper Networks,
+Northrop Grumman, and Dow Chemical.
+This attack, which is reported to have originated in China,
+illegally copied source code.
+(<a href="http://www.cnet.com/news/new-ie-hole-exploited-in-attacks-on-u-s-firms/">"New IE hole exploited in attacks on U.S. firms" by Elinor Mills, January 14, 2010, C|Net</a>).
+This attack included focused attacks on SCM systems.
+<p>
+<a href="http://www.wired.com/images_blogs/threatlevel/2010/03/operationaurora_wp_0310_fnl.pdf">"Protecting Your Critical Assets: Lessons Learned from 'Operation Aurora'" by McAfee (2010)</a>
+discussed Operation Aurora in detail.
+It explained,
+"Within large enterprises, source code is typically housed in source
+code trees within source code control systems, often called software
+configuration management (SCM) systems. Vendors include Perforce,
+Concurrent Versions System (CVS), Microsoft Visual Source Safe (VSS),
+IBM Rational, and others. In our experience, a number of these systems
+are not secured by default and typically rely on the customer to prevent
+an attacker from bypassing default control."
+They note that the threats included:
+<ol>
+<li>Stealing a company’s intellectual property by downloading the entire tree and then exfiltrating it out of the company’s network...
+<li>Ability for both legitimate users as well as potentially unauthorized users to make changes to the tree...
+<li>Utilizing the captured source code to find additional vulnerabilities in the affected products...
+</ol>
+<p>
+McAfee's report continued,
+"Insufficient out-of-the-box security mechanisms - plus the fact that
+organizations do not specifically lock down their SCM systems - give
+attackers unfettered access to these systems. What’s more, obtaining
+this access is often trivial, given the lack of security controls. Because
+most SCM systems are not set to write and maintain sufficient logs to
+aid in investigation and/or recovery after an attack, the scenario can
+be particularly threatening...
+During the course of this investigation, we discovered numerous design
+and implementation flaws in a number of source code management systems
+that make cyberattacks highly viable dditionally, due to the open nature
+of most SCM systems today, much of the source code it is built to protect
+can be copied and managed on the endpoint developer system.
+It is quite common to have developers copy source code files
+to their local systems,
+edit them locally, and then check them back into the source code tree. As
+such, many code files can typically be found on endpoints such as the
+systems used by developer or quality assurance (QA) team members.
+As a result, attackers often don't even need to target and hack the backend
+SCM systems; they can simply target the individual developer systems to
+harvest large amounts of source code rather quickly..."
+<p>
+In many cases the source code that was illegally copied 
+was managed by Perforce, a widely-used SCM, so they took a look at Perforce
+in particular.
+What it found at the time was instructive; the first few of its many findings
+were:
+<ol>
+<li> Perforce server service installs with system practice (even though
+it is generally recommended that software be installed as a limited user)
+<li>Unauthenticated user creation - by default unauthenticated
+users are allowed to create users.
+<li>Passwords are unencrypted.
+<li>System/user/workspace enumeration was permitted.
+<li>All communications between client and server are unencrypted.
+</ol>
+
+<p>
+Perforce has fixed some of the problems noted then, but even as of 2015
+the default protections are that every user has superuser privileges
+until 'p4 protect' is used
+(per <a href="http://www.perforce.com/perforce/doc.current/manuals/p4sag/p4sag.pdf">Helix Versioning Engine Administrator Guide: Fundamentals</a>, 2015,
+page 78, "default protections" section).
+To be fair, the Perforce documentation
+clearly states that installers should run 'p4 protect' immediately after
+installing Perforce for the first time.
+But in my opinion that's still inexcusable.
+Users often ignore or skimp reading the manual,
+and users often simply accept the system defaults.
+For security to be useful, security needs to be the default.
+If the defaults are insecure, then deployments will typically be insecure.
+
+<p>
+<h2>Git</h2>
+<p>
+Git is very widely used.
+<a href="http://git.kernel.org/cgit/git/git.git/plain/Documentation/RelNotes/1.7.9.txt?id=HEAD">Git version 1.7.9 (released in 2012)</a>
+added signed commits, a key mechanism that can let you prove
+that a particular commit was made by someone with a particular private key.
+<p>
+Of course, this only helps if you use it.
+<a href="https://mikegerwitz.com/papers/git-horror-story">"A Git Horror Story: Repository Integrity With Signed Commits" by Mike Gerwitz</a>
+discusses the specifics of how to use git
+and its signed commit capabilities.
+<p>
+I'm not aware of a detailed security analysis of git, particularly
+for countering malicious but authorized co-developers.
+<p>
+One useful tip comes from
+<a href="https://groups.google.com/forum/#!topic/binary-transparency/f-BI4o8HZW0">Eric Myhre</a> - configure git to check all incoming objects.
+This should be the default in git, in my opinion.
+You can do this by including this in <tt>~/.gitconfig</tt>
+(the fetch and receive operations normally default to whatever transfer does):
+<pre>
+[transfer]
+fsckObjects = true
+</pre>
+You can do the same thing with this command line:
+<pre>
+git config --global transfer.fsckObjects true
+</pre>
+
+<h1>Conclusions</h1>
+<p>
+All of this can't prevent all attacks.
+But such an SCM system can make the attacks much harder to perform,
+more likely to be detected, and make detection much more rapid.
+Here are some examples:
+<ol>
+<li>A malicious developer could insert a few lines into a build
+process that said "when you compile, email to me your private key data" -
+then, once they had the private key, remove that line, and then
+forge other changes as that unsuspecting developer.
+But an SCM system with all of the capabilities above would make it
+much harder to hide this.
+The change with these malicious instructions
+would be clearly labelled as from that developer, and
+later changes would be labelled as being from that developer or
+one of the compromised systems - and removing the change later
+would record yet <i>another</i> change that might be detected.
+<li>A malicious attacker might take over the repository, and repeatedly
+remove a critical patch to a security vulnerability.
+Still, the removal could be detected by the creator of the patch, and
+actions such as changing to a different repository could be performed.
+Trying to change older copies would likely be detected by chaining and
+comparisons with backups.
+</ol>
+<p>
+It's my hope that SCM systems will have more of these capabilities
+in the future.
+I'm happy to note that some SCM developers have considered these issues.
+<a href="http://aegis.sourceforge.net/propaganda/security.html">Aegis
+has a nice side-by-side comparison</a> comparing a version of this paper
+with Aegis' capabilities.
+<a href="http://bazaar-ng.org/security.html">
+Bazaar-NG has considered these security ideas</a>.
+Hopefully others will consider these issues too.
+
+<p>
+Another paper on the topic of SCM security is
+<a href="https://www.slideshare.net/perforce/whitepaper-source-code-protection">
+Source Code Protection: Evaluating Source Code Security
+by Stephanie Woiciechowski, EMC Product Security Office,
+EMC Corporation</a>
+
+<hr>
+
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+<a href="http://paul.stadig.name/2010/12/thou-shalt-not-lie-git-rebase-ammend.html">Paul Stadig's "Thou Shalt Not Lie: git rebase, ammend, squash, and other lies"
+</a> is related.
+
+</body>
+</html>
+

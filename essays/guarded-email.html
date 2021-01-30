@@ -1,0 +1,1325 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Guarded Email</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="keywords" content="spam, stop spam, guarded email, email guarding, guard, eliminating spam, David, Wheeler, David A. Wheeler, theft">
+<meta name="GENERATOR" content="Mozilla/4.76 [en] (X11; U; Linux 2.4.2-2 i586) [Netscape]">
+</head>
+<body bgcolor="#ffffff">
+      
+<center>  </center>
+ <i>This draft article was written by David A. Wheeler, and is intended 
+for eventual formal publication as a scholarly work. You may read the article, 
+ and print a single copy for personal use. You may not redistribute the article,
+ and you may not change its content</i>.<br>
+ 
+<center> 
+<h1>No-Spam-Authenticated Email and the Guarded Email Protocol</h1>
+  </center>
+      
+<center>David A. Wheeler   
+<p>dwheeler@dwheeler.com </p>
+   
+<p><i>DRAFT.</i> First version December 8, 2002; Revised December 31, 2002</p>
+  </center>
+      
+<p><br>
+   </p>
+   
+<h2> Abstract</h2>
+   Spam (unsolicited bulk email, also called junk email) has become serious
+problem on the Internet,  threatening to eventually eliminate the practical
+use of email.&nbsp; This  paper identifies three major approaches to dealing
+with spam: blacklisting,  heuristically identifying spam, and authentication.
+&nbsp;It then examines  the issues in authentication; although narrow specific
+instances of authenticating  email exist, no paper currently available discusses
+the issues involving authentication. &nbsp;It then defines a specific new
+authentication protocol,&nbsp; called "guarded email", that should eliminate
+nearly all spam without throwing away legitimate email, incorporates significant
+legal protections against spammers, incorporates optional cryptographic techniques
+to counter spammer capturing of cleartext passwords, and can be implemented
+incrementally by individuals across the Internet.&nbsp; In guarded email,
+received email is first checked by a "guard," and only email meeting certain
+criteria are passed on the final recipient. In particular, the guard must
+check for the existance of a password or other authentication marker in the
+email (as cleartext or encrypted in some way).&nbsp; If there is no correct
+password, and the email doesn't meet any other guard criteria for accepting
+the email (such as being from an address in a "whitelist"), then the email
+is <i>not</i> accepted; instead, a challenge is sent to the original sender,
+with human-readable information on how to determine the password.&nbsp; Additional
+extensions to the guarded email concept, in particular automtically maintained
+whitelists and loop prevention techniques, result in a simple protocol where
+users who normally communicate with each other can do so without change,
+and strangers can communicate by answering a simple human-readable challenge
+(i.e., untrusted users must "log in" to send email to someone else). <br>
+  &nbsp;   
+<h1> Introduction</h1>
+   Spam is <i>unsolicited bulk email</i> (also called unsolicited mass email
+or junk email);  it's the (automated) bulk nature of it that is so offensive,
+as discussed  next. A few people try to limit the definition of spam to only
+cover commercial  spam, but it doesn't matter if the spam is commercial or
+not, if the sheer  volume of spam makes it impossible to use the equipment
+you purchased.   
+<p>Spamming is a form of stealing and trespass.&nbsp; Spammers make <i>other 
+ people</i> pay for their messages without permission of the recipient.&nbsp; 
+ Large volumes of spam work as essentially a denial-of-service attack on the
+recipients; as the number of spams received rise, it becomes increasingly 
+ difficult to read legitimate (non-spam) email.&nbsp; Also, the costs from 
+ time spent deleting email can become having to delete emails For example, 
+ spam steals a great deal of my time, uses up bandwidth and storage space 
+without my permission, and makes it hard for legitimate email to reach me. 
+And it hurts others; my web pages once made it easy for people to contact 
+me (using "mailto:" links); the volume of spam I get has forced me to remove 
+that capability, making it unnecessarily harder for others to contact me. 
+Many organizations no longer post their email addresses, because their legitimate 
+email is overwhelmed by spam. One estimate finds that spam costs <a href="http://www.spamhaus.org/newsdog.lasso?article=107">
+  6 billion Euros a year</a>
+   and the cost is rising.
+<a href="http://www.washingtonpost.com/ac2/wp-dyn/A17754-2003Mar12">A
+Washington Post article dated March 13, 2003</a> also
+discusses spam.
+They quote Brightmail Inc.'s report that
+roughly 40% of all e-mail traffic in the United States is spam
+(up from 8% in late 2001 and nearly doubling in the past six months), and
+Ferris Research Inc.'s report that
+spam will cost U.S. organizations more than $10 billion this year. 
+They also quote
+Robert Mahowald, research manager for IDC;
+his firm estimates that for a company with 14,000 employees,
+the annual cost to fight spam is $245,000 and that "there's no end in sight."
+</p>
+   
+<p>Trying to opt-out doesn't work; you're rarely removed, and in most cases 
+ you get <i>more</i> spam. See the <a href="http://www.newsfactor.com/perl/story/16304.html">
+  U.S. Federal Trade Commission (FTC)'s comments</a>
+   that specifically note that "opting out" of spam results in more spam. 
+</p>
+   
+<p><b>Spam can even kill.</b> There is a <a href="http://www.secretservice.gov/alert419.shtml">
+  U.S. Secret Service Advisory on 419 schemes</a>
+   that particularly discusses the "Nigerian" letter (called the Nigerian 
+Advance Fee Fraud Overview, a kind of "419" fraudulent scheme) They note that
+in June of 1995, an American was murdered in Lagos, Nigeria, while pursuing
+ a 4-1-9 scam, numerous other foreign nationals have been reported as missing,
+ this particular type of fraud grosses hundreds of millions of dollars annually,
+ and the monetary losses are continuing to escalate. This kind of fraud doesn't
+ need email, but it's a common spam letter precisely because the criminals
+ don't need to pay "up front" to send spam, so spam has enabled this deadly
+ fraud to ensnare and hurt far more people than it could otherwise. Certainly,
+ people shouldn't fall for such frauds, but since criminals are allowed to
+ send spam to everyone on the planet, spam allows these criminals to exploit 
+ the naive and those who momentarily let their guard down. The notion that 
+ you can steal other people's resources to support scams is ludicrous. </p>
+   
+<p> </p>
+   
+<p>The IETF (who develops Internet standards) describes why spam is a problem 
+ in documents such as <a href="http://www.ietf.org/rfc/rfc2635.txt">RFC 2635</a>
+. The IETF document <a href="http://www.ietf.org/rfc/rfc2505.txt">RFC 2505</a>
+   gives more information to mail-system administrators on how to deal with
+ spam.<br>
+  <a href="http://slate.msn.com/?id=2074042">Slate even argues that spam
+will  soon end email as we know it</a>
+  . I think Slate overstates the case, since they presume that "laws have 
+not worked," but in fact, laws to forbid spam have yet to be tried.&nbsp; 
+In any case, the approach discussed in this paper uses a combination of technical
+ means and laws to prevent spam. <br>
+ </p>
+ 
+<p>One ISP did a survey in May 2000 and found that in one month they had over
+500,000 spam messages vs. 50,000 legitimate messages - in other words, 90%
+of their message traffic was spam (http://nospamemail.truepath.com/daily,
+via St. Denis).<br>
+ </p>
+    
+<p>Since <i>receivers</i> pay the bulk of the costs for spam (including most 
+obviously their time to delete all that incoming spam), spam use will continue 
+to rise until effective technical and legal countermeasures are deployed, 
+<i>or</i> until people can no longer use email. </p>
+   
+<p>There are many proposed approaches to preventing spam.&nbsp; You can see
+ a discussion of some of them at <a href="https://dwheeler.com/essays/stopspam.html">
+ https://dwheeler.com/essays/stopspam.html</a>
+ .&nbsp;  However, they are at most only partially effective, so a different 
+approach  is necessary.&nbsp; This paper describes a different approach, called
+"guarded  email."&nbsp; This paper describes the threat environment, 
+the guarded email approach, examples of the approach in action, implementation 
+issues, and rationale.</p>
+ 
+<h1> Threat</h1>
+ 
+<!--
+  ??? Discuss threat, attacker, desired result.&nbsp; Alice, Bob, Spud (the
+ spammer).
+-->
+ 
+<p>This section briefly describes the problem to be solved.&nbsp; Some user
+ named Alice wants to send a non-spam message to some other user named Bob. 
+Bob would like to receive the message from Alice, and may later wish to easily 
+reply back to Alice.&nbsp; However, Bob and Alice may or may not know each 
+other; indeed, Bob may have never received a message from Alice before.</p>
+ 
+<p>Unfortunately Spud, the spammer,&nbsp; constantly sends spam (unsolicited 
+bulk email) to as many email addresses as possible, as often as possible, 
+including to Bob (and possibly Alice too).&nbsp; Bob would like to not receive 
+email from Spud, yet receive email from Alice.&nbsp; Note that Spud may have 
+a profit motive (e.g., Spud may be advertizing for a child pornography site), 
+or not (e.g., Spud may be advocating Nazism).&nbsp; Spud can forge arbitrary 
+values for email messages. This means that Spud can forge "from" addresses 
+to contain any value, but Spud is likely to only use this capability to forge 
+a "from" address that cannot be replied to.&nbsp; Spud could forge his "from" 
+address to have a value of someone Bob trusts (possibly even Alice, if Bob 
+trusts her). However, doing this requires that Spud determine who Bob trusts, 
+an action that is possible (e.g., by doing traffic sniffing) but is more difficult
+for Spud to do. Also, forging "from" addresses to have others' legitimate
+address is somewhat less likely because spamming while forging such from
+addresses has stiffer anti-fraud penalties in many jurisdictions.</p>
+ 
+<p>The opposite of "spam" is sometimes called "ham". &nbsp;Thus, the fundamental
+ task is that Bob wants to receive ham from Alice, even if Bob does not previously
+ know Alice, while Bob does not want to receive spam from Spud.<br>
+ </p>
+ 
+<!--
+<p>???&nbsp;Figure.&nbsp; Alice -&gt;&nbsp;Bob,&nbsp;&nbsp; &lt;- Spud (the 
+ spammer)</p>
+-->
+ 
+<p>Note that this paper does not deal with countering computer viruses and
+ email worms. </p>
+<p><br>
+ </p>
+ 
+<h1>Environment</h1>
+ 
+<p>An anti-spam technique should ideally work in any communication system 
+where there is the threat of spamming, including electronic mail (email), 
+instant messaging, faxes, voice telephones, and so on. &nbsp;Much of the ideas
+discussed here are independent of the specific communication media. &nbsp;Nevertheless,
+to make the approach concrete, this paper will concentrate on email based
+on Internet standards, such as the Simple Mail Transfer Protocol (SMTP).
+&nbsp;This section briefly discusses how email is typically transmitted over
+the Internet using Internet standards.</p>
+<table cellpadding="2" cellspacing="2" border="1" width="100%">
+  <tbody>
+    <tr>
+      <td valign="top">??? Insert picture here showing MUA -&gt; MSA -&gt;
+MTAs -&gt; delivery agent -&gt; mailbox -&gt; {POP, IMAP, direct} -&gt; MUA.<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>  </p>
+ 
+<p>In the Internet, users compose, submit, and receive email using a Mail
+User Agent (MUA); examples of MUAs include Mozilla Mail and Microsoft Outlook.
+&nbsp; When a user wishes to send an email, their MUA sends the email to
+a Mail Submission Agent (MSA) for further transmission. The MSA then transfers
+the email on towards the eventual recipient through zero or more Mail Transfer
+Agents (MTAs). &nbsp;The roles of MUAs, MTAs, and MSAs are described in IETF
+RFC <a href="http://www.ietf.org/rfc/rfc2476.txt">2476</a>
+, but note that in practice MTAs are often also used as MSAs, and MSAs use
+the same protocol as MTAs. &nbsp;MTAs send the messages to other MTAs using
+the Simple Mail Transfer Protocol (SMTP). &nbsp;SMTP was specified in RFC
+<a href="http://www.ietf.org/rfc/rfc821.txt">821</a>
+, but has been more recently updated in RFC <a href="http://www.ietf.org/rfc/rfc2821.txt">
+2821</a>
+ (which obsoleted RFC <a href="http://www.ietf.org/rfc/rfc821.txt">821</a>
+, <a href="http://www.ietf.org/rfc/rfc974.txt">974</a>
+, and <a href="http://www.ietf.org/rfc/rfc1869.txt">1869</a>
+, as well as updating <a href="http://www.ietf.org/rfc/rfc1123.txt">1123</a>
+). Typical SMTP implementations implement various extensions, the framework
+for extensions is defined in RFC <a href="http://www.ietf.org/rfc/rfc1869.txt">
+1869</a>
+, and common extensions include RFC <a href="http://www.ietf.org/rfc/rfc1870.txt">
+1870</a>
+ for declaring message sizes before transmission, RFC <a href="http://www.ietf.org/rfc/rfc1652.txt">
+1652</a>
+ (8bit-MIME) for transporting 8-bit data instead of 7-bit data. &nbsp;RFC
+<a href="http://www.ietf.org/rfc/rfc2554.txt">2554</a>
+ defines an SMTP service extension so an SMTP client may indicate an authentication
+mechanism to the server, perform an authentication protocol exchange, and
+optionally negotiate a security layer for subsequent protocol interactions.&nbsp;
+This extension is a profile of the Simple Authentication and Security Layer
+(SASL); SASL itself is defined in RFC <a href="http://www.ietf.org/rfc/rfc2222.txt">
+2222</a>
+.</p>
+<p>The final ("delivery") MTA must cause the message to be stored in a "message
+store" for later retrieval by users. &nbsp;This function is called a "Mail
+Delivery Agent" (MDA). &nbsp;This storage may be performed directly by the
+MTA, or may be done indirectly through some intermediary program that may
+also offer filtering capabilities. Most MTAs include some message store capability,
+and the Unix program procmail (for example) can be used as an intermediary.
+ &nbsp;The final message store format is not specified by an Internet standard,
+and indeed there are many different formats. &nbsp;For example, the old Unix
+"mbox" format simply stores the text messages in sequence preceded with the
+header "From ", the sender email address, and a timestamp. &nbsp;New messages
+are delivered by appending to the file /var/mail/<i>username</i> in this
+format. &nbsp;Some Unix MUAs detect if there is a local file named "mbox",
+and if so, would move those new messages to the end of the mbox file. &nbsp;There
+are many other formats; the point here is to show that message stores can
+be implemented in simple ways.</p>
+<p>However, many user machines are not permanently connected to the Internet,
+and/or the users tend to roam. &nbsp;Thus, while most MUAs are able to obtain
+email from message stores implemented as locally-accessible files, todays'
+MUAs typically access email using some protocol to access a server that controls
+the message store. &nbsp;Two popular protocols that allow an MUA to access
+a remote mail message store are the Post Office Protocol (POP) and the Internet
+Message Access Protocol IMAP. &nbsp;POP Version 3 is defined in RFC <a href="http://www.ietf.org/rfc/rfc1939.txt">
+1939</a>
+. &nbsp;IMAP version 4rev1 is defined in RFC <a href="http://www.ietf.org/rfc/rfc2060.txt">
+2060</a>
+. &nbsp;POP is a simpler protocol to implement - and thus more widespread.
+&nbsp;However, POP only works well if the user always uses the same client
+to access email; if the user moves between machines to access email (e.g.,
+between different home and work machines), then IMAP is a more suitable protocol.</p>
+<p></p>
+<p>There are standard extensions for both POP and IMAP. &nbsp;RFC <a href="http://www.ietf.org/rfc/rfc2449.txt">
+2449</a>
+  defines the POP extension mechanism, though it warns that POP is intentionally
+simple and users who wish to use a more capable protocol should often switch
+to IMAP. &nbsp;RFC <a href="http://www.ietf.org/rfc/rfc1734.txt">1734</a>
+  defines the POP3 "AUTHenticate" command. RFC <a href="http://www.ietf.org/rfc/rfc2195.txt">
+2195</a>
+  defines a simple challenge/response protocol to authenticate MUAs to POP
+or IMAP servers. &nbsp;RFC <a href="http://www.ietf.org/rfc/rfc1731.txt">
+1731</a>
+ defines some IMAP authentication mechanisms. &nbsp;RFC <a href="http://www.ietf.org/rfc/rfc2086.txt">
+2086</a>
+ defines Access Control List (ACL) extensions to IMAP. RFC <a href="http://www.ietf.org/rfc/rfc2193.txt">
+2193</a>
+ defines "mailbox referrals" for IMAP.&nbsp; A longer list of IMAP-related
+standards is at <a href="http://www.imap.org/papers/biblio.html">http://www.imap.org/papers/biblio.html</a>
+.<br>
+</p>
+<p>All of this is irrelevant unless the format of the delivered email itself
+is standardized. &nbsp;Internet email messages are sent in the Internet Message
+Format defined by IETF RFC <a href="http://www.ietf.org/rfc/rfc2822.txt">
+2822</a>
+ (which obsoletes RFC <a href="http://www.ietf.org/rfc/rfc822.txt">822</a>
+). This format, by itself, is only intended for transporting single text
+messages. &nbsp;However, it is typically combined with Multipurpose Internet
+Mail Extensions (MIME) to transport arbitrary data. &nbsp;MIME is defined
+in five parts, in IETF&nbsp;RFC <a href="http://www.ietf.org/rfc/rfc2045.txt">
+2045</a>
+, <a href="http://www.ietf.org/rfc/rfc2046.txt">2046</a>
+, <a href="http://www.ietf.org/rfc/rfc2047.txt">2047</a>
+, <a href="http://www.ietf.org/rfc/rfc2048.txt">2048</a>
+, and <a href="http://www.ietf.org/rfc/rfc2049.txt">2049</a>.
+RFC <a href="http://www.ietf.org/rfc/rfc2387.txt">2387</a>
+defines a multipart/related type to connect related objects
+together. &nbsp;RFC 1847 defines signed and encrypted multipart subtypes
+for MIME. RFC 1848 defines MIME Object Security Services (MOSS), a protocol
+that uses that framework to apply digital signature and encryption services
+to MIME objects. RFC <a href="http://www.ietf.org/rfc/rfc2480.txt">2480</a>
+ discusses handling MIME security parts in non-MIME environments. RFC <a href="http://www.ietf.org/rfc/rfc1864.txt">
+1864</a>
+ defines the Content-MD5 header for MIME-conformant messages. &nbsp;Secure/Multipurpose
+Internet Mail Extensions (S/MIME) provides security extensions to MIME messages
+- RFC <a href="http://www.ietf.org/rfc/rfc2633.txt">2633</a>
+ defines S/MIME version 3, RFC <a href="http://www.ietf.org/rfc/rfc2632.txt">
+2632</a>
+ defines S/MIME version 3 certificate handling, and RFC <a href="http://www.ietf.org/rfc/rfc2634.txt">
+2634</a>
+ defines some enhanced S/MIME services.
+There is also an RFC defining OpenPGP.</p>
+<p>Of course, not all email is delivered successfully, which brings us to
+the issue of error notification. As described in RFC <a href="http://www.ietf.org/rfc/rfc2821.txt">
+2821</a>
+ section 6.1, "When an SMTP server accepts an email, it accepts responsibility
+for ensuring its delivery or replying with an issue.&nbsp; As part of the
+protocol, it identifies who the email is "from" (which may be different than
+the "From" value in the email message itself). When the receiver-SMTP accepts
+a piece of mail (by sending a "250 OK" message in response to DATA), it is
+accepting responsibility for delivering or relaying the message... If there
+is a delivery failure after acceptance of a message, the receiver-SMTP MUST
+formulate and mail a notification message.&nbsp; This notification MUST be
+sent using a null ("&lt;&gt;") reverse path in the envelope.&nbsp; The recipient
+of this notification MUST be the address from the envelope return path (or
+the Return-Path: line).&nbsp; However, if this address is null ("&lt;&gt;"),
+the receiver-SMTP MUST NOT send a notification.." However, it's worth noting
+that there are many existing systems which do not store "Return-Path: &lt;&gt;"
+in stored messages that are notifications; this will be important later in
+the discussion on preventing mail loops. &nbsp;RFC <a href="http://www.ietf.org/rfc/rfc1891.txt">
+1891</a>
+ defines an SMTP service extension for delivery status notifications. RFC
+<a href="http://www.ietf.org/rfc/rfc2298.txt">2298</a>
+ defines an extensible message format for message disposition notifications
+(see also RFC
+<a href="http://www.ietf.org/rfc/rfc1894.txt">1894</a>).
+
+&nbsp;RFC <a href="http://www.ietf.org/rfc/rfc1892.txt">
+1892</a>
+ defines a MIME report type for mail system administrative messages. &nbsp;RFC
+<a href="http://www.ietf.org/rfc/rfc1893.txt">1893</a>
+ defines a method for reporting enhanced mail system status codes.<br>
+</p>
+<p></p>
+<p>RFC <a href="http://www.ietf.org/rfc/rfc3028.txt">3028</a>
+ defines "Sieve", a mail filtering language. &nbsp;RFC <a href="http://www.ietf.org/rfc/rfc3339.txt">
+3339</a>
+ defines how to timestamps on the Internet.</p>
+<p>There are several documents relating to mailing lists
+(an important issue, because any spam handling approach must also allow
+users to receive email from mailing lists they <i>have</i> solicited).
+RFC <a href="http://www.ietf.org/rfc/rfc2919.txt">2919</a> is especially
+relevant; it is "List-Id: A Structured Field and Namespace
+for the Identification of Mailing Lists".
+RFC <a href="http://www.ietf.org/rfc/rfc2369.txt">2369</a>
+describes the use of URLs as a meta-syntax for mail list commands.
+
+Note that there is an <a href="http://www.ietf.org/internet-drafts/draft-palme-maillist-02.txt">
+Internet Draft titled "Appropriate Mailing List Behavior"</a>
+, which suggests behavior of mailing lists. </p>
+<p>
+  Any solution should have a number of positive characteristics.&nbsp; A
+solution should support sending to multiple recipients.&nbsp; Although Bob
+may need special software, Alice should be able to send email to Bob without
+changes to Alice's MUA or MTA.&nbsp; The solution should be decentralized,
+ not depending on some central node, so that it can scale to the entire Internet.&nbsp;
+It should be easily implemented. <br>
+<br>
+Other useful standards include RFC <a href="http://www.ietf.org/rfc/rfc2104.txt">
+2104</a>
+ (defining HMAC, keyed hashing for message authentication).<br>
+  &nbsp;   
+<p></p>
+ 
+<h1>Related Work</h1>
+ 
+<p>There are a vast number of websites and papers about spam. &nbsp;A survey 
+paper describing various methods to control spam includes "Unsolicited Bulk 
+Email: Mechanisms for Control" by Hoffman and Crocker <a href="http://www.imc.org/ube-sol.html">
+ http://www.imc.org/ube-sol.html</a>
+  . &nbsp;Unfortunately, this survey doesn't fully identify the area discussed
+ here. &nbsp;They do identify "accountability", but they presume that senders
+ themselves, the first hop, or a relay must specifically authenticate their
+ identity; in this paper, all that needs authentication is that the email
+is not spam, not truly the sender's identity. &nbsp;A few of many techniques 
+are noted here, some of which aren't noted in Hoffman and Crocker's paper.<br>
+A nice summary of anti-spam techniques is given in
+<a href="http://www-106.ibm.com/developerworks/linux/library/l-spamf.html?ca=dgr-lnxw04SpamFilter">
+Spam Filtering techniques: Six approaches to eliminating unwanted e-mail</a>
+by David Mertz.
+ </p>
+ 
+<h2>White Lists</h2>
+ One simple approach is to create a list of email addresses that emails are
+acceptable from; all others are rejected. &nbsp;This certainly works to prevent
+most spam. &nbsp;Clearly, a spammer can still get through if they forge a
+"from" address from some Alice that is accepted by Bob, unless some authentication
+technique is used (to ensure that the message is really from Alice). If some
+addresses are added to the whitelists of most people (e.g., "support@amazon.com"
+or "postmaster"), then spammers can use those addresses. This can be a serious
+problem, especially since there are some standard names where this is likely
+(see RFC <a href="http://www.ietf.org/rfc/rfc2142.txt">2142</a>
+). However, a much more serious problem is that this approach, if used by
+itself, also makes it impossible for Alice to send a message to Bob if Bob
+does not already know Alice. &nbsp;It also causes trouble if Alice changes
+her email address. Whitelists can be combined with other methods, however,
+to deal with these problems. <br>
+ <br>
+ 
+<h2>Black Lists</h2>
+ Another simple approach is the opposite of the white list: create a list
+where email will <i>not</i> be accepted from. &nbsp;This list may be specifically
+of email addresses, or of mail transfer agents (MTAs). &nbsp;Typically, such
+lists identify MTAs which have been known to send spam in the past, or which
+allow arbitrary senders to send email (an "open relay"). &nbsp;However, spammers
+find these approaches fairly trivial to work around; they simply move on
+to yet another location or email address.<br>
+ <br>
+ 
+<h2>Heuristic Spam Identification</h2>
+  
+<p>Most email systems use various heuristics to analyze each email message 
+to determine whether or not it is spam. Many programs, such as SpamAssassin,
+look at the headers for various clues and perform various queries in an attempt
+to determine if a message is spam or not. Users can often create simple filters
+to catch certain keywords (such as the "ADV:" keyword required by some state
+laws in subject lines), but manually manipulating such filters quickly becomes
+too time-consuming.<br>
+<a href="http://spamconference.org/proceedings2003.html">The 2003 Spam
+Conference</a> in Cambridge, MA concentrated primarily on heuristic
+spam identificiation techniques.
+ </p>
+ 
+<p> <a href="http://www.paulgraham.com/spam.html">Paul Graham's plan for
+spam</a>
+, discusses a naive Bayesian approach, in which each email user can run a
+program that creates a personal spam filter based on statistical analysis. 
+Graham didn't invent the idea, but he did make it much more widely known. 
+<a href="http://paulgraham.com/better.html">He more recently published
+various improvements on it</a>.
+There's a great deal of study on the approach, including <a href="http://arxiv.org/abs/cs.CL/0006013">
+An evaluation of Naive Bayesian anti-spam filtering</a>
+, <a href="http://arxiv.org/abs/cs/0008019">An Experimental Comparison of 
+Naive Bayesian and Keyword-Based Anti-Spam Filtering with Personal E-mail
+Messages</a>
+, <a href="http://arxiv.org/abs/cs/0009009">Learning to Filter Spam E-Mail:
+A Comparison of a Naive Bayesian and a Memory-Based Approach</a>
+, and information from <a href="http://www.lsi.upc.es/%7Ecarreras/pub/boospamev.ps">
+lsi.upc.es</a>
+ and <a href="http://www.monmouth.edu/%7Edrucker/SVM_spam_article_compete.PDF">
+monmouth.edu</a>
+; <a href="http://developers.slashdot.org/developers/02/08/16/1428238.shtml?tid=156">
+Slashdot</a>
+ has carried a discussion about it. <a href="http://www.ai.mit.edu/%7Ejrennie/ifile/">
+Ifile implemented the idea</a>
+ many years ago - it claims a first release date of Aug  3 20:49:01 EDT 1996,
+and the author doesn't claim that is the first time this has been implemented,
+either. <a href="http://crm114.sourceforge.net">CRM114</a>
+ has an active filter using this technique, but can extend the probabilities
+to phrases and not just words (some studies have suggested that doing this
+doesn't help). <a href="http://tuxedo.org/%7Eesr/bogofilter/bogofilter.html">
+Eric Raymond has developed bogofilter</a>
+, a high-speed implementation. A selected set from the newsgroup news.admin.net-abuse.sightings
+might be useful for initial training, though it can't be used directly (a
+spammer will try to fill it with useful messages to disable filtering). </p>
+ 
+<p> <a href="http://spambayes.sourceforge.net/">The SpamBayes project</a>
+ is researching how to improve classification of spam vs. ham messages when
+examining the message contents. They began with the naive Bayesian approach,
+but have been evaluating variations on the technique to improve it further. 
+Their tests show that examining pairs of words are actually less effective
+than examining words individually, which is an interesting approach. They
+have also developed a different algorithm for combining the probababilities
+of individual words, the chi-squared approach, which in their tests produce
+even better results. Here is their description in their own words: </p>
+<blockquote> The chi-squared approach produces two numbers - a "ham probability" 
+("*H*") and a "spam probability" ("*S*"). A typical spam will have a high 
+*S* and low *H*, while a ham will have high *H* and low *S*. In the case where
+the message looks entirely unlike anything the system's been trained on,
+you can end up with a low *H* and low *S* - this is the code saying "I don't
+know what this message is". Some messages can even have both a high *H* and
+a high *S*, telling you basically that the message looks very much like ham,
+but also very much like spam. In this case spambayes is also unsure where
+the message should be classified, and the final score will be near 0.5. So
+at the end of the processing, you end up with three possible results - "Spam",
+"Ham", or "Unsure". It's possible to tweak the high and low cutoffs for the
+Unsure window - this trades off unsure messages vs possible false positives
+or negatives.</blockquote>
+  <br>
+ All heuristic approaches suffer from the problem of false positives and
+false negatives. &nbsp;If too many spams are misclassified as ham, then the
+user will start to see too many spam messages (eventually becoming unable
+to use email, if the problem is severe). &nbsp;If hams are misclassified
+as spam, then users will lose email messages - and for most users, that's
+even worse, so such heuristics have to conservatively let messages through
+unless it's extremely likely that the message is spam. &nbsp;Also, these
+heuristics are not immune to spammer counter-attacks. &nbsp;For example,
+a spammer could send a spam message with a randomly-created dictionary list
+of "good" words attached, in the hopes of confusing the classifiers into
+misclassifying the message as ham. &nbsp;Counter-counterattackers (e.g.,
+weighting words seen first) are possible, but clearly this has the potential
+for an endless back-and-forth struggle.<br>
+ <br>
+ 
+  <h2>Impose Time Costs</h2>
+ Another approach has been to impose a cost on senders of email. Imposing 
+monetary costs is generally undesirable, but requiring the sender to perform 
+some calculation (requiring them to "pay in time") is feasible. &nbsp;While 
+this does not completely prevent spam, it could significantly reduce the rate
+at which spam could be sent (and thus received).<br>
+ <br>
+ Hashcash (<a href="http://www.cypherspace/adam/hashcash">http://www.cypherspace/adam/hashcash</a>
+) is one of the more widely-known approaches to imposing time costs on senders.
+Adam Back describes the approach this way:  
+  <blockquote>   
+    <p>Hash cash is payment in burnt CPU cycles by calculating n-bit partial 
+hash collisions on chosen texts. The idea of using partial hashes is that
+they can be made arbitrarily expensive to compute (by choosing the desired
+number of bits of collision), and yet can be verified instantly. This can
+be used as the basis for an ecash system measured in burnt CPU cycles. Such
+cash systems can be used to throttle systematic abuses of un-metered internet
+resources.</p>
+   
+    <p>Hash cash is denominated in the bit length of the partial hash collisions.
+ One bit longer is twice as expensive to compute (on average). By choosing
+an appropriate denomination of hash collision we can create a system of metering
+which does not pose a problem to the normal sender, but which becomes expensive
+for large mass mailings. For example, my workstation is able to test 180,000
+hashes per second.  A 20 bit hash collision takes on average 6 seconds to
+produce at this rate. If I am charged by recipients a 20 bit hash for each 
+email I send, I can only usefully send 3750 mails per day. This should be
+more than adequate for the normal user, but could easily prevent a spammer
+breaking even with his low rate of success. This should cause spammers to
+either give up sending spam, or to work hard on increasing the accuracy of
+their direct marketing database, either option being is a net positive result.</p>
+   
+    <p>The recipient's service provider's SMTP server could be modified to 
+discard, or bounce messages with insufficient hash cash. Notification of
+the amount of hashcash required could be part of the bounce message. Alternatively
+the user could use the hashcash client as part of incoming mail filtering.
+ If the system administrator, or the user decides that they are still getting
+spam with the current postage charge, they increase the hashcash charge for
+receipt. Hashcash suffers from a high rate of inflation: machines get faster 
+every year. In the longer term it may be necessary to increase the hash collision
+postage rate by a couple of bits or so a year.</p>
+   
+    <p>For mailing list servers which have a legitimate need to send many 
+emails (50 messages/ day x 1000 subscribers = 50,000 emails / day) the requirement
+to include hash cash tokens would become expensive. To solve this problem
+subscribers should put the mailing list address in a postage-free recipients
+list.</p>
+ </blockquote>
+           <br>
+ In time-lock cryptography, the goal is to find a puzzle that is easy to
+create by the sender, but takes considerable effort for a spammer to solve.<br>
+ <br>
+ <font size="3" face="Times"><span style="font-size: 19px; font-family: Times; ">
+ 
+    <div style="position: absolute; top: 360px; left: 317px; "><nobr></nobr></div>
+    </span></font>Tom St. Denis' paper, "An e-mail Spam Deterrent: N-Spam"
+(http://www.iahu.ca:8080/papers/nspam.pdf) discusses another approach, based
+on RSA.<br>
+ <br>
+ One significant problem is that these approaches essentially require
+that all senders modify their sending client or server before they can
+send email to receivers requiring this information
+(or at least, that users obtain separate programs to answer the puzzles).
+As a result, they require standardization and nearly universal deployment
+by senders before they can be used in most cases.
+This is a serious weakness of the approach if used by itself.
+<br>
+  
+    <p></p>
+ 
+    <h2>Challenge-Response<br>
+ </h2>
+ 
+    <p>Professor Timo Salmi developed in the summer of 1997 an "email password
+system" using what he calls "Timo's method", described at <a href="http://www.uwasa.fi/%7Ets/info/spamfoil.html">
+ http://www.uwasa.fi/~ts/info/spamfoil.html</a>
+  . This is implemented using Unix procmail, and is a little tricky to install.
+ &nbsp;After rejecting known spammers identified via a blacklist, mail with
+ "from" addresses in a whitelist are passed on to the recipient. &nbsp;Mail
+ with from addresses not in a whitelist are not delivered; instead, they
+are  given a reply, saying that they must add a stated password in the subject
+ line. &nbsp;He defines "email password systems" as any system requiring
+a password in the header or body of the email for the email to be passed
+through. &nbsp;A few heuristics are used to prevent mail loops. &nbsp;Updating
+the whitelist must be done by hand (by modifying a program), the email currently
+ replied simply states the email (so a spammer could automatically identify
+ the password), and the passwords are sent as cleartext (so spammers could
+ capture passwords through email traffic).<br>
+   </p>
+  
+    <p>MailCircuit's HandShake Verification and Spam Filter Process, described 
+at <a href="http://www.mailcircuit.com/sf.html">http://www.mailcircuit.com/sf.html</a>
+ , describes a somewhat similar system. &nbsp;A reply is sent, but instead 
+of including the password in the replied email, a "letter of introduction" 
+is replied and the unknown email is held in a special queue. &nbsp;New senders 
+must then log on to a web page (as described in the letter of introduction), 
+which is a unique web page for that email. If the sender makes a positive 
+reply, then the message is sent on to the original recipient and the sender 
+is added to the "verified" list (so future emails from the "from" address 
+will not be held). &nbsp;Note that if a spammer provides a valid return address, 
+this could be easily faked. &nbsp;Unconfirmed email messages are eventually 
+discarded.</p>
+ 
+    <p>The Tagged Message Delivery Agent (TMDA) project at <a href="http://tmda.net">http://tmda.net</a>
+<!-- was sourceforge.net/projects/tmda, http://software.libertine.org/tmda/ -->
+  is developing a program to support verification. &nbsp;TMDA combines a
+"whitelist", a "blacklist", and a confirmation system for unknown, but legitimate
+senders.
+TMDA assumes that spammers never give a valid return address.
+Note that if a spammer <i>is</i> willing to have a valid return email
+address, a spammer can trivially develop programs to automatically
+confirm email - completely subverting TMDA.
+On the other hand, this assumption is often true currently, and it
+certainly makes use of TMDA simple.
+TMDA features automatic whitelisting of confirmed senders,
+MUA-independent, site-wide installations using relay rewriting (including
+    non-unix clients such as Microsoft Windows), and uses <a href="http://web.archive.org/web/20011026090355/http://www-cse.ucsd.edu/users/mihir/papers/hmac.html" target="Resource Window">
+ HMAC</a>
+  (Hashed Message Authentication Codes) for "cookie" generation and verification.
+The <a href="http://tmda.net/faq.cgi?req=all">TMDA FAQ</a> describes it in more detail, as well as listing other similar programs.
+Instead of sending a "cookie" in the subject line or other email header,
+TMDA creates specially tagged email addresses when sending out confirmation
+requests, so that email must be sent with name-"dated"-date-hash.
+For example, a second email might be sent to
+jason-dated-1032297526.da8e7f@mastaler.com.
+This has has pros and cons; some do not like the complicated email addresses
+this creates, though by using the email "Reply-To" tag this problem can
+be reduced.
+See the TMDA FAQ for more discussion on this topic.
+TMDA can optionally add a user to the whitelist if they respond to the
+password (termed the "cookie"); see the CONFIRM_APPEND and
+ADDED_HEADERS_CLIENT.
+</p>
+
+<p>
+Another challenge-response system is the
+Active Spam Killer (ASK) at <a href="http://www.paganini.net/ask/">http://www.paganini.net/ask</a>.
+As with TMDA, this system presumes that the spammer will not receive replies,
+since a spammer who receives replies could write a program to automatically
+respond to the email.
+As they note:
+<blockquote>
+ The real fun happens when an email comes from an unknown user (i.e, someone not in any of your lists). In this case, ASK calculates the MD5 checksum of the message + a secret MD5 key (configured during installation time). This number is sent as part of a "confirmation message" back to the user. If the user replies to it, the confirmation number (in the subject) is recognized, the message is dequeued and delivered. If the user does not reply, the message remains queued until it's removed.
+<br>
+The program has some intelligence to deal with specific cases. For instance, if a mail is sent to a non-existing user, the error message from mailer-daemon is ignored. This avoids seeing lots of "invalid user" messages in your inbox.
+<br>
+Another interesting "twist" is that messages coming from your own email address are never trusted. If the spammer knows your address he could easily fake your own address as the From: line. Messages coming from you will be identified by a "mailkey", a piece of string you always put on your message by default (maybe a piece of your own signature). Note that this has the added side-effect of allowing any messages coming in reply to a message you sent to someone (as long as that person keeps your "mailkey" in it's quoted reply, a practice common these days).
+<br>
+ ASK will by default deliver mail coming from MAILER-DAEMON, unless it is an invalid email response to a confirmation message. If a spammer uses MAILER-DAEMON in the "From:" field, he could defeat ASK's protection. If that becomes an issue, future versions of the program will "Junk" all mail coming from MAILER-DAEMON, unless it also contains our mailkey (normally Mail Transfer Agents append the original message to the error message, thus triggering the mailkey mechanism).
+</blockquote>
+More information about ASK is in their
+<a href="http://www.paganini.net/ask/howitworks.html">How it works</a> and their
+<a href="http://www.paganini.net/ask_wiki/">FAQ</a>.
+</p>
+
+ 
+    <p>Another challenge-response system is Whitelight at <a href="http://sourceforge.net/projects/whitelight">
+ http://sourceforge.net/projects/whitelight</a>
+ . &nbsp;"Whitelight is a lightweight whitelist implementation built atop 
+procmail, with an autoresponder-based confirmation mechanism.  Email with 
+bogus return addresses (read: spam) is silently but effectively filtered out."</p>
+ 
+    <p>Mozilla bug #156744 recommends adding support in Mozilla mail (the
+basis of Netscape Mail) for TMDA &nbsp;(<a href="http://bugzilla.mozilla.org/show_bug.cgi?id=156744">
+http://bugzilla.mozilla.org/show_bug.cgi?id=156744</a>
+). &nbsp;Mozilla bug #187044 recommends adding support for some challenge/response 
+system to Mozilla mail <a href="http://bugzilla.mozilla.org/show_bug.cgi?id=187044">
+(http://bugzilla.mozilla.org/show_bug.cgi?id=187044</a>
+).</p>
+ 
+    <h2>Sender Warranted Email<br>
+ </h2>
+ 
+    <p>Habeas' "Sender Warranted Email" (SWE) (TM) system as described in
+    <a href="http://www.habeus.com/faq/index.html"> http://www.habeus.com/faq/index.html</a>
+  provides a somewhat different approach; an article briefly describing the 
+approach is at <a href="http://www.oblomovka.com/writing/haeas%3A_the_antispam_haiku.php3">
+ http://www.oblomovka.com/writing/haeas%3A_the_antispam_haiku.php3</a>
+ . Email which wishes to warrant that it is not unsolicited bulk email can 
+include a special Haiku in the email message header. &nbsp;This Haiku is termed
+the "Habeus warrant mark," and since it is copyrighted and includes a trademark
+reference, a license is required to use the mark. &nbsp;Receivers can simply
+check to see if the Habeas mark is included. &nbsp;Habeas has widely announced
+that it will legally enforce its mark, and has also requested a patent for
+this approach.<br>
+ </p>
+ 
+    <p>This approach has the advantage of simplicity. &nbsp;However, it is
+not yet clear if spammers will truly respect this if it is used widely; not
+all countries may recognize Habeus' rights. &nbsp;Habeas' license may not
+suit all its users; ideally, recipients should be the ones to choose exactly
+what license is appropriate (recipients can use a whitelist, of course, but
+the mark can only be applied if certain criteria are accepted). &nbsp; However,
+most concerningly, since a single company owns the rights to the license,
+if this approach is widely used this represents a serious overcentralization 
+of control (especially since, if a patent is granted, there could not be competing
+marks). &nbsp;Currently, use is free for ISPs and individuals. &nbsp;However,
+nothing prevents Habeas from substantially raising its rates in the future,
+creating a worldwide corporate tax on the ability to receive email. Centralization
+of any company in the worldwide infrastructure is not desirable, no matter
+how noble their goal.<br>
+  </p>
+    
+    <h1></h1>
+ 
+    <p><br>
+  &nbsp; </p>
+   
+    <h1> Guarded Email</h1>
+   This paper describes a different anti-spam technique, termed "guarded
+email".&nbsp;&nbsp;  The guard must check for the existance of a password
+or other authentication  marker in the email (as cleartext or encrypted in
+some way).&nbsp; If there  is no correct password, and the email doesn't
+meet any other guard criteria  for accepting the email, then the email is
+    <i>not</i> accepted; instead, a challenge is sent to the original sender,
+with human-readable information  on how to determine the password.&nbsp;
+Additional extensions, in particular  whitelists and loop prevention, result
+in a simple protocol where users who normally communicate with each other
+can do so without change, and strangers  can communicate by answering a simple
+human-readable challenge (i.e., untrusted  users must "log in" to send email
+to someone else).   
+    <p>Bob only receives mail that passes through Bob's guard (BG).&nbsp;
+Alice  may or may not be guarded. </p>
+   
+    <p>??? insert figure. <br>
+  Figure ?? illustrates this.&nbsp; Throughout this text, the sender of the
+ original message is Alice (unless otherwise noted), while the intended eventual
+ recipient is Bob.&nbsp; Bob has a guard controlling his inbox; Alice may
+or may not also be guarded. </p>
+   
+    <p>??? Switch to Alice/Bob notation. </p>
+   
+    <p>The following sections discuss challenges, authentication information, 
+ whitelists, loop prevention, alternatives to whitelists, and some variations 
+ on the approach (removing challenges and removing passwords). <br>
+  &nbsp; </p>
+   
+    <h2> Challenge</h2>
+   Whenever email is received by the guard and it doesn't meet the criteria 
+ for accepting email, then the guard should either drop the email or send 
+a reply called the "challenge."&nbsp; This email should include information 
+ telling the sender how to determine the password/authentication information. 
+  
+    <p>I suggest sending the following in a challenge: </p>
+   
+    <ol>
+   <li> A brief explanation that this is a guarded email account, that the
+ recipient has not yet received the email, and that to complete sending the
+ email the sender must respond correctly to a challenge.</li>
+    <li> The email would also include the actual human-readable challege
+(telling  the sender how to determine the challenge value).&nbsp; The challenge
+should  be unique for each person, not shared across an organization (otherwise, 
+a spammer could solve the challenge and spam everyone in the organization).</li>
+    <li> Text that invokes as many laws as possible to make it legally dangerous 
+ for a spammer to answer the challenge and send their spam email. The text 
+ should note that the receiver has specically already opted <i>out</i> of 
+their spam (since receiver has sent the challenge) and noting that they may 
+be sued if they send spam anyway. For example, the message could declare that
+the challenge is a terms of service agreement for this email account, specifically
+stating that sending spam to this account violates the terms of service,
+and that violating the terms of service is considered a break-in (just as
+any other break-in for a login).&nbsp; Other laws, if appropriate, should
+be noted as well.&nbsp; Note that this means a spammer would be possibly
+ violating several laws to send each spam message, beyond what they'd be
+violating  normally - making it more dangerous for the spammer to send the
+spam.</li>
+    <li> The entire contents of the original email.&nbsp; The original contents 
+ should be sent back, so that guarded email users don't have to store large 
+ amounts of potentially&nbsp; worthless spam email.&nbsp; Instead, the sender 
+ will be responsible for storing and re-sending the material.&nbsp; However, 
+ it is true that this adds communication overhead; if this is critical, an
+ alternative would be storing it locally (for some time) and use some id
+key  to identify what email message is being dealt with (a hash of the contents
+ would serve this need).</li>
+     
+    </ol>
+   It <i>must not</i> be easy for a machine to process the challenge and
+automatically  determine the answer.&nbsp; Instead, the challenge should
+be created so that a human must read the challenge to be able to answer it.
+Examples of kinds of challenges include natural language directions, a question
+of fact, a puzzle, a mathematical equation to solve, a riddle, and a shrouded
+picture  of the password (say in cursive).&nbsp; Sample challenges might
+be "The password  is 'quat', without the 't'; then add 'ck' to the end" or
+"Please give the  last name of the first U.S. President."&nbsp; A program
+might be able to figure out a few specific challenges, but if nearly all
+challenges cannot be solved by machines, the challenges will be effective.
+  
+    <p>Challenges could even give directions for how to obtain the password, 
+rather than specific directions on how to determine the password.&nbsp; For 
+example, it could say "to obtain the password, please call me at (555) 555-1212.&nbsp;
+ Note that this is a work number, and unsolicited sales phone calls are not
+ allowed."&nbsp; If the directions involve a mechanism that already forbid
+ spam (e.g., a fax number), this could provide an even stronger legal case
+ that any spam sent is illegal. At the most extreme case, the challenge could
+ be of the order "figure it out" - meaning that Alice (or a spammer) will
+have to find a different way to contact Bob, or a friend of Bob that knows
+Bob's password. </p>
+   
+    <p>If desired, implementations could create a "pending" folder so that
+users  would know what email has been challenged and awaiting authentication.&nbsp; 
+ Users could then, if they have time, look at those pending messages. However, 
+ there's no need for this capability for most uses, and the suggested approach 
+ is specifically designed so that it is not needed. </p>
+   
+    <p>Note that if the spammer cannot receive email replies, which is true
+for  most current spammers, then the spammer cannot see the challenge at
+all.&nbsp;  Since such spammers don't see the challenge, they will be unable
+to respond  to the challenge and thus their spam will simply be thrown away.&nbsp;
+This  does mean that people must be able to receive replies if they may be
+challenged;  this appears to be a reasonable restriction.&nbsp; Spammers
+are unlikely to respond to every challenge, since each will take time and
+greatly reduce the value of spamming. </p>
+   
+    <p>If a normal sender receives a challenge, they are likely to perform
+the  challenge as long as it's relatively easy. After all, they presumably
+sent  the email hoping that the receiver will receive it, and are probably
+willing  to perform a short challenge to make that happen (especially if
+they only  have to do it once for that address; see the whitelist discussion
+below).&nbsp;  The answer to the challenge is termed the "password" here,
+and the process  of checking the password is termed authentication which
+will be described  next. </p>
+   
+    <h2> Authentication</h2>
+   If senders do solve a challenge, and determine the password, they will 
+need to respond with a message that includes the resulting password and the 
+contents of the intended message.&nbsp;&nbsp; In the short term, the "Subject" 
+line appears to be the wisest place to include the password, since modifying 
+the subject line is supported by all mail user agents, but a separate email 
+header (e.g., "Guard-Challenge-Response") should also be reserved and used 
+to send this information whenever the mail user agent is aware of guarded 
+email.&nbsp; Over time, this additional use of the Subject line could disappear 
+as mail user agents include support for the header. <br>
+  When a response is contained in an email, it should be checked (by the
+notional  "guard" on which this scheme is named).&nbsp; The check should
+actually be  quite loose, since humans who probably do not know the recipient
+are involved.&nbsp;  I suggest ignoring upper/lower case distinctions (by
+changing everything to lower case), removing all whitespace, and optionally
+removing the terminating  punctuation mark before checking for equivalence.&nbsp;
+If the check succeeds,  the email is finally delivered to the recipient.&nbsp;
+Otherwise, a "sorry,  wrong response" could be sent, probably after some
+delay (to slow down guessing  attacks).&nbsp; Adding the name to the blacklist
+is inadvisable - if this  were done, an attacker could create a denial of
+service by forging email source addresses so that the recipient could not
+receive email from a large number of people.   
+    <p>It would probably be useful for an individual guard to support multiple 
+ possible passwords.&nbsp; Thus, multiple challenges could be given for different
+ groups of people (e.g., you can choose a chess challenge or a programming
+ challenge), or simply provide an alternative in case one challenge turns
+out to be excessively difficult.&nbsp; As a related thought, if an email
+can include many passwords, it's far easier to support emailing to multiple
+guarded mailboxes: simply include all the passwords, and the guard will check
+them all (if any of the passwords work, then the email is accepted).&nbsp;
+ There would obviously need to be an upper bound on the number of allowed
+passwords,  or spammers might try to send massive numbers of passwords in
+the hopes of  accidentally guessing a valid one. </p>
+   
+    <p>Anyone can receive the challenge, and it probably isn't hard to solve, 
+ so individual passwords are probably not that valuable.&nbsp;&nbsp; Thus, 
+ the password response could be sent as cleartext unless if you are concerned 
+ that spammers will capture large amounts of traffic and immediately use those
+passwords to spam many people. Large amounts of traffic seem quite unlikely
+at first, as long as few use guarded email.&nbsp; If guarded email became
+popular, such data capture would be far more likely.&nbsp; However, cleartext
+forms would be far easier to use by ordinary email readers not equiped to
+support guarded email.&nbsp; Thus, implementations and standards should support
+both a cleartext and a non-cleartext way of sending responses. </p>
+   
+    <p>A non-cleartext method should be able to send a response based on
+the password, without allowing a spammer to easily reuse it.&nbsp; One approach 
+would be to not send the password as cleartext - instead, send a keyed hash 
+(also called a message authentication code, though in this case it is being 
+used solely to ensure integrity not authentication).&nbsp;
+RFC <a href="http://www.ietf.org/rfc/rfc2104.txt">2104</a>
+describes
+ HMAC, a wrapper for more strongly securing keyed hashes, which can be combined
+ with hash algorithms such as SHA-1 (MD5 is a common hash algorithm, but
+recent  weaknesses suggest SHA-1 is a better choice).&nbsp; The keyed hash
+could be computed by using HMAC-SHA1 as defined in RFC 2104, with a cleaned
+password  as the key, and the text covers whatever should not be allowed
+to change.&nbsp;  I would suggest including in the text the sending date,
+the (simple) sender  email address, the (simple) receiver email addres, the
+subject line text,  and the message body.&nbsp; This information needs to
+be in a canonical form  for this approach to work; for example, the sending
+date should be of the  form YYYY-MM-DD, the sender address should be simply
+and easily determined.&nbsp;  Since humans determine the password value,
+the value of the password should  be made canonical ("cleaned") to eliminate
+unimportant differences (e.g.,  make it all lowercase, remove all whitespace,
+and use a standard character  encoding such as UTF-8).&nbsp; The resulting
+hash could be placed in a header  (say as "Guard-Hashed-Response"). A spammer
+cannot then extract passwords  simply by observing the intermediate traffice
+between sender and receiver.&nbsp;  A spammer <i>can</i> reuse the keyed
+hash, but only if their message forges  the same sender, the same sending
+date, the same subject line, sends it to  the same recipient, and includes
+exactly the same message text.&nbsp; A spammer  will not find resending the
+same message text to the same recipient with the same critical header information
+(including sending date) useful.&nbsp; Note that this approach does not require
+either senders or receivers to "remember"  past messages sent, which is advantageous.&nbsp;
+Instead, receivers can simply  repeat the keyed hash algorithm implementation
+and will only accept the email  if the hashes match (if the hashes match,
+then the correct password must have been used). </p>
+   
+    <h2> Whitelist</h2>
+   The process described above can be made much easier to use by adding support 
+ for a whitelist. Any email address on the receiver's "whitelist" is automatically 
+ accepted without requiring the challenge/response process.&nbsp; With a whitelist,
+email traffic with usual recipients (family members, co-workers, etc.) is
+handled immediately and without change.&nbsp; A whitelist is somewhat similar
+to an Instant Messenging "Buddy List," but with the advantages of email (such
+as universal standards and support for nonsynchronous communication).&nbsp; 
+ Whitelists should support listing both individual email addresses and domain 
+ names (e.g., "anything from any domain inside xyz.org").&nbsp; Users must 
+ be able to maintain their whitelist directly so they can view the entries, 
+ add entries, and remove entries in the whitelist.   
+    <p>An initial whitelist can be created completely automatically by examining 
+ all stored email (skipping any in a "spam" folder).&nbsp; Presumably, if 
+there's a saved message from some other user U, then it's likely that more 
+messages from U to the recipient would be welcome.&nbsp; In addition, the 
+whitelist should include a domain name pattern that covers the recipient's 
+organization.&nbsp; A recipient might optionally add domain name patterns 
+for the organizations they routinely do business with (e.g., customers, suppliers, 
+and sponsors).&nbsp; A recipient could even add patterns for organizations 
+whose names are unlikely to be forged - e.g., while anyone can forge an email 
+from the ".mil" domain, spammers are likely to find that unwise.&nbsp; Note 
+that these these domain patterns are not really necessary, and the scheme 
+will work well without them.&nbsp; The initial whitelist could include some 
+spammers; that's okay, since spammers generally change their source email 
+addresses rapidly and the spammers can be manually removed from the whitelist. 
+    </p>
+   
+    <p>The whitelist can be easily and automatically maintained by observing 
+email traffic.&nbsp; Every time a user sends email to someone (including as
+a reply),&nbsp; or saves an email from someone, those email addresses should
+be automatically added to the whitelist.&nbsp; Also, the receiver's "postmaster"
+related addresses need to be added, at least temporarily (e.g., a few days),
+so that the sender can receive error reports should the email fail to be
+delivered (e.g., because the email address no longer exists).&nbsp; One complication
+is determining exactly what those other addresses could be. </p>
+   
+    <p>One important complication: to receive mailing lists, the mailing
+list  address must be included in the whitelist (since senders to the mailing 
+list are unlikely to want to respond to many challenges).&nbsp; Ideally, email
+lists will standardize their behavior so that email readers can automatically 
+ detect subscriptions and add all the relevant email addresses (list address, 
+ administrative reports, etc.) to the whitelist. </p>
+   
+    <p>If the format of whitelists is standardized, the whitelists could
+be shared  with other email accounts and merged in with others.&nbsp; For
+example, a  user with both a business and personal email account could take
+the whitelist  from each, send the whitelist to the other account, and have
+merged whitelists  used by both accounts.&nbsp; Families might want to share
+lists of their email addresses, so that anyone in the family could immediately
+contact any other member.&nbsp; Thus, implementations should support extraction
+of the whitelist (or a subset of it), and should support merging in whitelists, 
+with both operations supporting simple standard format(s) for the whitelist 
+(e.g., XML or simple ASCII format). </p>
+   
+    <p>Although not required by the guarded email scheme, an implementation
+may  want to generalize the concept of the whitelist to a "speciallist",
+which  lists email address patterns (including individual addresses) and
+their disposition.&nbsp;  This would allow the easy implementation of a blacklist
+(a list of senders  who are rejected), by simply identifying that address's
+disposition as "blacklist".&nbsp;  Another extension is timed whitelists,
+where whitelist entries expire after  a particular date.&nbsp; For example,
+user S sends a message to user R, then  user S might add R's address to S's
+whitelist for 90 days (resetting any previous expiration date), and might
+add the address of R's "postmaster" to expire in 3 days.&nbsp; Another extension
+would be to permit "never-whitelist" addresses: email can be sent to such
+addresses, but the email address is not the automatically set to being part
+of the whitelist. </p>
+   
+    <p>Clearly, if a spammer forges a spammed message claiming to be from
+someone  in a whitelist, their spam will get in.&nbsp; But in many locations
+such blatant forgeries are illegal, and thus more dangerous to the spammer
+to perform (especially if done often).&nbsp; Also, the spammer has to determine 
+the whitelist value that would work for each recipient, which is nontrivial.&nbsp; 
+ A spammer could use a virus to do this, but doing so is often illegal, thus
+ more dangerous to the spammer, and so again, less likely. Finally, once
+spams  are reduced to a small subset which are doing extremely illegal things,
+it  will be easier to concentrate legal resources on identifying and prosecuting
+ those spammers. </p>
+   
+    <p>However, if spammers routinely forge "from" addresses to have the
+value  of trusted user, a simple whitelist approach will not work.&nbsp;
+In that  case, whitelist alternatives need to be used as described below
+to counter  spammers. <br>
+  &nbsp; </p>
+   
+    <h2> Loop Prevention</h2>
+   Infinite feedback loop of emails must be prevented.&nbsp; For example, 
+if both the sender and receiver implement guarded email, and sending email 
+did not automatically add that recipient's email address to the sender's whitelist,
+a naive implementation could result in an endless email loop.&nbsp; The original
+receiver could reply to the sender with the challenge; if the original receiver
+is not in the original sender's whitelist, the original sender would respond
+with another challenge; the receiver would respond with another challenge,
+and so on, forever.&nbsp; This particular problem is solved by automatically
+adding the receiver's email address to the sender's whitelist.   
+    <p>However, automatically adding to whitelists is not enough.&nbsp; For
+example,  imagine that there are two ordinary users A and B, who both have
+guarded email but neither are in the other's whitelist.&nbsp; A malicious
+spammer M could send an email message to A, claiming to be from B, without
+including a password.&nbsp; A would then send a challenge to B.&nbsp; But
+B does not have A in his whitelist, so B sends a challege to A.&nbsp; A still
+doesn't have B in his whitelist, so the email could repeatedly be sent back-and-forth
+forever.&nbsp; Automatic whitelist addition does not help in this case. </p>
+   
+    <p>A similar problem can occur with error reports.&nbsp; If a challenge
+is  sent and an error occurs (e.g., the email address is non-existant), then
+an MTA might reply with an error report, but then the guarded email system
+might reply with a challenge to the MTA, which might respond with an error
+report, and so on without end.&nbsp; Errors can occur not only with end systems
+but with systems along the path of the message transmission. "Vacation" messages
+ ("I'm on vacation...") can have similar issues. </p>
+   
+    <p>Thus, some sort of loop prevention mechanism is needed to prevent
+two guarded systems from looping.&nbsp; Thankfully, this is rather easy to
+implement.&nbsp;  First, a key insight is to note that if a challenge is
+received, the challenge  must be either accepted or thrown away without further
+replies.&nbsp; Thus,  challenges need to be marked in some way.&nbsp; A challenge
+could marked by using a special header ("Challenge-Message: 1"), or by including
+special text in the subject line ("GUARDED EMAIL CHALLENGE&nbsp; FROM <i>
+address</i> "); I would recommend using both when sending, and accepting
+either as indications  of a challenge.&nbsp; The same rule needs to apply
+to error responses: they  should either be accepted by the guard, or thrown
+away without further replies.&nbsp;  Indeed a challenge is in some sense
+an error reply, and should be marked as such.&nbsp; Error responses can be
+detected by examining where they came from, or by examining their contents.
+    </p>
+   
+    <p>A related issue is that messages could simply drop all messages that
+have  source times that are "too old", as determined by some configuration
+parameter.&nbsp;  Implementations must be sure that any time representation
+wraparounds don't  interfere with the mechanism. <br>
+  &nbsp; <br>
+  &nbsp; </p>
+   
+    <h2> Whitelist Alternatives</h2>
+   A whitelist is quite simple to implement.&nbsp; However, spammers can
+forge  "from" addresses, and if they can easily determine the value of "from"
+addresses  that will reach their victims and are willing to ignore the illegality
+of  forging, whitelists would be become a serious vulnerability to this approach.&nbsp;
+ Thankfully, although they are more complicated to implement, there are alternatives
+ to using whitelists while still keeping the system easy to use (indeed,
+if  implemented in MUAs or MTAs these alternatives would be invisible to
+the users).   
+    <p>First, when sending messages to someone you've sent emails to before, 
+your email browser could store the passwords for each recipient, in a manner 
+exactly analogous to how web browsers currently store passwords for web sites.&nbsp;
+ The browser could automatically look up the passwords for each of the intended
+ recipients, and add the password information to the message.&nbsp; This
+would  eliminate the need for the recipient to have a whitelist for those
+they communicate  with normally. </p>
+   
+    <p>However, this doesn't handle the problem of receiving challenges.&nbsp; 
+ If sender S sends a message to R, and R replies with a challege, S would 
+like to receive the challenge message.&nbsp; Thus, R needs to include enough 
+information in the challenge to S that S can decide to accept the challenge 
+as legitimate.&nbsp; One solution would be to use the same challenge approach 
+in reverse.&nbsp; When S sends bthe original message, S could include (in 
+a special header) some sort of authentication information, and when R replies 
+with the challenge, R could include enough additional authentication information 
+that S can verify that the message is appropriate.&nbsp; For example, S could 
+send as the authentication data a keyed hash (using HMAC-SHA1), where the 
+key is a reply-password.&nbsp; The reply-password could be the same as the 
+regular password, but is ideally different and can be changed more rapidly 
+(say, once every 3 days, and generated completely randomly since there's no
+need for it to be human-readable. The hashed text could include the sending 
+date, receiver email address, and email contents.&nbsp; R could then include, 
+in its challenge sent back to S, another keyed hash, where the text is the 
+challenge text and reply date.&nbsp; The key would be the key provided by 
+S.&nbsp; S, when it receives the challenge, could then verify if the hash 
+value was correct.&nbsp; Clearly, if a spammer can convince someone to send 
+them email, they would then have the information necessary to forge "challenges" 
+that are actually spam, but this is only true until the reply-password is 
+changed.&nbsp; Several reply-passwords could be supported, e.g., a new reply-password 
+might be generated each day and only the last three are considered valid.&nbsp; 
+This would allow a challenge reply to occur up to 3 days later.&nbsp; The 
+timescales could be shrunk further  as well. </p>
+   
+    <h2> No Challenges</h2>
+   One variant to the approach described here is to simply not support replying 
+ with challenges.&nbsp; In this case, a sender simply must know the password 
+ or be on the whitelist (if supported).&nbsp; The password could be provided 
+ other ways, e.g., by meeting in person, or providing the challenge information 
+ (or password) on a web page.&nbsp; However, the problem with removing support 
+ for challenges is that some people may only have an email address for someone 
+ they wish to contact.&nbsp; In that case, it may be quite difficult to determine
+ how to start the conversations.&nbsp; Challenges solve this problem. <br>
+  &nbsp;   
+    <h2> Alternatives to Passwords</h2>
+   Another variant to the approach described here is to not use passwords, 
+but instead use some other authentication mechanism so that Alice can show 
+Bob's guard that she is authorized to send email to Bob.&nbsp; Any other authentication
+system would also work, such as Kerberos, Windows' proprietary variant of
+Kerberos, and keys obtained through a Public Key Infrastructure (PKI).&nbsp;
+One problem is that to use an authentication system, both the sender and
+receiver would have to agree on the authentication system, many of which
+require some sort of centralized service (e.g., a specific Kerberos ticket
+server or certificate authority).&nbsp; However, in many such cases the Alice
+and Bob would already know each other or be part of the same organization,
+ so whitelists could easily cover the circumstance.&nbsp; Also, setting up
+ these other authentication mechanisms is more complex than simply sharing
+ a password, so this may not be worthwhile unless the mechanisms are already
+ in place.   
+    <h2> Other Responses</h2>
+   Although the discussion here has been to accept or not accept an email, 
+other alternatives are possible.  For example, the priority of an email might 
+start as low, unless supported by a password, and the priority of the email 
+could be raised once the password was received.   
+    <h2> Other than Email</h2>
+     
+    <p> The discussion here has primarily examined email, especially Internet 
+ standards based email. However, this approach should work for other areas
+ as well whenever individuals communication and wish to counter spam. </p>
+   <br>
+  &nbsp; <br>
+  &nbsp;   
+    <h1> Examples of the Approach in Action</h1>
+      
+    <p><br>
+  Here are a few example of the guarded email approach in action.&nbsp; Bob
+ is, in all cases, a user of guarded email.&nbsp; Alice wants to send email
+ to Bob, and Bob might wish to reply.&nbsp; Spud is trying to send spam to
+ Bob, and Bob does not wish to receive Spud's messages.&nbsp; At first, we'll
+ assume that whitelists are used (and initialized as suggested earlier) and
+ that Alice does not have a guarded email account.&nbsp; Whitelists have
+the  advantage of simplicity and the disadvantage of being vulnerable to
+spammers  who intentionally forge email "from" addresses as through their
+emails were  from trusted users.&nbsp; Later examples show what happens when
+alternatives  to whitelists are used, when Alice is also a guarded account,
+and so on. </p>
+   
+    <p>1. Imagine Bob knows Alice, and has saved a previous message from
+Alice  before creating the whitelist.&nbsp; Thus, Alice is on Bob's whitelist
+(meaning  that Bob always wants to hear from Alice).&nbsp; When Alice sends
+an email  to Bob, Bob's guard finds that Alice is on the whitelist and Bob
+immediately  gets Alice's message.&nbsp; Note that for this case (where the
+receiver has  previously communicated with the sender), there appears to
+be no change for  the users. </p>
+   
+    <p>2. Imagine Bob does not know Alice - they've never communicated before.&nbsp; 
+ Thus, Alice is not on Bob's whitelist.&nbsp; When Alice sends an email to
+ Bob, Bob's guard finds that Alice is not on Bob's whitelist, and also doesn't
+ see Bob's password in the email.&nbsp; Thus, Bob's guard sends an email
+back  to Alice with a "challenge" (some human-readable text that describes
+how to create the password to communicate with Bob).&nbsp; Alice reads the
+challenge  and determines that "monkey" is Bob's guarded email password.&nbsp;&nbsp;
+ Alice's MTA isn't designed to handle guarded email, but that's okay - she
+ simply replies to the challenge (which causes the original email to be added
+ as an attachment), and adds the password "monkey" to the end of the subject
+ line.&nbsp; Now Bob's guard receives a message with the same content, but
+ with Bob's guarded email password.&nbsp; Bob's guard passes this new email
+ message on to Bob.&nbsp; If Bob likes the email, Bob may choose to save
+or  reply to the email; either action will add Alice to Bob's whitelist,
+so that  from then on Alice does not need to use Bob's guarded email password.
+    </p>
+   
+    <p>3. Spud sends a spam email message to Bob, using a legitimate account 
+that can accept replies.&nbsp; Bob's guard replies with a challenge as above.&nbsp;
+ However, Spud is sending millions of email messages, and doesn't have time
+ to respond to every guarded email user's challenges, so Bob will never see
+ the spam.&nbsp; Spud may choose to actually respond to the challenge, and
+ if so, Bob will get the email.&nbsp; However, if Bob just deletes the email,
+ Spud is never added to Bob's whitelist - so Spud will have to re-enter the
+ password for the next spam message too.&nbsp; Spud could save the password, 
+ but Bob can simply change the password.&nbsp; Note that changing the password 
+ impacts Spud, but doesn't impact Alice as long as Alice's message was either 
+ saved or replied to. </p>
+   
+    <p>4. Spud sends a spam email message to Bob, using a forged email account 
+ name that cannot accept replies (this is true for most current spammers).&nbsp; 
+ Bob's guard replies with a challenge, which eventually leads to some MTA 
+responding with an email with an error message (e.g., no such user).&nbsp; 
+The error message reaches Bob's guard again, but since the email is not in 
+the whitelist nor contains the password, the error email is silently dropped.&nbsp; 
+Note that Bob never sees the spam at all. </p>
+   
+    <p>5. Instead, Bob decides to try to send email to Alice; Alice and Bob
+don't  know each other, and Alice does not have guarded email.&nbsp; This
+would work easily if Alice's email were given correctly, but Bob manages
+to use the wrong email address Alice2 instead, which doesn't exist.&nbsp;
+When Bob sends the email, Bob's whitelist is automatically modified so that
+Bob can receive email from Alice2, and modifies the whitelist so error messages
+relating to Alice2 can be received (the error might be detected anywhere
+along the way by an MTA, not necessarily in Alice's domain).&nbsp; An error
+is returned,  explaining that there is a problem.&nbsp; Bob's guard finds
+that this is acceptable, so Bob receives the email that Alice2 is invalid.
+    </p>
+   
+    <p>??? Error whitelist. Timed, say 4 days. </p>
+   
+    <p>6. Alice is guarded, as is Bob, but neither knows the other.&nbsp;
+Alice  sends an email message to Bob, and that process also adds Bob to Alice's 
+whitelist.&nbsp; Bob's guard replies to Alice with a challenge, which Alice 
+receives. Alice responds with the password, and now Bob receives Alice's message.
+    <br>
+  &nbsp; <br>
+  &nbsp; <br>
+  &nbsp; </p>
+   
+    <h1> Implementation Issues</h1>
+   This approach could be implemented by an MUA, an MTA, or a combination.&nbsp; 
+ If done by an MUA, whitelist querying and maintenance is easier (particularly 
+ if saving a message is supposed to automatically add that sender to the receiver's
+whitelist).&nbsp; However, depending on the MUA to implement this approach
+might cause challenges to be delayed.&nbsp; If done by an MTA, challenges
+ could be immediately sent, but whitelist maintenance is harder (e.g., there
+ may need to be a protocol between the MUA and whoever maintains the list). 
+ <br>
+  &nbsp;   
+    <p>It may be desirable to have configurable options. When a message is
+sent,  should the recipient be added to the whitelist?&nbsp; How long - forever?&nbsp;
+ Should cleartext passwords be permitted (if not, it will be difficult to
+communicate with those who do not have implementations of guards). <br>
+  &nbsp; <br>
+  &nbsp; </p>
+   
+    <h1> Rationale</h1>
+   &nbsp;   
+    <p>&nbsp; <br>
+  &nbsp; <br>
+  &nbsp; <br>
+  &nbsp; <br>
+  &nbsp; <br>
+  &nbsp; <br>
+  &nbsp; <br>
+  &nbsp; <br>
+  &nbsp; </p>
+   
+    <p>The goal of "guarded email" is to permit easy communication with those 
+ who normally communicate, and to permit emails from new participants only 
+ if they can respond correctly to a challenge.&nbsp; While a spammer could 
+ in theory respond to the challenges, the goal is to make it unprofitable.&nbsp; 
+ If there are only a few users of guarded email, spammers can ignore them 
+while spamming everyone else, leaving those who are guarded with no spam.&nbsp; 
+ If most email users use guarded email, then spammers could respond to the 
+ challenges, but they must respond to every challenge in turn, greatly increasing 
+ the cost of a spammed message to a spammer.&nbsp; The hope is that the cost
+ will be increased to the point that spam will not be worthwhile. </p>
+   
+    <p>For example, if it took 30 seconds to read and respond to a challenge, 
+ a spammer could only send 120 messages in an hour - and that would be paid 
+ human time, not simply computer time.&nbsp; According to one repetent spammer 
+ (<span class="article">Laura Betterly</span>), a response rate of&nbsp;<span class="article">
+  0.013%</span> would be "horrible", but in fact spammers can sometimes make
+ money with 0.001% response rates (they note another spam where the rate
+was&nbsp;<span class="article">  0.0023%).&nbsp; Given these figures, assume
+that a spam response rate might  achieve 0.02% (2 in 10,000 messages).&nbsp;
+To get a response, you'd need  to send 5,000 messages, which would require
+(5,000/120) = 41.6 hours (a work-week).&nbsp;  If workers are paid $4/hour,
+the cost to get one response would be $4*41.6  = $166, so the profit off
+each person would need to exceed $166.&nbsp; In  most spam, this is unlikely,
+and once spam is made unprofitable, a significant  subset of it will cease.</span>
+ </p>
+   
+    <p>Another way to make spamming unprofitable is to make it legally more
+dangerous  for a spammer to perform their theft. The challenge text, as described
+below,  should include various legal statements so that a spammer would have
+to break  multiple laws to actually send the spam - increasing the likelihood
+of a far greater loss, including possibly jail time. Thus, by ensuring that
+spammers  must break multiple laws on every message they send, the likelihood
+is increased  that they will face stiff fines and jail time, disincentivizing
+them from  spamming. This is described in more detail below. <br>
+  <span class="article"></span>Spammers could create lists of responses,
+but  these could easily be made worthless - each user could occasionally
+change  their challenge (e.g., when they start receiving a lot of spam),
+rendering  such lists quickly worthless. <br>
+  &nbsp; </p>
+   
+    <p>??? Examine the issue of sending to _groups_ of email addresses. </p>
+   
+    <p>??? Need to examine how error replies are handled.<br>
+  &nbsp; </p>
+   
+    <p>I originally developed this idea on December 8, 2002. </p>
+   
+    <h1> Bibliography</h1>
+   http://www.dsv.su.se/jpalme/ietf/mailing-list-behaviour.txt   
+    <p>[Mangalindan 2002] Mangalindan, Mylene. November 13, 2002. For Bulk
+E-Mailer,  Pestering Millions Offers Path to Profit. The Wall Street Journal
+Online.  <a href="http://online.wsj.com/article_email/0,,SB1037138679220447148,00.html">
+  http://online.wsj.com/article_email/0,,SB1037138679220447148,00.html</a>
+   <br>
+  &nbsp; <br>
+  &nbsp; <br>
+  List of current Internet RFCs is at <a href="http://www.rfc-editor.org/rfcxx00.html">
+http://www.rfc-editor.org/rfcxx00.html</a>
+  "Official Internet Protocol Standards".  </p>
+   
+    <p><i>This draft article was written by David A. Wheeler, and is intended 
+ for eventual formal publication as a scholarly work. You may read the article, 
+ and print a single copy for personal use. You may not redistribute the article,
+ and you may not change its content. You may also see David A. Wheeler's
+personal website at <a href="https://dwheeler.com">  https://dwheeler.com</a>
+  .</i> <br>
+??? Note that if a legitimate email list changes its "from" address,
+they need to warn everyone first.
+  &nbsp; <br>
+  &nbsp; </p>
+   <br>
+ <br>
+
+<a href="http://www.boxbe.com/help">Boxbe has added a "waitlist" function that is like what I discussed in 2002.</a>
+ 
+    </body>
+    </html>

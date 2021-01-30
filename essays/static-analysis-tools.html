@@ -1,0 +1,699 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Flawfinder Home Page</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="David A. Wheeler's Page for Flawfinder">
+<meta name="keywords" content="security, flawfinder, ITS4, vulnerabilities, vulnerability, source code, scan, scanner, hit, C, C++, Python, David, Wheeler, David A. Wheeler">
+<link rel="stylesheet" type="text/css" href="paper.css">
+
+</head>
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Static analysis tools for security</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2015-08-16</h2>
+
+<p>
+There are many static analysis tools, and many of them
+look for security vulnerabilities.
+<a href="http://samate.nist.gov/">NIST&#8217;s
+Software Assurance Metrics and Tool Evaluation (SAMATE)
+project</a> posts a general list of static analysis tools focused on
+finding security vulnerabilities.
+Wikipedia's pages on
+<a href="https://en.wikipedia.org/wiki/Static%5Fcode%5Fanalysis">static analysis</a> and
+<a href="https://en.wikipedia.org/wiki/Dynamic%5Fprogram%5Fanalysis">dynamic analysis</a> may prove helpful.
+<a href="https://www.gnu.org/software/hurd/open_issues/code_analysis.html">GNU Hurd (!) has a list of analysis programs</a>.
+<a href="http://www.altdev.co/2011/12/24/static-code-analysis/">John Carmack
+(founder and former technical director of Id Software)&#8217;s post
+&#8220;Static Code Analysis&#8221;</a> discusses static analysis in general:
+&#8220;Automation is necessary...
+I feel the success that we have had with code analysis has been clear
+enough that I will say plainly it is irresponsible to not use it.&#8221;
+Carmack also quotes
+Dave Revell, &#8220;the more I push code through static analysis,
+the more I&#8217;m amazed that computers boot at all.&#8221;
+
+<p>
+If you&#8217;re looking for another FLOSS tool to help you find security
+problems in your C programs more in depth,
+for now I particularly suggest that you look at my own
+<a href="https://dwheeler.com/flawfinder/">flawfinder</a>,
+the
+<a href="http://clang-analyzer.llvm.org/">Clang Static Analyzer</a>,
+<a href="http://splint.org">SPLINT</a>,
+and
+<a href="http://sourceforge.net/apps/mediawiki/cppcheck/index.php?title=Main_Page">cppcheck</a>.
+Cppcheck focuses on
+low false positives so it should be easy to examine its reports.
+Flawfinder (my own tool) uses a very simple naive approach
+(it is basically a simple lexer), but
+that simple approach has its own advantages.
+RATS is the project most similar to flawfinder;
+it uses the same basic technique, and is also released under the GPL.
+
+<p>
+I&#8217;m a big fan of using <i>multiple</i> tools to find security vulnerabilities.
+My own
+<a href="https://dwheeler.com/flawfinder">Flawfinder</a>
+is intentionally simple, easy-to-use, and easy-to-understand.
+It is certainly not the be-all of tools, but that is not the point.
+My hope is that flawfinder will encourage people to start looking
+into the various tools available, and trying some out.
+Software is complex; we need tools to help us find vulnerabilities
+ahead-of-time in software we develop.
+
+
+<h1>OSS tools</h1>
+<p>
+Other OSS/FS tools/projects that statically analyze programs for
+security issues (besides flawfinder) include:
+<ol>
+<li><a href="https://dwheeler.com/flawfinder/">flawfinder</a>, my security static analysis tool for analyzing C/C++ programs (GPL license).
+<li><a href="http://clang-analyzer.llvm.org/">Clang Static Analyzer</a> (BSD-like license)
+can find bugs in C, C++, and Objective-C programs.
+<a href="http://www.libertatia.org/blog/?p=67">Here are a few comments
+about Clang Static Analyzer from a user</a>.
+It does inter-procedural analysis with contraint modeling, so it
+can do far more in-depth analysis of software.
+<li><a href="https://railroader.org/">Railroader</a>, a static analysis tool for finding security vulnerabilities in Ruby-on-Rails applications (MIT license). Full disclosure: I am the lead maintainer.
+<li><a href="https://www.owasp.org/index.php/OWASP_LAPSE_Project">OWASP LAPSE+</a>, a static security analyzer for Java web applications that is a successor to the LAPSE project (GPL).
+<li><a href="http://h3xstream.github.io/find-sec-bugs/">FindSecurityBugs</a> (LGPL) is a plug-in for FindBugs for finding security-related defects.
+<li><a href="http://splint.org">SPLINT</a> (GPL license).
+This works somewhat like lint, searching for probable errors;
+to really use it, developers need to add additional annotations to
+help the tool identify problems.
+This is a very mature program, widely used,
+and one you can start using right away on &#8216;real programs&#8221;.
+<li><a href="http://fbinfer.com/">(Facebook) Infer</a> (BSD license)
+is a static analyzer
+that looks for defects in Java, C, and Objective-C code code.
+It does interprocedural analysis and is based on separation logic
+(a logic system with additions specifically for reasoning about programs).
+It focuses primarily on
+quality issues like resource leaks and null dereferences,
+rather than security issues,
+but it seems promising.
+<li><a href="http://sourceforge.net/projects/cqual/">Cqual</a> (GPL license).
+&#8220;Cqual is a type-based analysis tool that provides a lightweight, practical mechanism for specifying and checking properties of C programs.
+Cqual extends the type system of C with extra user-defined
+type qualifiers.
+The programmer adds type qualifier annotations to their program
+in a few key places, and Cqual performs qualifier inference to
+check whether the annotations are correct.
+The analysis results are presented with a user interface
+that lets the programmer browse the inferred qualifiers and their flow paths.&#8221;
+<li><a href="http://www.cs.berkeley.edu/~daw/mops/">MOPS</a> (old BSD license)
+&#8220;MOPS is designed to check for violations of rules that can be expressed as temporal safety properties. A temporal safety property dictates the order of a sequence of operations. For example, in Unix systems, we might verify that the C program obeys the following rule: a setuid-root process should not execute an untrusted program without first dropping its root privilege.&#8221;
+It uses a model checking approach.
+<li>
+<a href="http://rips-scanner.sourceforge.net/">RIPS</a>
+does static code analysis on PHP code.
+It&#8217;s currently in PHP, but
+<a href="http://websec.wordpress.com/2013/02/01/project-rips-v0-54-status/">
+RIPS is being rewritten</a>.
+<li><a href="http://hal.cs.berkeley.edu/cil/">CIL</a> is a framework for
+analyzing C programs.
+<li><a href="http://mtc.epfl.ch/software-tools/blast/">BLAST
+(Berkeley Lazy Abstraction Software Verification Tool)</a>.
+&#8220;BLAST is a software model checker for C programs.  The goal
+of BLAST is to be able to check that software satisfies behavioral
+properties of the interfaces it uses.
+BLAST uses counterexample-driven automatic abstraction refinement to
+construct an abstract model which is model checked for safety properties.
+The abstraction is constructed on-the-fly, and only to the required precision.&#8221;
+Note: The first version of BLAST was developed at UC Berkeley, but
+follow-on work is going on at EPFL.
+<li><a href="http://www.cs.berkeley.edu/~daw/boon/">BOON</a> (BSD-like license).
+BOON stands for &#8220;Buffer Overrun detectiON&#8221;.
+&#8220;BOON is a tool for automatically finding buffer overrun vulnerabilities in C source code. Buffer overruns are one of the most common types of security holes, and we hope that BOON will enable software developers and code auditors to improve the quality of security-critical programs.&#8221;
+<li>
+<a href="http://www.ggcc.info/">
+ggcc</a> is an extension of the gcc compiler suite that will do static
+checking of various kinds.
+As of May 2008 it was in early development.
+<li>
+<a href="http://stanse.fi.muni.cz/">
+Stanse</a> (GPLv2) is a static analysis framework to find bugs in C code.
+It&#8217;s written in Java, plus some perl.
+<li>
+The
+<a href="http://developer.spikesource.com/wiki/index.php/Home">
+Spike PHP Security Audit Tool</a> is for analyzing PHP programs.
+<li>
+<a href="http://pixybox.seclab.tuwien.ac.at/pixy/">Pixy</a> scans PHP
+programs for XSS and SQLI vulnerabilities; it is written in Java.
+<li>
+<a href="http://orizon.sourceforge.net/">Orizon</a>
+is a general-purpose code analysis system (though their primary interest
+is security scanning).
+<a href="http://milk.sourceforge.net/">Milk</a> is a
+Java source code security scanner built on top of Orizon.
+They are connected to OWASP.
+<li>
+<a href="http://www.striker.ottawa.on.ca/~aland/pscan">PScan</a> (GPL license)
+is a source code scanner like flawfinder and RATS,
+but has only a limited capability.
+It&#8217;s really only intended to find
+format string problems.
+In contrast, both flawfinder and RATS can find
+format string problems and many other problems as well.
+<li>
+The <a href="http://osq.cs.berkeley.edu">Open Source Quality Project</a>
+at Berkeley is investigating tools and techniques for assuring software
+quality (not just security) of OSS/FS programs.
+
+<li><a href="http://pedantic.sourceforge.net">Project pedantic&#8217;s Czech
+by Jose Nazario</a> might become interesting, but
+as of April 2004 it looks like that project has halted, with only a buggy
+not-ready prototype so far (which is too bad!).
+<li>
+<a href="http://smatch.sourceforge.net">smatch</a>.
+is a general-purpose tool for statically analyzing programs, and
+could be used to build vulnerability scanners.
+Indeed, there are lots of tools for statically analyzing programs
+in a general way, this is only one example.
+<li>
+<b>Sparse</b>
+is a specialized static analysis tool that does
+additional type-checking, including checks related to security.
+It was originally designed to check the Linux kernel source code.
+<a href="http://kernel.org/pub/linux/kernel/people/josh/sparse/">Sparse
+finally has its own web page</a>.
+More information on sparse is available from the
+<a href="http://tree.celinuxforum.org/pubwiki/moin.cgi/Sparse">
+CE Linux forum</a>,
+the <a href="http://www.xenotime.net/linux/doc/sparse_howto.txt">
+Quick sparse HOWTO by Randy Dunlap</a>, and the
+<a href="http://vger.kernel.org/vger-lists.html#linux-sparse">sparse
+mailing list</a>.
+You can download older
+<a href="http://www.codemonkey.org.uk/projects/git-snapshots/sparse/">snapshots of sparse&#8217;s code from codemonkey.</a>
+
+<li>
+<a href="http://www.cubewano.org/oink">
+Oink (including Cqual++)</a> (BSD-like license).
+(a Collaboration of C++ Static Analysis Tools).
+
+<li>
+<a href="http://www.yasca.org/">Yasca</a> (BSD license)
+is a &#8220;simple static analysis tool designed to analyze source code
+and for a variety of errors. It is both a framework and an implementation,
+and leverages other open source code scanners where applicable.&#8221;
+You can also see the
+<a href="http://scovetta.github.io/yasca/">Yasca Github site</a>.
+
+<li>
+<a href="http://frama-c.cea.fr/">Frama-C</a> (LGPL)
+is a framework for the development of collaborating
+static analyzers for the C language. Many analyzers are provided in the
+distribution, including a value analysis plug-in that provides variation
+domains for the variables of the program, and Jessie, a plug-in
+for computing Hoare style weakest preconditions.
+It provides a formal behavioral specification language for C programs 
+named ACSL.
+
+<li>
+<a href="http://rtlcheck.sourceforge.net/">RTL-check</a>
+&#8220;RTL-check is an extensible and powerful abstract interpretation framework for static analysis of programs from a safety and security perspective. It performs analysis on RTL, which is the low-level intermediate representation generated by GCC. See the documentation section for more information.&#8221;
+The code is on SourceForge; a good first start to learning about it is to read
+Patrice Lacroix master&#8217;s thesis.
+
+<li>
+<a href="http://pmd.sourceforge.net/">PMD</a> looks for potential problems in Java code.  Not specific to security. (BSD-style license)
+There are
+<a href="http://java-source.net/open-source/code-analyzers/pmd">
+other Java program analyzers</a> too.
+
+<li>
+<a href="http://findbugs.sourceforge.net/">Findbugs</a> also looks for potential problems in Java code.  Not specific to security (LGPL license).
+
+<li>
+<a href="http://sourceforge.net/apps/mediawiki/cppcheck/index.php?title=Main_Page">cppcheck</a>
+searches for defects in C/C++ code.
+It appears to work by tokenizing source files into sequences of tokens and then
+matching on the tokens;
+thus it's more like flawfinder and RATS, since it does not have
+deeper analysis available to it (e.g., it cannot do interprocedural
+analysis).
+There&#8217;s little documentation, unfortunately, but you can invoke it
+like this (use the force option &#8220;-f&#8221; else it will give up on some files,
+and use -a (&#8220;all warnings&#8221;) to get all details):
+<pre>
+  cppcheck -a -f ./ 2&gt; cpperr.txt &amp;
+</pre>
+
+<li>
+<a href="http://search.cpan.org/dist/Perl-Critic/bin/perlcritic">PerlCritic</a>
+analyzes perl programs.  It&#8217;s really a style checker, not so much a
+vulnerability scanner.
+
+<li>
+<a href="http://sourceforge.net/projects/agnitiotool/">Agnitio</a>
+is a tool to manage checklists when doing manual reviews.
+It&#8217;s a different kind of tool, but I thought it&#8217;d be worth noting.
+Warning: it needs .NET and doesn&#8217;t run on Mono as of 2011-09-15
+(though they are working on that).
+
+<li>
+<a href="https://developer.mozilla.org/en/Treehydra">Treehydra</a>
+is a GCC plugin that provides a low level JavaScript binding to GCC&#8217;s
+GIMPLE AST representation. Treehydra is intended for precise static
+analyses.  Most of Treehydra is generated by Dehydra. A Dehydra script
+walks the GCC tree node structure using the GTY attributes present
+in GCC. Treehydra is included in Dehydra source, and is built when a
+plugin-enabled CXX is detected.
+
+<li><b>Coccinelle aka spatch</b>
+<a href="http://coccinelle.lip6.fr/">Coccinelle, also known as spatch</a>,
+is a source-to-source translator available under GPLv2.
+<a href="http://lwn.net/Articles/315686/">Valerie Henson
+(now Valerie Aurora) has written an article about
+Coccinelle</a>, and
+<a href="http://lwn.net/Articles/380835/">here&#8217;s another article about it</a>.
+
+<li><b>bddbddb / bddshell</b>.
+<a href="http://bddbddb.sourceforge.net/">bddbddb</a> (aka b5b) is
+a general-purpose tool for analyzing big programs.
+It lets you read in a program and then enter queries in a
+Prolog-like language, and its internals use the BDD datastructure to
+make all of this work for large programs.
+<a href="http://sourceforge.net/projects/bddshell/">bddshell</a>
+lets you use it interactively.
+These are more &#8220;tools for building analysis tools&#8221;, rather than
+analysis tools themselves.
+<li>
+<b>LLVM</b>.
+<a href="http://llvm.org">LLVM</a> is really a compiler infrastructure
+project, but among other things it can be used to create
+analysis tools.  But it&#8217;s not a security analysis tool by itself.
+
+<li>
+<a href="http://www.shellcheck.net/">shellcheck</a>
+(GNU Affero General Public License version 3)
+is a static analysis tool that reports on
+common mistakes in (Bourne) shell scripts.
+It is not specific to security, but several of its reports
+are security-related.
+
+<li>
+<b>Elsa</b>.
+<a href="http://scottmcpeak.com/elkhound/sources/elsa/">Elsa</a>
+(BSD license)
+is a C/C++ parser based on Elkhound.
+GCC also has a parser.
+
+</ol>
+
+<p>
+<a href="https://anonscm.debian.org/cgit/collab-maint/check-all-the-things.git">check-all-the-things</a> is a project that tries
+to run as many tools as possible on some software
+(be prepared for a lot of output!).
+<a href="https://continuousassurance.org/">The Software Assurance
+Market Place (SWAMP)</a> can run a number of tools on software.
+
+<p>
+There
+is a similar program to flawfinder,
+<a href="http://www.cigital.com/its4/">ITS4</a> (from Cigital), but it isn&#8217;t
+open source software or Free Software (OSS/FS) as defined above,
+and as far as I know it isn&#8217;t maintained.
+
+<p>
+Of course, you could go the other way: Instead of looking for specific
+common weaknesses, you could prove that the program actually meets
+(or does not meet) certain requirements.
+If you&#8217;re interested in open source software tools related to
+proving programs correct, seej
+<a href="https://dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)... with Lots on Formal Methods / Software Verification</a>
+and the
+<a href="http://www.openproofs.org">Open Proofs website</a>.
+
+<p>
+<h1>Quasi-open tools</h1>
+<p>
+<ol>
+<li><a href="http://rosecheckers.sourceforge.net/">CERT ROSE checkers</a>
+checks C and C++ against a subset of the rules in the
+<a href="https://www.securecoding.cert.org">
+CERT Secure Coding Standards for C and C++</a>.
+The ROSE checkers are themselves open source, and build on
+the open source ROSE, but ROSE itself is fundamentally dependent on a
+a proprietary component (Edison Design Group&#8217;s C/C++ compiler), so 
+the whole stack is in fact proprietary.
+<li><a href="http://www.rosecompiler.org/">ROSE/Compass</a> (BSD license)
+is a source-to-source
+translator that can be used to build analysis programs.
+It includes Compass, which reports violations of a number of rules that
+relate to security.
+</li>
+<li><a href="http://sourceforge.net/projects/visualcodegrepp/">VisualCodeGrepper</a> - this is a code security review tool for C/C++, C#, VB, PHP, Java,
+and PL/SQL.
+The EULA says it's under the GPL.. but I can't find any actual source code.
+As far as I can tell it's a lexically-based tool, which means it
+appears to work the same way as flawfinder, RATS, and ITS4.
+</li>
+</ol>
+
+<p>
+<h1>Proprietary tools</h1>
+<p>
+There are various suppliers that sell proprietary programs that
+do this kind of static analysis.
+I can't list them all, but I may as well list some.
+These tools include:
+<ol>
+<li>
+<a href="http://www.fortifysoftware.com/">HP/Fortify Software</a>.
+Their Fortify Source Code Analysis tool is briefly
+described in the PCWorld article
+<a href="http://www.pcworld.com/news/article/0,aid,115532,00.asp">
+Software Searches for Security Flaws</a>.
+Fortify Software is now owned by HP (as of 2010).
+<li>
+<a href="http://www.coverity.com">Coverity&#8217;s SWAT tool</a> searches for
+defects in general, including some security issues.
+It&#8217;s based on previous work on the
+<a href="http://metacomp.stanford.edu/">Stanford checker, which was
+implemented by xgcc and the Metal language</a>
+(the Stanford site has lots of interesting papers, but no code as
+far as I can tell -- please let me know if things are otherwise).
+<li>
+<a href="http://www.grammatech.com/">GrammaTech</a>
+develops and sells &#8220;static-analysis and program-transformation
+tools for C/C++ and Ada&#8221;.
+This include CodeSurfer/CodeSonar (R) for static analysis, and
+CodeSurfer/x86 for analyzing and rewriting binary executables.
+<li>
+<a href="https://www.sourcemeter.com/">Sourcemeter</a>
+is a static source code analyzer for
+Java, C/C++, RPG and Python. The Java code analyzer is able to find
+source code vulnerabilities like SQL-injection, XSS and some others. It
+works in a way similar to Lapse+.
+(There's a free version with a few capabilities, but you need to pay
+for its more advanced features.)
+<li>
+<a href="http://www.veracode.com/">Veracode</a>
+has tools to analyze software for security vulnerabilities
+(including binary analysis).
+<li>
+<a href="http://sofcheck.com/products/inspector.html">Sofcheck Inspector</a>
+performs static analysis on Java and Ada programs to find defects.
+<li>
+<a href="http://redlizards.com">Red Lizard Software</a> is an Australian firm
+that sells Goanna, a tool that analyzes C/C++ code for software quality bugs
+(including some security vulnerabilities).
+<!--
+Dr. Ansgar Fehnker - ansgar.fehnker@redlizards.com
+-->
+<li>
+<a href="http://www.kestrel.edu">Kestrel Institute</a> works to
+&#8220;make formal methods work in practice&#8221;;
+they have various proprietary tools.
+<li>
+<a href="http://www.ouncelabs.com/">Ounce Labs</a>&#8217;s product Prexis.
+Ounce labs was recently bought by IBM.
+<li>
+<a href="http://www.klocwork.com/">Klocwork</a> sells various products
+that do static analysis.
+<li>
+<a href="http://www.atstake.com/">@stake</a>, now owned by
+Symantec Corporation,
+sells a tool called the
+<a href="http://www.atstake.com/events_news/press_releases/template.html?usa/052404">
+SmartRisk (TM) Analyzer</a>; unlike many tools, this
+one analyzes binary code.
+<li>
+<a href="http://www.parasoft.com">Parasoft</a> sells some static
+analysis tools.
+<li>
+Microsoft bought the company Intrinsa, and their product (known as PREfix)
+is used now to do static analysis of many of their own products.
+<li>
+<a href="http://www.viva64.com/en/pvs-studio/">
+PVS-Studio</a>
+is &#8220;a static analyzer that detects errors in
+source code of C, C++/C++0x, C#, and Java applications.&#8221;
+Historically it&#8217; was not specifically focused on security issues,
+but more recent versions have added that information.
+<a href="http://www.viva64.com/en/b/0299/">Here's an article about
+PVS-Studio being used to find mistakes in the Linux kernel</a>.
+<a href="https://www.viva64.com/en/sast/">Here is more info
+about PVS-Studio</a>.
+<li>
+<a href="http://research.sun.com/projects/parfait/">Parfait</a> is a
+Sun research project, which
+<a href="http://research.sun.com/projects/downunder/publications/documents/kca09.pdf">has found some vulnerabilities</a>.
+<a href="http://research.sun.com/minds/2009-0512/">An interview discusses
+Parfait further</a>.
+At the time of this writing, this is unreleased.
+<li>
+<a href="http://kdmanalytics.com/index.php">KDM Analytics</a> has developed
+some prototypes using a standards-based approach.
+Code is first transformed into
+<a href="http://en.wikipedia.org/wiki/Knowledge_Discovery_Metamodel">KDM</a>
+(an OMG standard), and rules are
+defined using SBVR (another OMG standard).
+Then you can search for matches/violations of rules.
+One neat thing is that this can analyze (in principle) either binary
+or source code in arbitrary languages.
+I know some people are modifying gcc to generate KDM.
+SBVR (the rule-defining language)
+is a restricted-English logic language, so the rules are unusually readable.
+To my knowledge, these are not available on the market yet.
+</ol>
+<p>
+There are of course many companies that sell the service of performing
+security reviews of source code for a fee; who generally
+use a combination of tools and expertise.
+These include <a href="http://www.securesoftware.com">Secure Software</a>
+developer of RATS, and
+<a href="http://www.aspectsecurity.com">Aspect Security</a>,
+backers of the
+<a href="http://www.owasp.org">Open Web Application Security Project (OWASP).</a>
+
+<p>
+Arian Evans has announced that he&#8217;s working on a list of such tools,
+and intends to post that list at
+<a href="http://www.owasp.org">OWASP</a>; by the time you read this,
+it may already be available.
+<a href="http://samate.nist.gov/">NIST&#8217;s
+Software Assurance Metrics and Tool Evaluation (SAMATE)
+project</a> posts a list of static analysis tools, along
+with a list of related papers and projects.
+<a href="http://cwe.mitre.org/">Common Weakness Enumeration (CWE)</a>
+is developing a standard set of definitions of common weaknesses and
+their interrelationships.
+
+<p>
+Other places list security tools, but not really static analysis tools;
+these include
+the <a href="http://www.networkintrusion.co.uk/">Talisker Security Wizardry Portal</a> and
+<a href="http://www.insecure.org/tools.html">insecure.org&#8217;s survey of
+the top 75 tools</a>.
+
+<p>
+<a href="http://www.java2s.com/Product/Java/Byte-Source-Code/Source-Analysis-Diagram.htm">Java2s has a list of Java-related tools for source
+analysis</a> which may be of interest.
+They make the common mistake of saying &#8220;commercial&#8221; when they mean
+&#8220;proprietary&#8221; (OSS is commercial software too).
+
+<p>
+There are a vast number of static analysis tools that check for
+style or for possible errors, which might happen to catch security
+problems.  They&#8217;re usually not focused on security issues, though,
+and there are too many to list anyway, so I don&#8217;t try to list them all here.
+
+<p>
+This list can&#8217;t possibly be exhaustive, sorry.
+My goal here isn&#8217;t to provide all possible alternatives, merely to
+provide useful information pointing to at least <i>some</i> other tools and
+services.
+My goal is mainly so you can have an idea of what&#8217;s going on in the field.
+
+<!-- Look up xg++, Eau Claire; McGraw said some interesting things.
+-->
+
+<h1>Be careful defining language subsets</h1>
+<p>
+Many people have developed &#8220;language subsets&#8221; in an effort to reduce
+the risk of errors.
+In concept, these can be really helpful, especially for languages like C
+which are easy to abuse.
+<p>
+Such language subsets should be automated by static analysis tools; then,
+it&#8217;s easy to check if you&#8217;ve met the rules.
+But these only have value if the subset is well-designed.
+In particular, the subset should be designed to minimize cases where
+perfectly acceptable constructs are forbidden
+(essentially false positives), and should maximize detection of actual
+failures (best done through analysis of real-world failures).
+<p>
+One of the better-known subsets for C is &#8220;MISRA C&#8221;.
+Les Hatton has published a detailed and devastating critique of
+older versions of MISRA C
+(of both MISRA C 1998 and the later MISRA C 2004).
+Fundamentally, he believes (and provides good evidence) taht
+MISRA C&#8217;s development was not based on real data on
+failures, but instead on random rule creation, some of which are absolutely
+full of false positives, and many have no value.
+<a href="http://www.leshatton.org/index_SA.html">See Les Hatton&#8217;s
+papers, including those showing why those versions of
+MISRA C are badly flawed</a>.
+His paper
+<i>Language subsetting in an industrial context: a comparison of MISRA C 1998 and MISRA C 2004</i> is
+&#8220;A comparison of real to false positive ratios between the 1998 and 2004
+versions of the MISRA C guidelines on a common population of 7 commercial
+software packages&#8221;, and it has devestating conclusions:
+&#8220;On these results, MISRA C 2004 seems a step backwards and attempts at
+compliance with either document are essentially pointless until something
+is done about improving the wording of the standard and its match with
+existing experimental data. In its current form, the complexity and
+noisiness of the rules suggest that only the tool vendors are likely
+to benefit.&#8221;
+<p>
+An additional problem with MISRA C is that it is not
+open access (aka Internet-published). That is, you can&#8217;t just
+use Google to find it and then immediately view its contents
+(without registering or paying for the contents).
+That makes it hard to apply.
+Purported standards that aren&#8217;t open access
+are becoming increasingly pointless; IETF, OASIS, W3C, Ecma, and
+many other bodies already do this.
+<p>
+I&#8217;m a fan of Les Hatton&#8217;s work, and I particularly like his
+<a href="http://www.leshatton.org/index_SA.html">paper on his EC-- ruleset</a>.
+The EC-- ruleset is Internet-published, and is <i>much</i> smaller,
+so it&#8217;s actually <i>easier</i> to apply than MISRA C.
+More importantly, though, the EC-- ruleset appears to be much better
+matched to the real world for finding failures, so I strongly
+prefer EC-- over MISRA C.
+Here were his rules for creating the EC-- ruleset; once you look at this
+list, I think you&#8217;ll see why:
+<ul>
+<li>Every rule is associated with faults which appeared in the quoted surveys
+and failed in the sense described above.
+<li>Each rule covers as many of the fault modes as possible to reduce the total
+number of rules
+<li>Each rule is easy to understand and as unambiguous as possible
+<li>Each rule is as non-contentious as possible to ease acceptance
+<li>Taken together, the rules cover the vast majority of the faults described in
+the earlier surveys and should therefore have a high signal to noise ratio
+with detection rates of around 8 per 1 KXLOC expected.
+</ul>
+<p>
+Additional rules specific to security would be a good idea, too, if they&#8217;re
+well-crafted.
+The
+<a href="https://www.securecoding.cert.org/confluence/display/seccode/CERT+C+Secure+Coding+Standard">
+CERT C Secure Coding Standard
+</a>
+is an effort to craft rules for developing secure C programs.
+I haven&#8217;t had time to evaluate it in-depth, though, so I don&#8217;t know
+what its quality is.
+Another document you might examine is
+<a href="http://msdn.microsoft.com/en-us/library/bb288454.aspx">
+Microsoft&#8217;s
+Security Development Lifecycle (SDL) Banned Function Calls</a>.
+
+
+<h1>Dynamic/Hybrid Analysis Tools</h1>
+<p>
+Static analysis tools are unlikely to catch all problems in practice;
+they&#8217;re best complemented with other approaches.
+Certainly, having humans look at code is wonderful (this is a
+manual static analysis approach).
+
+<p>
+Dynamic analysis tools send data to executing programs as a way
+to possibly find problems.
+Many tools are based on the idea of sending
+random or partly random data for testing; some &#8220;randomize&#8221; but
+try to concentrate on patterns most likely to reveal security problems.
+Dynamic analysis tools include:
+
+<ol>
+<li>
+American Fuzzy Lop (AFL) is a really good fuzzer, focused
+on file-level fuzzing.
+<li>
+<a href="http://www.immunitysec.com/spikeproxy.html">
+SPIKE Proxy</a> is an OSS/FS HTTP proxy for
+finding security flaws in web sites.
+It is part of the Spike Application Testing Suite and
+supports automated SQL injection detection, web site crawling,
+login form brute forcing, overflow detection,
+and directory traversal detection. 
+<li>
+<a href="http://bfbtester.sourceforge.net/">
+Brute Force Binary Tester (BFBTester)</a>
+checks for single and multiple argument command line overflows
+and environment variable overflows, and version 2.0
+can also watch for
+tempfile creation activity.
+<li>
+Michal Zalewski&#8217;s mangleme
+(<a href="http://lcamtuf.coredump.cx/mangleme/mangle.cgi">demo</a>
+and 
+<a href="http://lcamtuf.coredump.cx/soft/mangleme.tgz">source code</a>)
+sends stressing random data for testing web browsers.
+<li>
+<a href="http://toadstool.se/software/iexploder/">iExploder</a>
+is another tools for testing web browsers by sending random data.
+<li>
+<a href="http://sam.zoy.org/zzuf/">zzuf</a> is a fuzzer
+(open source, MIT-style license).
+See the
+<a href="http://sam.zoy.org/zzuf/zzuf-20070225.pdf">FOSDEM 2007 slides</a>
+and
+<a href="http://www.linux.com/feature/118126">Joe Barr&#8217;s article
+about zzuf</a>.
+<li>OWASP ZAP dynamically probes web applications, looking for indicators
+of unknown vulnerabilities.
+There a lot of these kinds of tools.
+</ol>
+
+<p>
+There are lots of scanning tools for checking for already known specific
+vulnerabilities, and sometimes they help.
+<a href="http://www.nessus.org">Nessus is a widely-used
+vulnerability assessment tool.
+<a href="http://www.cirt.net/code/nikto.shtml">Nikto</a>
+scans web servers for common problems.
+
+<p>
+There are many, many other tools and techniques available; I can&#8217;t
+list all of them.
+You can find a few leads from the
+<a href="http://www.insecure.org/tools.html">Top 75 Security Tools</a>
+survey at insecure.org.
+ISP planet&#8217;s
+The article
+<a href="http://www.isp-planet.com/technology/2004/security_toolkit_vulnerability_4.html">Web Vulnerability Assessment Tools</a>.
+
+
+
+
+<p>
+<hr>
+<p>
+You might want to look at my
+<a href="https://dwheeler.com/secure-programs">Secure Programming HOWTO
+web page</a>, or some of my other writings such as
+<a href="https://dwheeler.com/essays/open-standards-security.pdf">
+Open Standards and Security</a>,
+<a href="https://dwheeler.com/essays/oss_software_assurance.pdf">
+Open Source Software and Software Assurance (Security)</a>,
+and
+<a href="https://dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)</a>.
+
+<p>
+You can also view
+<a href="https://dwheeler.com">my home page</a>.
+</body>
+</html>
+

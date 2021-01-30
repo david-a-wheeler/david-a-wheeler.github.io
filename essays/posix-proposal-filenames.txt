@@ -1,0 +1,156 @@
+Dear POSIX committee:
+
+It is currently very difficult to portably and correctly
+process filenames in POSIX; please make it *easy* to do
+as proposed below.
+Also, please correct the current examples; many of the
+spec examples are wrong, because they can fail in circumstances
+permitted by the standard (empty directories, filenames with newline, etc.).
+The process of correcting the examples
+will also illustrate *why* it is important to add mechanisms
+to easily support filename processing.
+
+The following pages explain why filename processing
+is so difficult in POSIX:
+http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html
+http://www.dwheeler.com/essays/filenames-in-shell.html
+Note in particular that incorrect file processing is
+a significant source of security vulnerabilities.
+
+The POSIX specification already states that filenames are not portable
+if they include control characters (like newlines) or
+begin with "-", and so on are not portable.
+Nevertheless, the specification *does* permit their support, and
+many implementations do allow them.  Given this situation, the
+specification needs to be enhanced so that programs can be
+written that work on all POSIX systems.
+
+
+Make globbing safer:
+
+sh: Add a standard option to enable nullglob.  Otherwise, "for" loops on
+glob results fail badly on the empty case.  The glob() function
+already has this!
+
+Glob - auto-prefix globs:
+Add a new option to glob() that auto-prefixes "-" with "./".
+Add new shell setting to turn this on or off, and say that it MAY
+be turned on.
+(Alternative: Could ALWAYS auto-prefix?
+If just said "should", then you can't count on it, useless for security.)
+If this is added, along with nullglob, then filenames
+beginning with "-" won't cause misinterpretation as an option,
+and are are thus less likely to cause trouble
+and for loops on glob would work out.
+Add this to the glob library too?  If globbing is auto-prefixed, then
+the risks from filenames beginning with "-" greatly goes down.
+
+
+For "find" etc., make it easy to create and process null-separated filename lists:
+
+find: add -print0, perhaps duplicate as "-0".
+
+xargs: Add -0.
+
+sh read: -d "", and maybe a new "-0" (equivalent to IFS="" read -d "" -r).
+Then can use while loop to handle all filenames.
+(Note: the easy while loop interferes with stdin)
+
+sh: Should enable byte 0 in "for" loop.. but how?
+Perhaps a setting that splits on \0 inputs, and a "for" option enabling in
+for just the for items? E.G., given:
+ for name [zin list]...
+When the list is calculated, IFS is ignored, and instead it is split on \0.
+Complete invention; I know of no shell that does it.
+
+sort: Get GNU -z (maybe "-0"?)
+
+grep: Add -0 (GNU grep accepts either -Z or --null).
+
+ISSUE: Can option names be "-0" in the specification?
+
+Note: Here's an example of filename bugs in the specification
+itself (in basename):
+http://austingroupbugs.net/view.php?id=192
+
+
+NOTE TO SELF: They no longer use Aardvark, they use Mantis for bug reports:
+http://austingroupbugs.net/
+
+====
+
+find . -print0 | xargs -0 COMMAND
+
+ find . -print0 |
+while IFS="" read -r -d "" file ; do ...
+
+
+
+
+ (Shell 'for' loops - how???)
+
+The option names to use this convention (when available) are jarringly inconsistent.
+In particular, perl uses -0, while the GNU tools options are as follows:
+sort -z, find -print0, xargs -0, and grep accepts either -Z or --null.
+The equivalent option in the bash shell read command is -d "" (aka empty delimeter).
+
+
+Shell programming is remarkably easy in many cases; what’s sad is that this common case (file processing)
+is far complicated than it needs to be, simply because the rules on filenames are too permissive.
+It would be much simpler if systems imposed a few simple rules on filenames,
+such as prohibiting control characters, prohibiting leading “-”, and
+requiring filenames to be UTF-8.
+Standardizing certain facilities, like shell nullglob and support for null character separators, would help too.
+Then you could always print filenames safely, and these “normal” shell constructs would always work:
+
+ # This works if filenames never begin with "-" and nullglob is enabled:
+ for file in *.pdf ; do ... done           # Use "$file" not $file
+ # This works if filenames have no control chars and IFS is tab and newline:
+ for file in `find .` ; do ... done        # Use "$file" not $file
+ # This works today, but isn't standard:
+ find . -print0 | xargs -0 COMMAND
+
+
+
+I examined:
+The Open Group Base Specifications Issue 7
+IEEE Std 1003.1-2008
+Copyright © 2001-2008 The IEEE and The Open Group
+http://www.unix.org/2008edition/
+
+In Volume "Base Definitions" section 12.1 "Utility Argument Syntax", it says:
+ The arguments that consist of <hyphen> characters and single letters or digits,
+ such as 'a' , are known as "options'' (or, historically, "flags").
+Later in guideline 3 it says:
+ Each option name should be a single alphanumeric character
+ (the alnum  character classification) from the portable character set.
+ The -W (capital-W) option shall be reserved for vendor options.
+ Multi-digit options should not be allowed.
+Therefore, "-0" is a legitimate flag.
+
+In Volume "Base Definitions" section 12.1 "Utility Argument Syntax", it says:
+  Guideline 10:
+    The first -- argument that is not an option-argument should be accepted as a delimiter indicating
+    the end of options. Any following arguments should be treated as operands, even if they begin
+    with the '-' character.
+
+
+NOTE: See "System Interfaces" glob().
+It already supports
+  GLOB_NOCHECK
+    Supports rule 3 in XCU Patterns Used for Filename Expansion . If pattern does not match any pathname,
+    then glob() shall return a list consisting of only pattern, and the number of matched pathnames is 1.
+Need a "GLOB_PREFIX_DASH": if the resulting match begins with "-", prepend "./" to it.
+
+In Shell & utilities section 2.13.3 "Patterns Used for Filename Expansion",
+the end of rule 3 is:
+"If the pattern does not match any existing filenames or pathnames, the pattern string shall be left unchanged."
+This is rarely what the user wanted.  In particular, in the expression:
+ for file in *.txt
+the user almost certainly did NOT want it to return "*.txt" on no match.
+It turns out that the glob() utility *could* return nothing on no match, by omitting GLOB_NOCHECK,
+but there is no standard way to request this in the shell specification.
+Many shells do implement this ability, but in a nonstandard way; there needs to be
+a STANDARD way to do "null globbing".
+
+

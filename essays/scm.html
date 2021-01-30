@@ -1,0 +1,1538 @@
+<html lang="en-US">
+<html lang="en-US">
+<head>
+<title>Comments on Open Source Software / Free Software (OSS/FS) Software Configuration Management (SCM) / Revision-Control Systems</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+<body>
+Also available in <a href="http://subversion.bluegate.org/wheeler.html">Japanese</a>
+<hr>
+<center>
+<h1 class="title">Comments on Open Source Software / Free Software (OSS/FS) Software Configuration Management (SCM) / Revision-Control Systems</h1>
+<i>by David A. Wheeler</i><br>
+<i>April 10, 2004; lightly revised May 18, 2005</i><br>
+</center>
+
+<br>
+<b><i>This paper is getting increasingly obsolete, but I'm leaving it here because there are some broader principles noted here. Enjoy.
+More recent articles include
+<a href="http://blogs.gnome.org/newren/2008/03/01/happenings-in-the-vcs-world/">
+Elijah's 2008-03-01 "Happenings in the VCS World"</a> ,
+<a href="http://arstechnica.com/news.ars/post/20090107-dvcs-adoption-is-soaring-among-open-source-projects.html">
+DVCS adoption is soaring among open source projects</a>, and
+<a href="http://queue.acm.org/detail.cfm?id=1595636">
+Making Sense of Revision-control Systems</a>.
+As of 2011, distributed SCM systems have become much more common.
+When I wrote this paper, git was powerful but had two big problems that
+have since been addressed: git had a poor user interface
+(git has since greatly improved the user-level "porcelain" commands),
+and git didn't work well on Windows (since that time
+much of git has been rewritten in C, and
+"<a href="http://code.google.com/p/msysgit/">git for Windows</a>"
+using msys is now available, so Windows use is workable though Unix-like
+systems are naturally better for development).
+Other major distributed SCM systems are
+mercurial (Hg), bazaar (bzr), and Monotone (among others), which
+have their supporters and major-project users.
+The subversion (svn) program
+is widely used by those who need a simple centralized SCM.
+</i></b>
+<br>
+<br>
+With the release of Subversion 1.0, lots of people are
+discussing the pros and cons of various software configuration
+management (SCM) / version control systems available as
+open source software / Free Software (OSS/FS).
+Indeed, the problem is now an embarassment of reasonable choices:
+there are several OSS/FS SCM systems available today.
+Here's some information about SCM systems
+that I've learned that you may find helpful;
+I'll discuss four options (CVS, Subversion, GNU arch, and Monotone),
+the differences between centralized and decentralized SCM,
+a discussion about using GNU arch to support centralized development,
+and a few links to other reviews.
+I think future SCM systems will need to counter more threats than
+today's SCM systems are designed to do;
+<a href="scm-security.html">feel free to also look at my paper
+on SCM security</a>.
+
+<h1>CVS, Subversion, GNU Arch, and Monotone</h1>
+In my opinion three OSS/FS SCM systems got the most discussion
+in April 2004: CVS, Subversion, and GNU Arch.
+Two other SCM systems that are getting more than a little attention are
+Monotone and Bazaar-NG, so I have a few comments about them.
+As of April 2005, git/Cogito have entered the arena with a bang, since
+this pair of tools is being developed specifically for Linux kernel
+development (this is a large number of smart, motivated developers who
+have the most experience of anyone with distributed SCMs).
+There are certainly other SCM tools (such as Aegis and CodeVille),
+and I don't mean to intentionally
+exclude them, but I just haven't had the time to examine the others in as
+much depth.
+Besides, knowing about these four will help you understand the rest.
+So, here's a brief discussion about each.
+
+<h2>CVS</h2>
+<a href="http://www.cvshome.org/">CVS</a>
+is extremely popular, and it does the job.
+In fact, when CVS was released,
+<a href="https://dwheeler.com/innovation/innovation.html">CVS was
+a major new innovation in software configuration management</a>.
+However, CVS is now showing its age through a number of awkward limitations:
+changes are tracked per-file instead of per-change, commits aren't
+atomic, renaming files and directories is awkward, and its branching
+limitations mean that you'd better faithfully tag things or there'll
+be trouble later.
+Some of the maintainers of the original CVS
+have declared that the CVS code has become
+too crusty to effectively maintain.
+These problems led the main CVS developers to start over and
+create Subversion.
+
+<h2>Subversion</h2>
+<a href="http://subversion.tigris.org/">Subversion</a> (SVN) is
+a new system, intending to be a simple replacement of CVS.
+I looked at Subversion 1.0, released February 24, 2004.
+Subversion is basically a re-implementation of CVS with its
+warts fixed, and it still works the same basic way (supporting a
+centralized repository).
+Like CVS,
+subversion by itself is intended to support a centralized
+repository for developers and doesn't handle decentralized development well;
+the <a href="http://svk.elixus.org/">svk project</a>
+extends subversion to support decentralized development.
+<p>
+From a technology point-of-view you can definitely argue with some
+of subversion's decisions.
+For example, they don't handle changesets
+as directly as you'd expect given their centrality to the problem.
+But technical advancement is not the same as utility; for many people
+who currently use CVS and just want an incremental improvement,
+subversion is probably more or less what they were expecting and
+looking for.
+But there are weaknesses, for example, Subversion doesn't keep track
+of "which patches have already been applied" on a given branch, and
+trying to reapply a patch more than once causes problems.
+Thus, subversion has trouble with history-sensitive merging of branches
+where the branches share parts (GNU arch doesn't have this problem,
+because it <i>does</i> track what merges have been applied).
+<p>
+In 2004
+there were concerns by some about Subversion's use of db to store data
+(rather than the safer flat files), since in a few cases this can
+let things get "stuck".
+In practice this doesn't seem to be
+so bad (in part because the data can be extracted), but certainly
+some are concerned.
+In newer versions, there is a database backend called fsfs which uses
+flat files.
+The fsf backend was created because subversion had
+had some problems with the DB backend in debian-installer 
+(a fairly large repository); fsfs works without
+any problems in that case.
+<p>
+Subversion uses a BSD-old-like license that, while OSS/FS, is
+GPL-incompatible, and that's unfortunate
+(<a href="https://dwheeler.com/essays/gpl-compatible.html">GPL
+incompatibility can be a problem</a>).
+Subversion <i>can</i> be used to maintain GPL software or any
+other kind, without restrictions.
+<p>
+Subversion depends on a large number of libraries and programs
+(and can be perceived as rather "heavyweight"), so it can take some
+effort to install currently; distributions will probably be quick
+to include it, so that problem should go away relatively soon.
+<a href="http://svnbook.red-bean.com/">This book on Subversion</a>
+gives more information about it.
+<p>
+By the way, there's a general problem with Subversion that is
+shared by many other SCM tools: Subversion tracks file contents,
+but it doesn't track the modification date/timestamp of individual files
+(i.e., it fails to record important metainformation).
+Generated files can store the date/timestamp of the retrieval, or
+maybe of the changeset, but the latter is not the default.
+This can produce extra build work, or inaccurate builds.
+See the email
+<a href="http://mail.python.org/pipermail/python-dev/2005-December/058641.html">
+"Should I really have to install Python before Ican build it?</a> on
+December 13, 2005, for a more detailed explanation.
+SCM tools that record modification times, as well as the file names and
+contents, don't have this problem, though they can have a different problem:
+if a users' clock is severely off, they can cause serious build problems.
+This can be partly but not completely alleviated by performing extra
+checks when the files are transferred, but some designs make this hard.
+Of course, this presumes that all times are for a common standard
+(e.g., UTC); if clock times are recorded in LOCAL time you have even
+more trouble.
+</a>
+<p>
+If you're using CVS and want a simple upgrade path to something better,
+Subversion appears to be the simplest approach.
+It works in a very similar way to CVS
+(in particular through a centralized repository), allowing any of the
+authorized developers to immediately modify a shared repository
+(with a record that it was done so and rollback capability).
+Subversion is what it intends to be: an improved CVS.
+
+<h2>GNU Arch</h2>
+<a href="http://www.gnuarch.org">GNU arch</a> is a very interesting
+competitor, and works in a completely different way from CVS and Subversion.
+GNU Arch is released under the GNU GPL.
+I looked at GNU Arch version 1.2, released February 26, 2004.
+GNU arch is fully decentralized, which makes it very work well for
+decentralized development (like the Linux kernel's development process).
+It has a very clever and remarkably simple approach to handling data,
+so it works very easily with many other tools.
+The "smarts" are in the client tools, not the server, so a simple secure ftp
+site or shared directory can serve as the repository, an intriguing
+capability for such a powerful SCM system.
+It has simple dependencies, so it's easy to set up too.
+<p>
+Decentralized development has its strengths, particularly in allowing
+different people to try different approaches (e.g., independent
+branches and forks) independently and then bringing them together later.
+This ability to scale and support "survival of the fittest" is what
+makes decentralized development so important for Linux kernel maintenance.
+Arch can also be used for centralized development, but see
+my discussion below about that.
+<p>
+There are also a number of people who have built support tools and such
+that support arch.
+For example,
+<a href="http://wiki.gnuarch.org/moin.cgi/graphing_20relations">tla-graph</a>
+can create a graph of the patchlogs in archives.
+<p>
+Indeed, I really like arch, yet I'm also frustrated by it.
+It has so many positive strengths, so it might be confusing why
+I think it has some problems. So, here's a discussion of its problems,
+which basically show GNU arch is a tool that's already very usable but
+needs some maturing.
+<p>
+A serious weakness of arch is that
+it doesn't work well on Windows-based systems,
+and it's not clear if that will ever change.
+There are ports of arch, both non-native (Cygwin and Services for Unix)
+and a native port too.
+However, the current win32 port is only in its early stages,
+and the
+<a href="http://wiki.gnuarch.org/moin.cgi/Native_20WIN32_20Support">
+Win32 page on the Arch wiki says "Arch was never
+intended to run on a non-POSIX system.
+Don't expect to have a full blown arch on your Microsoft computer."</a>
+At least part of the problem is the long filenames used internally by arch;
+arch could certainly be modified to help, though there doesn't
+seem to be much movement in that direction.
+Other problematic areas include
+<a href="http://mail.gnu.org/archive/html/gnu-arch-users/2004-02/msg00211.html">
+symbolic links, proper file permissions, and newline problems</a>,
+as well as the general immaturity of the port as of March 2004.
+Some people don't think that poor Windows support is
+a problem; to me (and others!), that's a serious problem.
+Even if <i>you</i> don't use any Microsoft Windows systems,
+people don't want to
+use many different SCM systems, so if one can handle many environments
+and the other can't, people will use the one that can handle more environments.
+I think GNU Arch's use will be hampered by this lack of support as
+long as this is true, even for people who never use Windows;
+good <i>native</i> Windows support is very important for an SCM tool.
+<p>
+Arch has some awkward weaknesses involving filenames.
+Arch uses
+<a href="http://wiki.gnuarch.org/moin.cgi/FunkyFileNames">
+extremely odd filenaming conventions</a> that cause
+trouble for scripts, command-line use, and many common tools.
+Its "+" prefixes cause problems with extremely common tools like
+<tt>vi</tt>, <tt>vim</tt>, and the pager
+<tt>more</tt> (this is especially a problem when trying to
+enter change log information - why choose a convention that's
+inconvenient for one of the world's most popular text editors?).
+Its "=" prefixes expose a bug in bash filename completion
+(this bug will eventually be fixed in bash, but buggy implementations
+will be around for a long time to come because this is such a rare need
+and bash is the default shell for many systems).
+And although this is less of a problem, it stores data in an "{arch}"
+directory, but the "{}" characters cause problems for
+many shells (particularly C shells) because they have a
+special meaning (they're filename globbing characters like "*").
+For example, in C shells you can't "cd {arch}" or "vi {arch}/whatever";
+you must quote the directory name.
+The problem isn't that filename conventions are a bad idea; most CM
+systems have them!
+The problem is that some of
+the conventions chosen by arch seem to be <i>designed</i> to interfere with
+commonly-used tools, and thus require using many work-arounds
+when using common tools
+(such as prefixing the filename with "./" or using the "--" option).
+That's unfortunate since GNU Arch's underlying concepts
+work <i>well</i> with other tools; if the developers had chosen
+better conventions these problems would never have occurred.
+I suspect these poorly-chosen conventions are
+too ingrained to be easily changed now, but there's always hope.
+There are ways to override the defaults in some cases, but not in
+many, and tools should choose <i>good</i> defaults.
+It's too bad, because nothing in arch's fundamental design
+<i>requires</i> these particular filename conventions.
+In February 2004 arch couldn't handle spaces in filenames,
+but this significant defect has been fixed; version 1.2.1 and later
+support spaces in filenames.
+<p>
+GNU arch gives you a lot of control using lower-level commands, but it
+doesn't (yet) automate a number of tasks that it really should be automating.
+Many common operations require multiple commands, when instead a
+single command and reasonable options should be enough for most people.
+If you use a single archive for a long time in GNU arch,
+it eventually accumulates a very large amount of data
+and becomes inconvenient to work with.
+<a href="http://www.gnu.org/software/gnu-arch/tutorial/new-archive.html#Creating_a_New_Archive">arch's developer suggests
+dividing archives by time and including a date in the archive name</a>.
+I think handling this accumulation is a nuisance;
+this kind of manual work is exactly what an SCM should handle automatically
+(e.g., perhaps arch could hide branches that have been
+unused in more than a year, by default).
+Arch has nice caching facilities (both in archives and on individual
+workstations) which can speed access to
+specific versions.
+However, these caches often have to be created by hand
+(by default the tool should automatically create caches, and remove old
+automatically-created caches, as well).
+Arch works slowly if the {arch} directory is on NFS; the
+tool should be able to detect slow execution and automatically try to find
+an efficient alternative, instead of requiring user workarounds.
+Many arch developers seem to create a similar set of higher-level
+specialized scripts to automate common tasks,
+but that's missing the point: you shouldn't have to
+write scripts to make a tool automate common tasks.
+An SCM tool should include commands that,
+through automation and good defaults,
+"do the right thing" for common tasks.
+The good news is that the arch developers are realizing that this
+is a problem and correcting it.
+The "rm" (delete) command deletes both the
+id and the corresponding file automatically (instead of requiring two steps);
+that capability was only added on February 23, 2004, though, so clearly
+automating steps has only begun.
+The documentation notes that automatic cache management is
+desirable; it just hasn't been done.
+The mirroring capability is clever, but if you download
+a mirror and make a change, you can't commit the change and
+the tool isn't smart enough to automatically help
+(even though the tool <i>does</i> have information on the mirror's source).
+The website described a
+<a href="http://wiki.gnuarch.org/moin.cgi/Arch_20Recipes#head-2c5332402d44ef87a1bb8d4fdf2ccaf758a57334">complicated workaround using undo and redo</a>,
+and Jan Huldec described a simpler approach (using tag, sync-tree, and
+set-tree-version),
+but the tool should be able to help commit changes even if you
+downloaded from a mirror.
+
+<p>
+Arch will sometimes allow dangerous or problematic
+operations that just shouldn't be allowed.
+For example, branches should be either commit-based branches
+(all revisions after base-0 are created by commit)
+or tag-based branches (all revisions are created by tag)</a>;
+<a href="http://www.gnu.org/software/gnu-arch/tutorial/symbolic-tags.html#Symbolic_Tags">
+merging commands will not work otherwise</a>,
+yet the tool doesn't enforce this limitation.
+The tla tool doesn't check if there are still pending merge
+rejections (.rej reject files), so operations such as
+commit, update, replay, or star-merge produce a scrambled workarea;
+users make mistakes, and an SCM system should work to <i>protect</i> data.
+<!-- .rej file comment by Monnier 2 Mar 2004 -->
+
+<p>
+The user interface also has some problems.
+Under the user nightmare clause, the "mv" and "move" commands do
+different things: "mv" moves moves both the id and the file, while
+"move" only moves the id.
+This user interface seems designed for confusion;
+why not make "move" and "mv" the same, and make "mv-id" the only command
+that only manipulates id's?
+Many commands are aliases, which simply makes documentation
+unnecessarily complicated.
+
+
+<p>
+The arch documentation is weak and needs more work;
+that's especially unfortunate, because the documentation issues
+can hamper early adopters who want to start using it today.
+A careful reading of what's available on-line should be enough
+for at least basic use of arch, though.
+Much of the documentation emphasizes lower-level implementation details
+(e.g., exactly how a command is implemented in the local
+filesystem) instead of emphasizing the higher-level constructs.
+Some of the documentation emphasize aliases, which is
+extremely distracting; if "add" and "add-id" mean the same thing,
+just document "add" (and later on, in an ignorable note, list the aliases).
+In some cases the documentation needs to be updated for what the
+software actually does.
+The on-line tutorial at the
+<a href="http://www.gnu.org/software/gnu-arch">FSF GNU arch website</a>
+is a good place to start, and the
+<a href="http://wiki.gnuarch.org/">Arch Wiki</a> is an especially good
+place to find some more detailed reference material.
+<p>
+In general, GNU arch isn't currently as mature as subversion.
+Its implementation needs more shaking down, its weird filename
+limitations should be fixed, and it sometimes requires users to do
+optimizations "by hand" when the tool should be handling it automatically.
+As noted above,
+its commands are sometimes on the low-level side; it can take several
+simple commands to set up values that should be defaults or
+built-in recipes/commands.
+And the documentation needs work.
+
+<p>
+But don't count out GNU arch for the long term based on these problems,
+most of which are short-term.
+Many of these problems simply reflect the fact that GNU arch hasn't had as much
+time to mature as other tools like subversion.
+I'm documenting these problems because, in fact, GNU arch has a lot
+going for it.
+In my opinion, the GNU arch developers have emphasized simplicity,
+openness of design, and power (ability to handle complex situations),
+and have paid less attention so far
+to ease of use (especially for simple situations).
+Thus, although it has problems as noted above,
+GNU arch is extremely powerful and its basic
+concepts are very flexible.
+More time and tools that build on top of GNU arch can resolve these issues.
+Arch is also endorsed by the Free Software Foundation (FSF) and
+directly supported by their Savannah system; that's
+certainly no guarantee of success, but endorsements like that often bring
+users and developers to a project, increasing its likelihood of success.
+GNU arch is a frankly more interesting approach to the problem,
+and it has a <i>lot</i> of promise.
+
+<p>
+<a href="http://lists.seyza.com/pipermail/gnu-arch-dev/2005-April/001001.html">
+This open letter from Tom Lord (GNU Arch's developer) to Linus Torvalds
+explains the basic concepts behind GNU Arch, in more detail.</a>
+
+<p>
+Unfortunately, events in 2004 and 2005 make it a little less clear
+how things well GNU Arch will move forward.
+Many developers seem to like many of the <i>ideas</i> in GNU Arch,
+but not the implementation.
+As a result, several other projects
+have been started which take some of the <i>ideas</i>
+of GNU Arch, but are separate projects which aim to be much
+more user-friendly, portable to Microsoft Windows as well as Unix-like systems,
+and so on.
+SCM projects that are conceptual descendents of GNU arch include
+<a href="http://www.nongnu.org/arx/">Arx</a>
+(which has poor Windows support),
+<a href="http://bazaar.canonical.com/">Bazaar</a> (also named baz)
+which is essentially a friendly fork of GNU Arch to improve it
+(primarily its UI),
+and especially
+<a href="http://bazaar-ng.org/">Bazaar-NG</a> (also named bzr).
+The Bazaar folks  are working to ensure a smooth transition to
+Bazaar-NG once that becomes ready.
+
+<h2>Bazaar-NG</h2>
+<p>
+Thus
+<a href="http://bazaar-ng.org/">Bazaar-NG</a> (also named bzr)
+is a new distributed SCM system that
+builds on the ideas of Bazaar (which extended GNU Arch),
+but it's essentially a new project.
+<a href="http://bazaar-ng.org/todo-from-arch.html">Here's how the
+Bazaar-NG developers compare their work with GNU arch</a>.
+Bazaar-NG is trying to
+exploit some of the major innovations in arch, but by providing an
+interface that's easier to use (e.g., "doing the right thing" and
+easily supporting common operations), trying to make it easier
+to transition to, and it borrows many ideas from elsewhere.
+<p>
+I like much of what I see in Bazaar-NG.
+The main developer is developing the user documentation and code
+simultaneously (an approach I heartily recommend),
+and emphasizing common use cases.
+As a result, it appears that the most common use cases
+will be especially easy to do -- something very important in SCM systems.
+I like it when people write user documentation simultaneously, because
+if a common operation is hard to explain, that's a good signal that the
+tool isn't user-friendly enough.
+GNU Arch is an unfortunate example -- it needs good documentation because
+some of its operations are more complicated or awkward than necessary
+(some would say Arch has "unnecessary user-hostile complexity").
+The Bazaar-NG developers plan to cryptographically sign changes to counter the
+dangers of repository subversion (see my
+<a href="https://dwheeler.com/essays/scm-security.html">companion paper
+on software configuration management (SCM) security</a> for more information).
+<p>
+It's developed in Python, which means it should easily port to any system.
+Some may be concerned that the resulting system will be too slow;
+I suspect that concern isn't well-founded, and portions could be
+rewritten for speed if that becomes a problem, but that remains
+to be seen.  Other SCM systems, such as CodeVille, are written in Python,
+so this isn't a strange choice.
+<p>
+Bazaar-NG is far less mature than many other projects.
+So keep that in mind; as of April 2005 I wouldn't commit a large,
+pre-existing project to Bazaar-NG!
+But since Bazaar-NG has
+financial backing from the company Canonical, who commercially support
+Ubuntu, it may catch up very rapidly.
+Its emphasis on ease-of-use is quite heartening.
+
+<h2>Monotone</h2>
+<a href="http://www.venge.net/monotone">Monotone</a>
+is another decentralized SCM.
+It's released under the GPL; it uses the programming language Lua
+(e.g., for hooks), whose implementation has been released under the MIT license
+(historically it was released under a zlib-like license).
+I looked at version 0.10, released March 1, 2004.
+Monotone is interesting because it's
+different approach to a distributed SCM.
+As Shlomi Fish describes it,
+<blockquote>
+"changesets are posted to a depot
+(that can be a CGI script, an NNTP newsgroup or a mailing list),
+which collects changesets from various sources.
+Afterwards, each developer commits the desirable changesets
+into his own private repository....
+Monotone identifies the versions of files and directories
+using their SHA1 checksum. Thus, it can identify when a file
+was copied or moved, if the signature is identical
+and merge the two copies.
+It also has a command set that tries to emulate CVS as much as possible."
+</blockquote>
+<p>
+Monotone basically has a three-layer structure
+(working copy, local database, and net server).
+This is different from GNU Arch, which basically has only two layers
+(working copy and archive), though GNU Arch has a few tools
+that make archives work together in special cases (e.g., for mirroring).
+In few cases this is more convenient than GNU Arch; GNU Arch sometimes makes
+you enter hand-wringingly long commands to copy data between archives
+(say from "my local archive" to a "master shared archive").
+If in contrast you're simply posting data from a local database
+to a net server in Monotone, it works well.
+Monotone is based by using SHA-1 hashes for everything;
+specific file versions are identified with hashes, and sets of files
+are identified through the hash of its manifest.
+That means that SHA-1 hashes are even
+used as a global namespace for version id's.
+This has some nice technical properties, but it also means that the
+normal version numbers used in Monotone aren't meaningful to humans.
+Thankfully, you don't have to type in long SHA-1 hashes everywhere, only
+enough to be unique.
+<p>
+In Monotone, each person manages their own local database,
+and never automatically trusts anything sent by the net server.
+That can be a little disconcerting, and doesn't appear to be
+as strong a support if you want to implement centralized development.
+Internally Monotone uses an underlying simple SQL database (SQLite).
+It's hard to say if that's good or bad.
+<p>
+One very nice property of Monotone is that it has good support
+for recording status about approvals and disapprovals, as well as for
+test results (this is something GNU Arch doesn't do well).
+Monotone can generate ancestry graphs
+in xvcg graph visualization format (a separate tool for
+GNU Arch can create graphs too).
+<p>
+Monotone supports handling file metadata like file permissions (which
+ones can be executed) and symbolic links by creating and editing a
+special file (.mt-attrs).
+This works, but it's nowhere near as convenient as other tools like
+GNU Arch (which handle this automatically).
+Monotone requires you to "add" and "drop" each file to state which files
+in a working copy must be managed.
+GNU Arch has this mode, but can also be used in a mode where the simple
+filenames are enough to determine this.
+I prefer explicit add and drop commands, so I think this
+is fine, but some may not like this choice.
+Monotone can only commit entire sets of files;
+GNU Arch can also commit specific named files as well.
+This is an advantage for GNU Arch;
+if you found a minor unrelated problem while working on
+something else, in GNU Arch (and BitKeeper)
+you can make that small fix and commit just that one file.
+<p>
+There's current work to port Monotone to Windows (using MinGW and Cygwin),
+but this work in 2004 was very preliminary.
+This lack of a Windows port is a problem, as I noted earlier with GNU Arch.
+As of 2005 this appears to have gotten better, but I haven't checked in
+detail.
+<p>
+Monotone has recently fixed some of its problems
+in handling unusual filenames
+(this seems to be a common problem in SCM systems).
+Monotone's emphasis on security, and its clear concepts, make it another
+SCM worth considering.
+Monotone's approach to merging is based on three-way merging and SHA-1 hashes.
+The Monotone folks argue that the Arch approach is somewhat weaker
+than Monotone's approach, but note that Monotone isn't nearly
+as good as Arch in supporting some kinds of "cherry-picking"
+(see the <a href="http://www.venge.net/monotone/faq.html">Monotone FAQ</a>
+for more information), so it's hard for me to declare either one a
+"winner" in terms of merge capabilities.
+<p>
+The Monotone command sets are intentionally similar to CVS, and that can
+help old CVS users somewhat.  But only to a point!
+The underlying concepts
+of Monotone are so different that the "same" commands aren't really the same.
+Monotone's documentation needs work too, but I can say that
+it was easy to get the current "depot" of Monotone -- while GNU Arch
+didn't have clear instructions for the equivalent action.
+<p>
+One unfortunate thing: if you forget to commit before merging, and there's
+a conflict, you could be in for a lot of problems.
+Here's what their documentation says:
+<blockquote>
+Monotone makes very little distinction between a "pre-commit" merge (an update) and a "post-commit" merge. Both sorts of merge use the exact same algorithm. The major difference concerns the recoverability of the pre-merge state: if you commit your work first, and merge after committing, the merge can fail (due to difficulty in a manual merge step) and your committed state is still safe. It is therefore recommended that you commit your work first, before merging. 
+</blockquote>
+Shame, shame!  SCM systems should work very hard to <i>prevent</i>
+data loss or scrambling.
+Please, SCM authors, build in protection mechanisms or do an automatic
+commit-before-merge or something else to keep developers out of trouble.
+They're only human, and commands that can cause data loss or scrambling
+should require explicit requests, not through the use
+of normal (and commonly-used) commands.
+<p>
+In 2004 Monotone was experimenting with a "netsync" protocol for synchronizing
+two databases, which was clever but needed shaking out.
+As of April 2005, Monotone has switched to using netsync exclusively.
+However, Monotone can't use a simple repository (like sftp) for centralized
+repository, which is a minor negative compared to GNU Arch.
+In 2004 Monotone had nice email support, which I thought was a nice plus
+(GNU Arch, for example, doesn't
+do a very good job supporting email automatically).
+Monotone still supports some email work (e.g., using its Packet I/O
+capabilities) but it's not clear that it's as good as it was.
+Not everyone can run a server, and it's nice to allow for the use of email
+as a transport (because <i>everyone</i> can get email).
+<!--
+The email support is a nice plus (GNU Arch, for example, doesn't
+do a very good job supporting email automatically).
+-->
+<p>
+Monotone does appear to be less popular than GNU Arch
+(as determined by Google link counts), for what that's worth.
+Since Monotone seems to be less popular than GNU Arch, and has
+a version number less than one (suggesting that it's "not as ready"),
+I'm going concentrate more on GNU Arch as an example of a
+decentralized SCM for the rest of the paper.
+But Monotone can't be counted out for the future.
+
+<h1>Centralized vs. Decentralized SCM</h1>
+<p>
+As you can tell, there seems to be two different schools of thought
+on how SCM systems should work.
+Some people believe SCM systems should primarily aid in
+controlling a centralized repository, and so they design their
+tool to support a centralized repository (such as CVS and Subversion).
+Others believe SCM systems should primarily aid in allowing
+independent developers to work asynchronously, and then synchronize
+and pull in changes from each others, so they develop tools to
+support a decentralized approach
+(like GNU arch, monotone, darcs, Bazaar-NG, and Bitkeeper).
+Tools built to support one approach <i>can</i> be used to support the
+other approach, but it's still important to understand the difference.
+<p>
+Tools built to support one camp can sometimes
+support the other approach, to at least some extent.
+However, it's not as clear to me that these supports for the "other approach"
+are always as good as a tool made to do the same thing natively.
+That's particularly true when centralized systems
+try to support decentralized development
+(in theory a distributed system should be able to
+easily support centralization easily, though a particular tool may
+not do a good job).
+Subversion has svk, which builds a distributed SCM system
+on top of subversion.
+However, implementing svk on top of subversion is a very heavyweight
+way to create a distributed SCM system, far exceeding
+what it takes to implement a natively distributed SCM system.
+GNU arch can easily support a centralized repository by having developers
+share read/write privileges to a directory that implements the
+repository, but see the discussion below about security concerns I have
+(due to the direct control over the repository by users).
+There's also the extra tool
+<a href="http://web.verbum.org/arch-pqm/">arch-pqm</a> which can help
+mitigate some of my security concerns,
+though it's not currently integrated into GNU arch.
+The various projects' supporters all seem to feel that "their side"
+does adequately support the other approach, though.
+I <i>do</i> expect that the different projects will continue working
+to get better at supporting the "other" approach,
+so in a few years this distinction may get <i>really</i> fuzzy.
+<p>
+A collection of
+<A href="http://www.kerneltraffic.org/kernel-traffic/kt20030323_210.txt">
+messages in Kernel Traffic illuminate some of the advantages of
+distributed SCM, and some of the challenges in implementing such systems.</a>
+In particular, Larry McVoy identifies some of the challenges he faced
+implementing BitKeeper: rename handling in a distributed system,
+security semantics (since each user controls their own area),
+and time semantics (time moves all around).
+He also claims that merging branches when things are truly distributed,
+in a way that eliminates unnecessary manual repairs and re-repairs,
+is not easy.
+
+<p>
+<a href="http://lwn.net/Articles/72498/">A posting by Bastiaan Veelo at
+Linux Weekly News</a> has a nice summary:
+<blockquote>
+"The most important thing to be aware of though is that
+Arch and Subversion differ in fundamental ways.
+Arch works in a decentralized way, while Subversion is designed
+on a client/server model.
+Indeed with Arch you can start coding
+and using version control without first applying
+for access to the server.
+However, [merging] your code with the main branch has
+to be done by the one project maintainer....
+<p>
+Development with Subversion (and CVS for that matter)
+is centralized in the sense that there is just one repository,
+but it is actually more decentralized in a social sense since
+there are as many code integrators as there are developers
+with write access to the repository.
+<p>
+In short, one could say that Arch is centralized around a
+code integrator, and that Subversion (like CVS) is centralized
+around a repository.
+You decide what fits best. If you are a heavy user of CVS...
+chances are that Subversion actually fits your needs best.
+</blockquote>
+<p>
+<a href="http://lwn.net/Articles/246381/">Linus Torvalds has an
+interesting post about the advantages of distributed development</a>.
+<p>
+The subversion developers have a very enlightened post about this titled
+<a href="http://subversion.tigris.org/subversion-linus.html">
+Please Stop Bugging Linus Torvalds About Subversion</a>.
+In it, they say:
+"We, the Subversion development team, would like to explain why we agree
+that Subversion would not be the right choice for the Linux kernel.
+Subversion was primarily designed as a replacement for CVS.
+It is a centralized version control system.
+It does not support distributed repositories, nor foreign branching,
+nor tracking of dependencies between changesets.
+Given the way Linus and the kernel team work, using patch swapping
+and decentralized development, Subversion would simply not be much help.
+While Subversion has been well-received by many open source projects,
+that doesn't mean it's right for every project."
+In short, tools are typically developed to support certain approaches,
+and if you want to work in a certain way you need to choose tools that
+help (not hurt) the process, create those tools,
+or change your process to better fit the tools available.
+
+<h1>Using Arch to Support Centralized Development</h1>
+<p>
+As I noted above,
+conceptually a distributed approach should be able to fully implement the
+centralized approach.
+I do have some concerns about the recommended method for using
+GNU arch to support a centralized repository of multiple developers.
+It appears that some support tools will deal with my concerns, though
+using them takes much more effort.
+<p>
+<a href="http://wiki.gnuarch.org/moin.cgi/Centralized_20Development">
+The GNU Arch wiki site provides basic information on how to use arch
+in a centralized way.</a>
+It's easy to use GNU arch to implement a centralized repository: a
+particularly simple way is to
+grant all developers read/write access to a shared filesystem
+(say secure ftp) used to create the centralized repository.
+The "repository" is in some sense a pseudo-user that everyone can write to.
+Systems hosting many project repositories that need to be protected
+from each other will need to define users or groups (say one per project)
+to provide that separation.
+This can viewed as a minor problem (now the system administrator
+or a special group management tool needs to get involved whenever a
+new project or new developer joins a project) or a big plus
+(operating system controls are heavily tested and far more reliable
+than application-level access controls).
+Once set up, there are certainly many advantages to this scheme.
+For example, it's
+often easier to set up a shared directory than a more complex server.
+<p>
+However, I think there are problems when using arch this way.
+This approach presumes that all the clients "work perfectly;"
+if there are many
+developers, the odds increase that some developer is using
+an older client with a bug or subtle semantic difference
+that could screw up the whole repository.
+More importantly, it presumes that developers, and attackers
+who temporarily gain developer privileges, are never malicious.
+Since a developer has complete unfettered read/write access to
+a shared repository,
+a malicious developer (or attacker taking the developer's
+credentials) could stomp over a
+shared arch repository, changing supposedly unchanging data
+to make the repository quite different than expected.
+Unless there's something to counteract it, a malicious developer or attacker
+with their privileges
+could insert malicious code without making it clear that they inserted it,
+make it appear that some other developer inserted malicious code,
+or erase data in a way that makes it unrecoverable.
+Obviously, malicious developers are bad thing, but an SCM system should
+always be able identify exactly who inserted any malicious code
+(in a nonrepudiable way), and protect the integrity of the SCM
+history so that changes can be easily undone (and re-checked, once you've
+found a culprit).
+In today's unfriendly world, where you're often working with people you don't
+<i>really</i> know, protection against malicious attack is important.
+<p>
+The recommended GNU arch setup for a central repository
+has all users sharing a single account,
+so the operating system and arch have
+no way to even distinguish between the users when they log in!
+It's possible to set up a shared directory
+repository so that users authenticate individually,
+and then set up a shared directory (using groups),
+but users can then accidentally (or intentionally) set their access
+control bits so that later developers won't be able to
+read or modify the files.
+So, the recommended approach has a lot of drawbacks if a client
+misbehaves, or you don't fully trust your developers,
+or an attacker might gain developer privileges.
+<p>
+You can make backups and compare them with the original, which
+would at least detect malicious changes to the repository history
+if they happen after the backup.
+Backups would also allow people to replace the malicious change with
+the correct version.
+Note, however, that arch doesn't currently include tools to do this
+checking automatically
+(I don't think you can use arch's mirroring capability,
+since the arch data itself is suspect).
+So, you'll have to know a lot about arch's internals to do this currently,
+until arch adds such tools.
+This approach would <i>not</i> identify exactly who made the
+malicious change, even when the culprit could have been required
+to log in as a specific developer.
+But possibly more importantly, a malicious developer could trivially
+create a malicious change and forge it as though someone else made the change.
+A backup could only tell you that an addition had been made, but
+it can't say if the data in the addition is correct.
+So backups definitely help, but attackers can get around them.
+<p>
+Another partial (but significant) counter to these problems are the new
+<a href="http://wiki.gnuarch.org/moin.cgi/Signing_20Archives">signing
+archives</a> capabilities added to arch 1.2.
+You can optionally make an archive a "signed" archive, in which the
+changes are cryptographically signed.
+I've looked into this (my thanks to
+Colin Walters who helped me understand details of the signature process).
+When enabled arch can sign MD5 hashes, which are cryptographically much
+weaker than SHA-1 hashes, but that's certainly a step forward
+from having no cryptographic signatures.
+Some effort is definitely required
+to set up signed archives (e.g., now you need public keys of all
+developers), though it's a good idea for security-minded systems.
+The signatures sign the revision number as well as the change itself
+(they're both encoded in the signed tarball),
+so an attacker can't just change the patch order
+and can't silently remove a patch and renumber the later patches
+without detection.
+However, it appears to me that such signatures (at least as
+currently implemented) cannot detect the
+malicious substitution of whole signed patches (such as
+the silent replacement of a previous security fix with a non-fix),
+or removal of the "latest" fix before anyone else uses it.
+Unlike backups, signatures can detect many problems <i>without</i> comparing
+an external source (so it'll likely be faster to detect problems),
+and it's built-in to the tool already, which increases the likelihood
+it'll be used.
+For many developers, backups and signing archives may be enough.
+However, this mechanism still doesn't expose who made
+certain kinds of malicious changes (such as silent removal and replacement),
+in the case where the developer could have been identified.
+<p>
+Arch-pqm (patch queue manager) is an arch extension that
+creates a central repository out of a decentralized tool.
+It allows developers to send their requests (such as changes)
+to a central location,
+then arch-pqm queues up those requests and has them
+automatically performed.
+Arch-pqm first checks the GNUPG signatures of the requests
+to determine if the requester is an authorized developer for that
+repository, and rejects changes by anyone else.
+This is closer in approach to how centralized tools
+like CVS and subversion work.
+I've had several email conversations with arch-pqm's developer,
+Colin Walters,
+and found that arch-pqm only permits operations that protect the
+history of the repository.
+In particular, arch-pqm supports the star-merge operation to merge
+in new changes,
+caching, uncaching, making new categories / branches / versions,
+and tagging -- none of which erase the history in the repository.
+<p>
+Thus, it currently appears to me that combining signed archives,
+backups, and arch-pqm will probably address my concerns.
+Arch-pqm prevents arbitrary developers, who have rights to the repository,
+from arbitrarily changing the frozen repository values.
+Signed archives and comparisons with
+backups allow the detection and repair of malicious changes to the
+repository if the attackers work around or subvert arch-pqm.
+If a malicious developer's changes can always be recorded correctly
+as theirs and undone later (by forcing them to sign their changes),
+and at least detected when the infrastructure can't do otherwise,
+then my concerns disappear.
+One caveat: I haven't done a detailed security analysis, and arch-pqm
+wasn't originally designed specifically to provide this security.
+For example, perhaps creating odd filenames or trying to change settings might
+subvert this protection.
+There may be ways to create to exploit a buffer overflow or other
+technique to subvert these checks.
+Still, the basic concepts seem sound, and some security analysis at least
+has a chance with this setup.
+Unfortunately, using arch-pqm isn't yet built into arch, and the
+backup checking isn't built into arch either, so there's more than
+a little "rolling your own" effort to implement and use this approach.
+Also, the documentation doesn't lay out a simple step-by-step method
+for setting it up.
+
+<p>
+I should note that currently I don't think Arch supports signing
+of signatures. In other words, if B accepts A's work, and C accepts
+B's work (which included A's work), then I should see signatures
+by A of A's work, and signatures of B indicating that they accepted A's work.
+To be fair, few SCM systems support that.
+But centralized systems have an easier time providing equivalent
+functionality; distributed systems should record more of this
+kind of information, because there's no central place to get it or trust it.
+
+<p>
+Note that Colin Walters is also creating a
+<a href="http://mail.gnu.org/archive/html/gnu-arch-users/2004-01/msg01069.html">
+"smart server" for arch named "archd" and a protocol to support the server</a>.
+In some ways this appears to be similar in concept to arch-pqm; it
+would be a program that would automatically execute SCM commands from
+authorized users.
+However, archd would use a specialized protocol designed
+for the purpose to transfer the data, rather than using email.
+It appears that it will have similar protections (it will
+limit the commands that can be executed),
+and if that's true, the same comments would probably apply.
+But this would be for the future; it's not ready for use at this time.
+
+<p>
+In all SCMs, if you're worried about malicious developers,
+you have to be careful about who can define "hooks" and
+the permissions they have when they run.
+Whenever GNU arch runs a command,
+<a href="http://regexps.srparish.net/tutorial-tla/using-hooks.html">
+GNU arch runs the program ~/.arch-params/hook (if it exists)</a>
+to run additional actions ("hooks").
+In other words, the hooks are defined on a
+per-user basis, not per-project basis.
+That design has some advantages from a security point-of-view;
+since the hook is <i>not</i> inside
+the maintained development area (normally), editing files shouldn't
+trick the CM system into running new commands.
+However, that has disadvantages if there's a
+shared repository, because that means that the shared repository
+can't run commands to enforce some requirements
+(e.g., to require that there be no compiler warnings, run regression tests,
+announce a change via email, or require two-person authorization before
+checking in).
+This can also be solved by arch-pqm or a smart server, since
+the server can run the hooks on its own in its own environment.
+<!--
+http://mail.gnu.org/archive/html/gnu-arch-users/2004-01/msg01069.html
+Colin Walters is also working on a "smart server" (archd)
+and a protocol to support it.
+-->
+
+
+
+<p>
+<a name="other-scm-systems"></a>
+<h1>Other OSS/FS SCM systems</h1>
+Besides
+<a href="http://www.cvshome.org/">CVS</a>,
+<a href="http://subversion.tigris.org/">Subversion</a> (SVN),
+<a href="http://svk.elixus.org/">svk</a>,
+<a href="http://www.gnuarch.org">GNU arch</a>, and
+<a href="http://www.venge.net/monotone">Monotone</a>,
+there are many other OSS/FS SCM systems, such as
+<a href="http://aegis.sourceforge.net">Aegis</a>,
+<a href="http://www.cvsnt.org">CVSNT</a>,
+<a href="http://abridgegame.org/darcs/">Darcs</a>,
+<a href="http://www.zedshaw.com/projects/fastcst/index.html">FastCST</a>,
+<a href="http://www.opencm.org">OpenCM</a>,
+<a href="http://www.vestasys.org/">Vesta</a>,
+<a href="http://www.superversion.org/">Superversion</a>,
+<a href="http://codeville.org/">Codeville</a>, and
+git/<a href="http://kernel.org/pub/software/scm/cogito/">Cogito</a>,
+<a href="http://selenic.com/mercurial/">Mercurial</a>
+I've already mentioned
+<a href="http://bazaar.canonical.com/">Bazaar</a>,
+<a href="http://www.nongnu.org/arx/">Arx</a>, and
+<a href="http://bazaar-ng.org/">Bazaar-NG</a>.
+<p>
+That's not even a complete list!
+I'm not trying to completely exclude these others from consideration;
+I just don't have enough time to analyze them too, though for several
+of them I gathered enough information to decide that I wasn't
+as interested in learning more.
+You should certainly investigate the various alternatives before picking
+an SCM system, since your desires might be different than mine.
+For use right now, Aegis is reported to be quite mature and would
+be worth a look;
+Codeville looks like it will be ready soon and has some interesting
+merging capabilities;
+Bazaar-NG (as I mentioned earlier)
+emphasizes both ease-of-use and good technology, and
+its corporate backing may speed its development;
+Darcs is really interesting for its technology.
+<p>
+Here's some information I gathered on some of them:
+<ol>
+<li><a href="http://aegis.sourceforge.net">Aegis</a>.
+The <a href="http://better-scm.berlios.de">better SCM initiative</a>'s
+initial information about Aegis made me decide to skip it,
+but perhaps that was too hurried.
+The better SCM initiative claimed that
+Aegis requires running as root, which in my mind is
+an unfortunate security weakness that immediately turned me off.
+It also reported that it was very hard it is to install,
+which again made me not very interested in examining it further.
+On the other hand, some Aegis users have since told me
+that Aegis is better than that review claims, so this may have been too harsh.
+Aegis has been around a long time (first released in 1991), and it's
+been widely reported as being mature (with lots of functionality)
+and very reliable;
+obviously those are important attributes in an SCM system!
+Aegis can validate received transactions before accepting them, which is
+an excellent capability; on bigger systems you often don't want to
+accept changes unless they pass a battery of tests in many environments.
+Aegis is released under the GNU GPL, the most common OSS/FS license
+(an advantage over some OSS/FS SCM systems such as CVS,
+which use odd one-off licenses that make merging functionality
+from elsewhere more complicated).
+Aegis supports "both push and pull" models; it's not clear to me
+that it supports fully distributed development, but it appears to be
+more flexible than the strictly centralized models supported by, say, CVS.
+Aegis' direct support of Windows is very poor, unfortunately; they say that
+"Most sites using Aegis and Windows together do so by
+running Aegis on the Unix systems, but building and testing
+on the NT systems. The work areas and repository are
+accessed via Samba or NFS"  (that works, but it's awkward).
+Aegis suports many security capabilities (see their documentation for more).
+I hope to take a further look at Aegis in the future; I've received some
+emails from happy Aegis users, and its strengths are certainly worth
+considering.
+<li>
+<a href="http://www.cvsnt.org">CVSNT</a>.
+CVSNT is an active fork of CVS.
+It began life as a port of CVS to Windows NT; it now works on
+both Windows and Unix-like systems.
+And it has since added several features beyond the original CVS,
+such as better handling of merges without tagging requirements,
+per-branch access control, support for Unicode,
+more efficient binary diff storage, additional server triggers,
+and additional protocols.
+But it appears that CVSNT currently
+has some of the same limitations as the original CVS,
+such as not handling renaming well.
+If you look at this, be sure to check out other alternatives such
+as Subversion.
+<li>
+<a href="http://www.zedshaw.com/projects/fastcst/index.html">FastCST</a>.
+As of June 2004, FastCST is an interesting project in
+its early stages; only time will tell if it becomes
+a major project or not.
+The author's goal is to create a "completely distributed, fast, and
+secure revision control tool"
+but as of release 0.4 only its non-distributed parts are functional.
+It uses a novel delta algorithm (to minimize the size of a change),
+it focuses on security at every point,
+and tries to balance security, collaboration, and control.
+License: GPL.
+<li><a href="http://www.opencm.org">OpenCM</a>.
+OpenCM looks very interesting; it's paid special attention to security,
+which I appreciate.
+But there is very little evidence that OpenCM is being maintained or will be
+maintained for the future.
+As of April 2004, it was only at version
+"0.1.2alpha7pl1" (a version number that doesn't inspire confidence!).
+Worse, that version was released 10 months earlier (on June 20, 2003).
+The mailing list archives show very little activity.
+I made a phone call to Jonathan S. Shapiro
+and learned that there was a small effort to
+"finish" a few things in OpenCM and call it a "version 1.0" release.
+But frankly, that doesn't bode well for future maintenance.
+This is too bad, because there's actually a lot of technical promise in
+OpenCM.
+OpenCM may get more support if they produce a "1.0" release.
+Indeed, it may just take one person to try it out and decide to run with it;
+there's a lot of technical merit in it.
+But OpenCM is hard to recommend right now unless you're willing to take
+the project on.
+<li>RCS and SCCS.
+RCS is a much older SCM system, as is SCCS which came before it.
+There is a GNU implementation of SCCS, named cssc, but GNU only recommends
+it when interoperating with old SCCS data.
+The lock-based approach used by RCS and SCCS just doesn't work well
+with today's fast development cycles and large development groups.
+Some SCM systems (like Bitkeeper) use one of these as an infrastructure
+component to build their SCM system, but at that point they're just
+lower-level libraries.
+
+<li><a href="http://www.vestasys.org/">Vesta</a>.
+The <a href="http://better-scm.berlios.de">better SCM initiative</a> review
+reported that "Vesta is reported to be mature", and Vesta has been
+used in many large projects.
+Vesta is a centralized SCM system with a built-in build system as well,
+and uses the older "locking style" for editing files.
+Vesta only supports Unix-like systems; there's no evidence at all
+that it <i>could</i> run on Windows.
+<p>
+A major difference between Vesta and other tools is that Vesta is
+both an SCM and a build tool (like make plus related dependency-computing
+tools).
+There are many advantages to this approach;
+"make" has many known weaknesses, and Vesta automates
+more of the build process than make does.
+In particular, Vesta does automatic dependency detection, so you
+don't have to use a combination of other tools
+(like makedepend along with make) to build results.
+However, "make" is extremely popular and common, and that is
+a turnoff to some potential users.
+In 2004 I noted that
+because only Vesta can be used to build Vesta,
+I expect that it'll be hard for it to attract new users and developers.
+As of April 2005 I've been told that "bowing to popular demand"
+they've developed a "Make-based source distribution of Vesta",
+which eliminates one concern that I had.
+<p>
+Vesta uses the older, traditional method of handling SCM.
+It controls a central repository (so it's a centralized system like
+CVS, Subversion, and Aegis), and you must
+locks files while they're being edited.
+Even more oddly, locking is at the
+granularity of "packages" (not individual files), which in some ways
+appears even more constricting.
+Unlike some older systems, that doesn't mean you <i>can't</i> edit
+files simultaneously.
+Instead, when two developers need to change files in the same
+package concurrently, at least one must create a branch
+in the version number sequence.
+Locking files for editing
+is an old, traditional (pre-CVS) way of handling multiple edits to the
+same file, and if people are essentially assigned to given files this
+can often work out okay.
+Old, traditional approaches aren't necessarily bad; many large
+systems have been created that way, and they work find if you're
+used to them.
+However, having to handle locks can slow down development, especially
+if there are a large number of people who might need to
+edit a particular file.
+CVS' approach that eliminated the need for locks was CVS' major achievement.
+Vesta's alternative solution -- creating new branches --
+appears to me to be a little more cumbersome than CVS's
+if you have to do it a lot, <i>especially</i> since Vesta
+doesn't seem to have built-in support for merging branches later.
+Vesta <i>does</i> includes several features to support
+groups in geographically distributed sites to share development,
+in particular, there's a tool for replicating sources between repositories. 
+<p>
+Vesta is probably a reasonable choice for those who wish to use
+the locking style of SCM,
+and its build systems appears to be much easier to use than make.
+If groups of files tend to be "owned" by particular individuals who
+are typically the only ones who make chances to the files, Vesta
+may work quite well.
+In fact, if that's how you work, Vesta may support your approach well.
+However, I suspect many developers (who are used to the freedom of
+making arbitrary changes and merging later with help from their
+SCM tool) may find Vesta a little constricting.
+For some projects, Vesta may be a great choice; for others, it won't be.
+
+<li>
+<a href="http://codeville.org/">Codeville</a>.
+Codeville is a decentralized system.
+It has some very interesting technical ideas
+for merging changes much more effectively.
+In particular, it has a clever way to eliminate unnecessary merge conflicts.
+Codeville creates an identifier for each change, and
+remembers the list of all changes which have been applied
+to each file and the last change which modified each line in each file.
+When there's a conflict, it checks to see if one of the two sides
+has already been applied to the other one, and if so makes the other side
+win automatically.
+If that doesn't work, it backs off to a CVS-like patch strategy.
+It also versions "spaces between the lines", for reasons they describe.
+Codeville is implemented in Python, which should speed development, and
+it's a relatively well-known language so it shouldn't have some of the
+challenges of Darcs (as I'll explain below).
+Currently it's immature, but it's growing.
+<li>
+<a href="http://www.superversion.org/">Supervision</a> (GPL).
+Superversion 1.2 is a single-machine, single-developer SCM system.
+That can be useful, for example, to allow a developer to easily back
+out of an approach, or to see what changed when.
+One nifty thing is that it has built-in support for nifty graphs showing
+the relationship between versions.
+However, I'm primarily interested in SCM systems that handle many developers,
+so I didn't find this one so interesting.
+As of April 2005, they have an upcoming version 2 that
+will support multiple users, and thus is more interesting from my point of view.
+Version 2 is designed to work as a centralized server
+with clients, so it appears to be designed to support centralized
+development; peer-to-peer development might be added later.
+It runs on at least Unix-like systems and Windows.
+It depends on Java; that may mean that it requires the use of the
+proprietary Sun JVM, which is an issue for many
+(for this perspective, see
+<a href="http://www.gnu.org/philosophy/java-trap.html">
+Free But Shackled - The Java Trap</a>).
+As
+<a href="https://dwheeler.com/java-imp.html">OSS/FS Java implementations
+become more capable</a> this concern may go away.
+<li>
+git and
+<a href="http://kernel.org/pub/software/scm/cogito/">Cogito</a>.
+Linus Torvalds and other Linux kernel developers
+abandoned BitKeeper, and decided to write their own distributed SCM system.
+Linus created a low-level system called "git", with the intention
+of having higher-level SCM services be built on top of it.
+The most popular higher-level service built specifically
+to run on top of git is Petr Baudis' "Cogito" (formerly known as git-pasky).
+The development of Cogito and git has moved very rapidly;
+as of the time of this writing it's still fast-changing and not
+very mature.
+git is specifically designed to support Linux kernel development
+(see <a href="http://marc.theaimsgroup.com/?l=git&amp;m=111464974422367&amp;w=2">this email by Linus Torvalds about git's design</a>),
+but it's clear it could be used by at least some others as well.
+<p>
+The primary focus of git is performing distributed development with
+<i>extremely</i> fast merging (about 1 "patch" per second) for large programs
+(e.g., the Linux kernel).
+The lower-level "git" is designed to simply store a large number of
+different static views of each version of a tree.
+It does this through the concepts of a "blob" (a versioned file),
+"tree" (a set of all files for a given version), and "commit"
+(a description of what changed between two trees).
+Each of these is referenced using its SHA-1 hash.
+It's presumed that disk space is not critical; each versioned file
+is stored as a separate compressed file, and <i>not</i> as a delta.
+This approach simplifies many tasks at the cost of some storage space,
+but this is viewed as a reasonable trade-off
+(there's ongoing work to add "deltification" as a localized option).
+It is presumed that some operations (such as identifying exactly
+who last modified every given line in a file) are <i>not</i> important;
+these are not implemented in the current implementation, and implementing
+them given the current approach may be quite resource-intensive.
+<p>
+Cogito does not work on Windows natively
+(there are reports it work on top of Cygwin), primarily
+because much of it is implemented using bash shell scripts.
+I strongly suspect git won't work on Windows natively.
+However, the underlying file structure should work just fine on Windows.
+Making it work on Windows might
+simply require moving the shell code to something more portable
+(say Python or Perl), and since
+there's relatively little code that might not take too long.
+It's also conceivable that a port of bash and many other
+Unix tools might work too (short of Cygwin), though I know of no one
+who's tried that approach.
+<p>
+Currently git-based tools handle renamed files and directories very poorly.
+Changes do not get applied correctly when a file is renamed but is
+edited by another branch
+(this is in comparison to GNU Arch, Darcs, and many other systems).
+Torvalds has been very adamant that the git format not directly
+store information about file/directory renames, because he believes
+it should be possible to determine such information without it.
+This is technically true, and is especially true if
+in practice people carefully
+commit before and after any rename without changing the
+contents (and never move files with identical contents between commits).
+But the current tools don't try to handle this case, and so the results
+are very poor after renames.
+<p>
+The git data format stores whether or not a file is executable, and
+of course the filenames and their data
+(there's actually an entire "mode", so you could store more information
+if it was important to you).
+It does <i>not</i> store the date/time stamp of individual files,
+only the date/timestamp of a commit (of an entire tree of files).
+Thus, very quickly date/time stamps of individual files are lost;
+this may not matter to you.
+<p>
+Merges are currently implemented using
+the traditional 3-way merge algorithm.
+For Linux kernel development (and many others) this is actually quite
+sufficient.
+But this is known to have problems handling certain kinds of
+"criss-crossing" branches, so for some it will produce a lot of
+unnecessary rejects (requiring hand correction) as compared to some
+other merging implementations.
+git actually stores complete copies of all past versions and how they
+relate, so it should be possible to implement alternative merge
+algorithms in the future.
+<p>
+Lots of functionality is missing from git and Cogito, though it's enough
+now to be used.
+One area of particular concern to me is that while tags can be signed,
+ordinary commits (even if exchanged between people) are not cryptographically
+signed.
+You want cryptographic signatures of commits, and have them stored in
+the database, so that they can be checked later on.
+In particular, this sort of precaution helps prevent counter many
+kinds of attacks if (when) attackers take over a repository.
+<p>
+Other SCM prototypes have been built on git,
+and various interfaces have been developed to other SCMs
+(in particular, there's a prototype git-to-Darcs interface, and GNU Arch's
+Tom Lord announced he was planning to switch to the git format though
+it's not clear that will really occur).
+Since git is low-level, it's probably best to start by using Cognito
+rather than the low-level git at first.
+<p>
+A web interface to git repositories has been created; so you can see
+examples of git results by examining the
+<a href="http://www.kernel.org/git/">kernel.org git repository</a>.
+The mailing list is helpful, but there's a <i>vast</i> amount of traffic on
+it;
+<a href="http://kerneltraffic.org/git/">
+Zack Brown's "git traffic"</a> has lots of info on git and Cogito.
+<li>
+<a href="http://selenic.com/mercurial/">Mercurial</a>
+Mercurial (whose commands begin with "hg")
+is a small SCM that's an offshoot from git and Cogito.
+git's low-level functions store whole files (compressed).
+Mercurial, instead, is designed to store files as changes.
+This makes tasks like identifying who did what, and when a given
+file was changed, simpler to do.
+It's a small Python program, and lacking some functions compared to others
+at this time, but it's an interesting development.
+</ol>
+<p>
+<a href="http://abridgegame.org/darcs/">Darcs</a>,
+in particular, is very interesting for its technology.
+From what I've seen, darcs is currently more of a prototype
+of some very innovative ideas for SCM, and maybe a tool for smaller
+projects, rather than a useful tool
+for large projects, though it can be used.
+Darcs is written in Haskell, which is both a strength and a weakness.
+Haskell is a high-level functional programming language,
+which probably helped the developer concentrate on abstract concepts.
+However, while Haskell is intriguing, in my experience
+programs written in it are generally slow, and possibly worse, its
+performance is unpredictable
+(<a href="http://supybot.com/Members/jemfinch/haskell-sucks/document_view">jemfinch expresses somewhat similar concerns</a>).
+Some have argued to me that Haskell isn't necessarily slow today, and
+maybe that's true, but darcs' developer admits that
+darcs has poor performance (which would cause trouble as a project gets large).
+In March 2004 the darcs developer said performance
+has gotten much better, so perhaps that's no longer a serious problem.
+However, since few developers truly grok functional programming,
+darcs is less likely to get other developers to help extend it.
+It <i>does</i> get contributions -- a few minor contributions by
+others have been reported to me -- but they're nothing compared to the
+scale of work by others in Subversion or GNU Arch.
+In March 2004 Darcs' website stated that
+it does not have an "abundance of features"
+and its "core may be still be buggy" -- not exactly the words you want
+to hear when you let a program control your source code!
+The main developer does say that the website is out of date,
+that the program is no longer buggy, and that it supports more than
+basics (though it is still missing some features).
+<p>
+Darcs does have some innovative approaches, though, and perhaps darcs
+will leap past everyone else, or at least perhaps some of its
+ideas may slip into other SCM systems.
+For example,
+<a href="http://www.abridgegame.org/pipermail/darcs-users/2003/000146.html">
+darcs can keep track of inter-patch dependencies</a>
+so that bringing in just one patch can bring in "just the others needed",
+a clever capability not supported by other tools like GNU Arch.
+It is completely patch-oriented, and requires user input to help
+characterize exactly what changed.
+For example, it understands a "token replace patch", which
+makes it possible to create a patch which changes every instance
+of the variable ``stupidly_named_var'' with ``better_var_name'',
+while leaving ``other_stupidly_named_var'' untouched.
+As the author says,
+"When this patch is merged with any other patch involving
+the ``stupidly_named_var'', that instance will also be modified
+to ``better_var_name''. This is in contrast to a more conventional
+merging method which would not only fail to change new instances
+of the variable, but would also involve conflicts when merging
+with any patch that modifies lines containing the variable.
+By more using additional information about the programmer's intent,
+darcs is thus able to make the process of changing a variable name
+the trivial task that it really is..."
+The advantage is that merge conflicts can suddenly disappear, or at
+least be far less likely, because the system has more information to work
+with.
+The disadvantage is that this requires more interaction with the developer,
+who already has a complicated problem.
+Whether or not this approach will catch on is to be seen; I doubt it,
+myself, since systems which don't have it seem to be acceptable to
+most developers.
+But I can definitely see how that additional information could make an
+SCM system more powerful.
+
+<a name="other-reviews"></a>
+<h1>Other Reviews of SCM or OSS/FS SCM Systems</h1>
+<p>
+There are many other SCM comparisons available.
+The <a href="http://better-scm.berlios.de">better SCM initiative</a>
+was established to encourage improved OSS/FS SCM systems, by
+discussing and comparing them.
+Among other things, see their
+<a href="http://better-scm.berlios.de/comparison/comparison.html">
+comparison file</a>.
+<a href="http://zooko.com/revision_control_quick_ref.html">
+The website <a href="http://revctrl.org/">revctrl.org</a> is a nice
+starting point for comparing alternatives.
+Zooko has written a short review of OSS/FS SCM tools</a>.
+<a href="http://www.onlamp.com/pub/a/onlamp/2004/01/29/scm_overview.html">
+Shlomi Fish's OnLamp.com article compares various CM systems</a>
+as does his
+<a href="http://better-scm.berlios.de/docs/shlomif-evolution.html">
+Evolution of a Revision Control User</a>.
+The arch folks have developed
+<a href="http://wiki.gnuarch.org/moin.cgi/SubVersionAndCvsComparison">
+a comparison of arch with Subversion and CVS</a> (obviously, they like arch).
+Another pro-arch discussion is
+<a href="http://web.verbum.org/blog/freesoftware/distributed-future">
+Why the Future is Distributed</a>.
+A pro-subversion discussion is available at
+<a href="http://www.red-bean.com/sussman/svn-anti-fud.html">
+Dispelling Subversion FUD</a>.
+<a href="http://developers.slashdot.org/article.pl?sid=04/02/22/2344228&amp;mode=thread">Slashdot had a discussion when Subversion 1.0 was announced.</a>
+<a href="http://www.kerneltraffic.org/kernel-traffic/kt20030323_210.txt">
+Kernel traffic posted a summary of a technical discussion about BitKeeper.</a>
+<a href="http://www.cmcrossroads.com/bradapp/links/scm-links.html">
+Brad Appleton has collected lots of interesting SCM links</a>.
+<a href="http://supybot.com/Members/jemfinch/vcs/">jemfinch has some
+interesting essays about SCMs</a> (he uses the term VCS), including why
+he thinks the approach to branches used by Darcs, Arch,
+and Bazaar-ng is a poor one.
+<a href="http://linuxmafia.com/faq/Apps/scm.html">
+A brief overview of SCM systems that can run on Linux
+is available</a>.
+<a href="http://changelog.complete.org/posts/528-Whose-Distributed-VCS-Is-The-Most-Distributed.html">
+Whose Distributed VCS Is The Most Distributed?</a> discusses distributed VCSs.
+<a href="http://weblogs.mozillazine.org/preed/2006/11/version_control_system_shootou.html">Version Control System Shootout Redux (Mozilla - Mortal Kombat</a>
+describes Mozilla's decision process, which is really amusing because he
+uses Mortal Kombat images to describe the "shootout".
+<p>
+
+I've not discussed highly related issues like bug tracking
+(such as Bugzilla); that's outside the scope of this paper.
+
+<p>
+<a name="bitkeeper"></a>
+<h1>BitMover's BitKeeper</h1>
+<p>
+There are many proprietary SCM systems, such as
+BitKeeper, Perforce, and Rational ClearCase, but since they aren't OSS/FS
+they're really outside the scope of this paper.
+However, I can't completely omit discussing BitKeeper entirely,
+because the Linux kernel developers' use of BitKeeper demonstrated how
+distributed SCM can work, and BitKeeper's association with
+this well-known OSS/FS project makes it hard to ignore.
+Besides, the case of BitMover's BitKeeper is especially interesting,
+in part because it's very controversial.
+<p>
+BitKeeper is a proprietary SCM system that supports distributed SCM.
+Even though BitKeeper is proprietary, Linus Torvalds decided to use
+it to maintain the OSS/FS Linux kernel.
+The bargain was that the OSS/FS kernel developers got to use (for free)
+a good SCM tool; the proprietary vendor got a great deal of free publicity
+and many helpful insights from highly intelligent users.
+The no-cost BitKeeper required that source code being maintained be
+copied to the vendor; since few commercial developers wanted to do that,
+they were generally willing to buy the commercial license without
+that condition.
+The no-cost BitKeeper also forbid users to work on competing projects; indeed,
+there are reports that
+<a href="http://lwn.net/Articles/103727/">
+even purchasers of the for-pay product were
+forbidden to work on competing projects</a>.
+<p>
+Some, such as Torvalds, found these conditions acceptable.
+Others did not believe using a proprietary SCM system was acceptable for
+working on an OSS/FS system
+(e.g., <a href="http://kerneltrap.org/node/204">Richard Stallman's
+believed this was fundamentally unacceptable</a>).
+Others were concerned about the risks of depending
+on a single vendor with a proprietary format
+(what if the vendor changed their policies later?), or
+did not find the "cannot develop competing products" condition acceptable
+(this condition is very unusual and is clearly an attempt to
+prevent competition).
+BitMover released <a href="http://www.bitkeeper.com/press/2005-03-17.html">
+a no-cost source-available client for Bitkeeper</a> that allows people to
+extract current versions of data (programs) from BitKeeper repositories;
+it's not clear that this client is OSS/FS, and it has limited functionality,
+but it may be sufficient for some purposes.
+<p>
+In April 2005 things came to a head.
+Torvalds' employer (OSDL) also paid money to someone else,
+who on their own free time (not paid for by OSDL)
+was working on a competing product.
+BitMover's Larry McVoy complained that even this was unacceptable.
+After examining the difficulty of trying to keep competing interests compatible,
+<A href="http://lwn.net/Articles/130681/">
+Torvalds decided he would have to switch to a different SCM program</a>.
+The article
+<a href="http://kerneltrap.org/node/4966">No More Free BitKeeper</a>
+gives the vendor's (BitMover's) side of the story.
+There's reason to hope that this decision will greatly
+increase the speed of development of an OSS/FS distributed SCM tool;
+the licensing constraints of BitKeeper made it very difficult for some
+excellent developers to work with competing OSS/FS SCM systems, and
+with that constraint gone it's likely that development of some of them
+will accelerate.
+
+<h1>Conclusions</h1>
+The world of OSS/FS SCM systems is a better place than it was a few
+years ago;
+there are now several viable options.
+CVS, while it has its weaknesses, is still a workhorse able to do
+the basic job.
+Subversion is ready today for those who just want a better CVS for
+a centralized SCM system, and it's
+probably the most common SCM choice today
+for those who want a centralized OSS/FS SCM system that's a little better
+than the aging CVS.
+There are other reasonable choices, too; Aegis seems to have a lot
+going for it too, and I've had several reports that it's mature, so
+for large projects that would be a system worth examining.
+<p>
+But there are lots of other options, and it's going
+to be interesting to watch what happens in the future.
+A <i>lot</i> of people want a distributed SCM system;
+the Linux kernel developers have shown that distributed SCM can
+be <i>extremely</i> effective through their use of BitKeeper.
+In distributed SCM systems, the field is currently crowded, with
+many people having developed early stages with significantly different
+approaches to the problem.
+GNU Arch is extremely capable if you're willing to work with the
+issues listed above (and I think it <i>will</i> get better), though
+it hasn't made as much progress in 2004 and 2005 as it should have, and
+thus it may lose its early momentum to other OSS/FS competitors.
+Monotone, CodeVille, and Bazaar-NG in particular look like potentially
+strong contenders at the moment to me.
+I really like a lot of things about Bazaar-NG, though it's
+less mature and it remains to be seen if its promising start will result
+in a winning product.
+<p>
+In the end, the best approach is to look at your options, winnow down to
+a short list, and then try each of those top contenders.
+I hope you've found this brief tour helpful.
+
+<p>
+<a href="scm-security.html">Feel free to also look at my paper
+on SCM security</a>, or
+see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+
+</body>
+</html>
+

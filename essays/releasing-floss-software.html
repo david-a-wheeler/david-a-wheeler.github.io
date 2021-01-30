@@ -1,0 +1,750 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Releasing FLOSS for Source Installation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="This article briefly explains why you should follow standard release conventions when releasing software source code packages for Unix/Linux/POSIX - and what they are.">
+<meta name="keywords" content="source package, install, installation, releasing, distributing, open source software, source code, Free software, FLOSS, standards, GNU, Fedora, Debian, Ubuntu, Red Hat, SuSE, Novell, Linux, BSD, Linux, Unix, POSIX, package, packages, release, conventions">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Releasing Free/Libre/Open Source Software (FLOSS) for Source Installation</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2009-04-13 (revised 2013-08-23)</h2>
+
+<p>
+If you&#8217;ve written (or started to write) some
+Free/Libre/Open Source Software (FLOSS), <i>please</i> follow
+the time-tested community standards for releasing FLOSS software
+when you want people to be able to install it from source code.
+This article will briefly explain why you should follow
+standard release conventions, and what they are.
+
+<p>
+<h1>Why Follow Standard Release Conventions?</h1>
+<p>
+First, the <i>why</i>.
+The quick answer is, &#8220;because it makes it easy to install your software -
+including creating packages to do so&#8221;.
+Modern Linux and BSD systems (as well as MacOS and MS Windows) normally install
+programs via &#8220;packages&#8221;; on Linux and BSD systems, this automatically
+installs all the necessary dependencies too.
+These packages are <i>much</i> easier to
+create and maintain if you follow standard release practices.
+<p>
+I&#8217;ve written a number of FLOSS programs (such as
+<a href="https://dwheeler.com/flawfinder">flawfinder</a> and
+<a href="https://dwheeler.com/sloccount">SLOCCount</a>), and participated
+in other development, but I didn&#8217;t really understand the importance of the
+release standards until I started to create packages as part of my work on
+<a href="http://www.openproofs.org">open proofs</a>.
+I quickly learned that the packaging <i>concept</i> was simple, but
+some programs were hideously painful to package because they hadn&#8217;t
+followed the usual release standards.
+I knew some of these practices before, but I sometimes skimped on them
+before I understood the nightmare I was (unintentionally) inflicting on others.
+<p>
+I intend to modify my future releases to better meet usual release practices,
+now that I&#8217;ve &#8220;learned better&#8221;... and
+I hope to spread the word so that others will do the same.
+<p>
+<h1>What are the Standard Release Conventions?</h1>
+<p>
+Now, the <i>what</i>.  These documents in particular describe
+good release practices:
+<ol>
+<li>The <a href="http://www.gnu.org/prep/standards/">GNU Coding Standards</a>,
+especially the material on the
+<a href="http://www.gnu.org/prep/standards/html_node/Managing-Releases.html">
+release process</a>.
+The <a href="http://www.gnu.org/software/make/manual/make.html#Makefile-Conventions"> makefile conventions section of the GNU make manual</a>
+is illuminating about these.
+<li><a href="http://en.tldp.org/HOWTO/Software-Release-Practice-HOWTO/">
+Software Release Practice HOWTO</a> by Eric Steven Raymond.
+<li><a href="http://www.pathname.com/fhs/">Filesystem Hierarchy Standard (FHS)</a> &mdash; this describes where files are supposed to go.
+</ol>
+<p>
+If you&#8217;re releasing FLOSS, you want it to be easy to package, so it
+might be a very good idea to know about typical packaging guidelines.
+You can look at:
+<ul>
+<li><a href="http://fedoraproject.org/wiki/Packaging:Guidelines">Fedora&#8217;s
+packaging guidelines</a>
+(as well as
+<a href="http://fedoraproject.org/wiki/How_to_create_an_RPM_package">
+How to create a Fedora package</a>); Novell/SuSE is similar
+<li><a href="http://www.debian.org/doc/debian-policy/">Debian Policy Manual</a>
+<li><a href="https://wiki.ubuntu.com/UbuntuDevelopment">Ubuntu development</a> (based on Debian)
+<li><a href="http://www.freebsd.org/ports/references.html">FreeBSD&#8217;s &#8220;ports&#8221; system</a>
+<li><a href="http://www.openbsd.org/faq/faq15.html">OpenBSD packages and ports system</a> (based on FreeBSD)
+</ul>
+<p>
+At least look over the first set (the 
+<a href="http://www.gnu.org/prep/standards/html_node/Managing-Releases.html">
+GNU coding standards&#8217; release process</a>,
+<a href="http://en.tldp.org/HOWTO/Software-Release-Practice-HOWTO/">
+Software Release Practice HOWTO</a>, and the
+<a href="http://www.pathname.com/fhs/">Filesystem Hierarchy Standard (FHS)</a>).
+<p>
+<h1>A Quick Checklist</h1>
+<p>
+I know that the above is a lot information, so here is a
+quick checklist of some of the most important guidelines
+(in my opinion), based on problems that I&#8217;ve had:
+
+<ol>
+<li><b>Pick a good, simple, and unique Google-able name for the package
+and its executables.</b>
+Limit your package name to the lower case letters
+a-z, digits 0-9, and the four punctuation characters &#8220;-._+&#8221;.
+The
+<a href="http://en.tldp.org/HOWTO/Software-Release-Practice-HOWTO/naming.html">
+Software Release Practice HOWTO&#8217;s chapter on
+good project and archive naming practice</a> and the
+<a href="http://fedoraproject.org/wiki/Packaging:NamingGuidelines">
+Fedora naming guidelines</a> may help.
+Make sure the uppercase/lowercase distinction is irrelevant; some filesystems
+can&#8217;t distinguish them, and package names tend to be all lowercase anyway.
+Try to pick a name that&#8217;s unique &mdash;
+at least unique among packages, and
+preferably, one that doesn&#8217;t have any Google hits at all
+(so that people can find your package easily).
+A good example of a bad name is
+<a href="http://why.lri.fr/index.en.html">Why</a>, because it is
+completely un-Googleable.
+If you don&#8217;t pick a good name, then in the best possible case,
+people will rename your program, often leading to confusion.
+At worst, they will never find your program at all.
+Similarly, try to make to make the name of the executable(s) unique;
+they will probably be installed in /usr/bin with all other user programs.
+
+<li><b>Identify the version in MAJOR.MINOR.SUBMINOR format
+or by using dates in YYYYMMDD format</b>.
+I especially recommend using the MAJOR.MINOR.SUBMINOR form
+defined as
+<a href="http://semver.org/">semantic versioning</a>
+(with the added restriction: don't add "-..." at the end of a version name,
+because the rpm tool used by many Linux distributions
+does not allow hyphens in version names).
+People and software must be able to <i>easily</i> determine if a version
+is older or newer than another one.
+Using version numbers (e.g., 2.2.2) or date values in YYYYMMDD format
+(e.g., 20090413) makes that clear.
+The filenames of major releases should include the version number, e.g.,
+&#8220;myprogram-1.2.7.tar.gz&#8221;, so that even after downloading there
+are no questions.
+<i>Please</i> use a version control system (such as git),
+but please make occasional &#8220;real&#8221; releases that
+are single-file archives; that way, people can easily know what version
+is ready to use, and how to get it.
+
+<li><b>Use a standard, widely-used, GPL-compatible FLOSS license &mdash; and say so.</b>
+One of the worst mistakes a FLOSS project can make is to use
+a non-standard license (especially a home-grown one) or fail to
+state a license at all.
+&#8220;Home-grown&#8221; licenses are often not even FLOSS, impede reuse
+of other code, can delay packaging or use by years,
+and will dissuade potential co-developers.
+Many organizations and distributions explicitly forbid using software
+that fails to include a license statement, because they create a
+legal hazard.
+As a result, failing to state a license
+makes the software useless to many.
+Use one of the standard FLOSS licenses (e.g., MIT, BSD-new,
+LGPL, or GPL), and
+<a href="https://dwheeler.com/essays/gpl-compatible.html">
+be sure your license is GPL-compatible</a>.
+<a href="http://fedoraproject.org/wiki/Licensing">Fedora&#8217;s licensing
+page</a> has more info.
+You do not need to <i>use</i> the GPL itself, but using a GPL-incompatible
+license is a mistake, in part because most FLOSS is GPL&#8217;ed.
+<i>Do not</i> write your own FLOSS license.
+Clearly state in your documents - and code header files - what the license is.
+
+<li><b>Follow good distribution-making practice, in particular,
+make sure tarballs
+always unpack into a single new subdirectory (of the current directory)
+named NAME-VERSION.</b>
+The
+<a href="http://en.tldp.org/HOWTO/Software-Release-Practice-HOWTO/distpractice.html">
+Software Release Practice HOWTO&#8217;s &#8220;Good distribution-making practice&#8221;</a>
+goes into this.
+Make sure that tarballs unpack into a subdirectory, or unwary users will
+end up with unwanted junk in directories they use.
+By doing this, you&#8217;ll fulfill people&#8217;s
+expectation that the first two steps to do are
+(1) unpack (untar) the file, and
+(2) &#8220;cd&#8221; into its directory.
+
+<li><b>Support the standard invocation to configure, build, and install it:
+<tt>./configure --prefix=/usr ; make; make install</tt>.</b>
+Many people expect that, after the unpack-and-cd steps,
+you&#8217;ll perform the normal configure, make, make install process.
+Please implement configuring, building, and installing this way,
+because this presumption is widespread (e.g.,
+<a href="http://www.tuxfiles.org/linuxhelp/softinstall.html">here</a>,
+<a href="http://www.codecoffee.com/tipsforlinux/articles/27.html">here</a>,
+<a href="http://tldp.org/LDP/LG/current/smith.html">here</a>,
+and
+<a href="http://www.linuxtutorialblog.com/post/troubleshooting-configure-make-and-make-install-tutorial">here</a>).
+You do not need to use the GNU autotools (autoconf, automake, and libtool)
+to implement this - just conform to the usual external interface.
+See the
+<a href="http://www.gnu.org/prep/standards/html_node/Managing-Releases.html">
+GNU Coding Standards&#8217; &#8220;Managing the Release Process&#8221;</a> for more.
+That said, you might consider using autotools, since it automates this;
+<a href="#autotools">see the notes below on autotools</a>.
+Don&#8217;t interleave the configuring, building, and installation steps;
+in particular, the build (&#8220;make&#8221;) step should create all the files to be
+installed, and the install step should do nothing but install the files
+created by the build step.
+The first two steps should <i>not</i> require root privileges; the latter
+one <i>may</i> require privileges depending on where files are being
+installed.
+The next three bullets discuss the assumptions of each of these
+three steps.
+
+<li>
+<b>Support the standard <tt>./configure</tt> options like --prefix,
+--exec-prefix, --bindir, --libdir, and so on</b>.
+By supporting the standard &#8220;configure&#8221; options you make it easy to
+install the program wherever the user wants it.
+Supporting &#8220;prefix&#8221; is especially important;
+&#8220;prefix&#8221; is prepended to all filenames to be installed, and
+should default to &#8220;/usr/local&#8221;
+(for a system-wide installation that&#8217;s not part of the system).
+When the program is packaged for a given system, the prefix is typically
+changed to &#8220;/usr&#8221; instead.
+You should support installation by a single unprivileged user, in which
+case the prefix would typically be &#8220;$HOME&#8221;.
+There is a <i>reason</i> that people need control over these values,
+for example, never assume that &#8220;libdir&#8221; is the same as &#8220;$(prefix)/lib&#8221; &mdash;
+on many 64-bit systems it is &#8220;$(prefix)/lib64&#8221;.
+<a href="http://www.gnu.org/prep/standards/html_node/Configuration.html#Configuration">Here&#8217;s how configuration should work</a>.
+It&#8217;s nice to support --srcdir, but I wouldn&#8217;t worry about that;
+--srcdir can be awkward to support, and is far less important
+(storage space is plentiful nowadays,
+so you can just make a copy and then build).
+But options like --prefix and --libdir are vital.
+
+<li>
+<b>Create a makefile that can rebuild everything and
+uses makefile variables (including applicable standard
+standard makefile variable names and targets)</b>.
+By default, invoking &#8220;make&#8221; should rebuild/recompile everything
+(by tradition this target is named &#8220;all&#8221;).
+Makefiles should be able to rebuild everything;
+many distributions forbid using pre-built binaries or libraries in packages
+(since they can&#8217;t then fix problems).
+It&#8217;s okay to include pre-built binaries/libraries in a source
+distribution, as long as &#8220;make&nbsp;clean&#8221; 
+(or &#8220;make&nbsp;maintainer-clean&#8221; or
+&#8220;make&nbsp;really-clean&#8221;) can get rid of them.
+<p>
+Makefiles should maximally use makefile variables so they can be easily
+overridden where necessary, e.g., &#8220;make&nbsp;CC=mygcc&#8221;.
+<a href="http://www.gnu.org/prep/standards/html_node/Makefile-Conventions.html#Makefile-Conventions">GNU publishes useful makefile conventions</a>.
+Overriding &#8220;make&#8221; values is very portable (it&#8217;s defined by the POSIX standard),
+with this precedence: (1) variables set on the &#8220;make&#8221; command line,
+(2) MAKEFLAGS, (3) variables set in the Makefile unless &#8220;-e&#8221; is set,
+(4) environment values, (5) default Makefile rules.
+in particular, variables set on the make line or via MAKEFLAGS take precedence
+over the rest (make will use the environment values if their values are
+not set in a makefile; &#8220;-e&#8221; makes the environment values take precedence).
+<p>
+Use standard makefile variable names where they apply
+(e.g., prefix, exec_prefix, bindir, libdir, etc.).
+<p>
+You don&#8217;t need to create a makefile directly; many programs
+use makefile generators, such as the one in
+<a href="http://www.cmake.org/">Cmake</a>
+and
+<a href="http://www.gnu.org/software/autoconf/">autoconf</a>/<a href="http://www.gnu.org/software/automake/">automake</a>.
+Just make sure that the generated makefile(s) support these conventions.
+It&#8217;s nice if you can create a portable makefile by sticking with
+just the capabilities in the
+POSIX standard, but the 2008 POSIX specification for &#8220;make&#8221;
+lacks so many capabilities that many people find it unacceptable
+(others have come to the same conclusion, e.g.,
+<a href="https://developer.mozilla.org/en/Build_and_Install">Mozilla</a>
+<a href="http://llvm.org/docs/MakefileGuide.html">LLVM</a>
+<a href="http://mad-scientist.net/make/rules.html">Mad Scientist</a>).
+If you will not create a portable makefile, then use GNU make and its
+extensions; GNU make is open source software, free (in both senses),
+available everywhere, actively maintained, and full of useful
+capabilities.
+(Hopefully someday the POSIX standard for make will get fixed; I have
+submitted some comments to try to get things better.)
+
+
+<p>
+Note: be sure to mark phony targets (like &#8220;all&#8221;, &#8220;clean&#8221;, and &#8220;install&#8221;)
+with the .PHONY mark, like this:
+<pre>
+     .PHONY : clean
+</pre>
+This is particularly important for &#8220;install&#8221;; without it,
+&#8220;make install&#8221; will probably do <i>nothing</i> on filesystems that
+ignore case distinctions (because the
+make will see that the &#8220;install&#8221; file already exists).
+In general,
+<a href="http://www.gnu.org/software/make/manual/html_node/Phony-Targets.html">
+marking phony targets</a> (targets that aren&#8217;t really files)
+will eliminate mysterious errors and document more clearly what is what.
+
+<p>
+Even if you use a completely different build system that does not use
+<tt>make</tt>, at least include a tiny makefile that invokes the
+&#8220;real&#8221; make system.
+There&#8217;s no reason you have to use <i>make</i> directly
+if you don&#8217;t want to.
+For example, today&#8217;s FLOSS Java applications tend to use
+<a href="http://ant.apache.org/">Ant</a> or
+<a href="http://maven.apache.org/">Maven</a>.
+<a href="http://www.cmake.org/">Cmake is
+a very useful cross-platform build system</a>, with a lot of users
+(Cmake generates makefiles, so it automatically meets the requirement
+to provide a makefile).
+However, make sure you include a small makefile that can invoke your
+build and installation system.
+That way, people don&#8217;t need to figure out how to invoke your make system,
+and programs can be automatically built and installed regardless
+of your preferred build system.
+<!-- For a fun picture see:
+  https://karussell.wordpress.com/2009/09/29/evolution-of-build-systems/ -->
+
+<li>
+<b>&#8220;make install&#8221; should not rebuild anything; simply copy files to locations as specified by DESTDIR, prefix, and so on</b>.
+Most packaging systems, including Ubuntu, Debian, and Fedora&#8217;s,
+expect programs to be completely built by the steps above, and then split
+&#8220;installation&#8221; into two steps:
+An &#8220;install&#8221; to an intermediate directory
+(where the files will then be collected),
+and a final &#8220;install&#8221; done
+on the user&#8217;s actual system.
+The program will not be given root privileges in the first step, and
+in the second step it will not normally run commands at all, it will just
+copy files into predetermined positions.
+This is easily done if your installation program is invoked using
+&#8220;make&nbsp;install&#8221; and
+supports a few standard conventions (such as DESTDIR).
+The install rule should
+&#8220;not modify anything in the directory where the program was built,
+provided &#8216;make all&#8217; has just been done...
+The commands should create all the directories in which files are
+to be installed, if they don&#8217;t already exist.&#8221;
+In most cases using &#8220;cat&#8221; in &#8220;make install&#8221; is a mistake;
+&#8220;make install&#8221; should simply make directories and copy already-built
+files into the appropriate directories, so think carefully before
+adding any command other than mkdir, install, cp, and ln.
+Please support the
+<a href="http://www.gnu.org/prep/standards/html_node/DESTDIR.html">
+DESTDIR convention</a>, that is, they should always install into
+the directory $(DESTDIR)$(prefix) where DESTDIR can be set by the user.
+This implies that you should always create directories before installing
+into them; $(DESTDIR)/usr/bin might not exist!
+Packaging can be <i>very</i> painful if you don&#8217;t support DESTDIR.
+<a href="https://dwheeler.com/essays/automating-destdir.html">Automating
+DESTDIR</a> can be a pain, so it&#8217;s best if the program supports it
+to start with.
+If your package doesn&#8217;t support DESTDIR, at least make sure that
+the &#8220;make install&#8221; target only uses a few simple commands to place the files
+in their final positions (e.g., mkdir, install, cp, and ln), so that
+the package
+<a href="https://dwheeler.com/auto-destdir">Auto-DESTDIR</a> can
+automatically support DESTDIR.
+The GNU documents recommend not depending on mkdir supporting &#8220;-p&#8221;,
+but I think this is obsolete advice; &#8220;mkdir -p&#8221; has become very widespread,
+and it is even included in the Single Unix Standard version 3,
+so I think it&#8217;s okay to depend on it now.
+It&#8217;s often helpful to
+support other make targets like &#8220;clean&#8221; and &#8220;uninstall&#8221;.
+
+
+<li>
+<b>Do not require web access or interactivity for building, testing,
+or installing the software</b>.
+Often these aren&#8217;t permitted or possible.
+If you <i>must</i> interact with a user before installation can complete,
+install all the files without interaction,
+and detect when a user tries to start the program for the first time.
+Normally you should do this by looking for a file or directory named
+$HOME/.PACKAGE_NAME.
+If that file/directory doesn&#8217;t exist,
+display information on how to complete the installation or
+interactively complete the installation, and in the process create the
+file or directory so this won&#8217;t happen next time.
+
+<li><b>Let users easily use and update the system/local versions of external tools and libraries needed for building and running it, and document what those are.</b>.
+Document in your README or INSTALL file the external tools/libraries you
+need for building and running your software, including a URL
+for each uncommon one.
+Most importantly, make it easy for users to separately install and
+update those tools/libraries!
+<p>
+It&#8217;s okay if you include a copy of an externally-developed
+tool or library, as a convenience for people who don&#8217;t want to download it
+separately.
+But <i>do not require people to use these embedded versions</i>.
+Over time, separate tools/libraries get updated, and whatever version
+is embedded in your release will become obsolete.
+Even if you sent the latest version <i>at the time</i>, external programs
+will be upgraded later.
+This is especially an issue for security updates; people want to be able
+to download and install them once, and then have that upgrade work for
+everything.
+Try to ensure that users can use dynamic libraries to load the latest versions,
+if that&#8217;s practical.
+Unfortunately, many Java programs are <i>especially</i> bad at this.
+Many distribution guidelines forbid using
+bundled libraries in their packages, for example, see
+<a href="https://fedoraproject.org/wiki/Packaging:No_Bundled_Libraries">
+Fedora&#8217;s &#8220;No bundled libraries&#8221; rule</a>
+and
+<a href="http://www.debian.org/doc/debian-policy/ch-source.html#s-embeddedfiles">
+Debian&#8217;s policy on convenience copies</a> explicitly forbid them.
+For example,
+<a href="https://lwn.net/Articles/430118/">
+Tom &#8220;spot&#8221; Callaway gave up packaging the Chromium web browser
+for Fedora</a>
+for this reason.
+<a href="http://anonscm.debian.org/viewvc/secure-testing/data/embedded-code-copies?view=markup">Debian works to try to identify packages that
+embed code from other projects</a>, saying,
+&#8220;This is considered bad for fixing security flaws because the fix needs
+to be applied in multiple source packages.&#8221;
+Similar problems mean that the math system Sage is not easily installed
+(via their package managers) on
+<a href="http://fedoraproject.org/wiki/SIGs/SciTech/SAGE">Fedora</a> or
+<a href="https://help.ubuntu.com/community/SAGE">Ubuntu</a>.
+<!--
+Also:
+https://fedoraproject.org/wiki/Staying_close_to_upstream_projects
+-->
+
+<li><b>If you support plugs-in/extensions, use a directory for them</b>.
+If your application can be extended with &#8220;plug-ins&#8221; (variously
+called &#8220;extensions&#8221; or other terms),
+do <i>not</i> require plug-ins to modify the contents of any files.
+Instead, just create a directory for plug-ins to be placed in
+(the names of such directories often end in &#8220;.d&#8221; but that&#8217;s not required).
+Then, when a plug-in is to be added or removed, the relevant file(s) can
+simply be added or removed.
+Your program should simply use the contents of this directory to
+determine what plug-ins are available.
+
+<li><b>If you patch an external library/tool, get the patch upstream.</b>
+If you don&#8217;t, your &#8220;local&#8221; version will stagnate while the original tool
+gets many improvements.
+
+<li><b>Use pkg-config when finding or installing libraries.</b>
+<a href="http://pkg-config.freedesktop.org/wiki/">Freedesktop.org&#8217;s pkg-config</a>
+is relatively new but has swept the world of POSIX systems because
+it&#8217;s an easily and simple solution to a more complicated problem.
+If you&#8217;re compiling an application, it can tell you which flags to use.
+If you&#8217;re creating a library, please create and install the pkg-config .pc
+files, so others can use pkg-config.
+
+<li><b>Use standard user interfaces.
+For command line tools, use &#8220;-&#8221; single-letter options, &#8220;--&#8221; long-name
+options, and &#8220;--&#8221; by itself to signal &#8220;no more options&#8221;.
+For GUI tools, provide a .desktop file.</b>
+Make it easy for people to start up your application.
+<a href="http://www.gnu.org/prep/standards/html_node/Command_002dLine-Interfaces.html">GNU standards for command line interfaces</a>
+notes standard option conventions for command line interfaces, including
+some standard long names like &#8220;--version&#8221; and &#8220;--help&#8221;.
+Once installed, GUI programs should be runnable from the main menu,
+which requires that a .desktop entry file be created and correctly installed;
+see
+<a href="http://standards.freedesktop.org/desktop-entry-spec/latest/">
+freedesktop.org&#8217;s desktop entry specification</a>.
+
+<li><b>Where sensible, make the application useable as a library
+or via the command line.</b>
+This makes it possible to build a larger program
+(using libraries or scripts) that uses your program/library.
+
+<li><b>Include tests as &#8220;make check&#8221; and return its success or failure as an exit status.</b>
+Users and packagers want to know if the program is working as intended,
+and anyone who makes an improvement to it will want to know if the program
+is still working.
+So, include an automated test suite,
+where you send in inputs, produce outputs, and check
+that the outputs are correct.
+It should be invocable with &#8220;make check&#8221;, it should
+&#8220;exit 0&#8221; if the tests succeeded, and it should
+&#8220;exit <i>nonzero</i>&#8221; if a test failed
+(so users will know that the program is not working properly).
+Tests that cover a significant amount of the program&#8217;s functionality
+and implementation are best, but even a cursory test
+(a &#8220;smoke test&#8221;) is better than nothing.
+Set up your test suite so that it&#8217;s easy to add new tests.
+Make sure the test will test the program built <i>even if</i> another
+version of the software is installed.
+
+<li><b>Include documentation.</b>
+Typically you&#8217;ll have a brief README (what is this program?) and INSTALL
+(how to install it and any requirements for tools).
+It&#8217;s a good idea to have a man page and additional separate documentation,
+sufficient to answer the questions:
+What does your program do (sufficient so the user can determine if they
+want it)?
+What are some sample invocations?
+What are its options?
+What is its input format or API?
+What is output format or result?
+What are its strengths or weaknesses?
+What is the project&#8217;s URL?
+
+<li><b>Make it portable.</b>
+If your software can port to different architectures and platforms,
+then it&#8217;s probably flexible enough to handle likely future changes.
+Follow formal and informal standards, such as the
+<a href="http://www.unix.org/single_unix_specification/">
+Single Unix Specification</a>.
+Consider using checking tools like the
+<a href="http://ldn.linuxfoundation.org/lsb/check-your-app">
+Linux Foundation&#8217;s AppChecker</a>.
+
+<li><b>Support internationalization/locationalization (i18n/L10n).</b>
+Use tools (like gettext) for any command-line or GUI interface
+so that people can use their native language in such interfaces.
+Do not assume that characters all fit in one or two bytes (they do not).
+I recommend using UTF-8 to encode characters in most cases,
+but in some cases (e.g., Java, Windows APIs)
+it may be easier to use a different encoding;
+if you do, beware of their gotchas
+(some glyphs take more than 2 bytes in UTF-16, and you have to worry
+about byte ordering and the byte-order mark).
+</ol>
+
+<p>
+<h1>Test by packaging</h1>
+<p>
+By far the best way to see if you&#8217;ve done a poor job of packaging
+is to create a package.
+If it isn&#8217;t trivial to create a package, then you haven&#8217;t
+released it properly.
+<p>
+For example, you could follow the
+<a href="http://fedoraproject.org/wiki/PackageMaintainers/CreatingPackageHowTo">instructions for creating a Fedora package</a>.
+Just fill in the name, version number, and so on.
+Your prep, build, and install instructions should be simply:
+<pre>
+ <b>%prep</b>
+ %setup -q  # This auto-unpacks tarballs in standard formats
+
+ <b>%build</b>
+ %configure # Configures with "--prefix=/usr", CCFLAGS=..., and so on.
+ make %{?_smp_mflags}  # This makes, using configuration info.
+
+ <b>%install</b>
+ rm -rf %{buildroot}
+ make install DESTDIR=%{buildroot}
+</pre>
+<p>
+Or, you can do the same thing with Debian or Ubuntu; create a package.
+If you have to do anything nonstandard, you are probably
+doing it wrong.
+<p>
+Yes, packagers can work around a lot, but in the long term that
+will create problems.
+If you release your software in a format that is easy to package,
+you will speed the release of your software out to end-users, and
+reduce the risk that there will be unintended problems.
+
+<p>
+<h1><a name="autotools">What about Autotools?</a></h1>
+<p>
+The GNU autotools suite can help you automate creating a good build
+process for your users.
+In particular, autotools will automatically implement many of the conventions
+listed above.
+<p>
+Autotools is <i>not</i> the only way to create source code releases
+that are easily built and packaged.
+But it&#8217;s one of the most widely-used, especially
+for programs that use C or C++ (though it&#8217;s not limited to that).
+Anyone releasing software as non-Windows source code should
+know a little about autotools,
+so that they can determine if they should use it.
+<p>
+There isn&#8217;t actually a program called &#8220;autotools&#8221; &mdash;
+instead, this is the
+conventional name for a suite of GNU tools that can be used together
+for this purpose, including autoconf, automake, and libtool.
+The process of changing a program to use autotools is called
+autoconfiscation.
+<p>
+Years ago, autotools was hard for developers to use and it
+had lousy documentation.
+GNU autotools has been significantly improved over the years,
+and much better documentation is available too.
+Unfortunately, there&#8217;s a lot of really obsolete documentation
+(and a lot of obsolete complaints about autotools).
+
+<p>
+See my
+<a href="https://dwheeler.com/autotools/"><i><b>autotools (autoconf, automake, and friends)</b></i></a> if you&#8217;re interested in more information.
+This page includes an autotools tutorial,
+pointers to other useful information, and
+warnings that may help you avoid wasting your time.
+
+<p>
+<h1>Recursive make considered harmful</h1>
+<p>
+Historically, when programs got big, people would divide the source
+code into directories, and create a makefile in each directory that
+would build that one directory.
+Then you would have makefiles recursively call down to other makefiles.
+This is the obvious way to scale up, and many projects have historically
+done this.
+
+<p>
+However, today many consider recursive makes a bad idea.
+The lucid
+<a href="http://aegis.sourceforge.net/auug97.pdf">&#8220;Recursive Make Considered Harmful&#8221; by Peter Miller</a>
+shows that the traditional &#8220;recursive make&#8221; approach
+is actually a bad approach.
+Recursive make tends to produce wrong results, is slower, and is
+hard to maintain.
+It is far better to have a single make process
+(possibly &#8220;including&#8221; multiple makefiles into it)
+For example,
+<a href="http://www.mega-nerd.com/erikd/Blog/CodeHacking/nonrecursive_automake.html">erikd reports success</a>, and
+<a href="http://danielkitta.org/blog/2009/07/30/non-recursive-automake-performance/">Daniel Elstner has shown that non-recursive make can be significantly faster</a>.
+
+<p>
+I think Miller is quite right that recursive make, though widely used, is
+a bad idea.
+I would add some caveats.
+Miller correctly notes the problems of &#8220;=&#8221; and the advantages of &#8220;:=&#8221;,
+but &#8220;:=&#8221; is not in the POSIX standard (it&#8217;s a GNU make extension).
+I worked with the POSIX standards folks to get &#8220;::=&#8221; into the POSIX standard;
+hopefully in the future this kind of assignment will be more portable.
+Still, you can learn a lot about correctly using make from this paper.
+
+
+<p>
+<h1>Related pages</h1>
+<p>
+Here are a few related pages:
+
+<ul>
+<li>
+<a href="http://wiki.debian.org/UpstreamGuide">Debian&#8217;s &#8220;Upstream Guide&#8221; (formerly &#8220;Getting Packaged&#8221;)</a>
+
+<li>
+<i>&#8221;Distribution-friendly projects&#8221; (LWN)</i> by Diego Petten&ograve; -
+<a href="http://lwn.net/Articles/274763/">part 1</a>,
+<a href="http://lwn.net/Articles/277132/">part 2</a>,
+<a href="http://lwn.net/Articles/279130/">part 3</a>.
+
+<li>
+<a href="http://www.theopensourceway.org/wiki/How_to_tell_if_a_FLOSS_project_is_doomed_to_FAIL">How you know your
+Free or Open Source Software Project is doomed to FAIL</a>
+by Tom Callaway.
+<!--
+Formerly at:
+<a href="http://spot.livejournal.com/308370.html">
+-->
+
+<li>
+<a class="http" href="http://offog.org/articles/packaging/">Packaging
+Unix software</a></em> by Adam Sampson</a>
+
+<li><a href="http://starplot.org/articles/physics-software-rant.html">Physics Software Rant</a> is an older rant showing that many of
+these problems are not new.
+
+<li>
+<a href="http://www.cmake.org/">
+Cmake is a very useful cross-platform build system</a>.
+
+<li>
+<a href="http://code.google.com/p/quagmire/">Quagmire</a>
+is intended to replace automake and libtool, and eventually some of
+autoconf. Unlike these tools it requires GNU make and is
+written solely using GNU make features -- no preprocessing is required.
+<a href="http://www.airs.com/blog/archives/95">
+&#8220;The GNU Configure and Build System&#8221; by Ian Lance Taylor
+</a>
+explains the goals of quagmire, by an author of a book about
+the GNU configure and build system (autoconf, automake, and libtool).
+
+<li>
+<a href="http://en.wikipedia.org/wiki/GNU_build_system">
+The GNU build system (aka &#8220;autotools&#8221;)</a> is a mature
+(though somewhat baroque) set of tools for building and installing software.
+<a href="http://oreilly.com/catalog/9781593272067">&#8221;Autotools&#8221; by John Calcote (No Starch Press)</a>
+is book about using Autotools.
+
+<li>
+<a href="https://dwheeler.com/essays/automating-destdir.html">
+Automating DESTDIR for Packaging</a> discusses how supporting DESTDIR can
+(in some cases) be automated; the
+<a href="https://dwheeler.com/auto-destdir/">Auto-DESTDIR</a> package
+automates DESTDIR using some of the approaches it describes.
+
+<li>
+<a href="http://lwn.net/Articles/370157/">
+How to destroy your community (Josh Berkus, PostgreSQL developer)</a>
+
+<li>
+<a href="http://people.redhat.com/~rjones/how-to-supply-code-to-open-source-projects/">
+How to get your code into an open source project (by Richard Jones)</a>
+and
+<a href="http://www.kegel.com/academy/opensource.html">
+Contributing to Open Source Projects HOWTO (by Dan Kegel)</a>
+explain how to contribute to existing projects, which is essentially
+the perspective from the other side.
+
+<li>
+<a href="http://www.faqs.org/docs/artu/">The Art of Unix Programming</a>
+(Raymond) provides a lot of lessons learned about how to develop
+software on Unix-like systems.
+</ul>
+
+<p>
+There are efforts to help create packages for many different systems
+simultaneously.
+For example, the Linux Foundation announced in April 2009 that it would host a
+<a href="http://www.desktoplinux.com/news/NS7175483186.html">
+build service to build packages for multiple systems simultaneously</a>
+(based on the OpenSUSE build service).
+But these are much easier if you follow the guidelines above.
+
+<p>
+<a href="http://www.freesoftwaremagazine.com/columns/2009_software_installation_linux_broken_and_path_fixing_it">2009: software installation in GNU/Linux is still broken -- and a path to fixing it</a> argues that GNU/Linux distributions
+should change how application software is installed.
+That&#8217;s worth discussing, but I suspect that if there are any such changes,
+they will primarily work only for software that follows guidelines
+like the ones above.
+
+<p>
+<a href="https://dwheeler.com/essays/automating-destdir.html">Automating
+DESTDIR</a> can be a pain, so it&#8217;s best if the program supports it
+to start with;
+my package
+<a href="https://dwheeler.com/auto-destdir">Auto-DESTDIR</a> can
+automatically support DESTDIR in some cases if the program installation
+does not support it to begin with.
+
+<p>
+<hr>
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2009 David A. Wheeler.
+
+</body>
+</html>
+

@@ -1,0 +1,1210 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Automating DESTDIR for Packaging</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Notes on how to automate DESTDIR">
+<meta name="keywords"
+ content="DESTDIR, automation, automatic, packaging, packages, Debian, deb, RPM, Fedora, Red Hat, packager, SuSE, Makefile, make install">
+  <link rel="stylesheet" type="text/css" href="paper.css">
+<meta name="generator" content="vim">
+</head>
+<body>
+<h1 class="title">Automating DESTDIR for Packaging<br>
+</h1>
+<h2 class="author">by <a href="https://dwheeler.com">David A.
+Wheeler</a></h2>
+<h2 class="date">2009-02-19 (updated 2011-07-29)</h2>
+<p>&nbsp; <br>
+</p>
+<p>
+<blockquote>
+<i>It is unnecessarily hard to create native
+packages (like deb and RPM), and unnecessarily hard to
+directly install source code packages under the control of
+programs like GNU stow, because many software source packages fail
+to support the <a
+ href="http://www.gnu.org/prep/standards/html_node/DESTDIR.html">
+DESTDIR convention</a>.&nbsp; The
+DESTDIR convention makes it easy to compile a program so that it
+will run in some directory X, but be installed in directory $DESTDIR/X instead.
+There are a vast number of source packages that do not support DESTDIR, and
+it&#8217;s often difficult to add DESTDIR
+support to complex makefiles.
+This paper discusses what could be done to
+automatically support DESTDIR, instead of requiring every source
+package in the universe be changed to support DESTDIR.
+This paper shows
+that there are practical ways to automate support for DESTDIR, and
+points to tools like
+<a href="../auto-destdir">auto-DESTDIR</a>
+and
+<a href="../user-union/">user-union</a> that implement some of
+these solutions.</i>
+</p>
+</blockquote>
+</p>
+<h1>Introduction</h1>
+<p>Today&#8217;s users of Linux and Unix systems don&#8217;t want to follow
+complicated instructions to install programs
+&mdash; they want to click on one button, and have
+everything installed as necessary.&nbsp; Ideally, they should be able
+to install programs using their native package format and download
+tools, such as&nbsp;<a
+ href="http://www.debian.org/doc/maint-guide/ch-modify.en.html#s-destdir">deb</a>
+(used by Debian and Ubuntu) and RPM
+(used by Fedora, Red Hat, and SuSE/Novell).&nbsp; But that means that
+someone has to <span style="font-style: italic;">create</span> those
+packages.&nbsp; Alternatively, they should be able to use a program
+that can automatically download, compile, and install from source code,
+perhaps with some program like
+<a href="http://www.gnu.org/software/stow/stow.html">GNU stow</a>
+that can place each package in its own separate directory while appearing
+to all be in one place.
+Whether you are
+creating native packages, or automatically installing source packages,
+it&#8217;s often vital to be able to <span style="font-style: italic;">compile</span>
+the program so that it will run in some directory X, but <span
+ style="font-style: italic;">install</span> the program in some other
+directory $DESTDIR/Y.&nbsp; There is a standard way to do this: Have the
+source package support the <a
+ href="http://www.gnu.org/prep/standards/html_node/DESTDIR.html">
+DESTDIR convention</a>.
+</p>
+<p>Unfortunately, many
+software source packages fail to support the <a
+ href="http://www.gnu.org/prep/standards/html_node/DESTDIR.html">
+DESTDIR convention</a>, and it&#8217;s sometimes a real pain to add DESTDIR
+support.
+The build programs (e.g., Makefiles) can be large, complex, and
+multilayered...
+so it can be painful for a packager to modify the build scripts to
+add DESTDIR support.
+A packager can send DESTDIR patches upstream, but they
+may be ignored or improperly maintained... which means that the packager
+may need to keep re-modifying the build system, every time the program
+is updated.
+Ugh.
+All too often, packaging can be completely automated <i>except</i> for
+the lack of DESTDIR support.</p>
+<p>Why is DESTDIR important?
+There are many reasons, but let's look at two examples:
+<ul>
+<li><b>DESTDIR helps create native packages</b>.
+The tools for creating native packages in deb and rpm formats,
+(the two most popular Linux distribution foramts)
+<i>require</i> that &#8220;installed&#8221; files be specially-placed
+in a subdirectory
+by a &#8220;make install&#8221; during package creation.
+This is something DESTDIR enables.
+For example, Debian&#8217;s documentation explains that
+during the packaging process, you must
+&#8220;install the program into a temporary subdirectory from which
+the maintainer tools will build a working... package.
+Everything that is contained in this directory will be installed on a
+user&#8217;s system when they install your package...&#8221;.
+<a
+ href="http://fedoraproject.org/wiki/PackageMaintainers/CreatingPackageHowTo">Fedora&#8217;s
+Creating Package HowTo</a> has similar requirements for Fedora.
+The packaging software then copies files from that intermediate
+location
+into an archive for later installation in the &#8220;right&#8221; place.
+It&#8217;s easy to specially place files-to-be-installed
+if the program already supports the &#8220;DESTDIR&#8221; variable, because DESTDIR
+tells the installer the intermediate location to install
+software.&nbsp; Otherwise, it can be difficult to do.<br>
+<li><b>DESTDIR helps install local packages from source</b>.
+Many people use programs like GNU stow (or similar conventions)
+to help manage locally-installed packages from source code.
+For example, GNU stow is designed to let you store a program
+into some directory like /usr/local/stow/MYPROGRAM and
+have binaries in /usr/local/stow/MYPROGRAM/bin/myprogram, yet have the
+program be invoked as /usr/local/bin/myprogram.&nbsp; That way,
+plug-ins and extensions will automatically work correctly.&nbsp; GNU
+stow&#8217;s documentation specifically notes that you need to do this.
+GNU stow's documentation suggests
+using <tt>make prefix=Y install</tt> as a work-around, but as they note, many
+programs (including emacs!) automatically force
+a recompilation when the prefix is changed, making this moot.
+It can also cause subtle problems when installing; it makes more sense to
+have a separate prefix and DESTDIR value, so that each can be used
+where appropriate.
+</ul>
+</p>
+<p>It&#8217;d be much better if the equivalent of DESTDIR could be automated,
+<i>without</i> requiring application programs to
+add DESTDIR support to their installers.&nbsp; After all,
+almost any &#8220;real&#8221; Unix/Linux program with source code available
+supports &#8220;make install&#8221; (or equivalent)
+for installation.&nbsp; A &#8220;make install&#8221; process presumes
+that it is writing the files to the &#8220;real&#8221; filesystem.&nbsp; Ideally,
+there&#8217;d be a way to reroute writes to the &#8220;real&#8221; filesystem to some
+other directory tree, so that they could be packaged or used with
+programs like GNU stow.
+This shouldn&#8217;t be that hard - &#8220;make install&#8221; may invoke many programs
+and
+do a lot of recursive directory descending to
+figure out <i>what</i> to install, but the commands that actually <i>do</i>
+the installing are usually simple ones like &#8220;install&#8221; and &#8220;cp&#8221;.
+<br>
+</p>
+<p>Ideally this re-routing process would work <i>without</i>
+requiring the program running &#8220;make install&#8221; to run as root.
+That way, a non-root user could do
+&#8220;make-redir DESTDIR=<i>newdir</i> install&#8221;
+(or equivalent) and have all the &#8220;installed&#8221; files
+show up inside <i>newdir</i>.
+Ideally, it would be efficient, and could track other information (such
+as permissions and owners).&nbsp; Also, these should be able to work
+without re-routing programs that don&#8217;t descend from &#8220;make install&#8221;;
+often final packaging is done on a shared machine that is packaging
+multiple programs simultaneously.&nbsp; A lot of tools don&#8217;t quite do
+this;
+they primarily just &#8216;track&#8217; what&#8217;s
+changed, require special privileges, and so on.
+Some tools that you would <i>think</i> do this can&#8217;t do anything
+remotely
+like it; for example, &#8220;fakeroot&#8221; (widely used by Debian)
+can record owners, but it can&#8217;t redirect writes to files (because it
+doesn&#8217;t wrap the system call &#8220;open&#8221;).<br>
+</p>
+<p>
+This turns out to be harder than I thought, and in particular,
+some of the &#8220;obvious&#8221; ways to do this turn out to be
+more complicated that you&#8217;d like.
+So here are
+some various technical approaches, and a list of some related tools
+that
+implement that approach (and might possible to use as a baseline to
+implement automating DESTDIR).
+</p>
+<p>
+After looking at the alternatives, I&#8217;ve decided
+that the
+&#8220;<a href="#wrappers">wrappers</a>&#8221; approach is
+especially promising.
+See the <a href="https://dwheeler.com/auto-destdir">Auto-DESTDIR</a>
+software, which implements this wrappers approach.
+The wrappers approach at first seems like an odd solution,
+but the advantages of the wrappers approach
+are only compelling when you start thinking about
+the problems of the alternatives (as described below).
+</p>
+<h1>Not covered: General issues in program-specific directories or
+simplified source/package installation</h1>
+<p>
+First, let me clarify that this paper
+is <i>not</i> about the <i>general</i> idea of (1) creating
+separate directories for each different program or program
+installation,
+nor is it about (2) simplifying source/package installation in its
+entirety.
+Instead, I am focusing on a specific step, copying files into one place
+that will be run from another, that turns out to be important in both
+of these general issues (and probably others as well).
+The following subsections point to other programs/papers about
+those issues in general,
+and explain how automatically supporting DESTDIR can simplify these
+general issues.
+</p>
+<h2>Program-specific directories</h2>
+<p>
+Creating separate directories for each different program or program
+installation is a widely-implemented idea.
+For example, using the tool GNU stow,
+all files that implement perl might be stored in &#8220;/usr/local/stow/perl&#8221;
+while all files that implement emacs might be stored in
+&#8220;/usr/local/stow/emacs&#8221;,
+and the executable of emacs might be &#8220;/usr/local/stow/emacs/bin/emacs&#8221;.
+Many of these tools (including GNU stow)
+run your installation script (or have you run them) with a special
+setting of &#8220;prefix&#8221; (so that each program is
+installed in a special program-specific location).
+Then, they set up symbolic links to point to the &#8220;real&#8221; files
+(e.g., so you don&#8217;t have to have a massive constantly-changing PATH).
+</p>
+<p>
+There are many already-existing tools that do this, including
+<a href="http://www.toastball.net/toast/">toast</a> (GPLv3+),
+<a href="http://www.gnu.org/software/stow/stow.html">GNU stow</a> (GPL),
+<a href="http://www.gormand.com.au/peters/tools/graft/graft.html">Graft</a>
+(GPL),
+<a href="http://www.encap.org/">Encap</a> (<a
+ href="http://directory.fsf.org/project/epkg/">GPL license for epkg</a>),
+<a href="http://xstow.sourceforge.net/">xstow</a> (GPL, a C++
+re-implementation
+of GNU stow),
+<a href="http://www.rc0.org.uk/spill">spill</a> (GPL, a C
+implementation similar to stow),
+<a href="http://offog.org/code/garstow.html">GARStow</a>
+(unknown license),
+<a href="http://mvertes.free.fr/">It</a> (GPL),
+<a
+ href="http://www.arlut.utexas.edu/csd/opt_depot/opt_depot-2.0/overview.html">opt_depot</a>
+(no license found),
+<a href="http://www.risacher.org/localfix/">Risacher&#8217;s localfix</a>
+(no license found),
+and
+<a href="http://www.pvv.ntnu.no/%7Earnej/store/storedoc.html">STORE</a>
+(GPL).
+Some of these are conceptual descendents of the old
+<a href="http://www.cs.cmu.edu/~help/unix_linux/software_collections/local_depot.html">CMU Depot</a>, often via GNU stow.
+<a href="http://www.linux.com/archive/feature/127393">&#8220;Get rid of
+stowaway packages with GNU Stow&#8221; (David A. Harding)</a>
+gives a brief intro to GNU stow.
+</p>
+<p>
+If this is <i>all</i> you&#8217;re doing,
+and you have all necessary rights to install to the stowed directories,
+you might think you don&#8217;t need DESTDIR at all... just set up the <i>prefix</i>
+and store in these special directories.
+But it turns out that you still often want to install files to one
+place,
+yet have them run in another, which means you want to automate DESTDIR:
+</p>
+<ul>
+  <li>As noted in the <a
+ href="http://www.gnu.org/software/stow/manual.html#SEC7">GNU
+stow manual section 6.1 (&#8220;Compile-time and install-time&#8221;)</a>,
+&#8220;Software whose installation is managed with Stow needs to be installed
+in one place (the package directory, e.g. &#8216;/usr/local/stow/perl&#8217;) but
+needs to appear to run in another place (the target tree, e.g.,
+&#8216;/usr/local&#8217;). Why is this important? What&#8217;s wrong with Perl, for
+instance, looking for its files in &#8216;/usr/local/stow/perl&#8217; instead of in
+&#8216;/usr/local&#8217;?
+The answer is that there may be another package, e.g.,
+&#8216;/usr/local/stow/perl-extras&#8217;, stowed under &#8216;/usr/local&#8217;. If Perl is
+configured to find its files in &#8216;/usr/local/stow/perl&#8217;, it will never
+find the extra files in the &#8216;perl-extras&#8217; package, even though they&#8217;re
+intended to be found by Perl. On the other hand, if Perl looks for its
+files in &#8216;/usr/local&#8217;, then it will find the intermingled Perl and
+&#8216;perl-extras&#8217; files.
+This means that when you compile a package, you must tell it the
+location of the run-time, or target tree; but when you install it, you
+must place it in the stow tree.&#8221; </li>
+  <li>If you are trying to set up files so that they will
+eventually run in a &#8220;stowed&#8221; location, but you cannot currently
+write to that stowed location, then you may want to use DESTDIR so that
+you can &#8220;install&#8221; files to an intermediate location which is not the
+final location for execution. </li>
+  <li>If the program you&#8217;re dealing with doesn&#8217;t properly support
+&#8220;--prefix&#8221; or &#8220;make&nbsp;prefix=value&nbsp;install&#8221;, you need something
+that can automatically redirect files to another location
+(so that these tools can manage them). </li>
+</ul>
+<p></p>
+<h2>Simplified installation from source code</h2>
+<p>
+This paper does not cover the entire problem of automatically
+installing packages directly from source code,
+though it does potentially cover a piece of the problem.
+The idea of making it easier to install from source tarballs is
+nothing new; this has been raised by
+<a href="http://www.mail-archive.com/gnome-list@gnome.org/msg00777.html">Francesco
+Montorsi</a>
+and
+<a href="http://lwn.net/Articles/346035/">myself</a>.
+There are several existing tools that try to automatically install
+programs
+from source tarballs, though most of them do not do a good job of
+automatically determining what is to be done, and few understand
+dependencies
+or integrate well with an existing package management system.
+Here are some related papers/projects:
+</p>
+<ul>
+  <li>The tool <a href="http://www.scrudgeware.org/projects/Spkgtool/">Spkgtool</a>
+can act as a GUI front-end to various &#8220;symbolic link package systems&#8221;
+(currently supporting stow, graft, and encap/epkg), and it
+can automatically build and install source tarballs
+if they comply with the basic GNU standards
+(e.g., ./configure, make, and make install, with support for the
+make variable &#8220;prefix&#8221;). </li>
+  <li><a href="http://easinstaller.sourceforge.net/">Easinstaller is a
+little GUI tool for Unix beginners who need to
+compile a program/library from source, but don&#8217;t know how</a>. </li>
+  <li><a href="http://www.npsnet.com/danf/software/">Dan&#8217;s autospec</a>
+automatically creates RPM .spec files from tarballs.
+"It uses the information it can determine (from a Makefile, manual pages, an LSM file, etc.) to fill in the proper spec file fields. This allows a human packager to use the generated spec file as an almost complete template to quickly create an RPM package from a typical source or binary archive."
+ </li>
+  <li><a href="http://www.toastball.net/toast/">toast</a> (GPLv3+) is a
+&#8220;simple source-and-symlinks package manager for root and non-root
+users&#8221;.
+It is a &#8220;simple, self-contained tool for downloading, building,
+installing, uninstalling and managing software packages. Unlike
+traditional package-management systems, toast is primarily intended to
+work directly with software distributed as source code, rather than in
+some precompiled or specialized binary format, such as RPM. Binary
+packages are also supported.&#8221;
+It includes some of the capabilities of GNU stow, etc., but it also
+includes heuristics so that it can compile straight from
+source code.
+(Which means that toast does not fit my categories well &mdash;
+it includes stow-like capabilities and source installation capabilities.
+It also has lots of heuristics to try to automatically implement DESTDIR
+when the underlying system fails to do so.)
+The toast man page has links to other interesting programs. </li>
+  <li><a href="http://srcpack.sourceforge.net/">spm (srcpack)</a> (on
+SourceForge)
+is a simple package manager focused on source packages. </li>
+  <li><a href="http://www.gnu.org/software/sourceinstall/">GNU Source
+Installer</a>
+is a &#8220;source package manager for Unix-likes.
+It provides configuration, compilation, installation, upgrade, tracking
+and removal of packages built from source code following the GNU coding
+standards.&#8221; </li>
+  <li><a href="http://gnomefiles.org/app.php?soft_id=1062">Bulldozer</a>
+works
+with the Nautilus file manager of GNOME and supports
+make, Ant, NAnt, and several other formats, letting you automatically
+invoke build targets. </li>
+  <li><a href="http://svasey.org/urpkg/">Urpkg</a> (GPL) tries to
+install software
+in a safe way, especially from source code; it does this by creating
+a new user for each program that it installs, as well as using some
+sticky bit trickery, so that programs are protected from each other. </li>
+  <li><a href="http://luau.sourceforge.net/">Luau: The Lib
+Update/AutoUpdate Suite</a>
+enables people to download and install programs on their local systems,
+but it requires that software developers encode information for it
+(in an XML file). </li>
+  <li><a href="http://www.autopackage.org/">Autopackage</a>
+&#8220;makes software installation on Linux easy. Software distributed using
+Autopackage can be installed on multiple Linux distributions and
+integrate well into the desktop environment.&#8221;
+&#8220;An autopackage (a .package file) contains all the files needed for
+the package in a distribution neutral format with special control
+files inside, wrapped in a tarball with a stub script appended to the
+beginning. In order to install a .package file, you run it, and the
+scripts then check your system for the autopackage tools and offers to
+download them if they&#8217;re not present.&#8221;
+It&#8217;s essentially a special package format, designed for
+interoperability.
+The format is an API-based approach, which is different than many
+others. </li>
+  <li><a href="http://paco.sourceforge.net/">Paco (discussed below)</a>
+tries to install from source code automatically, using LD_PRELOAD
+(see below).
+But, like many other programs (like checkinstall), it simply watches
+what
+a program tries to do when it installs... it doesn&#8217;t intercept what is
+done, to make it right. </li>
+  <li><a href="http://cr.yp.to/slashpackage/management.html">D.J.
+Bernstein&#8217;s /package package management approach</a> is a
+different take on the problem. </li>
+  <li><a href="http://www.bell-labs.com/project/nsbd/">Not-so-bad
+distribution</a>
+is focused on verifying updates and limiting privileges when updating. </li>
+  <li><a
+ href="http://www.edos-project.org/xwiki/bin/view/Main/WP2StateOfTheArt">WP2
+State of the Art</a> is a wiki page that notes related programs. </li>
+  <li><a href="http://github.com/astraw/stdeb/tree/master">stdeb (Python to Debian source package conversion utility)</a> - stdeb ("setuptools debian") "produces Debian source packages from Python packages via a new distutils command, sdist_dsc. Automatic defaults are provided for the Debian package, but many aspects of the resulting package can be customized via a configuration file."
+  <li><a href="http://pypi.python.org/pypi/van.pydeb">van.pydeb</a>
+makes "egg metadata information available for Debian packaging".
+It is a collection of "Tools for introspecting Python package metadata and translating the resulting information into Debian metadata", including version numbers, package names, and dependencies.
+  <li><a href="http://pkg-config.freedesktop.org/wiki/">pkg-config</a> (GPLv2+)
+is a "helper tool used when compiling applications and libraries. It helps you insert the correct compiler options on the command line so an application can use  gcc -o test test.c `pkg-config --libs --cflags glib-2.0`  for instance, rather than hard-coding values on where to find glib (or other libraries)."
+It's run out of the freedesktop.org site.
+The information it uses is stored in ".pc" files.
+See the
+<a href="http://en.wikipedia.org/wiki/Pkg-config">Pkg-config Wikipedia page</a>,
+the <a href="http://linux.die.net/man/1/pkg-config">pkg-config man page</a>,
+and this
+<a href="http://people.freedesktop.org/~dbn/pkg-config-guide.html">
+pkg-config guide</a>.
+  <li><a href="http://search.cpan.org/~rsrchboy/CPANPLUS-Dist-RPM-0.0.8/lib/CPANPLUS/Dist/RPM.pm">CPANPLUS::Dist::RPM</a> is "a distribution class to create RPM packages from CPAN modules, and all its dependencies. This allows you to have the most recent copies of CPAN modules installed, using your package manager of choice, but without having to wait for central repositories to be updated."
+  <li><a href="http://packages.debian.org/lenny/java-package">java-package</a> helps create Debian packages</a>
+
+</ul>
+<!--
+http://pkgbuilder.berlios.de/
+PkgBuilder
+23 April 2005 posting says "PkgBuilder is DEAD".
+-->
+<!--
+Universal Package Managment System (UPMS)
+http://sourceforge.net/projects/upms/files/
+appears dead.
+-->
+<p></p>
+<p>
+And of course, this paper is not about package management in general,
+e.g.,
+programs that support .rpm and .deb formats.
+However, to create .rpm and .deb files, it is important to support
+DESTDIR.
+This paper is about how to easily support DESTDIR,
+without twiddling makefiles.
+</p>
+<h2>Why not just support DESTDIR or make prefix=X install?</h2>
+<p>
+There&#8217;s no need for a special tool to support DESTDIR
+for programs that already support DESTDIR.
+In some programs that don&#8217;t support DESTDIR,
+you can have the effect by setting
+the &#8220;prefix&#8221; variable when running make install, that is,
+<tt>make&nbsp;prefix=MY_DESTDIR_VALUE&nbsp;install</tt>.
+It would be far better if source code releases followed the
+<a href="https://dwheeler.com/essays/releasing-floss-software.html">normal
+good practices for releasing FLOSS software source packages</a>,
+including support for DESTDIR.
+</p>
+<p>
+But this does not always work, for a variety of reasons.
+Many makefiles do not support DESTDIR at all.
+Many makefiles also don&#8217;t support &#8220;prefix&#8221;, or if they do,
+they forceably re-build the program when the prefix value is changed
+for
+<tt>make&nbsp;install</tt> (making the workaround useless).
+There are so many programs that do <i>not</i> follow
+<a href="https://dwheeler.com/essays/releasing-floss-software.html">normal
+good practices</a>
+that <i>we must to deal with the world as it is,
+not as we wish it would be</i>.
+We could modify tiny makefiles, but large multi-directory makefiles
+can be hideously hard to modify correctly, and then there is the
+problem of getting those changes accepted upstream.
+Since so many programs don&#8217;t support DESTDIR, it&#8217;d be nice to
+be able to automatically support DESTDIR without having to
+constantly muck around in complicated makefiles or other
+build/installation systems for program after program.
+Then, instead of having programmers around the world constantly
+changing their makefiles, it will <i>just work</i>.
+</p>
+<h1><a name="kernel">Kernel-based re-routing</a></h1>
+<p>The Linux kernel gets all read and write requests, so re-routing at
+the
+kernel level would be great - in theory, the re-routing
+would be perfect, and should have good performance.&nbsp;
+The big problem is that it requires basic changes in low-level
+infrastructure,
+where any mistakes could create a massive security hole... making it
+understandably difficult to get people to <i>accept</i> changes at
+this level.
+</p>
+<h2><a name="union">Union mounts</a></h2>
+<p>Union mounts can merge multiple directories (e.g., one is &#8220;read
+only&#8221; and
+the other written to).
+Generally, these require root privileges, though that&#8217;s not a killer -
+a setuid program could use them, for example.
+</p>
+<p>
+There are several kernel modules that implement union mounts, but
+they&#8217;re not widely avaiable on Linux distributions (as of early 2009).
+The best-known union mount implementation is
+<a href="http://www.filesystems.org/project-unionfs.html">UnionFS</a>,
+and another implementation is aufs; both implement union mounts as
+a new filesystem.
+<a href="http://lwn.net/Articles/312003">Union mounts</a>
+implement union mounts inside Linux, but at the VFS layer instead of as
+a new
+filesystem; at this moment this is very immature and not ready for
+normal use.
+Many Linux distributions do NOT have unionfs, aufs, or
+&#8220;union mounts&#8221; since they are not in the default Linux kernel.&nbsp;
+</p>
+<p>
+A FUSE-based implementations of a union file system can be used today,
+and
+doesn&#8217;t require changes to the Linux kernel (as Unionfs, etc. require).
+FUSE is already part of the usual Linux kernel, and it allows file
+requests
+to be redirected out to user programs.
+In particular,
+<a href="http://funionfs.apiou.org/">funionfs</a>
+implements a union filesystem using FUSE, and
+is included in Fedora, Debian, and Ubuntu.
+<a href="http://plasticfs.sourceforge.net/">PlasticFS version 1.12</a>
+uses FUSE as well.
+By design a FUSE-based approach requires more work than unionfs (due to
+extra
+context switches), but for only a &#8220;make install&#8221; this isn&#8217;t so bad.
+One implementer of <a href="http://podgorny.cz/moin/UnionFsFuse">a
+unionfs-on-FUSE</a>
+reports that the I/O processing completely buries this
+overhead anyway.&nbsp; Unfortunately, funionfs (at least) is also
+global (instead of per-process) - again, a problem for a shared
+packaging systems if used the &#8220;obvious&#8221; way.
+I should note that instead of reusing existing union file systems
+to redirect DESTDIR,
+<a href="http://fuse.sourceforge.net/">FUSE</a>
+could be used to directly implement this approach.
+</p>
+<p>
+By themselves, these kinds of union mounts described above
+are always <span style="font-style: italic;">global</span> to the
+whole system, so if you directly did a union mount of directories
+like &#8220;/usr&#8221; you would have trouble using a shared packaging system.
+Such a global approach to redirecting could easily cause
+problems administering the system.
+And there are a lot of security problems, too, if this is just a global
+situation.
+So this should really be done for a set of processes rather than the
+whole system, as discussed next.
+<br>
+</p>
+<h2>Process Group Unique Root</h2>
+<p>
+A union mount can be made unique to a process group through a variety
+of mechanisms.
+The &#8220;obvious&#8221; way is to recreate a new filesystem tree in a
+subdirectory,
+using mount --bind and union mounts (as above, say using
+funionfs and FUSE) to create a new
+filesystem that looks like the old one but is not visible to all.
+You can then
+use chroot (or pivot_root) to set the process group to the new
+filesystem.
+A variant of this approach would be to use
+<a
+ href="http://www.ibm.com/developerworks/linux/library/l-mount-namespaces.html">mount
+namespaces</a>, which again create filesystems that are
+specific to a process group (instead of being global to all processes).
+Again, the point would be to redirect writes to /usr, /bin, /lib, /etc.
+All of this could be implemented with a small suid program.
+<br>
+</p>
+<p>
+Ideally, it&#8217;d be rigged so that the process group isn&#8217;t
+root, but it can still write to the new local /usr (etc.).&nbsp; Bonus
+points if it <span style="font-style: italic;">pretends</span> to be
+root and records the parameters (a la fakeroot) - which could fool even
+complex &#8220;make install&#8221; routines.<br>
+</p>
+<p>For security, the key problem is that the process
+running &#8220;make install&#8221; should never be privileged.
+In particular, the process should not have root privileges, nor should
+it be
+allowed to raise its privileges by running set-uid programs that
+actually
+setuid.
+Otherwise, it could use its root privileges to get out of the jail, or
+run an suid program that wouldn&#8217;t realize that the filesystem is rigged
+(and then get exploited).
+Traditionally, &#8220;make install&#8221; is given total privileges, but we want to
+<i>not</i> do that.
+If &#8220;make install&#8221; is started with normal user privileges, that at least
+gets us started, but we need to make sure that privileges can&#8217;t be
+added later
+via setuid programs.
+We could do this by making sure all mounts disable setuid/setgid;
+mount already has this ability.
+Alternatively, we could forbid running executables with that setting
+(I believe SELinux and &#8220;cuppabilities&#8221; can do this).
+</p>
+<p>This approach - having a FUSE-based union mount approach
+that is local to a process group (e.g., chroot) -
+is the most robust technically, since it can redirect
+any non-setuid command used in the &#8220;make install&#8221;.&nbsp; It also has
+low
+overhead.&nbsp;
+But the effort of making sure it&#8217;s secure may make it difficult
+for distributors to accept it.<br>
+</p>
+<!--
+Actually, wouldn't it be easier to use unionfs (with the regular root as
+the base, and an empty fs on top of it) mounted at $DESTDIR, mount
+- - bind the original /proc, /sys, /dev, and /home into it, and then
+chroot $DESTDIR for compiling and installing? That still doesn't allow
+cross-compiling, but it has the copy-on-write semantics you described
+above - without the overhead from ptrace().
+ - Michael Riepe, TrackFS creator.
+-->
+<h1><a name="LD_PRELOAD">LD_PRELOAD</a></h1>
+<p>Many programs, like installwatch, use LD_PRELOAD to intercept
+library functions.&nbsp;
+There are various positives: LD_PRELOAD already exists, and it works
+per-process (so it doesn&#8217;t interfere with other programs).
+Unfortunately, LD_PRELOAD has many technical downsides.&nbsp;
+<p>
+LD_PRELOAD based approaches can&#8217;t redirect statically linked
+executables.&nbsp;
+Unfortunately, the programs most used by most install scripts
+are also the ones most likely to be statically linked
+(to increase reliability and enable recovery from serious
+library management problems).
+I know that
+SuSE&#8217;s &#8220;ln&#8221; is statically linked, and that
+FreeBSD and OpenBSD&#8217;s key routines used in installation
+are statically linked, and this is true for many other systems as well.
+<p>
+You might think that once you override open(), all calls to open() would be
+overridden, but this isn't true by default if the caller
+is inside the C library itself.
+It turns out that the standard GNU C library uses names prefixed by "__"
+whenever it calls internal functions.
+For example, the C library implements fopen(), but the fopen() implementation
+internally calls __open(), not open().
+In addition - and this is the kicker - by default the GNU C library
+will not let you override these __functions using LD_PRELOAD.
+So if you override just open(), an application that calls open() directly
+will be overridden... but an application that uses fopen() will skip
+right past it.
+You can recompile the GNU C library so that the redirection will occur by
+using the poorly-documented "--disable-hidden-plt" option.
+But in practice, this means that you have to recompile the C library.
+This is generally not well-received by distributions;
+<a href="http://www.mail-archive.com/debian-mentors@lists.debian.org/msg51519.html">Debian specifically rejected doing this</a>, and I suspect
+others will do the same.
+Few will want to change the default, because doing things this way speeds
+up normal use.
+An alternative is wrapping <i>all</i> the C library calls,
+but that's more work.
+<!--
+They&#8217;re also vulnerable to a lot of
+races and deadlocks when &#8220;trivial&#8221; changes to the C library occur,
+making it unreliable in the long term.
+-->
+<br>
+</p>
+<p>
+I found no program my needs for automating DESTDIR while using LD_PRELOAD,
+so I've started writing such a program:
+<a href="../user-union/">user-union</a>.
+User-union creates union mounts, without requiring special privileges,
+using LD_PRELOAD, and it can integrate with
+<a href="../auto-destdir/">auto-destdir</a>.
+</p>
+<p>Here are some existing related programs that already
+use LD_PRELOAD (though most just <i>watch</i> what files are changed,
+and do not let us <i>change</i> where the files go):
+</p>
+<ul>
+  <li><a href="http://www.toastball.net/toast/">toast</a> uses LD_PRELOAD
+  as one of its tricks for changing where things install;
+  unlike many of the other items noted below, it actually changes
+  where files are placed instead of just watching them.</li>
+  <li><a href="http://checkinstall.izto.org/">checkinstall</a> is one
+partial answer
+(<a href="http://asic-linux.com.mx/%7Eizto/checkinstall/">here&#8217;s
+another
+Checkinstall location</a>). </li>
+  <li>Checkinstall, in turn, includes the
+installwatch utility written by Pancrazio &#8216;Ezio&#8217; de Mauro,
+installwatch appears to have some filesystem redirecting ability,
+(there&#8217;s a note about &#8220;--fstrans=no&#8221; and <a
+ href="http://checkinstall.izto.org/cklist/msg00319.html">issues
+with openat</a>), but that&#8217;s not clear. <a
+ href="http://asic-linux.com.mx/%7Eizto/checkinstall/installwatch.html">installwatch
+is maintained as part of checkinstall</a>;
+it does <i>not</i> redirect file creation. </li>
+  <li><a
+ href="http://www.linuxquestions.org/questions/slackware-14/why-you-should-not-use-checkinstall-595581/">gnashley
+(src2pkg developer)</a> believes
+that checkinstall is no longer properly maintained, so instead,
+has developed a <a href="http://src2pkg.net/">
+&#8216;trackinstall&#8217; program (a drop-in replacement for &#8216;checkinstall&#8217;)
+as part of src2pkg</a> (this is built on &#8220;libsentry&#8221;).
+These let you run &#8220;make install&#8221; and track what changed, as part of
+larger tools to auto-create packages from source code.
+But <a
+ href="http://src2pkg.net/dokuwiki/doku.php?id=manual:02_advanced_usage">
+src2pkg&#8217;s approaches</a> don&#8217;t seem quite right; it supports
+(1) &#8220;real root&#8221; which doesn&#8217;t redirect, overwrites, and requires root,
+(2) DESTDIR method, which requires that DESTDIR work (it often
+doesn&#8217;t, and that&#8217;s the problem we&#8217;re trying to solve), and
+(3) JAIL, which redirects writes but
+doesn&#8217;t seem to correctly redirect reads to the right place (ugh) - so
+it doesn&#8217;t work well on many scripts. </li>
+  <li><a href="http://plasticfs.sourceforge.net/">PlasticFS up to version 1.11</a> used LD_PRELOAD to create a filesystem.  It tried to not redirect many calls, and instead asked users to first recompile the GNU C compiler with "--disable-hidden-plt".  That was completely impractical; rather than covering more functions (such as fopen), in version 1.12 it switched to FUSE.
+  <li><a href="http://xmailserver.org/flcow.html">FL-COW</a> ("Copy on write") copies files if they're being opened for writing and they are hard linked to somewhere else, using LD_PRELOAD.  Not exactly what I was looking for, but some similar ideas.  GPLv2.  It only covers a few functions (open, openat, fopen, freopen, and their *64 versions).
+  <li><a href="http://paco.sourceforge.net/">paco (Package Organizer)</a>
+(GPL)
+is a &#8220;source code package organizer for Unix/Linux systems...
+When installing a package from sources, paco wraps the &#8216;make install&#8217;
+command (or whatever is needed to install the files into the system),
+and generates a log containing the list of all installed files.
+Technically, this is done by preloading a shared library before
+installation using the environment variable LD_PRELOAD. During
+installation this library catches the system calls that cause
+filesystem alterations, logging the created files...
+Gpaco is the graphic interface of paco.&#8221;
+The Paco home page specifically notes that
+&#8220;Paco does not work on systems in which the executables involved in the
+installation of the packages (mv, cp, install...) are statically linked
+against libc, like FreeBSD and OpenBSD.&#8221;
+Paco, like many other tools, can only log what a program tries to do...
+it cannot redirect files elsewhere.
+But in a number of cases, we want to control where the files go, not
+just
+watch them go to the wrong place. </li>
+  <li><a href="http://www.npsnet.com/danf/software/">DanF has developed
+autospec
+and notes other programs</a>, such as
+&#8220;slurp&#8221; (which uses the library installwatch to notice changed files). </li>
+  <li><a href="http://www.freesoft.org/software/preload/">Brent Baccala's Preload libraries</a> can redirect file accesses using LD_PRELOAD.  Unfortunately they don't seem to be OSS (no license found).
+It wants a glibc patch to be installed; it appears to me this is the same effect as the using "--disable-hidden-plt" option and recompiling glibc.
+  <li><a href="http://home.gna.org/epor/">EPOR</a> (GPL)
+is an &#8220;extensible package organiser for Unix like systems.
+It&#8217;s written to trace filesystem changes (something being installed)
+and save those information in a simple textual db (but this as any
+other provided feature is customisable by embedded guile interpreter
+see chapter Customise epor).
+So, when a package is installed using epor to trace it, an entry is
+created in a local db. This entry contains informations supplied by
+command line (package name, version, ...) and traced by filesystem
+changes (new directories, files ...). This is achieved using the
+&#8220;LD_PRELOAD method&#8221;.
+Using informations stored, epor let you remove files installed by a
+particular package or view them in different ways.&#8221; </li>
+  <li><a href="http://fakeroot.alioth.debian.org/">Fakeroot</a> tracks
+permissions, but doesn&#8217;t redirect at all.
+Fakeroot is heavily used in Debian, and has a server daemon to help it,
+but it intentionally doesn&#8217;t wrap open() and create.
+That's because
+previous experience with the libtricks package suggested that trying
+to wrap these would lead to endless problems.
+
+</li>
+  <li><a href="http://archive.debian.net/slink/utils/libtricks">libtricks</a>
+can redirect open-for-read (a mega-VPATH), but it&#8217;s not clear
+that it can redirect writes... and it doesn&#8217;t seem to be maintained
+anyway.
+The creator of the fakeroot and libtricks packages found that trying to wrap 
+open() and create
+&#8220;creates other problems, as demonstrated by the libtricks package.
+This package wrapped many more functions, and tried to do a
+lot more than fakeroot.
+It turned out that a minor upgrade of libc (from one where the BR
+stat() function didn&#8217;t use open() to one [that sometimes did])
+would cause unexplainable segfaults...
+once fixed, it was just a matter of time before another function
+started to use open()...
+Thus I decided to keep the number of functions
+wrapped by fakeroot as small as possible, to limit the likelihood
+[of] collisions...
+I choose not to wrap open(), as open() is used by many
+other functions in libc (also those that are already wrapped), thus
+creating loops (or possible future loops, when the implementation of
+various libc functions slightly change).&#8221;
+An
+<a href="http://lists.debian.org/debian-devel/1999/04/msg00122.html">
+April 3 1999 posting by Joel Klecker</a>
+noted that, in order to make this work,
+"libtricks grovels deep within glibc internals (to the point that it
+has its own copies of internal glibc headers), I am not entirely sure
+if it can ever work with glibc 2.1, since an external lib and programs
+cannot access internal libc symbols.
+fakeroot grovels at a much higher level and still works."
+In short, previous experience trying to wrap open() with LD_PRELOAD 
+suggests that this is a bad idea.
+</li>
+  <li><a href="http://dag.wieers.com/home-made/soapbox/">Soapbox</a>
+can
+prevent writes, but not redirect them.<br>
+  </li>
+</ul>
+<h1><a name="ptrace">Ptrace</a></h1>
+<p>Ptrace() is a kernel-level call for &#8220;process tracing&#8221; (e.g., to
+watch/change system calls made by a process).&nbsp; It&#8217;s intended for
+debugging, but since it can watch another process, it can be used for
+this purpose.&nbsp; This has serious advantages; these can handle
+statically linked executables (while LD_PRELOAD-based approaches
+can&#8217;t), so SuSE&#8217;s &#8220;ln&#8221; is a non-issue. Since they track at the system
+call level, this approach is immune to the
+races and other problems of fakeroot and libtricks.
+Unfortunately, while ptrace() is great for watching what a program
+does,
+using it to <i>change</i> what a program does is far more
+complicated.
+Perhaps the premiere example of a related program that uses
+the ptrace() approach is TrackFS:<br>
+</p>
+<ul>
+  <li><a href="http://www.mr511.de/software/english.html">TrackFS</a>.
+&#8220;trackfs runs the child program(s) with tracing enabled
+and tracks the system calls they make.&#8221;</li>
+</ul>
+<p>Such a program could be implemented using ptrace and semantics like
+this:<br>
+</p>
+<ol>
+  <li>On open for read (not write), look at DESTDIR first - if it&#8217;s
+there, use it. Otherwise, try to open un-redirected.&nbsp; This saves
+disk space, as well as saving time by not copying files.&nbsp; In
+short, if a file is only used for reading/executing, and never written
+to, then just use it as-is.<br>
+  </li>
+  <li>On open for read AND write, look at DESTDIR first, and use it if
+there. Otherwise, copy any existing file to DESTDIR, then use it.</li>
+  <li>On open for write (not read), create any prefixed directories
+that exist on the original side. Then, open for write under DESTDIR.
+(It should fail if the original would have failed.)</li>
+  <li>&#8220;chmod&#8221; is essentially a write operation; redirect as above, but
+copy the file if it doesn&#8217;t exist.</li>
+  <li>&#8220;unlink&#8221;: If in DESTDIR, remove it. Bonus points: remember what
+you &#8220;removed&#8221;, so that later queries about it will claim it&#8217;s not
+there.&nbsp; Note that unionfs, funionfs, and so on have to handle this
+too (e.g., using &#8220;whitelists&#8221;).&nbsp; So you can &#8220;rm /bin/sh&#8221;, and it&#8217;s
+not there... and there&#8217;s no harm to the &#8220;real&#8221; filesystem.</li>
+</ol>
+<p>I may have missed a corner case, but it should work in principle.</p>
+<p>I&#8217;ve had a very interesting email exchange with TrackFS&#8217;s creator,
+Michael Riepe, about this.&nbsp; He pointed out that this requires that
+the controlling process actually <span style="font-style: italic;">change</span>
+the name of the file being opened, which requires using memory space
+somewhere.&nbsp; I suggested that it&#8217;d be possible to patch the stack
+with the new filename, use it, then halt and restore things back... so
+that you don&#8217;t have to try to do memory allocations and such.&nbsp;
+Michael isn&#8217;t sure that the stack grows correctly at all times (what
+about stack overflow?), but it&#8217;s plausible.&nbsp; Another issue he
+noted is that (absolute) symbolic links might not work correctly.&nbsp;
+I&#8217;m not sure about that, but that would cause complications to the
+rules above.<br>
+</p>
+<p>
+<a href="http://fakeroot-ng.lingnu.com/index.php/Home_Page">Fakeroot
+Next Generation (fakeroot-ng)</a> is using the ptrace()
+mechanism to get around the limitations of LD_PRELOAD, but as their
+website notes, using ptrace() creates many complexities.
+</p>
+<p>Originally, I thought the ptrace approach would be best, but the
+rules kept getting more complex, and the stack twiddling was more than
+I was hoping for.
+In short, implementing DESTDIR this way is quite complicated,
+involving a lot of architecture-dependent tweaking.
+Is there a better, simpler way?
+For this particular problem, I think there is.
+</p>
+<p>
+</p>
+<h1><a name="modifycommands">Modified basic commands</a></h1>
+<p>
+In most software, the &#8220;make install&#8221; command
+only uses a few simple commands to actually install the software.
+In my experience, the most common command by far is &#8220;install&#8221;, which
+is hardly surprising.
+Other common commands used in &#8220;make install&#8221; that might need
+redirecting from privileged directories
+(like /bin, /usr, and /etc) include
+cp, mkdir, ln, mv, touch, chmod, chown, ls, rm, and rmdir.
+It might also be useful to redirect &#8220;test&#8221;,
+though this is also a bash built-in (making its
+replacement more complicated) and I haven&#8217;t found any Makefiles where
+redirection of &#8220;test&#8221; is needed for &#8220;make install&#8221;.
+Programs that use
+<a href="https://dwheeler.com/program-library/">libtool</a>
+usually support DESTDIR directly, but even if they didn&#8217;t,
+the point is the same:
+&#8220;make install&#8221; tends to use only a very few programs.
+</p>
+<p>
+So given that &#8220;make install&#8221; tends to only a few commands,
+one &#8220;obvious&#8221; approach would be to modify just these basic
+commands so that they will redirect their writes
+(e.g., if an environmental variable is set).
+Then the packager can just set and environmental variable and run
+&#8220;make install&#8221;
+This seems completely appropriate for &#8220;install&#8221;; the
+whole purpose is to perform installs, so adding functionality so it
+can do installs in a common case (creating packages) seems appropriate.
+</p>
+<p>
+It&#8217;d be best if setting this up would be easy.
+I would suggest REDIR_DESTDIR as the environmental variable name.
+If it&#8217;s set, then writers are redirected to that as the root of the
+filesystem.
+For the &#8220;install&#8221; command,
+I think any use should be redirected (since by definition, all
+invocations
+are installs).
+With one exception: If install is invoked to install to inside
+REDIR_DESTDIR,
+then don&#8217;t re-prefix it;
+this avoids some awkward loops, and makes it easy for packagers to
+&#8220;automate&#8221; installation by <i>always</i> setting REDIR_DESTDIR.
+Other commands are only <i>sometimes</i> use for installation, but I
+suspect a simple detection method would be sufficient.
+For example, perhaps all
+attempts to write to a directory which only a
+privileged user/group (e.g., root) can write to would be redirected so
+that
+&#8220;/&#8221; becomes REDIR_DESTDIR.
+This way, &#8220;install&nbsp;xyz&nbsp;/bin&#8221; immediately becomes
+&#8220;install&nbsp;xyz&nbsp;${REDIR_DESTDIR}/bin&#8221;, and similarly for &#8220;cp&#8221;,
+but
+&#8220;cp&nbsp;xyz&nbsp;.&#8221; doesn&#8217;t get redirected if the directory is local
+and
+writable by an ordinary user (such as a user creating the package).
+Don&#8217;t use &#8220;INSTALL_DESTDIR&#8221; as the environment variable name - it turns
+out
+this gets used by many installation makefiles, and would cause trouble
+instead of helping.
+This way, you don&#8217;t have to list which directories get redirected -
+temporary and local files aren&#8217;t redirected, while files getting
+installed
+will get redirected.
+</p>
+<p>
+Obviously, if an attacker can control the environment variable of a
+root
+user, then the root user&#8217;s commands will get redirected.
+But if an attacker
+controls root&#8217;s environment, the system is already compromised
+(environment variables can already control the system in lethal ways
+in such cases).
+Never transition to root (from non-root) without removing all
+environment
+variables, and then adding in only the ones that you are certain are
+okay.
+This would be no different.
+</p>
+<p>
+This approach is easy to apply (once the commands are changed),
+executes quickly, clearly works in a shared
+environment, and has no security issues.
+So there&#8217;s a lot going for it.
+</p>
+<p>This approach only redirects those particular commands, and that is
+its fundamental weakness.&nbsp; However, although a lot of &#8220;make
+install&#8221; routines recurse deeply and do complicated
+things in their source directories, I&#8217;ve found in a quick scan that
+most only use a few limited commands
+(like cp, install, and mkdir) to actually do the installing where this
+would matter, so I think this approach would be remarkably
+successful.&nbsp;
+Unlike the LD_PRELOAD approach, this even works if programs like
+/bin/ln are
+installed statically.</p>
+<p>
+Unfortunately, this requires changing some really low-level
+key programs like &#8220;cp&#8221; and &#8220;mkdir&#8221;.
+This is probably easily justified for <i>install</i>,
+since the whole purpose of &#8220;install&#8221; is to install programs, and
+packages are very common in today&#8217;s world.
+But changing &#8220;cp&#8221; and &#8220;mkdir&#8221; is no small matter;
+even if all agreed to it (and such agreement is rare), it&#8217;d
+take a long time to widely deploy (think of not only the many
+Linux distros, but also the *BSDs, Cygwin, etc.).
+So while this could be a long-term strategy, it&#8217;s not so great
+for the short term.
+Is there any way we can make things simpler?
+I believe there is, as discussed next.
+</p>
+<p>
+</p>
+<h1><a name="wrappers">Wrappers for basic install commands and a
+special PATH</a></h1>
+<p>As noted above, typically only a few commands in &#8220;make install&#8221;
+actually need to be redirected.
+We could simply modify the PATH environment variable so that
+its <i>first</i> directory is a &#8220;wrapper&#8221; directory.
+The wrapper directory would contain specialized &#8220;wrapped&#8221;
+versions of common commands that are used to install software
+when running in &#8220;make&nbsp;install&#8221;.
+These wrapped versions would then redirect the file-writing.
+As noted earlier, such commands might include:
+install, cp, mkdir, ln, mv, touch, chmod, chown, ls, rm, and rmdir.
+(As noted above, programs that use
+<a href="https://dwheeler.com/program-library/">libtool</a>
+usually support DESTDIR directly and thus don&#8217;t need help.)
+</p>
+<p>This approach has the most of the same pluses and minuses
+as the previous approach, in particular, it
+only redirects those few commands.
+However, since those are the commands
+actually used by &#8220;make install&#8221;, in many cases this approach should be
+fine.
+One big additional positive, however, is that this can be done right
+away;
+no changing of fundamental programs is required.
+It requires no special privileges (and thus has no security
+impact), and running the wrappers can be quick
+(so there is practically no performance impact).
+The wrappers can be written in portable shell, which means that the
+wrappers can be really small and have no extra dependencies
+(so there would be no reason to <i>avoid</i> using them for
+installation).
+</p>
+<p>One weakness of this approach
+is that a &#8220;make install&#8221; that invokes one of these
+commands using its fullpathname (e.g., /bin/cp or /bin/install instead
+of &#8220;cp&#8221; or&nbsp; &#8220;install&#8221;) will not use the new redirecting
+command.&nbsp; I&#8217;ve found that some makefiles set INSTALL as
+/bin/install, and it&#8217;s possible a few other programs are done that way
+too.
+However, in many cases these are trivially overridden by invoking the
+&#8220;make&nbsp;install&#8221; program as
+&#8220;make&nbsp;INSTALL=install&nbsp;CP=cp&nbsp;MV=mv&nbsp;install&#8221;,
+so this problem is typically easy to overcome.
+</p>
+<p>
+This is a limited approach: It only redirects a few commands.
+But as long as &#8220;make&nbsp;install&#8221; routines use only a few commands
+to install programs &mdash; which seems to be the norm &mdash;
+then this approach is remarkably simple and effective.
+You could do worse than something that&#8217;s simple and effective.
+If you really need lots of programs redirected, you might be able to
+combine this with LD_PRELOAD based approaches; LD_PRELOAD works with
+many
+programs but tends to fail on the few that most matter (e.g., cp,
+mkdir, ln),
+so you can wrap the programs that LD_PRELOAD fails on, and let it
+pick up the rest.
+</p>
+<p>
+Instead of fiddling with the PATH, it&#8217;d be possible to use chroot to
+use
+these special commands instead.
+However, that
+<a href="#chroot">re-raises some of the complexity and security
+problems
+of chroot</a>.
+</p>
+<p>
+This is another trick that 
+<a href="http://www.toastball.net/toast/">toast</a> uses
+(as well as LD_PRELOAD).
+</p>
+<p>
+I&#8217;ve implemented this approach (with a small dosage of the
+&#8220;make using special SHELL approach&#8221; described next).
+I implemented it using the bash shell.
+Most installations already have bash installed;
+if I&#8217;d used perl or Python, a user would have to install a
+much bigger program just to run it.
+C is terrible for string processing, so C would not be a great way
+to implement it either.
+If you&#8217;re interested, please go take a look at
+<a href="https://dwheeler.com/auto-destdir">Auto-DESTDIR</a>.
+</p>
+<p></p>
+<h1><a name="makeshell">Make using special SHELL</a></h1>
+<p>
+Many make programs, such as GNU make, include the ability to set what
+shell to run.
+E.G., &#8220;make SHELL=... &#8220; lets you override which shell to run.
+A special shell could then be used to override where the files go.
+By itself, this could be easily fooled; a number of install scripts
+call
+sub-scripts which then do the work.
+However, this might integrate very nicely with other approaches;
+it would make it possible to &#8220;catch&#8221; file redirections, for example,
+and override calls to &#8220;/usr/bin/install&#8221; and such.
+One problem is that
+this can easily lead to completely re-implementing the shell,
+which is a terrible idea.
+</p>
+<h1><a name="chroot">Chroot</a></h1>
+<p>The &#8220;chroot&#8221; call is available everywhere.&nbsp;
+A traditional chroot jail could
+be created so that &#8220;written&#8221; files aren&#8217;t
+written to the &#8220;real&#8221; system.
+This was one of the first approaches I thought of.
+Unfortunately, on most Linux-based systems it can be rather complicated
+to set up proper chroot environments.
+Calling chroot() is easy, but setting up the right environment to use
+it may
+involve either a large number of shared mounts that can&#8217;t be written to
+(a security concern) or a vast amount of file copying.
+Calling on chroot() requires root privileges, which distributions are
+loathe
+to give, and root privileges must be later dropped after the
+environment is
+set up (since root privileges can escape chroot() jails);
+this can make it difficult to integrate with other tools (such as
+many package recompilation tools).
+</p>
+<!--
+From a security viewpoint, setting up chroot() to do this securely
+is non-trivial.
+In short, you want untrusted programs to be able to add new files to places
+like their version of /usr/bin.
+If there are no privileged programs it can execute, that might not be too
+bad, but if there are privileged programs, it gets crazy.
+You can sort-of do this by copying a new directory, allowing users to
+only add (not delete) files in it, and then dropping privileges.
+But you dare not do that naively with /usr/lib
+(a malicious program might add a "newer" library), or create files like
+/etc/ld.so.preload.
+-->
+<p>
+<a
+ href="http://www.freebsd.org/doc/en/books/porters-handbook/porting-prefix.html">FreeBSD
+automatically implements DESTDIR using chroot</a>,
+but it isn&#8217;t entirely clear that how FreeBSD handles this is entirely
+desirable.
+FreeBSD&#8217;s approach stores package information in $DESTDIR/var/db/pkg,
+which in many cases is not where you wanted that information.
+<!-- http://markmail.org/message/ztmsexrnjkmf537e -->I suspect that
+FreeBSD&#8217;s approach depends on
+features that other kernels (including Linux) do not have, e.g.,
+it depends on mount_nullfs(1), which appears to make their approach
+(implemented in file bsd.destdir.mk) hard to
+move to more-popular systems.
+It&#8217;s interesting to note that implementing this was <i>not</i> easy;
+<a
+ href="http://www.mail-archive.com/freebsd-ports@freebsd.org/msg09381.html">it
+took two tries to get this functionality working</a>.
+(<a href="http://src.gnu-darwin.org/ports/Mk/bsd.destdir.mk">Here&#8217;s
+a web-accessible copy of bsd.destdir.mk implementing DESTDIR</a>.)
+In any case, it is not at all clear
+that various Linux distributors are willing to use chroot
+to automate DESTDIR.
+See the kernel material (above) for some of the negatives of this.
+</p>
+<p>
+<a href="http://rust.sourceforge.net/">RUST</a>
+is &#8220;a toolkit for creating RPM packages to distribute software...
+[it] is both a drag &amp; drop RPM creation GUI and a &#8216;sandboxing&#8217;
+toolkit that allows you to do software installations within a
+chrooted environment and automatically generate RPMs from arbitrary
+source code, without ever seeing a spec file.&#8221;
+But since it doesn&#8217;t actually create
+.spec files, its results cannot be submitted to typical Linux
+repositories (like Fedora&#8217;s).
+</p>
+<h1><a name="sandboxes">Other Sandboxes</a></h1>
+<p>There are other sandboxing approaches beyond chroot,
+such as User Mode Linux, that
+could be used.&nbsp; But these appear really heavyweight for the
+purpose. Examples include:
+</p>
+<ul>
+  <li><a href="http://plash.beasts.org/environment.html">Plash</a> is
+an approach for sandboxing. As explained on the <a
+ href="http://plash.beasts.org/wiki/">Plash website</a>, it
+performs sandboxing by using a chroot to prevent all file access, and
+then
+modifying &#8220;library calls (such as open()) so that they make
+remote procedure calls (RPCs) to another process instead of
+making the usual Linux system calls.&#8221;
+I think this is too heavyweight for this task.</li>
+</ul>
+<h1><a name="conclusions">Conclusions and related info</a></h1>
+<p>
+I&#8217;ve implemented the
+<a href="#wrappers">&#8220;Wrappers for basic install commands and a special
+PATH&#8221;</a>
+approach above to automate DESTDIR.
+To get it,
+<a href="https://dwheeler.com/auto-destdir">get the
+auto-DESTDIR package</a>.
+As long as &#8220;make&nbsp;install&#8221; only
+uses a limited set of commands &mdash;
+which seems to be true in practice &mdash; this approach seems to
+solve the problem without requiring security issues or complicated
+reconfiguration of low-level infrastructure.
+It&#8217;s also very, very portable.
+</p>
+<p>
+You might also find the
+<a href="../user-union/">user-union</a> program useful, if you are
+trying to automate DESTDIR for existing programs.
+User-union creates union mounts, without requiring special privileges,
+and it can work with
+<a href="../auto-destdir">auto-DESTDIR</a>.
+</p>
+<p>Supporting DESTDIR is one of
+<a href="https://dwheeler.com/essays/releasing-floss-software.html">several
+good practices when releasing FLOSS software</a> - if you release
+FLOSS software, you should follow those general community guidelines.
+If you don&#8217;t, at least make sure that
+<a href="https://dwheeler.com/auto-destdir">Auto-DESTDIR</a>
+can automate its support.
+<br>
+</p>
+</body>
+</html>

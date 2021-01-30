@@ -1,0 +1,464 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Don&#8217;t Use ISO/IEC 14977 Extended Backus-Naur Form (EBNF)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A description of why you should not use ISO/IEC 14977 as an Extended Backus-Naur Form (EBNF) format, and why should use alternatives such as W3C's instead.">
+<meta name="keywords" content="EBNF, grammar, BNF, Extended Backus-Naur Form">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Don&#8217;t Use ISO/IEC 14977 Extended Backus-Naur Form (EBNF)</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2020-02-18 (original 2019-03-02)</h2>
+
+<p>
+If you need to define a language
+(such as a programming language or complex data structure)
+it&#8217;s often helpful to use some kind of
+Extended Backus-Naur form (EBNF).
+Often
+people do a Google search, find out that there&#8217;s an
+ISO/IEC standard (ISO/IEC 14977:1996), and then just use it...
+without realizing that this very old
+ISO/IEC standard has a lot of problems and should not be used.
+
+<p>
+In this essay I will briefly explain the problems of
+the ISO/IEC 14977:1996 specification,
+and why I think you should avoid using it.
+I will first explain why
+<a href="#mindless">just mindlessly obeying ISO is inappropriate</a>,
+and then discuss the
+<a href="#problems">many technical failings of the specification itself</a>.
+When I discuss its failings
+I will also compare the 14977 specification to a common alternative, the EBNF
+notation from the
+<a href="https://www.w3.org/TR/xml/#sec-notation"
+>W3C Extensible Markup Language (XML) 1.0 (Fifth Edition)</a>.
+It is not necessarily a <i>disaster</i> to use 14977, but a lot
+of people use it without realizing that it
+has a number of very serious problems and that there are much better
+alternatives available.
+Obviously these are my personal opinions, which you may not share...
+but I hope this essay will help you understand why I hold them.
+
+<h1 id="mindless">But shouldn't I mindlessly obey ISO and IEC?</h1>
+
+<p>
+But first: why not obey whatever ISO and IEC say?
+It may surprise you, but ISO and IEC are not gods from on high.
+They are just two of many standards-setting bodies.
+Just because
+they wrote a specification does not mean you should use it.
+
+<p>
+First, just because ISO or IEC wrote a document doesn't mean people use it.
+After all,
+<a href="https://spectrum.ieee.org/tech-history/cyberspace/osi-the-internet-that-wasnt">ISO developed and promulgated the so-called
+Open Systems Interconnect (OSI) standards in the 1980s as the one true way
+to connect networks, and OSI was solidly trounced by the TCP/IP suite
+developed by IETF</a>.
+Anyone who committed to the ISO-developed OSI standards wasted
+a lot of money!
+
+<p>
+In this specific case,
+even ISO does not use 14977 itself for all the language standards it publishes.
+Since even ISO doesn't always use 14977, there's no reason you need to.
+The 2011 paper
+<a href="https://www.grammarware.net/text/2012/bnf-was-here.pdf"
+>&#8220;BNF was Here:
+What Have We Done About the Unnecessary Diversity of
+Notation for Syntactic Definitions&#8221;
+by Vadim Zaytsev</a> expressly notes that
+many ISO specifications do not use 14977, and
+considers 14977 to be a failure.
+Unfortunately, most ISO standards are not publicly available
+(as I'll discuss in a moment).
+That said, here's a specific example you can check: the
+<a href="http://www.ada-auth.org/standards/ada12_w_tc1.html"
+>Ada programming language standard
+(published as International Standard ISO/IEC 8652:2012)</a>
+defines its own BNF format in section 1.1.4.
+Note that it does not use 14977 notation
+(for example, it does not use commas for concatenation).
+
+<p>
+I am certainly not anti-ISO or anti-standards, far from it.
+I am trying to convince you that you should not use something
+just because it comes from ISO.
+If you need something from an international standards body, then
+it&#8217;s worth noting that the W3C and IETF are also international
+standards bodies that have specified <i>different</i> EBNF notations.
+The W3C one, in particular, is a reasonable alternative, and that is
+the one I will focus on here (as a point of comparison).
+
+<p id="unjustified_fees">
+A broader
+problem with ISO and IEC is that unlike modern standards-setting organizations,
+they often charge for the IT standards they publish instead of making
+them publicly available.
+By "publicly available" I mean "at no cost"; even ISO uses this terminology.
+In contrast, the IETF, W3C, and other modern standards-setting
+organizations always make standards publicly available.
+These fees are not justifiable today.
+Distributing documents costs practically nothing, and
+ISO and IEC do not pay their authors (or the authors' employers),
+so all the money paid for these standards is exploitative.
+These fees also greatly impede the use of standards;
+modern systems require at least tens of thousands of standards
+(in the broad sense),
+so while charging for one document (even though the authors get none of it)
+is unjustified, no one can afford to get them all even if they wanted to.
+These fees are especially harmful to small businesses and hobbyists, and
+the world depends on them.
+In a historical context the fees made sense, because they were necessary
+to purchase and use printing presses.
+But today, no one wants that; they want the electronic document,
+nstantly, at no charge.
+ISO has been exploiting the world through these unjustified fees.
+I don't object at all to profit; the profit motivation has done great
+things for society.
+I object to exploitation; these organizations like ISO are
+charging for work, yet not paying the people who do the work nor
+making the work available for free.
+
+<p>
+Of course, many others have made the same observation.
+On
+<a href="https://news.ycombinator.com/item?id=16752556">April 4, 2018,
+user mycl</a> observed that
+"ISO Prolog (ISO/IEC 13211) doesn't have a free standard and it has
+hurt the Prolog language immeasurably. In this case the last freely
+available draft is quite different from the final standard, which makes
+the situation worse because not everyone is aware of this.
+I have noticed a lot of Prolog programmers don't know what's in the
+standard and what's not - you routinely see answers given on SO that are
+implementation dependent when they could easily have been expressed in
+strictly conforming ISO Prolog."
+
+<p>
+These fees exploit a feature of international law.
+In international law, certain organizations (such as the ISO and IEC)
+have historically been treated specially.
+To oversimplify, international law has recognized
+two kinds of standards (in French, « norme » and « standard »),
+and the bodies that make the first kind include ISO and IEC, while
+the bodies that make the second kind include IETF and W3C.
+This might suggest that ISO should be given more deference, but the
+reality is that ISO is exploiting this position to make unjustified profits.
+That reality undercuts any justification ISO might have for deference.
+
+<p>
+Since ISO has been exploiting its position,
+I see no reason to give ISO special deference.
+I feel sad about this; I think that ISO
+is an important organization that has lost its way.
+ISO has done some good work!
+I will continue to use ISO specifications where they are good, and
+I will even work with ISO where appropriate.
+More generally, I <i>do</i> think that it's important to have standards
+from organizations like ISO and IETF.
+
+<p>
+That said, I think it's important to realize that
+ISO <i>must</i> change its behavior if it wants to stay relevant
+in the long run.
+ISO needs to rediscover its actual purpose:
+to develop and encourage the use of international standards.
+If you can find a way to encourage ISO to update its practices and
+join the modern world, before it finally
+slips into irrelevance, that'd be great.
+I <i>want</i> to see a successful ISO in the long run, and I think its
+currently policies are inappropriate for the modern world.
+But until ISO fixes its policies to focus on making standards instead
+of making profits, it is appropriate to be a little wary of ISO standards.
+
+<p>
+This problem of charging unjustified fees is less of a problem in this case,
+though the situation is not great.  Thankfully
+<a href="https://www.iso.org/standard/26153.html">ISO/IEC 14977:1996</a>
+is one of the few ISO
+<a href="https://standards.iso.org/ittf/PubliclyAvailableStandards/index.html"
+>publicly-available specifications</a> (that means available at no charge).
+I find it bizarre that ISO thinks it's acceptable to have any standard
+it develops <i>not</i> be publicly available, obviously!
+On the other hand,
+it&#8217;s not friction-free;
+when I last tried, it&#8217;s easy to not notice the free version,
+you have to agree to a license before you can download it,
+you get a zip file that you have to decompress
+instead of simply getting the actual specification, and it&#8217;s a
+PDF file that doesn&#8217;t properly scale to different screen sizes
+(instead of clean responsive HTML or at least reflowing PDF).
+Compare this complicated multi-step process with the experience
+of getting the much-better W3C specification for the same job:
+<a href="https://www.w3.org/TR/xml/#sec-notation"
+>click here and start reading on any device</a>.
+
+<p>
+Hopefully I have convinced you that mindlessly obeying ISO is
+completely inappropriate.
+But getting the specification is not the primary problem in this case.
+The problem is using it.
+The specification is terrible, and far better options are available.
+
+<h1 id="problems">The specification itself has serious problems</h1>
+
+<p>
+The <i>whole point</i> of an EBNF is to make it possible to
+describe a grammar clearly, unabiguously, and succinctly.
+Here I examine the
+<a href="https://www.iso.org/standard/26153.html">freely-available
+specification</a>.
+Here are some of its key weaknesses (as I perceive them):
+
+<ol>
+<li id="no_unicode"><b>It is unable to indicate International/Unicode characters, code points, or byte values</b>.
+ISO/IEC 14977:1996 only supports ISO/IEC 646:1991 characters.
+It does have a &#8220;? ... ?&#8221; notation to
+informally describe a character,
+but that is not the same as having proper support.
+Thus, it cannot directly represent the full range of code points allowed by
+ISO/IEC 10646 / Unicode when processing text, and it&#8217;s
+also inadequate for describing binary formats.
+What&#8217;s worse, it has no way to indicate code points by <i>value</i>.
+You&#8217;d think that in the case of text formats
+you could quietly violate the standard by inserting
+Unicode characters surrounded by single or double quotes, but even in that case
+the specification isn&#8217;t adequate.
+For example, these are all different characters:
+<tt>&quot;&#x2d;&quot;</tt>,
+<tt>&quot;&#x2010;&quot;</tt>,
+<tt>&quot;&#x2011;&quot;</tt>,
+<tt>&quot;&#x2012;&quot;</tt>,
+<tt>&quot;&#x2013;&quot;</tt>,
+<tt>&quot;&#x2014;&quot;</tt>,
+<tt>&quot;&#x2015;&quot;</tt>,
+<tt>&quot;&#x2212;&quot;</tt>,
+<tt>&quot;&#xFE63;&quot;</tt>, and
+<tt>&quot;&#xFF0D;&quot;</tt>.
+Those are
+U+002D (&#8216;HYPHEN-MINUS&#8217;),
+U+2010 (&#8216;HYPHEN&#8217;),
+U+2011 (&#8216;NON-BREAKING HYPHEN&#8217;),
+U+2012 (&#8216;FIGURE DASH&#8217;),
+U+2013 (&#8216;EN DASH&#8217;),
+U+2014 (&#8216;EM DASH&#8217;),
+U+2015 (&#8216;HORIZONTAL BAR&#8217;),
+U+2212 (&#8216;MINUS SIGN&#8217;),
+U+FE63 (&#8216;SMALL HYPHEN-MINUS&#8217;),
+U+FF0D (&#8216;FULL-WIDTH HYPHEN-MINUS&#8217;).
+There is no substitute for the ability to specify code points!
+Since there is no way in the standard to unambiguously specify code points,
+this is a problem.
+This omission is also a problem when trying to represent
+binary formats.
+In contrast,
+W3C&#8217;s notation easily supports arbitary code points; just write
+#xN where N is a hexadecimal number.
+<br><br>
+Oh, and a quick aside.
+Technically ISO/IEC 10646 and Unicode are not exactly the same specification,
+since they come from different organizations.
+In most ways the distinctions are irrelevant;
+the character codes and encoding forms are (intentionally) synchronized
+between Unicode and ISO/IEC 10646, for which everyone is grateful.
+The ISO/IEC 10646 specification is publicly available, probably
+due to competition from the Unicode consortium.
+After all,
+the Unicode consortium is a modern standards organization that
+publicly releases its specification, and people would probably always
+ignore ISO/IEC 10646 if it wasn't publicly available.
+That said, you should normally use
+Unicode, not ISO/IEC 10646, as your specification.
+The
+"<a href="https://www.unicode.org/faq/unicode_iso.html">Unicode Standard
+imposes additional constraints on implementations to
+ensure that they treat characters uniformly
+across platforms and applications</a>".
+
+<li id="no_ranges"><b>It is unable to indicate character ranges</b>.
+ISO/IEC 14977:1996
+has no standard way to indicate character ranges,
+which are ubiquitous in grammars.
+In contrast, W3C&#8217;s notation easily supports an arbitary range, just write
+&#8220;[<i>range</i>]&#8221;.
+An example should make it clear why this matters.
+It&#8217;s really common to say that
+&#8220;this character
+must be an ASCII uppercase, lowercase, or decimal digit&#8221;.
+In W3C&#8217;s notation this is expressed by <tt>[a-zA-Z0-9]</tt>.
+Here&#8217;s how you do that in ISO/IEC 14977:1996
+(all but the last line are straight from section 8.1 of the
+specification, so this really is the expectation):
+<pre>
+letter
+  = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h'
+  | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p'
+  | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x'
+  | 'y' | 'z' |
+  | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H'
+  | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P'
+  | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X'
+  | 'Y' | 'Z';
+digit
+  = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7'
+  | '8' | '9';
+letter or digit = letter | digit;
+</pre>
+Clearly expressions like <tt>[a-zA-Z0-9]</tt> are shorter and clearer.
+Ranges also make exceptions clearer, e.g., if you omitted
+the letter <tt>O</tt> it would be obvious in a range but not obvious
+in a long list.
+Ranges also reduce the risk of bugs; if an option is accidentally omitted,
+the omission might not be noticed in a long collection of alternatives.
+
+<li id="commas"><b>It requires a sea of commas, so using it produces hard-to-read grammars</b>.
+One of the most common operations in a grammar, by far, is concatenation
+(aka sequencing).
+ISO/IEC 14977:1996
+requires that a comma be used for every concatenation, so
+any sequence of N symbols will have N-1 commas.
+This, means, that, every, rule, throughout, the, entire, grammar,
+is, festooned, with, commas.
+This doesn&#8217;t impact the ability to represent a grammar, but
+it makes grammars remarkably hard to read, <i>especially</i>
+if the rules themselves involve commas.
+Since the <i>whole point</i> of an EBNF notation is to create
+an easy-to-read grammar definition, almost doubling
+the number of required syntactic symbols is a serious mistake.
+W3C&#8217;s notation uses spaces, eliminating the problem entirely.
+
+<li id="one_or_more"><b>It has a bizarre, difficult-to-understand, and easily-misunderstood
+&#8220;one or more&#8221; notation</b>.
+Another common operation is to identify that something
+occurs &#8220;one or more&#8221; times.
+Regular expressions (which are widely used and known in the computing
+community) use the <tt>+</tt> symbol to represent this,
+e.g., <tt>z+</tt> in POSIX Extended Regular Expressions and
+Perl-Compatible Regular Expressions means &#8220;one or more zs&#8221;.
+In contrast, ISO/IEC 14977:1996 represents &#8220;one or more&#8221; as
+<tt>{&nbsp;symbol&nbsp;}-</tt>  which means
+&#8220;0 or more symbols, and then subtract the empty set&#8221;.
+The empty set is represented by no symbols at all (!)...
+which makes it easy to miss what is going on.
+This construct is also defect-prone.
+If that expression is concatenated with something afterwards,
+you need a comma (if you forget it then the following expression will be
+subtracted from the former)... but since commas are everywhere, it is
+easy to not notice where a comma does <i>not</i> occur.
+Most systems with a null set represent it with a symbol, to make it easy
+to notice... but not 14977.
+This whole notation is so counterintuitive
+that many people aren&#8217;t even aware
+it exists, and they end up repeating themselves to represent the construct
+(e.g., &#8220;foo, bar, baz {foo, bar, baz}&#8221;).
+It also requires re-explaining to everyone, since far more people
+know regular expressions than know the quirky ISO/IEC 14977:1996 notation.
+W3C&#8217;s notation supports &#8220;one or more&#8221;
+in the computing community&#8217;s standard way:
+just add a &#8220;+&#8221; suffix.
+
+<li id="hard_to_understand"><b>It is challenging to understand and many key terms are undefined</b>.
+I think many people find the specification challenging to understand,
+and that is not a good property of a specification.
+It is abstract, and that may be partly necessary given the subject matter.
+But it has a number of terms and definitions that seem unintuitive to me,
+and there are no definitions of key basic terms like character, sign,
+or symbol.
+Compare its text with the W3C specification, which is much easier to understand.
+</ol>
+
+<p>
+If you must use 14977, at least avoid the alternative representation
+characters.
+When the specification was written one of the concerns was that
+there were computers and typewriters (!)
+that did not have some of the characters
+such &#8220;{&#8220; and &#8220;}&#8221;,
+so alternatives such as
+&#8220;(:&#8221; and &#8220;:)&#8221; were defined.
+There is no reason today to use that nonsense.
+
+<p>
+But when the primary advantage of your specification is that it can
+handle old typewriters, perhaps that should not be your preferred spec.
+The weaknesses of this specification far outweigh its advantages.
+It is widely perceived as a failure, but because it still exists,
+people occasionally make the mistake of trying to use it.
+
+<h1 id="conclusions">Conclusions</h1>
+
+<p>
+I am not the only person to notice problems with 14977, of course.
+The paper
+<a href="https://www.grammarware.net/text/2012/bnf-was-here.pdf"
+>&#8220;BNF was Here:
+What Have We Done About the Unnecessary Diversity of
+Notation for Syntactic Definitions&#8221;
+by Vadim Zaytsev</a>
+(<a href="https://dl.acm.org/citation.cfm?id=2232090"
+>also available from the ACM</a>) has some interesting comments.
+He argues that one of the most significant problems with reusing
+grammar knowledge in specifications and manuals is the
+&#8220;diversity of syntactic notations: without loss of generality,
+we can state that every single language document uses its
+own notation, which is more often than not, a dialect of the
+(Extended) Backus-Naur Form.&#8221;
+The paper backs this up with an analysis of
+&#8220;a corpus of 38 programming language
+standards (ANSI, ISO, IEEE, W3C, etc), 23 grammar containing
+publications of other kinds (non-endorsed books, scientific
+papers, manuals) and 8 derivative grammar sources,
+exhibiting in total 42 syntactic notations while defining 77
+grammars (from Algol and C++ to SQL and XPath).&#8221;
+He notes that,
+&#8220;There was an attempt in 1996 to standardize the notation at ISO, but
+it only ended up adding yet another three dialects to the chaos.&#8221;
+He notes some reasons for the failure of 14977 adoption, and
+pointedly notes that ISO/IEC 14977 is not even used in
+all ISO language standards.
+ISO/IEC 14977 has unintentionally become a perfect demonstration of the
+<a href="https://xkcd.com/927/">XKCD cartoon "Standards"</a>.
+
+<p>
+In short, while there would be a big advantage to having a single notation,
+the community of those who write language specifications have generally
+rejected ISO 14977 for a variety of reasons.
+You should be aware of that rejection before committing to using it.
+Yes, it is published by ISO/IEC, but that does not mean that everyone
+uses it - or even that they <i>should</i> use it.
+
+<p>
+I bear no ill will to those who developed ISO/IEC 14977:1996.
+However, I think 14977 has a lot of problems, and
+there are obvious EBNF alternatives
+(such as W3C&#8217;s) that should normally be used instead.
+You would be wise to look at alternatives.
+
+<p>
+<hr>
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2019-2020 David A. Wheeler.
+Released under
+<a href="https://creativecommons.org/licenses/by-sa/3.0/">Creative Commons
+Attribution-ShareAlike version 3.0 or later
+(CC-BY-SA-3.0+)</a>.
+
+</body>
+</html>

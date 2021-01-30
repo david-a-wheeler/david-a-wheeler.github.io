@@ -1,0 +1,650 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>The Linux Kernel: It&#8217;s Worth More!</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Explanation of why the Linux kernel is worth far more than Merkey's offer of $50K; it's worth at least $612M">
+<meta name="keywords" content="Linux, linux kernel, effort, cost, estimating, cost estimate, Merkey, Molnar, GPL, open source software, Free software, OSS, OSS/FS, BSD-style, license, licensing, David Wheeler, David A. WHeeler">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+<h1 class="title">The Linux Kernel: It&#8217;s Worth More!</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">October 12, 2004 (Lightly revised September 28, 2011)</h2>
+
+<p>
+<i>This paper refines Ingo Molnar&#8217;s estimate of the development effort
+it would take to redevelop Linux kernel version 2.6.
+Molnar&#8217;s rough estimate found it would cost $176M (US) to
+redevelop the Linux kernel using traditional proprietary approaches.
+By using a more detailed cost model and much more information about the
+Linux kernel, I found that the effort would be
+<a href="#results">closer to $612M (US)</a>
+to redevelop the Linux kernel as it existed in 2004.
+A postscript lists some recalculations since then,
+showing that these values have grown.
+In any case, the Linux kernel is clearly worth far more than the $50,000
+offered in 2004.
+</i>
+
+
+<h1><a name="introduction">Introduction</a></h1>
+<p>
+On October 7, 2004, Jeff V. Merkey made the
+<a href="http://groups.google.com/groups?q=g:thl3463994640d&amp;dq=&amp;hl=en&amp;lr=&amp;selm=2MMU9-71k-11%40gated-at.bofh.it">
+following offer on the linux.kernel mailing list</a>:
+<blockquote>
+<tt>We offer to kernel.org the sum of $50,000.00 US for a one time
+license to the Linux Kernel Source for a single snapshot of
+a single Linux version by release number.  This offer must be
+accepted by **ALL** copyright holders and this snapshot will
+subsequently convert the GPL license into a BSD style license
+for the code.</tt>
+</blockquote>
+
+<p>
+Many respondents noted that this proposal was unworkable,
+because it required complete agreement by all copyright holders.
+Not only would such a process be lengthy, but
+many copyright holders made it clear in various replies
+that they would <i>not</i> agree to any such plan.
+Many Linux kernel
+developers expect improved versions of their code to be continuously
+available to them, and a release using a BSD-style license would
+violate those developers&#8217; expectations.
+Indeed, it was clear that many respondants felt that such a move
+would strip the Linux kernel of legal protections
+against someone who wanted to monopolize a derived version of the kernel.
+Many open source software / Free software (OSS/FS)
+developers allow conversion of their OSS/FS programs
+to a proprietary program; some even encourage it.
+The BSD-style licenses are specifically designed to allow conversion
+of an OSS/FS program into a proprietary program.
+However,
+the <a href="https://dwheeler.com/essays/gpl-compatible.html">GPL is the
+most popular OSS/FS license</a>, and it was specifically designed
+to prevent this.
+Based on the thread responses, it&#8217;s clear that
+many Linux kernel developers prefer that the GPL continue to be used as
+the Linux kernel license.
+
+
+<p>
+In addition, many people were suspicious about the motives for this offer.
+<a href="http://www.groklaw.net/article.php?story=20041011220545598">Groklaw
+published an article</a> that mentioned this proposal, and
+noted that someone with the same name
+is listed on a patent recently obtained by the Canopy Group.
+SCO is a Canopy Group company, and I have
+since confirmed that the patent application refers to the same person.
+<a href="http://www.groklaw.net/article.php?story=20041021131512626">Groklaw
+later tried to learn more about him</a>.
+<!--
+<a href="http://www.groklaw.net/article.php?story=20041021131512626">
+Later research by Groklaw</a> discovered that Merkey has been under
+a court-ordered restraining order from Novell (his former employer)
+by the Fourth Judicial District Court, Utah County, Utah;
+since Novell is a Linux distributor, this raised other questions.
+-->
+<!--
+The judge ruled, in this order, that Merkey had
+breached his contractual obligations to his employer, and that he had
+"pirated" technology from his employer (see point 228 and others).
+The judge also made several pointed statements about Mr. Merkey in his
+findings of fact (see point 124, 131, etc.).
+e.g., in point 124 he says "he also is and can be deceptive, not only to his
+adversaries, but also to his own partners, his business associates
+and to the court..." and in point 131 the judge claims that
+"[Merkey] regularly exaggerates or lies in his comments to
+others about events happening around him...".
+-->
+<!--
+146. Merkey asserts that he did not fit in at Novell because he had a
+different ethnic or religious background than most of the Novell workers.
+This claim was not supported by any meaningful evidence.
+The judge also noted that Mr. Merkey signed
+his emails to Microsoft as "Your Loyal Servant".
+These additional revelations raised many people's suspicions even further.
+-->
+I don&#8217;t really know why Merkey made this proposal, and it
+doesn&#8217;t really matter.
+What&#8217;s more interesting to me is the questions that this raised,
+namely, how much is Linux &#8220;worth&#8221;?
+That is a valid question!
+
+<p>
+In one of the responses,
+<a href="http://groups.google.com/groups?hl=en&amp;lr=&amp;c2coff=1&amp;threadm=2MMU9-71k-11%40gated-at.bofh.it&amp;rnum=1&amp;prev=/groups%3Fq%3Dg:thl3463994640d%26dq%3D%26hl%3Den%26lr%3D%26selm%3D2MMU9-71k-11%2540gated-at.bofh.it">
+Ingo Molnar calculated the cost to re-develop the Linux kernel</a>
+using my tool
+<a href="https://dwheeler.com/sloccount">SLOCCount</a>.
+Molnar didn&#8217;t specify exactly which version of the Linux kernel he used,
+but he did note that it was in the version 2.6 line, and
+presumably it was a recent version as of October 2004.
+He found that &#8220;the Linux 2.6 kernel, if developed from scratch
+as commercial software, takes at least this much effort under the
+default COCOMO model&#8221;:
+<pre>
+ Total Physical Source Lines of Code (SLOC)                = 4,287,449
+ Development Effort Estimate, Person-Years (Person-Months) = 1,302.68 (15,632)
+  (Basic COCOMO model, Person-Months = 2.4 * (KSLOC**1.05))
+ Schedule Estimate, Years (Months)                         = 8.17 (98.10)
+  (Basic COCOMO model, Months = 2.5 * (person-months**0.38))
+ Estimated Average Number of Developers (Effort/Schedule)  = 159.35
+ Total Estimated Cost to Develop                           = $ 175,974,824
+  (average salary = $56,286/year, overhead = 2.40).
+ SLOCCount is Open Source Software/Free Software, licensed under the FSF GPL.
+ Please credit this data as "generated using David A. Wheeler's 'SLOCCount'."
+</pre>
+
+<p>
+After noting the redevelopment cost of $176M (US),
+Ingo Molnar then commented,
+&#8220;and you want an unlimited license for $0.05M? What is this, the latest
+variant of the Nigerian/419 scam?&#8221;
+
+<p>
+Strictly speaking,
+the value of a product isn&#8217;t the same as the cost of developing it.
+For example,
+if no one wants to use a software product, then it has no value, no matter
+how much was spent in developing it.
+The value of a proprietary software product to its vendor
+can be estimated by
+computing the amount of money that the vendor will receive from it over all
+future time (via sales, etc.),
+minus the costs (development, sustainment, etc.)
+over that same time period -- but predicting
+the future is extremely difficult, and the Linux kernel isn&#8217;t a
+proprietary product anyway.
+Estimating value to users is difficult, and in fact,
+value estimation is surprisingly difficult to compute directly.
+But if a software product <i>is</i> used widely,
+so much so that you&#8217;d be willing to
+redevelop it, then development costs are a reasonable way to estimate
+the lower bound of its value.
+After all,
+if you&#8217;re willing to redevelop a program, then it must have <i>at least</i>
+that value.
+The Linux kernel is widely used, so its redevelopment costs
+will at least give you a lower bound of its value.
+
+<p>
+Thus, Molnar&#8217;s response is quite correct -- offering $50K for something
+that would cost at about $176M to redevelop is ludicrous.
+It&#8217;s true that the kernel developers could continue to develop the
+Linux kernel after a BSD-style release, after all, the *BSD operating systems
+do this now.
+But with a BSD-style release, someone else could take the code
+and establish a competing proprietary product, and it would
+take time for the kernel developers to add enough additional material
+to compete with such a product.
+It&#8217;s not clear that a proprietary vendor could really pick up the Linux
+kernel and maintain the same pace without many of the original developers,
+but that&#8217;s a different matter.
+Certainly, the scale of the difference between $176M and $50K is enough
+to see that the offer is not very much, compared to what the offerer
+is trying to buy.
+
+<p>
+But in fact, it&#8217;s even sillier than it appears; I believe the cost to
+redevelop the Linux kernel would actually be much greater than this.
+Molnar correctly notes that he used the default Basic COCOMO model
+for cost estimation.
+This is the default cost model for SLOCCount, because it&#8217;s
+a reasonable model for rough estimates about typical applications.
+It&#8217;s also a reasonable default when
+you&#8217;re examining a large set of software programs at once, since the ranges of
+real efforts should eventually average out (this is the approach I used in my
+<a href="https://dwheeler.com/sloc"><i>More than a Gigabuck</i></a> paper).
+So, what Molnar did was perfectly reasonable for getting a rough
+order of magnitude of effort.
+
+<p>
+But since there&#8217;s only one program being considered in this analysis --
+the Linux kernel --
+we can use a more detailed model to get a more accurate cost estimate.
+I was curious what the answer would be.
+So I&#8217;ve estimated the effort to create the Linux kernel, using a
+more detailed cost model.
+This paper shows the results -- and it shows that redeveloping the
+Linux kernel would cost even <i>more</i>.
+
+<p>
+This estimate is what it would cost to
+rebuild a particular version, and not exactly the same as the effort
+actually invested into the kernel.
+In particular, in Linux kernel development, a common practice is to
+have a &#8220;bake-off&#8221; where competing ideas are <i>all</i> implemented
+and then measured; the approach with the best result
+(e.g., faster) is then used.
+Bake-offs have much to commend them, but since only one approach
+is actually included, the effort invested in the alternatives isn&#8217;t
+included in this estimate.
+
+<h1><a name="computing">Computing a Better Estimate</a></h1>
+<p>
+To get better accuracy in our estimation,
+we need to use a more detailed estimation model.
+An obvious alternative, and the one I&#8217;ll use, is
+the Intermediate COCOMO model.
+This model requires more information than the Basic COCOMO model,
+but it can produce higher-accuracy estimations if you can provide
+the data it needs.
+We&#8217;ll also use the version of COCOMO that uses physical SLOC
+(since we don&#8217;t have the logical SLOC counts).
+If you don&#8217;t want to know the details, feel free to skip to the next
+section labelled &#8220;<a href="#results">results</a>&#8221;.
+
+<p>
+First, we now need to determine if this is an &#8220;organic&#8221;, &#8220;embedded&#8221;, or
+&#8220;semidetached&#8221; application.
+The Linux kernel is clearly not an organic application; organic applications
+have a small software team developing software in a familiar,
+in-house environment, without significant communication overheads,
+and allow hard requirements to be negotiated away.
+It could be argued that the Linux kernel is embedded, since it often
+operates in tight constraints; but in practice
+these constraints aren&#8217;t very tight,
+and the kernel project can often negotiate requirements to a limited extent
+(e.g., providing only partial support for a particular peripheral
+or motherboard if key documentation is lacking).
+While the Linux kernel developers don&#8217;t ignore resource constraints,
+there are no specific constraints that the developers feel are
+strictly required.
+Thus, it appears that the kernel should be considered
+a &#8220;semidetached&#8221; system; this is the
+intermediate stage between organic and embedded.
+&#8220;Semidetached&#8221; isn&#8217;t a very descriptive word, but that&#8217;s the word used by
+the cost model so we&#8217;ll use it here.
+It really just means between the two extremes of organic and embedded.
+
+<p>
+The intermediate COCOMO model also requires a number of additional parameters.
+Here are those parameters, and their values for the Linux kernel
+(as I perceive them); the parameter values are based on
+<i>Software Engineering Economics</i> by Barry Boehm:
+<ul>
+<li>RELY: Required software reliability: High (1.15). The Linux kernel
+  is now used in situations where crashes can cause high financial loss.
+  Even more importantly, Linux
+  kernel developers <i>expect</i> the kernel to be highly reliable,
+  and the kernel undergoes extensive worldwide off-nominal testing.
+  While the testing approach is different than traditional testing regimes,
+  it clearly produces a highly reliable result
+  (see the
+  <a href="https://dwheeler.com/oss_fs_why.html#reliability">Reliability</a>
+  section of my paper
+  <a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at the Numbers!</a>).
+<li>DATA: Data base size: Nominal (1.0).  Typically the Linux kernel
+  manages far larger data bases (file systems) than itself,  but it
+  handles them as somewhat opaque contents, so it&#8217;s questionable that
+  those larger sizes can really be counted as being much greater than
+  nominal.  Handling the filesystems&#8217;
+  metadata is itself somewhat complicated, and does take significant
+  effort, but filesystem management is only one of many things that
+  the kernel does.  So, absent more specific data, we&#8217;ll
+  claim it&#8217;s nominal.  If we claim it&#8217;s higher, and there&#8217;s reason
+  for doing so, that would increase the estimated effort.
+<li>CPLX: Product complexity: Extra high (1.65).
+  The kernel must perform multiple resource handling with dynamically
+  changing priorities: multiple processes/tasks running on potentially
+  multiple processors, with multiple kinds of memory, accessing peripherals
+  which also have various dynamic priorities.
+  The kernel must deal with device timing-dependent coding, and
+  with highly coupled dynamic data structures (some of whose structure
+  is imposed by hardware).  In addition, it implements
+  routines for interrupt servicing and masking, as well as multi-processor
+  threading and load balancing.
+  The kernel does have an internal design structure, which helps manage
+  complexity somewhat, but in the end no design can eliminate the
+  essential complexity of the task today&#8217;s kernels are asked to perform.
+  It&#8217;s true that toy kernels aren&#8217;t as complex; requiring single
+  processors, forbidding re-entry, ignoring resource contention issues,
+  ignoring error conditions, and a variety of other simplifications
+  can make a kernel much easier to build, at the cost of poor performance.
+  But the Linux kernel is no toy.
+  Real-world operating system kernels are considered extremely difficult
+  to develop, for a litany of good reasons.
+<li>TIME: Execution time constraint: High (1.11). Although it doesn&#8217;t need to
+  stay at less than 70% resource use, performance <i>is</i> an important
+  design criteria, and much effort has been spent on measuring and
+  improving performance.
+<li>STOR: Main storage constraint: Nominal (1.0).  Although there has been
+  some effort to limit memory use (e.g., 4K kernel stacks), Linux kernel
+  development has not been strongly constrained by memory.
+<li>VIRT: Virtual machine volatility: High (1.15).
+  The most common processor (x86) doesn&#8217;t change that quickly, though new
+  releases by Intel and AMD do need to be taken into account.
+  The Linux kernel is also influenced by other processor architectures,
+  which in the aggregate change quite a bit over time.
+  Even more importantly, the other components of underlying machines
+  (such as motherboards, peripheral and bus interfaces, etc.)
+  change on a weekly basis.  Often the documentation is unavailable,
+  and when available, it&#8217;s sometimes wrong (which from a developer&#8217;s
+  point of view looks like a volatile interface, since it keeps changing).
+  The Linux kernel developers spend a vast amount of time identifying
+  hardware limitations/problems and working around them.
+  What&#8217;s worse, there&#8217;s a variety of different hardware, and new ones
+  keep arriving.
+  The kernel developers do attempt to control things where they can.
+  For example, while they try to write code that works with a variety
+  of gcc versions, they limit themselves to one compiler (gcc), designate
+  an official gcc version, and try to limit when official gcc versions
+  are changed.
+  But these measures cannot hide the fact that
+  the interface of the underlying machine is
+  actually quite volatile.
+<li>TURN: Computer turnaround time: Nominal (1.0).  Kernel recompilation
+  and rebooting aren&#8217;t interactive, but they&#8217;re reasonably fast on
+  2+ GHz processors.  Once the first compilation has occurred,
+  recompilation is usually quite quick for localized changes.
+  Thus, there&#8217;s no reason for this to be a penalty.
+<li>ACAP: Analyst capability: High (0.86).  It appears that the people
+  analyzing the system, identifying the &#8220;real&#8221; requirements, and the
+  needed design modifications to support them,
+  are significantly better at doing this than the industry average.
+  This analysis tends to be more distributed than in a typical proprietary
+  project, but it obviously still occurs.
+<li>AEXP: Applications experience: Nominal (1.0).  It&#8217;s difficult to
+  determine how much experience with the Linux kernel
+  the software developers of the Linux kernel have.
+  Clearly, if you modify the same program day after day for many years,
+  you&#8217;ll tend to become more efficient at modifying it.
+  Some developers, such as Linus Torvalds and Alan Cox,
+  clearly have a vast amount of experience in modifying the Linux kernel.
+  But for many other kernel developers it isn&#8217;t clear that they have
+  a vast amount of experience modifying the Linux kernel.
+  In absence of better information, I&#8217;ve chosen nominal. This suggests that
+  on average, developers of the Linux kernel have about 3 years&#8217; full-time
+  experience in modifying the Linux kernel.
+  More experience on average would help, and lower the effort
+  estimation somewhat.
+<li>PCAP: Programmer capability: High (0.86).
+  Modern kernels such as Linux are complex, creating a strong barrier against
+  attempts to contribute by less capable developers.
+  Would-be contributors
+  must convince the existing experts that their work is worthwhile, so
+  new contributors&#8217; works are normally revised by highly capable developers.
+  Key kernel developers are not accepted as such unless they convince the
+  other, already highly capable developers that they are also capable.
+  Generally only
+  highly capable, above-average developers (75th percentile or more)
+  will be successful at helping to develop the Linux kernel.
+<li>VEXP: Virtual machine experience: Nominal (1.0).  The x86 processors,
+  which are by far the most popular for the Linux kernel, are
+  relatively stable and kernel developers have a lot of experience with them.
+  But they are not <i>completely</i> stable (e.g., the new 64-bit extensions
+  for x86 and the NX bit), which can also reduce experience slightly.
+  Authors of ports to other processors also tend to be experienced
+  with those processors.
+  On the other hand,
+  most of the kernel&#8217;s code is in its hardware drivers, and this
+  hardware often acts as a virtual machine as well as a needed interface.
+  Many driver developers, while experienced in general,
+  often have less experience with the particular component they&#8217;re
+  writing a driver for.
+  In particular, many drivers are <i>not</i> written by companies that
+  produce the hardware, and the developers
+  often don&#8217;t have good documentation to help them.
+  Sometimes this has helpful side-effects.
+  It can help unify how hardware is handled, since the
+  kernel developers who are writing drivers for several
+  similar peripherals will often develop a way
+  to unify their handling and apparant interface.
+  It can also have aid reliability in the long term, since the driver
+  writers undrerstand how the kernel works (Windows drivers
+  tend to be written by hardware companies who understand their product
+  but have less knowledge about Windows, and since their code is often
+  not peer reviewed by Windows developers, many Windows drivers can
+  cause the entire operating system to crash).
+  But this initial lack of information by Linux kernel developers
+  about the components does increase the effort to develop a driver.
+  What&#8217;s worse, hardware components are notorious for not operating as their
+  specifications proclaim, and the kernel&#8217;s job is to hide all that.
+  Thus, this is averaged as nominal, and this is probably being generous.
+<li>LEXP: Programming language experience: High (0.95).
+<li>MODP: Modern programming practices: High - in general use (0.91).
+  This program is written in C, which lacks structures such as
+  exception handling, so there is extensive use of &#8220;goto&#8221; (etc.) to implement
+  error handling.  However, the use of such constructs tends to be
+  highly stylized and structured, so credit is given for using modern
+  practices. Some might claim that this is
+  giving too much credit, but changing this would only make the estimated
+  effort even larger.
+<li>TOOL: Use of software tools: Nominal (1.0).
+<li>SCED: Required development schedule: Nominal (1.0).  There is little
+  schedule pressure per se, so the &#8220;most natural&#8221; speed is followed.
+</ul>
+
+
+<h1><a name="results">Results</a></h1>
+<p>
+So now we can compute a new estimate for how much effort it
+would take to re-develop the Linux kernel 2.6:
+<blockquote>
+<pre>
+MM-nominal-semidetached = 3*(KSLOC)^1.12 =
+  = 3* (4287.449)^1.12 = 35,090 MM
+Effort-adjustment =  1.15 * 1.0 * 1.65 * 1.11 * 1.0 * 1.15 *
+    1.0 * 0.86 * 1.0 * 0.86 * 1.0 * 0.95 * 0.91 * 1.0 * 1.0
+    = 1.54869
+MM-adjusted = 35,090 * 1.54869 = 54,343.6 Man-Months
+            = 4,528.6 Man-years of effort to (re)develop
+If average salary = $56,286/year, and overhead = 2.40, then:
+Development cost = 56286*2.4*4528.6 = $611,757,037
+</pre>
+</blockquote>
+
+<p>
+In short, it would actually cost about $612 million (US) to re-develop the
+Linux kernel.
+
+<p>
+Why is this estimate so much larger than Molnar&#8217;s original estimate?
+The answer is that SLOCCount presumes that it&#8217;s dealing with an
+&#8220;average&#8221; piece of software (i.e., a typical application) unless
+it&#8217;s given parameters that tell it otherwise.
+This is usually a reasonable default; almost nothing is as hard
+to develop as an operating system kernel.
+But operating system kernels
+are so much harder to develop that, if you include that difficulty
+into the calculation, the effort estimations go way up.
+This difficulty shows up in the nominal equation -
+semidetached is fundamentally harder, and thus has a larger exponent
+in its estimation equation than the default for basic COCOMO.
+This difficulty also shows up in factors such as &#8220;complexity&#8221;;
+the task the kernel does is fundamentally hard.
+The strong capabilities of analysts and developers, use of modern practices,
+and programming language experience all help,
+but they can only partly compensate; it&#8217;s still very hard to
+develop a modern operating system kernel.
+
+<p>
+This difference is smoothed over in my paper
+<a href="https://dwheeler.com/sloc"><i>More than a Gigabuck</i></a>
+because that paper
+includes a large number of applications.
+Some of the applications would cost less than was estimated, while
+others would cost more; in general you&#8217;d expect that by computing the
+costs over many programs the differences would be averaged out.
+Providing that sort of information for every program would have been
+too time-consuming for the limited time I had available to write that paper,
+and I often didn&#8217;t have that much information anyway.
+If I do such a study again, I might treat the kernel specially, since
+the kernel&#8217;s size and complexity makes it reasonable to treat specially.
+SLOCCount actually has options that allow you to provide the
+parameters for more accurate estimates,
+if you have the information they need and you&#8217;re willing
+to take the time to provide them.
+Since the nominal factor is 3, the adjustment for this situation
+is 1.54869, and the exponent for semidetached projects is 1.12,
+just providing SLOCCount with
+the option &#8220;<tt>--effort&nbsp;4.646&nbsp;1.12</tt>&#8221;
+would have created a more accurate estimate.
+But as you can see, it takes much more work to use this more
+detailed estimation model, which is why many people don&#8217;t do it.
+For many situations, a rough estimate is really all you need;
+Molnar certainly didn&#8217;t need a more exact estimate to make his point.
+And being able to give a rough estimate when given
+little information is quite useful.
+
+<p>
+In the end, Ingo Molnar&#8217;s response is still exactly correct.
+Offering $50K for something
+that would cost millions to redevelop, and is actively used and
+supported, is absurd.
+
+<p>
+It&#8217;s interesting to note that there are already
+several kernels with BSD licenses: the *BSDs (particularly
+FreeBSD, OpenBSD, and NetBSD).
+These are fine operating systems for many purposes,
+indeed, my website once ran on OpenBSD.
+But clearly, if there is a monetary offer to buy Linux code,
+the Linux kernel developers must be doing something right.
+Certainly, from a market share perspective, Linux-based systems are far
+more popular than systems based on the *BSD kernels.
+If you just want a kernel licensed under a BSD-style license,
+you know where to find them.<a href="http://catb.org/~esr/jargon/html/P/Plan-9.html">*</a>
+<!-- It's funny. Laugh. If you don't get the joke, explaining it
+won't make it any funnier to you. -->
+
+<p>
+It&#8217;s worth noting that these approaches only estimate development cost,
+not value.
+All proprietary developers invest in development with the presumption
+that the value of the resulting product (as captured from license fees,
+support fees, etc.) will exceed the development cost -- if not, they&#8217;re
+out of business.
+Thus, since the Linux kernel is being actively sustained, it&#8217;s only
+reasonable to presume that its <i>value</i> far exceeds this development
+estimate.
+In fact, the kernel&#8217;s value probably <i>well</i> exceeds this estimate of
+simply redevelopment cost.
+
+<p>
+It&#8217;s also worth noting that the Linux kernel has grown substantially.
+That&#8217;s not surprising, given the explosion in the number of peripherals
+and situations that it supports.
+In
+<a href="https://dwheeler.com/sloc"><i>Estimating Linux&#8217;s size</i></a>,
+I used a Linux distribution released in March 2000,
+and found that the Linux kernel had 1,526,722 physical source lines of code.
+In
+<a href="https://dwheeler.com/sloc"><i>More than a Gigabuck</i></a>,
+the Linux distribution had been released on April 2001, and its
+kernel (version 2.4.2) was 2,437,470 physical source lines of code (SLOC).
+At that point, this Linux distribution would have cost more
+than $1 Billion (a Gigabuck) to redevelop.
+The much newer and larger Linux kernel considered here, with far more
+drivers and capabilities than the one in that paper,
+now has 4,287,449 physical source lines of code, and
+is starting to approach a Gigabuck of effort all by itself.
+If the kernel reaches 6,648,956 lines of code
+(($1E9/$56286/2.4*12/3/1.54869) ^ (1/1.12))
+given the other assumptions
+it&#8217;ll represent a billion dollars of effort all by itself.
+And that&#8217;s just the kernel, which is only part of a working system.
+There are other components that weren&#8217;t included <i>More than a Gigabuck</i>
+(such as OpenOffice.org) that are now common in Linux distributions,
+which are also large and represent massive investments of effort.
+<i>More than a Gigabuck</i>
+noted the massive rise in size and scale
+of OSS/FS systems, and that distributions were rapidly growing in
+invested effort; this brief analysis is evidence that the trend continues.
+
+<p>
+In short, the amount of effort that today&#8217;s OSS/FS programs represent
+is rather amazing.
+Carl Sagan&#8217;s phrase &#8220;billions and billions,&#8221; which he applied to
+astronomical objects, easily applies to the effort
+(measured in U.S. dollars) now invested in OSS/FS programs.
+
+<h1><a name="postscript">A Postscript</a></h1>
+
+<p>
+I&#8217;d like to thank Ingo Molnar for doing the original analysis
+(using SLOCCount) that triggered this paper.
+Indeed, I&#8217;m always delighted to see people doing analysis instead of
+just guesswork.
+Thanks for doing the analysis!
+This paper is not in any way an attack on Molnar&#8217;s work; Molnar computed
+a quick estimate, and this paper simply uses more data to refine his
+effort estimation further.
+<p>
+Also, I&#8217;d like to tip my hat to
+<a href="http://www.informationweek.com/blog/main/archives/2007/10/linux_will_be_w.html">Charles Babcock&#8217;s October 19, 2007 article
+&#8220;Linux Will Be Worth $1 Billion In First 100 Days of 2009&#8221;</a>.
+He noticed that, by my calculations, if 
+the Linux kernel ever reached 6.6 million lines of code,
+it would be worth more than $1 billion in terms of equivalent, commercial development costs.
+Using the current size and growth rates of the Linux kernel, he examined
+the trend lines and found that
+&#8220;Sometime during the first 100 days of 2009, Linux
+will cross the 6.6 million lines of code mark and $1 billion in value.&#8221;
+<p>
+<!-- http://linux.slashdot.org/story/10/02/24/155214/The-Billion-Dollar-Kernel -->
+In 2010, researchers re-did the analysis, and found that it <i>had</i>
+crossed this milestone.
+<a href="http://iri.jrc.ec.europa.eu/concord-2010/posters/Garcia-Garcia.ppt">
+Jesus Garcia-Garcia and Ma Isabel Alonso de Magdaleno</a>
+found that the then-latest version (2.6.30) of the Linux kernel would
+cost an estimated EUR 1,025,553,430 to re-develop;
+at the exchange rate of 1.3499 U.S. Dollars per Euro of 2010-02-25
+(<a href="http://finance.yahoo.com/currency-converter?amt=149+from=USD&to=GBP&submit=Convert#from=EUR;to=USD;amt=1">reported by Yahoo finance</a>),
+this becomes about $1.4 billion.
+<!--
+Now, this 2010 study used 2006 European average salary figures (EUR 31,040),
+while my original analysis used year 2000 constant dollars,
+so these aren't strictly speaking the same dollar units.
+According to <a href="http://www.oanda.com/currency/historical-rates">a
+website that records historical exchange rates</a>, the exchange rate
+of Euros to dollars on 06-15-2006 (around midyear) was 1.25780.
+The 2010 study used the 2006 salary figure of EUR 31,040, which converts to
+$39,042/year.
+That's smaller, which suggests that Europe fundamentally pays less than
+the U.S. (which may well be true!).
+That makes it harder to do a one-for-one comparison.
+-->
+<p>
+The Linux kernel keeps growing;
+<a href="http://linuxcost.blogspot.com/2011/03/cost-of-linux.html">as of March 7, 2011, it would cost approximately $3 billion USD 
+to redevelop using this estimation method</a>.
+<p>
+Of course, the real story isn&#8217;t the exact numbers, it&#8217;s that instead of
+disappearing, FLOSS programs like the Linux kernel are thriving.
+
+<p>
+<hr>
+<p>
+<a href="http://www.groklaw.net/article.php?story=20041012233246869">An
+older version of this essay was published in Groklaw.
+
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/sloc"><i>More than a Gigabuck: Estimating
+GNU/Linux&#8217;s Size</i></a>,
+my article
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a>, and my papers and book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2004-2010 David A. Wheeler.  All rights reserved.
+This
+<a href="http://www.groklaw.net/article.php?story=20041012233246869">
+article was reprinted in Groklaw</a> by permission.
+Before September 28, 2011, this article was titled
+<i>Linux Kernel 2.6: It&#8217;s Worth More!</i>, but many of the
+points apply to versions other than Linux kernel version 2.6.
+
+</body>
+</html>
+

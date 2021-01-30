@@ -1,0 +1,343 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>How to easily open files and URLs from the command line</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="This essay describes how to quickly open a file, directory, or URL from the command line in various platforms.">
+<meta name="keywords" content="start, open, xdg-open, cygstart, gnome-open, kde-open, MIME, file, filename, URL, URI, http, https, directory, command line, Windows, MacOS, Linux, Unix, Cygwin, file type, filetype, file association, association">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">How to easily open files and URLs from the command line</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2018-10-07 (original 2010-07-06)</h2>
+
+<p>
+Nearly all operating systems have a simple
+command to open up a file, directory, or URL from the command line.
+This is really handy when you&#8217;re writing a program, because these are
+easy to invoke from almost any language.
+You can then pass it a filename (to open that file using the
+default application for that file type), a directory name to start
+navigating in that directory (use &#8220;.&#8221; for the current directory),
+or a URL like
+&#8220;<a href="https://dwheeler.com">https://dwheeler.com</a>&#8221;
+to open a browser at that URL.
+<p>
+Here&#8217;s how to open files or URLs from the command line, on lots
+of different platforms (Windows, MacOS, Linux/Unix, and Cygwin).
+<p>
+<h1>Windows</h1>
+<p>
+You want the <tt>start</tt> command; when running a command line (cmd.exe)
+or a batch file, use:
+<pre>
+  start <i>filename_or_URL</i>
+</pre>
+<p>
+This is a built-in of cmd, so other programs can&#8217;t invoke it as &#8220;start&#8221;,
+but other programs <i>can</i> invoke it this way:
+<pre>
+  cmd /c start <i>filename_or_URL</i>
+</pre>
+<p>
+Note that if it&#8217;s a local filename, and it&#8217;s executable,
+<tt>start</tt> will <i>execute</i> that program, not open a viewer of it.
+I haven&#8217;t found a Windows command that will easily open files
+but never execute them, unfortunately.
+This makes <tt>start</tt> (and <tt>explorer</tt>) a potential security
+problem, depending on how it's used, but I haven't found a secure built-in
+(other than implementing the command yourself).
+<p>
+Many Internet sources recommend using <tt>explorer</tt> instead,
+but there are good reasons to not do that.
+If you invoke <tt>explorer</tt> directly, it will <b>ignore</b> the user&#8217;s
+selected Internet browser, and will always use Internet Explorer instead.
+Users presumably made their choice for a reason, so you should respect it.
+(Indeed, Internet Explorer has a terrible history of vulnerabilities,
+so <i>forcing</i> its use seems like an bad idea.)
+One minor positive when using <tt>explorer</tt>
+is that if the executable came from the Internet,
+then you&#8217;ll be given a dialogue on whether or not to execute the file.
+But this isn't very helpful in real life, because
+users typically ignore these dialogues.
+Users typically neither understand nor care what these dialogues say, and
+<a href="http://www.youtube.com/watch?v=FxOIebkmrqs">
+they see so many such dialogues that they've been
+trained to answer &#8220;okay&#8221; to them</a>.
+Thus,
+<a href="http://en.wikipedia.org/wiki/Dancing_pigs">these security dialogues
+are basically pointless</a>.
+<p>
+Strictly speaking, redirection to other file-opening programs
+only works from cmd when
+&#8220;command extensions&#8221; are enabled, but as of Windows XP
+these are enabled by default.
+As usual, run &#8220;help start&#8221; to learn more about its options.
+The related Windows commands <tt>assoc</tt> and <tt>ftype</tt> are useful
+for setting the file type (for a given file extension) and the open command
+(for a given file type).
+
+<p>
+<h1>MacOS X</h1>
+<p>
+You want the <tt>open</tt> command, i.e.:
+<pre>
+  open <i>filename_or_URL</i>
+</pre>
+<p>
+(You can use &#8220;-a&#8221; to force a different application to run.)
+
+<p>
+<h1>Linux/Unix</h1>
+<p>
+You want the <a href="http://portland.freedesktop.org/xdg-utils-1.0/xdg-open.html"><tt>xdg-open</tt></a> command, i.e.:
+<pre>
+  xdg-open <i>filename_or_URL</i>
+</pre>
+<p>
+This isn&#8217;t always installed, so make sure the
+<a href="http://portland.freedesktop.org/xdg-utils-1.0/">xdg-utils</a>
+package is installed
+(the name of the package is xdg-utils on at least
+Fedora, Debian, and Ubuntu; it may have a different name on some other
+distributions).
+<p>
+The xdg-open program is just a wrapper that invokes the &#8220;real&#8221;
+opening program(s), but you should use xdg-open instead because
+the &#8220;real&#8221; program to do this
+varies widely depending on user preference.
+This (and similar wrappers) were developed by the
+<a href="http://portland.freedesktop.org/wiki/">Portland project at
+Freedesktop.org</a>
+(<a href="http://lxer.com/module/newswire/view/71524/index.html">
+here&#8217;s a news clip about Portland</a>).
+The &#8220;real&#8221; program for GNOME is gnome-open
+(which may in turn invoke nautilus),
+for KDE it&#8217;s kde-open or kfmclient
+(which on KDE 4 may in turn invoke dolphin),
+for XFCE it&#8217;s really exo-open, and
+there are some other programs like mimeopen.
+(These, in turn, find the right program to use and invoke it).
+Where appropriate, xdg-open follows the BROWSER convention.
+<p>
+Unfortunately, xdg-open isn't included with stock Solaris.
+In many cases, the better solution is to download and install xdg-utils,
+which is reported to work fine on Solaris.
+But if you must, an alternative is to directly invoke
+<a href="http://trac.sagemath.org/sage_trac/ticket/4979">
+/usr/dt/bin/sdtwebclient on Solaris</a>.
+<p>
+If you know for <i>certain</i> that a user is using a particular
+user interface, you <i>could</i> call that program (e.g., gnome-open) directly.
+But that kind of certainty is rare.
+For example, you may have written a GNOME program, but the user
+may be using KDE to invoke it; in that case
+gnome-open is not the right program to use.
+After all, if the user is using KDE, then it&#8217;s the KDE settings
+that should be used.
+In general, use xdg-open; you&#8217;ll save your sanity and
+respect your user&#8217;s preferences.
+
+<h1>Cygwin</h1>
+<p>
+A simple approach is the <tt>cygstart</tt> command, i.e.:
+<pre>
+  cygstart <i>filename_or_URL</i>
+</pre>
+<p>
+Note that if it&#8217;s a local filename, and it&#8217;s executable,
+opening the file will execute that program.
+This is the same problem that Windows has, for the same reasons
+(Cygwin runs on top of Windows, and thus inherits many Windows defects
+including this one).
+<p>
+Do <i>not</i> use
+<a href="http://www.commandlinefu.com/commands/view/2729/open-windows-executable-file-or-folder-from-cygwin-terminal">
+<tt>explorer $(cygpath "path" -w)</tt>
+</a>
+because although that may be faster, it will often choose the wrong
+application (in particular, it will fail to use the user&#8217;s preferred browser).
+<p>
+Note that <tt>start</tt> does not directly work on
+the Cygwin mintty command line, but <tt>explorer</tt> does.
+(If you use Cygwin, install mintty immediately; it&#8217;s wonderful.)
+You could use <tt>cmd /c start...</tt> instead, but don&#8217;t;
+on Cygwin you want to use <tt>cygstart</tt> instead.
+When you are <i>running</i> mintty, you can press control-left-button,
+or press right-button and select "open".
+
+<p>
+I hope that someday the distributed version of
+Cygwin will support <tt>xdg-open</tt>,
+but as of 2010-07-01 it does not.
+I do know that there is
+<a href="http://cygwin-ports.git.sourceforge.net/git/gitweb.cgi?p=cygwin-ports/ports;a=commit;h=b4e1bb7">a patch to xdg-open so that it will invoke
+cygstart if all else fails</a>.
+Cygwin does include a slightly related package with the name
+python-xdg, but as of 2012-03-18 the python-xdg
+package does not include xdg-open, so that does not help.
+
+<p>
+<h1>Making sure it does the right thing (and security issues)</h1>
+<p>
+Beware of common gotchas.
+<p>
+First, there is a basic security problem with the easy-to-use
+tools in Windows.
+Note that some of the Windows-based commands listed above
+will <i>execute</i> that file, instead of running a trusted viewer
+of the file, if it is a local executable file.
+This is true for Windows&#8217; <tt>start</tt> and
+Cygwin&#8217;s <tt>cygstart</tt> in particular.
+(It may also true of an xdg-open on Cygwin, if any, since it will have to
+depend on <tt>cygstart</tt>).
+I have not, as yet, found any easy way around this on Windows
+(including Cygwin, which since it runs on Windows inherits the flaws
+of Windows).
+This inability to easily open files without executing them
+is an example of a basic security vulnerability in Windows.
+This is an especially glaring flaw in Windows 
+because it is so easy to do this securely on everything else.
+I would love to hear about something better;
+<a href="https://dwheeler.com/contactme.html">please email me</a>
+if you know of a better solution!
+But do not hold your breath; I've had this request out for years, and
+no one has pointed me to anything.
+<p>
+Second, make sure that troublesome filenames are handled properly,
+including filenames
+with whitespace (including space, tab, newline, and return).
+In particular, if you&#8217;re invoking it from a Bourne shell
+(like <tt>bash</tt>),
+surround the variable reference with double-quotes (as you should with
+any value that might contain whitespace).  In short, do it like this:
+<tt>xdg-open "$filename"</tt>
+<p>
+Third, make sure that your invocation isn&#8217;t misinterpreted.
+All of these programs have different (incompatible) option formats;
+you need to make sure that a pathname isn&#8217;t misinterpreted as an option.
+This is annoying with Windows, because &#8220;/&#8221; is the leading character for options
+<i>and</i> a possible beginning of an absolute filename
+(Unix/Linux/MacOS have more rational approaches; they use &#8220;-&#8221;, which
+is trivially prefixed with &#8220;./&#8221;).
+In addition, it&#8217;s often ambiguous whether or not an argument is a filename
+or a URL.
+<p>
+There are three basic possibilities:
+URLs, absolute pathnames (that start from the filesystem root), and
+relative pathnames (that start from the current directory):
+<ol>
+<li>
+If you&#8217;re handing off a URL, just make sure it looks like one: it should
+start with PROTOCOL:/... where PROTOCOL is an alphanumeric name
+that begins with a letter (a-z or A-Z).
+All of these programs presume that if a parameter looks like a URL,
+it&#8217;s a URL (even if it isn&#8217;t).
+Make sure it&#8217;s a protocol they can handle; http:, https:, and ftp:
+are basically universal.
+In every one I&#8217;ve tested, file: is correctly treated as a local filename.
+<li>
+Absolute pathnames on Unix, Linux, and MacOS are easy - they always
+begin with &#8220;/&#8221;, so just pass them in that way.
+Absolute pathnames on Windows are more annoying to deal with, because they
+can look like URLs (e.g., &#8220;c:/hello&#8221;) or like option flags
+(e.g., &#8220;/select&#8221;).
+On Windows a possible solution is to use the &#8220;file:&#8221; prefix, which will
+force the string to be interpreted as a file.
+If you convert a filename to a file: URL, make sure you convert all
+&#8220;%&#8221; characters to &#8220;%25&#8221;, or it will be misinterpreted.
+<li>
+If it&#8217;s a relative pathname, make sure it does <i>not</i>
+look like anything else.
+In particular, make sure it does not look like
+a URL or an option.
+When in doubt, prefix any relative pathname
+with &#8220;./&#8221; to make sure it is interpreted correctly.
+In particular, if the relative pathname begins with &#8220;-&#8221;, prefix it with &#8220;./&#8221;;
+that is especially important on Unix/Linux/MacOS, but it&#8217;s even
+relevant for Windows (many Windows programs also use &#8220;-&#8221; as the
+option prefix).
+</ol>
+<p>
+As noted above,
+if you convert a pathname to a file: URL, make sure you convert all
+&#8220;%&#8221; characters to &#8220;%25&#8221;, or it will be misinterpreted.
+<p>
+Finally, beware of just arbitrarily accepting opening a file;
+opening /dev/zero (on Unix/Linux) or COM1: (on Windows) can cause trouble.
+In many circumstances this is not a big deal (if the user can
+just shut down the hung process), but in a few cases it can cause more
+serious problems.
+It&#8217;s best if you do <i>not</i> run these with root/admin privileges,
+because an attacker can then cause more trouble if they can get
+an arbitrary filename viewed.
+<p>
+And with that, there you go, a simple way to open up files,
+directories, and URLs.
+
+<p>
+<h1>A simple script</h1>
+<p>
+If you do not use Windows, or can trust the files that you open and/or execute,
+here's a simple shell script
+to figure out how to invoke the current user's browser.
+Remember: Don't do this on Windows if you can't trust the file.
+There's a program called "<tt>open</tt>" on some systems that is completely
+different, so we'll try that command only if others do not work out:
+
+<pre>
+#!/bin/sh
+# ...
+# Figure out how to invoke the current user's browser.
+# See: https://dwheeler.com/essays/open-files-urls.html
+viewer=FAIL
+for possibility in xdg-open gnome-open cygstart start open ; do
+  if command -v "$possibility" &gt;/dev/null 2&gt;&amp;1 ; then
+    viewer="$possibility"
+    break
+  fi
+done
+if [ "$viewer" = FAIL ] ; then
+  echo 'No viewer found.' &gt;&amp;2
+  exit 1
+fi
+# Now $viewer is set, so we can use it.
+"$viewer" "$FILE_OR_URL_TO_VIEW"
+</pre>
+
+<h1>Credits</h1>
+<p>
+I found some of this information in
+<a href="http://www.howtogeek.com/howto/15781/open-a-file-browser-from-your-current-command-promptterminal-directory/">
+How-To Geek&#8217;s
+&#8220;Open a File Browser From Your Current Command Prompt/Terminal Directory&#8221;</a>
+and
+<a href="http://superuser.com/questions/38984/linux-equivalent-command-for-open-command-on-mac-windows">
+Linux equivalent command for &#8220;open&#8221; command on Mac/Windows?</a>, but
+nothing in one place.
+
+<!-- TODO: Android?
+ Any way to open without executing the program on Windows?
+-->
+
+<p>
+<hr>
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2010 David A. Wheeler.
+
+</body>
+</html>
+

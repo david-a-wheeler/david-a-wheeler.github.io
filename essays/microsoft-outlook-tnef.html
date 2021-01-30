@@ -1,0 +1,397 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Microsoft Outlook/Exchange MS-TNEF handling (aka "Winmail.dat", "Win.dat", or "Part 1.2" problem of unopenable email attachments)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="What the Microsoft Outlook MS-TNEF (aka winmail.dat, win.dat, or Part 1.2 problem) problem is, and how to fix it">
+<meta name="keywords" content="tnef, ms-tnef, winmail.dat, Part 1.2, win.dat, Microsoft, Outlook, Exchange, Microsoft Outlook, Outlook Express, Microsoft Exchange, email, attachment, attachments, incompatible, standards, nonstandard, Thunderbird, eml, .eml, dat, .dat, David, Wheeler, David A. Wheeler, David Wheeler, Transport Neutral Encapsulation Format, Windows, Macintosh, Linux, Unix">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Microsoft Outlook/Exchange MS-TNEF handling (aka "Winmail.dat", "Win.dat", or "Part 1.2" problem of unopenable email attachments)</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2018-02-23 (first released 2006-06-12)</h2>
+
+<p>
+<i>
+All too often nowadays people report that they
+"can't open the attachment" of an email, because
+they only received a file named (typically) "Winmail.dat", "Win.dat", or
+"Part 1.2".
+Here's a brief explanation of the problem, and what to do about it.
+</i>
+
+<h1>The Problem: Microsoft Outlook sometimes sends a non-standard format (TNEF)</h1>
+<p>
+The basic problem is that in certain cases Microsoft's <i>Outlook</i> or
+<i>Exchange</i> programs
+use a nonstandard extra packaging mechanism called "ms-tnef" or "tnef"
+when it sends email - typically when it sends attachments.
+What Outlook is <i>supposed</i> to do is simply use the industry standards
+(such as MIME and HTML) directly for attachments, but Outlook fails to do so
+and adds this other nonsense instead.
+The full name of the format is "Transport Neutral Encapsulation Format",
+but that is a misleading name, because it obstructs reception due
+to its non-neutral, non-standard nature.
+<p>
+Most other email readers cannot read this nonstandard format.
+Email clients that can't (currently) read this format include
+Lotus Notes, Thunderbird / Netscape Mail, and Eudora.
+In fact, even Microsoft's own Outlook Express can't read this format!
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=77811
+Comment #7 From parish@magichamster.com 2003-03-20 13:38 PDT [reply]:
+
+There's also another free app, Fentun that deals with these. The website is
+http://www.fentun.com/ and the FAQ details where to find the technical details
+of the format.
+
+This format, Transport Neutral Encapsulation Format, is so non-standard that
+even Outlook Express can't handle it, only Outlook.  -->
+
+<p>
+If your e-mail program receives a TNEF file and doesn't understand it,
+instead of seeing the e-mail and/or attachment,
+you may only see an attachment named "Winmail.dat", "win.dat", "Part 1.2", or
+something else ending in ".dat" or ".eml".
+You can get software to read this file format, if you need to;
+the details are below.
+
+<h1>Senders: How to fix Outlook/Exchange</h1>
+<p>
+The problem seems to be two-part: Microsoft Outlook (their "client"
+program, used on the desktop) and Microsoft Exchange (their "mail server"
+program, used by a group of people to send and receive email with the
+rest of the world).
+<p>
+If you use Microsoft Outlook, and want to send attachments
+outside your office, you have to reconfigure Outlook so that
+other people can read the files you send :-(.  
+Ideally, convince your IT department to fix your whole organization.
+<p>
+<a href="http://kb.mozillazine.org/Winmail.dat_attachments">
+According to MozillaZine</a>, Outlook 2002/XP and Outlook 2003 should
+be configured this way so that email sent outside is not corrupted:
+<ol>
+<li>On the "Tools" menu, click "Options", then click the
+   "Mail Format" tab, and then the "Internet Format" button.
+<li>Set "When sending Outlook Rich Text messages to Internet ..."
+   to either "Convert to HTML format" or "Convert to Plain Text format". 
+</ol>
+<p>
+If you prefer, in all versions of Outlook, you can disable TNEF completely:
+<ol>
+<li>On the "Tools" menu, click "Options", and then click the "Mail Format" tab.
+<li>In the "Send in this message format" list, click "Plain Text" or "HTML",
+   and then click "OK".
+</ol>
+<p>
+One oddity: don't send a calendar entry / meeting invitation <i>and</i>
+an attachment in the same message; some versions of Outlook will send
+TNEF in this case, <i>even</i> if you've told it not to.
+<p>
+Alternatively,
+<a href="https://dwheeler.com/essays/securing-windows.html">
+one of the best ways to improve the security of Windows clients
+is to stop using Microsoft Outlook and Internet Explorer</a>.
+These two programs are the top two ways that Windows systems get exploited.
+Replacing them with more secure applications is more important than
+installing a virus checker - yes, Windows systems also <i>need</i> virus
+checkers, but cover your oozing wounds before worrying about innoculations.
+A simple and free way to do that is to get
+<a href="http://www.spreadfirefox.com/?q=affiliates&amp;id=31988&amp;t=60">
+Mozilla Firefox and Thunderbird</a>, but just about any alternative
+will do.
+<p>
+<a href="http://support.microsoft.com/kb/821750">
+Microsoft Exchange can be configured to stop sending nonstandard formats.
+</a>
+
+<h1>Receivers: How to read TNEF anyway</h1>
+
+<p>
+So, you just received a nonstandard format - now what?
+Well, you could tell the sender to configure their email client to
+send files in standard formats.
+That's a very friendly gesture; they almost certainly have no idea that
+their program is sending data others can't read, so you'll do a lot of
+people a favor.
+Feel free to give them a link to this page, if it would help:
+<a href="https://dwheeler.com/essays/microsoft-outlook-tnef.html">https://dwheeler.com/essays/microsoft-outlook-tnef.html</a>
+
+<p>
+But sometimes that's impractical.
+In that case, there are tools for reading TNEF files in other readers.
+Here are a few that seem to work; I'm sure there are many others.
+
+<p>
+First, I should note that for many systems and email clients, this is a
+non-issue.
+For example,
+the Linux distribution "Fedora Core 5" normally invokes a TNEF reader
+when trying read such files (e.g., from Thunderbird).
+(If you need the details, it can use the "ktnef" program, which is part of
+the kdepim package.)
+
+
+<h2>Macintosh</h2>
+<p>
+For Mac, "TNEF's Enough" is one such tool for reading.
+I've heard from people who are happy with it.  It's freeware.
+Get it from here:
+ <a href="http://www.joshjacob.com/macdev/tnef/index.html">http://www.joshjacob.com/macdev/tnef/index.html</a>
+<p>
+Another one is
+<a href="http://sourceforge.net/projects/tnefdd/">
+tnefDD for Mac OS X</a> (open source).
+Elliot Wilen reports to me that he's
+"observed truncation of filenames with TNEF's Enough, [but]
+tnefDD did not have this drawback".
+
+
+
+
+
+<h2>Windows</h2>
+<p>
+A freely-available tool for reading TNEF format on Windows and Linux
+is the tool called
+<!-- was: http://sourceforge.net/projects/tnef -->
+<a href="https://github.com/verdammelt/tnef">tnef</a>.
+It is released under the GNU General Public License (GPL).
+There are other alternatives, which I'll discuss below, but let's discuss
+tnef first - it's free and seems to do the job well.
+<p>
+Installation of tnef on Windows is not as trivial as I'd like, in part because
+on Windows it requires installing the "Cygwin" tool first.
+Still, I found it works well once installed, and Cygwin is useful
+for lots of other things too.
+<p>
+Here are instructions for how to install the GPL'ed "tnef" on Windows:
+<ol>
+<li>Save (as a file) a tnef attachment you've received;
+we'll use it later for testing and to simplify configuration.
+<li>Download and install Cygwin if it's not already installed. You
+can get it from <a href="http://www.cygwin.com/">http://www.cygwin.com/</a>.
+The installation has defaults for various settings, which you can change
+if you want; the main settings are
+the "root directory" (where the emulated Unix files are stored),
+a "home" directory (where the user files are stored),
+and a "local package directory" (where Cygwin packages - files that can
+be installed - are cached).
+Any new directory on your main hard drive (which is usually C:)
+will be fine; I suggest that you do <i>not</i> use your Desktop
+for any of these directories - if you do, you'll have a busy desktop
+and Windows will become sluggish.
+<li>Download the compressed "tnef" program from <a href="https://github.com/verdammelt/tnef">https://github.com/verdammelt/tnef</a>.
+<li>Move the compressed program file to your cygwin "home" directory
+(the one you selected earlier).
+If you've forgotten what the name of the Cygwin home directory is,
+double-click on the "Cygwin" icon (to bring up the command line)
+On some systems you might need to right-click on the Cygwin icon
+and select "Run as administrator" (do this if the instructions below
+fail due to permission problems).
+Then type in this command (press Enter after you've typed it in):
+<pre>
+   cygpath -w $HOME
+</pre>
+<li>
+Double-click on the "Cygwin" icon, which brings up a command line. Type this
+(pressing return at the end of each line):
+<pre>
+git clone --recursive https://github.com/verdammelt/tnef.git
+cd tnef
+autoreconf
+./configure
+make
+make install # Some systems, though not Cygwin, require a "sudo make install" 
+</pre>
+</ol>
+
+<p>
+Now the tnef tool is installed, but you need
+to configure Windows to auto-run the tnef tool on these files:
+<ol>
+<li>Right-click on a tnef file (a file ending in .2, .dat, .eml, or .tnef as
+the filetype); in the "Opens With:" section of the dialogue,
+select "Change...".
+<li>
+Select the executable file using the GUI. First go to the
+cygwin root directory (that you selected earlier),
+and then select "usr", then "local", then "bin", then "tnef.exe"
+(because tnef installs as "usr\local\bin\tnef.exe" inside the cygwin root).
+</ol>
+<p>
+From now on, you can save an tnef attachment somewhere with that
+file extension, double-click on it,
+and the original file will then be saved in the same directory.
+If you get a new file extension, you can configure Windows again for
+that extension.
+
+<p>
+Here are alternatives I know of:
+<ol>
+<li>
+<a href="http://www.eolsoft.com/freeware/winmail_opener/">
+winmail opener for Windows</a>
+My thanks to Elliot Wilen for pointing this one out.
+</li>
+<li>The web is full of references to
+<a href="http://www.fentun.com/">Fentun</a>'s
+tnef handling tool, a no-cost proprietary program.
+When I checked it, it was listed only as a Windows 95 tool,
+with hints suggesting that it does not work on Windows XP.
+For many, this is a non-starter, so I didn't consider it further.
+However, John Goggan reports that he has had Fentun
+running on several different machines for over a year without problems,
+including on Windows XP with Service Pack 2.
+He also says that Fentun is easier to install,
+that he's happy with it, and that he thinks
+Fentun is a better solution than the tnef program.
+He also had the following tip:
+<blockquote><i>
+Note that fentun doesn't appear to DO anything if you just double-click the executable. You have to pass in a winmail.dat file to have it do something. There is no install -- you just download fentun.exe from fentun.com, put it anywhere on your PC and then have your mail client (Thunderbird, for me) open up a winmail.dat attachment. The first time you do it, just browse to fentun.exe as the application to open it for you and tell the mail client to remember that option. From then on, just open the winmail.dat file up and Fentun will happily run and allow you to easily extract any of the contents!  
+</i></blockquote>
+</li>
+<li>Another alternative is
+<a href="http://www.kopf.com.br/winmail/">Winmail</a> - this is
+new, at the time of this writing only a beta (not a final product),
+and doesn't seem to be open source software (which is a minus).
+But it does appear easier to install.
+See their instructions for more if you're interested.
+</li>
+</ol>
+
+<h2>Linux/Unix</h2>
+<p>
+Again, a freely-available tool for reading TNEF format on Windows
+and Linux/Unix is the tool called
+<a href="https://github.com/verdammelt/tnef">tnef</a>.
+It is released under the GNU General Public License (GPL).
+<p>
+This is easier to install on Linux than Windows, and seems to work well.
+Here are instructions for how to install the GPL'ed "tnef" on Linux-based
+systems:
+<ol>
+<li>Save (as a file) a tnef attachment you've received;
+we'll use it later for testing and to simplify configuration.
+<li>Download the compressed "tnef" program from <a href="https://github.com/verdammelt/tnef">https://github.com/verdammelt/tnef</a>.
+<li>
+Open up a terminal and type this:
+(pressing return at the end of each line, changing SAVEDIR to whatever directory you saved the compressed file in, and replacing 1.4.1 with whatever the current version number is; after "su" you'll need to type the root password):
+<pre>
+git clone --recursive https://github.com/verdammelt/tnef.git
+cd tnef
+autoreconf
+./configure
+make
+# On some systems, omit "sudo":
+sudo make install
+</pre>
+</ol>
+
+<p>
+Now the tnef tool is installed, but you need
+to configure your GUI to auto-run the tnef tool on these files.
+Here are the steps for GNOME (KDE is similar):
+<ol>
+<li>Right-click on a tnef file (a file ending in .2, .dat, .eml, or .tnef as
+the filetype); click on "properties".  Now select what program
+to open this type of file (different versions of GNOME and KDE
+do this differently, but it's very apparant).
+<li>
+Select the executable file using the GUI. First go to the
+root directory, then select "usr", then "local", then "bin", then "tnef"
+(because tnef installs as "/usr/local/bin/tnef").
+Neil Robertson recommends that the executable line look like this
+(this will place the expanded file on your desktop):
+<pre>
+  /usr/local/bin/tnef -f $1 -C $HOME/Desktop
+</pre>
+</ol>
+<p>
+From now on, you can save an tnef attachment somewhere with that
+file extension, double-click on it,
+and the original file will then be saved in the same directory
+(or the desktop, if you've configured it that way).
+If you get a new file extension, you can configure your system again for
+that extension.
+
+<h2>The future: Thunderbird support</h2>
+<p>
+<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=77811">
+Thunderbird bug/feature request #77811</a>
+specifically discusses adding the capability to read Microsoft TNEF format,
+inline.
+At the time of this writing, no one has been inspired enough to
+add direct support for TNEF in Thunderbird.
+<p>
+If this is a problem for you, I encourage you to go to
+<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=77811">
+Thunderbird bug/feature request #77811</a> and vote for its implementation,
+since this would help Mozilla gauge the importance of this capability.
+<p>
+You can install the
+<a href="https://addons.mozilla.org/en-US/thunderbird/addon/4433">
+LookOut</a> extension.
+(You may not be able to just click on "install it";
+if so, right-click on "install it", save it in a file, and from Thunderbird
+use Tools/Extensions/Install to install the file.)
+As described in the
+<a href="http://lookout.mozdev.org/">LookOut home page</a>,
+LookOut is a plugin which will allow Thunderbird to interface with
+Microsoft's mail tools by decoding metadata and attachments
+encapsulated/embedded in a TNEF encoded attachment.
+The TNEF decoding engine was inspired (with permission) by
+the tnef.sf.net project.
+Some reports seem to suggest that this extension is a little buggy, though, so
+using tnef or ktnef above might be the better approach at this particular
+moment. But once it matures, LookOut might be the easier way to handle
+these extensions in the future.
+<!--
+<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=77811">
+Bug 77811 – Inline viewer for Microsoft proprietary mail formats (ms-tnef, etc.) ["winmail.dat"]
+-->
+
+<h2>Other tools</h2>
+<p>
+Dmitry Yu Okunev (dyokunev *at* ut dot mephi dot ru)
+notified me about a utility he wrote for his own purposes.
+To get it, use the "git" development utility and run:
+<pre>
+  git clone git://git.mephi.ru/xtnef.git
+</pre>
+<p>
+I have not tried it, so I don't know how well it works.
+He reports that it supports tnef and ytnef.
+
+<h1>For more information</h1>
+<p>
+The
+<a href="http://en.wikipedia.org/wiki/Transport_Neutral_Encapsulation_Format">Wikipedia article on Transport Neutral Encapsulation Format (TNEF)</a>
+and the
+<a href="http://kb.mozillazine.org/Winmail.dat_attachments">
+MozillaZine article on Winmail.dat</a> have more information.
+
+
+
+<p>
+<hr>
+<p>
+I <i>think</i> the above is correct, but I'm only human and there certainly
+could be mistakes in the above.
+If you find a mistake,
+<a href="https://dwheeler.com/contactme.html">please contact me</a>
+and tell me how to correct it.
+
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+
+</body>
+</html>
+
+

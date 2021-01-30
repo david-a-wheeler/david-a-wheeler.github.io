@@ -1,0 +1,440 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Python 3 in Python 2.6+</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="How to write Python programs that work in both Python 3 and Python 2.6+ without change">
+<meta name="keywords" content="python, python3, incompatible, 2to3">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Python 3 in Python 2.6+</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2015-01-27 (original 2009-11-02; this is a light update)</h2>
+
+<h1>Python 3: Rarely used</h1>
+<p>
+I like
+<a href="http://en.wikipedia.org/wiki/Python_%28programming_language%29">Python</a>; code written in Python tends to be very easy-to-read,
+and the massive number of libraries make it easy to make useful programs.
+<table border="1" bgcolor="yellow" align="right" width="25%">
+<tr><td>
+It was a mistake to have <i>not</i> implemented both Python 2 and Python 3 in a single CPython executable.
+</td></tr>
+</table>
+<p>
+Python 3 is in many ways an improvement over Python 2, but
+it was a mistake to have <i>not</i> implemented both Python 2 and Python 3
+in a single executable widely used by most people (CPython).
+This mistake makes it very difficult to transition from Python 2 to
+a Python 3 implementation.
+If your program is small and doesn't use any libraries,
+transitioning tends to be easy;
+just use the "2to3" conversion program, fix up some problems manually,
+and you are off and running.
+But that's a weird special case, because Python is popular and has
+spawned a massive number of libraries.
+Most Python programs depend on libraries, which depend on other libraries,
+which depend on other libraries (you get the point).
+If any library anywhere doesn't support Python 3, then nothing else
+that depends on it can use Python 3 either.
+So that means that every library you depend on (transitively!) must
+simultaneously switch to support Python 3 if you want to use Python 3.
+You also have to translate your entire program to Python 3, all at once;
+if your program is big, this is often impractical even with tools like 2to3.
+<p>
+Because of the library bottleneck, and the basic incompatibilities between
+Python 2 and Python 3,
+<a href="http://renesd.blogspot.com/2009/09/py3kpython3-more-than-one-year-on-096.html">Python 3 uptake has been slow</a>.
+Linux distributors find it painful to support Python 3 because of this
+(see <a href="http://www.mail-archive.com/fedora-devel-list@redhat.com/msg08865.html">this Fedora thread</a>
+and the
+<a href="https://fedoraproject.org/wiki/Features/Python3F13">Fedora
+Python3 F13 page</a>).
+<p>
+On
+<a href="http://hg.python.org/peps/rev/76d43e52d978">2014-04-13 Guido van Rossum had to add another 5 years to the Python 2.7 end-of-life date (to 2020)</a>,
+and in the comments admitted that many users "cannot yet migrate to Python 3".
+Even the infrastructure supporting Python can't switch to Python 3.
+<a href="http://mercurial.selenic.com/wiki/SupportedPythonVersions">Mercurial,
+a popular program written in Python,
+has tried to move to Python 3 twice, and abandoned the effort because it
+determined that it would cost an
+<i>additional</i> man-year of effort to make the switch</a>.
+In case you missed the irony,
+<a href="http://legacy.python.org/dev/peps/pep-0385/">the Python developers
+agreed to move Python development to mercurial (per PEP 385)</a>,
+most Python.org repositories have now moved from the
+<a href="http://svn.python.org/">Python.org subversion repositories</a> to the
+<a href="http://hg.python.org/">Python.org mercurial Repositories</a>.
+So Python.org is using a tool in Python to develop Python 3 that itself
+has abandoned switching to Python 3... because the transition to
+Python 3 is far too difficult.
+<p>
+The <a href="http://python3wos.appspot.com/">Python Wall of Superpowers
+(formerly Python Wall of Shame)</a> shows many libraries support Python 3,
+but remember, if 99% of your Python 2 libraries also support Python 3,
+then you <i>cannot</i> use Python 3 and <i>must</i> use Python 2.
+Some libraries (such as Twisted, Zope2, and meld3) have
+declared that they will <i>never</i> support Python 3.
+Through herculean effort, a number of libraries and programs do now work
+on Python 3.
+But even as of 2014, every developer I know who uses Python uses Python 2,
+never Python 3 (and Python 3.0 was released in December 2008!).
+<p>
+I think it was a terrible mistake to have combined
+changing the <i>programming language</i> with switching to a different
+<i>C implementation</i>.
+It is perfectly possible to have a single "python" executable that
+implements <i>both</i> version 2 and version 3 semantics to allow mixing
+of the different notations.
+Then, any program could be written with the version 3 semantics, yet
+call on libraries that were written with the version 2 semantics.
+There is a <i>reason</i> that people don't like backwards-incompatible changes;
+it makes transition rediculously hard.
+<p>
+The mailing lists sometimes talk about "carrots" to use Python 3,
+but I think that is missing the point.
+The problem is not the lack of carrots.
+The problem is the landmines,
+barbed wire, and guns shooting at you if you try to transition existing
+Python 2 code to a Python 3 implementation.
+The transition is broken, not the destination.
+<table border="1" bgcolor="yellow" align="right" width="25%">
+<tr><td>
+The transition is broken, not the destination.
+</td></tr>
+</table>
+<p>
+<h1>A better solution (for now): Write in 3, use 2</h1>
+<p>
+In a lot of cases it would better if we
+write Python programs that worked, without change, on
+<i>both</i> Python 2 and Python 3 (where "Python 3" really means
+version 3.3 or later).
+Then we don't have to muck with 2to3 (or 3to2) and other nonsense.
+This approach has been called
+<a href="http://lucumr.pocoo.org/2011/1/22/forwards-compatible-python/">forwards-compatible Python</a>.
+<p>
+<A href="http://docs.python.org/whatsnew/2.6.html">Python 2.6
+includes many capabilities that make it easier to write code
+that works on both 2.6 and 3</a>.
+As a result, you can program in Python 2 but using certain
+Python 3 extensions... and the resulting code works on both.
+Python 2.6 has been out for a while, so for many people, requiring 2.6
+is a reasonable precondition.
+(Some people can mandate version 2.7, which is even easier.)
+Where that's too difficult, write in Python 2.6+, but add some of the
+syntactic and semantic niceties of Python 3.
+<a href="http://ptgmedia.pearsoncmg.com/imprint_downloads/informit/promotions/python/python2python3.pdf">
+Mark Summerfield has a nice summary of Python 2 and 3 idiom differences</a>.
+<p>
+Although it's taken 5 years, it looks like the Python developers are
+finally starting to see the light and have moved closer to my position.
+<a href="http://thread.gmane.org/gmane.comp.python.devel/147048">In 2014,
+Guido van Rossum summarized the PyCon conference</a>,
+"... I do think we should make things better for people who
+have to straddle Python 2 and 3 in a single codebase, by developing more
+tools, and by security and possibly installer updates to 2.7 (PEP 466)...
+Some suggestions that were made: PSF financial support for
+tool development and/or porting...
+additional 2to3 fixers to help convert Python-2-only code to
+Python-2-and-3-single-source code, a separate linter,
+a sumo 2.7 distribution that includes all known
+backported-from-Python-3-stdlib packages,...
+The recommended and least painful way to develop for Python 2 and 3
+is definitely to <i>use a single source</i> that runs under both without
+translation; <i>we no longer recommend auto-generating Python 3 compatible
+source code using 2to3</i>, for a variety of reasons."
+
+<p>
+<h1>Writing Python 3 in Python 2.6+</h1>
+<p>
+A simple way to do this is to use Python 2.6+ for development and
+begin each of your Python .py files with the following:
+<pre>
+  from __future__ import print_function, unicode_literals
+  from __future__ import absolute_import, division
+</pre>
+<p>
+These switch to Python 3 meanings for key constructs.
+Now you use print(...) instead of a print statement,
+unicode strings, imports will always be absolute, and division
+will create floating-point values as needed (i.e., 1/2 now returns 0.5).
+<p>
+Python 2.6 includes a number of Python 3 features by default
+(like support for "bytes"), so you can just use them directly.
+In some cases, you should avoid using certain constructs and replace
+them with another
+(my thanks to
+<a href="http://nedbatchelder.com/blog/200910/running_the_same_code_on_python_2x_and_3x.html">
+Running the same code on Python 2.x and 3.x</a> which points out
+some of these).
+For example:
+<table border="1">
+<tr><th>Instead of</th><th>Use</th></tr>
+<tr><td>d.has_key(k)</td><td>k in d</td></tr>
+<tr><td>d.itervalues()</td><td>d.values()</td></tr>
+<tr><td>callable(o)</td><td>hasattr(o, '__call__')</td></tr>
+</table>
+
+<p>
+Some code constructs require a little extra work to make them work the
+same way in Python 2 and Python 3.
+For example, Python 3's "range" is the same as Python 2's "xrange".
+We can do this by inserting after the "from __future__" statements
+the following:
+<pre>
+  try:
+     xrange = xrange
+     # We have Python 2
+  except:
+     xrange = range
+     # We have Python 3
+</pre>
+<p>
+Now we can use "xrange(...)" in the rest of the file, and it will work
+correctly.
+(You could use "range()" directly, but in Python 2 this can be very
+inefficient.)
+<p>
+You can also import packages and rename them.
+However, instead of trying to do all this yourself,
+try to use the "six" module.
+The six module packages up many of these Python2/3 differences
+and makes it easy to "import whichever library I need".
+<p>
+You can use python's "-3" flag when running Python 2 to warn you about code 
+that will not cleanly transition to Python 2.
+Using that flag, and fixing what it finds over time, is a much more reasonable
+transition approach than trying to change everything simultaneously.
+<p>
+One of the advantages of Python is that it's a clean language to read;
+too much of this stuff makes it too complicated.
+There's a philosophical question as to whether or not you write in
+Python 2 (with some modifications), or in a Python 3 that happens to work
+in Python 2.
+For example, do you choose to use "xrange" or "range" as the name in the code?
+I prefer working in "python 2 with specific modifications" right now,
+for the following reasons:
+<ul>
+<li>Libraries all work in Python 2, while few work in Python 3.
+Thus, in practice, to make libraries work you're really working in Python 2,
+so you may as well use the notation of the system as it really is.
+<li>
+Python 2 is better-known, so the documentation (and so on)
+tends to be better.
+<li>
+The "2to3" tool tries to translate Python 2 into Python 3, and at least
+has some success.  The "3to2" tool is nowhere near as mature.
+</ul>
+
+<h1>But what if it gets too hard?</h1>
+<p>
+Python 2 and Python 3 have some different library interfaces, and
+trying to deal with all of that in each file can be awful.
+<p>
+Writing code that works in <i>both</i> 2 and 3 can become a serious pain,
+so when it gets too difficult, I abandon it, and
+make the code work on a Python 2 that adds some features of 3.
+Over time, I can modify the code to be more 3-like, presuming that future
+versions of Python 2 add notation from Python 3.
+This gives me a practical way to transition to Python 3, gradually, and then
+use 2to3 when all libraries have made that final step.
+By that point, the code differences will be trivial instead of the
+current chasm.
+
+<p>
+One of the biggest challenges is handling Unicode, because Python 3
+is stricter about Unicode than Python 2.
+Generally, you want to encode into Unicode as you read data in, and
+only encode back to bytes as you write it out
+(this is called the "Unicode sandwich" approach).
+See the
+<a href="http://nedbatchelder.com/text/unipain.html">Unipain</a> presentation,
+e.g., at
+<a href="http://nedbatchelder.com/text/unipain/unipain.html">Pragmatic Unicode ~ or ~ How Do I Stop the Pain?</a>, for more information.
+One nasty problem is that both Python 2 and Python 3 have a type called "str"
+but they are completely different;
+Python 2 "str" is for bytes (NOT Unicode), while Python 3 is for Unicode
+(and NOT bytes).
+You can write code that works on both, but the mixing of names
+is confusing.
+
+<p>
+The biggest problem with Python 3's approach to Unicode
+is that it works fine when given perfectly-encoded Unicode data,
+and that you always know what this encoding is.
+Sounds great, but this is almost never true.
+For example,
+Unix filenames are not strings, they are byte sequences
+that may not be legal character sequences.
+Later versions of Python 3 have papered over this simple case
+(see <a href="https://www.python.org/dev/peps/pep-0383/">PEP 383</a>).
+You normally have no idea what the encoding of the standard input is;
+the officially-claimed one is often wrong, and it may not even have one.
+In other cases there is often either no information about the
+encoding, or the encoding data is wrong
+(the latter is <i>especially</i> common in CJK settings).
+Data often has a nonstandard <i>mixture</i> of different encodings, e.g.,
+many "UTF-8" datasets are actually
+mixtures of 1252 (particularly curly quotes) and UTF-8.
+This means that using chardet, or using the character set encoding
+as provided by response headers, is often worthless.
+<a href="http://lucumr.pocoo.org/2014/1/5/unicode-in-2-and-3/">Armin Ronacher in January 2014</a>
+argues that
+"Python 2's way of dealing with Unicode is error prone and I am all in
+favour of improving it... [but] Python 3 is a step backwards and brought
+so many more issues that I absolutely hate working with it."
+In many cases you can use
+<a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">BeautifulSoup's UnicodeDammit class</a> to figure out the encoding
+(it also has a "detwingle" operator to handle data that is
+UTF-8 but also includes Windows-1252 characters for curling/smart quotes).
+A
+<a href="https://github.com/buriy/python-readability/issues/42">discussion on python-readability issue 42</a>
+noted that Unicode Dammit often worked, but
+not on Korean pages (where encodings are often wrong).
+
+<p>
+<a href="http://nedbatchelder.com/text/unipain.html">Pragmatic Unicode</a>
+discusses Unicode issues as follows:
+"Here's Fact of Life #4: You can't determine the encoding of a byte string
+by examining it. You need to know through other means.
+For example, many protocols include ways to specify the encoding.
+Here we have examples from HTTP, HTML, XML, and Python source files.
+You may also know the encoding by prior arrangement,
+for example, the spec for a data source may specify the encoding.
+There are ways to guess at the encoding of the bytes, but they are just
+guesses. The only way to be sure of the encoding is to find it out some
+other way...
+Fact of Life #5: Sometimes you are told wrong.
+Unfortunately, because the encoding for bytes has to be communicated separately from the bytes themselves, sometimes the specified encoding is wrong. For example, you may pull an HTML page from a web server, and the HTTP header claims the page is 8859-1, but in fact, it is encoded with UTF-8."
+These may be facts of life, but Python 3's design doesn't actually
+support these facts of life very well... especially point #5.
+Python 3's design seems to presume that you always <i>can</i>
+know what the encoding is, even though there is often <i>no</i> way to know
+in a sure way what this encoding actually is.
+Indeed, Pragmatic Unicode presumes that there data uses some
+standard encoding, even though real-world data is sometimes a mishmash
+of different encodings.
+<a href="http://lucumr.pocoo.org/2014/5/12/everything-about-unicode/">Armin Ronacher points out in May 2014</a>
+that these complexities make creating many real programs in Python 3
+much harder than in Python 2 (the opposite of what was intended).
+It may be possible to work with real-world data in Python 3 by
+reading bytes of data, and then combining the
+data along with the claimed encoding information to infer the actual encoding
+(and to clean up data if it is not in any valid encoding).
+<a href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">BeautifulSoup's UnicodeDammit class</a> shows a plausible way to (potentially) get there.
+
+<p>
+<h1>The future</h1>
+<p>
+I hope that the Python 2 C implementation will continue to be
+upgraded until it supports nearly all of the Python 3 features.
+In particular,
+I'd love to see "import __future__ python3", which would try to make it
+as python3-like as possible,
+including the new Python 3 names and interfaces.
+Then programs and libraries could
+easily switch to version 3 features at their own pace,
+instead of requiring a "flag day".
+It would also mean that code could be quite clean.
+<p>
+<a href="https://www.python.org/dev/peps/pep-0477/">PEP 477</a>
+has added ensurepip to Python 2.7.9.
+A key reason is that this makes it easier to access
+third party modules for migration from Python 2 to Python 3,
+including six, modernize, and future.
+<p>
+I think it's plausible that Python users will eventually end up at Python 3,
+but the Python developers did a <i>terrible</i> job in handling the transition.
+Expecting everyone to instantaneously convert code, both their own and
+all libraries transitively, was a terrible and unworkable idea.
+Hopefully other language developers will learn from this situation
+and handle transition more gracefully.
+
+<p>
+<h1>Related pages on making the same code work in Python 2 and Python 3</h1>
+<p>
+Lots of other pages have similar info on making code work on both 2 and 3
+directly.
+A lot of them include doing this for versions of Python before 2.6, which
+tends to be more work.
+These include:
+<ul>
+<li><a href="http://www.catb.org/esr/faqs/practical-python-porting/">Practical Python porting for systems programmers</a> by
+by Peter A. Donis and Eric S. Raymond.
+
+<li><a href="https://docs.python.org/3/howto/pyporting.html">Porting Python 2 Code to Python 3</a> discusses various options, and notes that
+"Over the years the Python community has discovered that the easiest way
+to support both Python 2 and 3 in parallel is to write Python code that
+works in either version...
+supporting Python 2 &amp; 3 simultaneously is typically the
+preferred choice by people so that they can continue to improve code
+and have it work for the most number of users..."
+It notes the "modernize" tool, which tries to transform Python 2 code into
+code that works on 2 or 3.
+It also mentions the "future" project that
+backports Python 3 objects into Python 2, and the "-3" flag you can use
+in Python 2 to warn of potential incompatibilities with Python 3.
+<li><a href="http://python3porting.com/noconv.html">Supporting Python 2 and 3
+without 2to3 conversion</a> talks about this, and in particular discusses
+how to use the "six" module to help.
+<li><a href="http://python-future.org/overview.html">Python-future</a>
+provides "the missing compatibility layer between Python 3 and Python 2";
+this is the sort of thing that should have been developed before
+Python 3 was even released.
+<li><a href="http://lucumr.pocoo.org/2011/1/22/forwards-compatible-python/">Forwards-compatible Python</a> also discusses this.
+This starts by saying,
+"For web applications the safest bet currently is to stick with Python
+2.x even for new projects[, for] the simple reason that right now we
+don't have enough supporting libraries for Python 3 yet and porting some
+of them over is a huge step."
+<li><a href="http://pydev.blogspot.com/2008/11/making-code-work-in-python-2-and-3.html">Making code work in python 2 and 3</a> has
+some interesting notes.
+<li>
+<a href="http://python-notes.curiousefficiency.org/en/latest/python3/questions_and_answers.html">Python 3 Q &amp; A</a> discusses why they made the changes for Python 3.  My problem is not with those changes (I <i>like</i> the changes in Python 3), it was the dramatically terrible transition approach that required all-or-nothing flag day transition (a terrible idea).
+<li><a href="http://pythonology.blogspot.com/2009/02/making-code-run-on-python-20-through-30.html">
+Making code run on Python 2.0 through 3.0</a>
+talks about making code run on anything from 2.0 on.
+<li>
+<a href="http://nedbatchelder.com/blog/200910/running_the_same_code_on_python_2x_and_3x.html">
+Running the same code on Python 2.x and 3.x</a>
+<li>"Py3 support is like an unemployed cousin we're
+letting crash on the couch: we're already annoyed that it's here, so it should
+try not to stack up dirty dishes everywhere."
+<a href="http://thread.gmane.org/gmane.comp.version-control.mercurial.devel/92238">a mercurial comment on Python 3</a>
+</ul>
+
+
+
+<!--
+http://www.ibm.com/developerworks/linux/library/l-python3-1/
+http://nedbatchelder.com/blog/200910/running_the_same_code_on_python_2x_and_3x.html
+http://pythonology.blogspot.com/2009/02/making-code-run-on-python-20-through-30.html
+http://www.rfk.id.au/blog/entry/preparing-pyenchant-for-python-3
+
+http://mail.mems-exchange.org/durusmail/qp/441/
+-->
+
+
+<p>
+<hr>
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2009 David A. Wheeler.
+
+</body>
+</html>
+

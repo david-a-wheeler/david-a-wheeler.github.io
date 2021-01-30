@@ -1,0 +1,1408 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>The Apple goto fail vulnerability: lessons learned</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Description of what we have learned">
+<meta name="keywords" content="Apple, goto fail, goto fail goto fail, lessons learned">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">The Apple goto fail vulnerability: lessons learned</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2021-01-16 (original 2014-11-23)</h2>
+
+<p>
+This paper identifies lessons that we <i>should</i> learn
+from the Apple &#8220;goto fail&#8221; vulnerability.
+It first starts with some
+<a href="#background">background</a>,
+discusses the
+<a href="#goto">misplaced blame on the goto statement</a>,
+focuses on identifying
+<a href="#counter">what could have countered this</a>,
+briefly discusses the
+<a href="#heartbleed">Heartbleed countermeasures</a>
+from my <a href="heartbleed.html">separate paper on Heartbleed</a>, and
+ends with
+<a href="#conclusions">conclusions</a>.
+Some of these points have been made elsewhere, but this tries to merge
+them together in one place.
+Others have not been noted elsewhere, to my knowledge.
+For example,
+<a href="#gcc-unreachable">gcc quietly dropped its support
+for detecting dead code that can lead to this vulnerability</a>, and
+<a href="#detect-duplicates">detecting duplicate lines in source code</a>
+might also be an additional useful countermeasure.
+
+<p>
+This paper is part of the
+essay suite <a href="learning-from-disaster.html">Learning from Disaster</a>.
+
+<h1 id="background">Background</h1>
+
+<!-- Used as fair use; see below for rationale. -->
+<a href="http://www.zazzle.com/goto_fail_t_shirt_plain_code-235322391420181248"><img src="../images/goto-fail-goto-fail.png" width="260" height="162" align="right" alt="T-shirt with text goto fail; goto fail;" title="T-shirt with text goto fail; goto fail;.  The shirt is by DesignedbyJonathan, sold by Zazzle, and the image is used according to the U.S. copyright fair use doctrine."></a>
+<!-- Kludge: The non-breaking spaces here prevent having a
+     single isolated "On" with the picture on smartphone screens. -->
+<p>
+On&nbsp;2014-02-21&nbsp;Apple released a security update for its
+implementation of SSL/TLS in many versions of its operating system.
+The vulnerability is formally named CVE-2014-1266,
+but informally it&#8217;s often called the
+Apple &#8220;goto fail&#8221; vulnerability
+(or &#8220;goto fail goto fail&#8221; vulnerability).
+
+<p>
+The essence of the problem is straightforward.
+The code included these lines
+<a href="http://opensource.apple.com/source/Security/Security-55471/libsecurity_ssl/lib/sslKeyExchange.c?txt">[Apple2014]</a> in
+function SSLVerifySignedServerKeyExchange:
+<pre>
+  if ((err = SSLHashSHA1.update(&amp;hashCtx, &amp;signedParams)) != 0)
+    goto fail;
+    goto fail;
+  <i>... other checks ...</i>
+  fail:
+    <i>... buffer frees (cleanups) ...</i>
+    return err;
+
+</pre>
+
+<p>
+The problem was the second (duplicate) &#8220;goto fail&#8221;.
+The indentation here is misleading; since there are no curly braces
+after the &#8220;if&#8221; statement, the second &#8220;goto fail&#8221; is
+<i>always</i> executed.
+In context, that meant that vital signature checking code was skipped,
+so both bad and good signatures would be accepted.
+The extraneous &#8220;goto&#8221; caused the function to return 0 (&#8220;no error&#8221;)
+when the rest of the checking was skipped; as a result,
+invalid certificates were quietly accepted as valid.
+
+<p>
+Many technical details are provided by
+<a href="https://www.imperialviolet.org/2014/02/22/applebug.html">[Langley2014]</a> (ImperialViolet),
+<a href="https://nakedsecurity.sophos.com/2014/02/24/anatomy-of-a-goto-fail-apples-ssl-bug-explained-plus-an-unofficial-patch/">[Ducklin2014]</a>
+(Sophos),
+and
+<a href="http://www.theguardian.com/technology/2014/feb/25/apples-ssl-iphone-vulnerability-how-did-it-happen-and-what-next">[Arthur2014]</a>.
+Some people discuss it and also suggest countermeasures, including
+<a href="http://embeddedgurus.com/barr-code/2014/03/apples-gotofail-ssl-security-bug-was-easily-preventable/">[Barr2014]</a>,
+<a href="http://digwww.com/news-10150464/apple-s-goto-fail-tells-us-nothing-good-about-cupertino-s-software-delivery-process.html">[Baxter-Reynolds2014]</a>,
+<a href="http://avandeursen.com/2014/02/22/gotofail-security/">[vanDeursen2014]</a>,
+and
+<a href="http://www.cigital.com/justice-league-blog/2014/02/25/understanding-apple-goto-fail-vulnerability-2/">[Sethi2014]</a>.
+The
+<a href="https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2014-1266">National Vulnerability Database (NVD) entry for CVE-2014-1266</a>
+explains where the problem occurred this way:
+&#8220;The SSLVerifySignedServerKeyExchange function in
+libsecurity_ssl/lib/sslKeyExchange.c in the Secure Transport feature in
+the Data Security component in Apple iOS 6.x before 6.1.6 and 7.x before
+7.0.6, Apple TV 6.x before 6.0.2, and Apple OS X 10.9.x before 10.9.2 does
+not check the signature in a TLS Server Key Exchange message, which allows
+man-in-the-middle attackers to spoof SSL servers by (1) using an arbitrary
+private key for the signing step or (2) omitting the signing step.&#8221;
+<a href="https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2014-1266">[NVD2014]</a>
+
+<p>
+Exactly when the vulnerability was added is not clear.
+The vulnerability was not in the final version of iOS 5 version 5.1.1,
+released in May 2012; it was present in iOS version 6, which
+was publicly released in September 2012.
+<a href="http://www.theguardian.com/technology/2014/feb/25/apples-ssl-iphone-vulnerability-how-did-it-happen-and-what-next">[Arthur2014]</a>
+
+<p>
+I have not found any data on <i>why</i> the line was duplicated,
+probably a side-effect of Apple&#8217;s notoriously secretive ways.
+It could have been by accident or on purpose, but most people
+(including me) think it is probably by accident.
+Baxter-Reynolds speculates that
+&#8220;Either the line has been duplicated by accident,
+there was a &#8220;if&#8221; check above it that was deleted
+but the developer left the &#8220;goto&#8221; in by accident,
+or there was a problem merging the code written by two developers.
+(Merging is a little complicated for non-programmers to understand. From
+time-to-time two developers will work on the same code in individual
+copies of the master code. When two copies of the same code are sent back
+to that master code, the source control system that manages everything
+has to make decisions about how to combine the two developers work. This
+process can go wrong.)&#8221;
+<a href="http://digwww.com/news-10150464/apple-s-goto-fail-tells-us-nothing-good-about-cupertino-s-software-delivery-process.html">[Baxter-Reynolds2014]</a>.
+A plausible cause of code duplication is a copy/paste error
+<a href="http://www.theguardian.com/technology/2014/feb/25/apples-ssl-iphone-vulnerability-how-did-it-happen-and-what-next">[Arthur2014]</a>.
+Steven M. Bellovin stated that,
+&#8220;I don&#8217;t think that Apple&#8217;s goto fail was a deliberate attack...
+[but if it was]
+it very clearly was not the NSA or other high-end intelligence agency.
+As I noted, this is too visible and too clumsy.&#8221;
+<a href="https://www.cs.columbia.edu/~smb/blog/2014-02/2014-02-24.html"
+>[Bellovin2014]</a>.
+The widely-respected Bruce Schneier was more neutral about its being
+possibly malicious:
+&#8220;Was this done on purpose? I have no idea. But if I wanted to do
+something like this on purpose, this is exactly how I would do it.&#8221;
+<a href="https://www.schneier.com/blog/archives/2014/02/was_the_ios_ssl.html"
+>[Scheier20014]</a>.
+A few do think it was more likely to be on purpose.
+The gotofail.com FAQ author states that,
+&#8220;It is hard for me to believe that the second &#8220;goto
+fail;&#8221; was inserted accidently given that there were no other
+changes within a few lines of it. In my opinion, the bug is too
+easy to exploit for it to have been an NSA plant. My speculation
+is that someone put it in on purpose so they (or their buddy) could
+sell it.&#8221;
+<a href="https://gotofail.com/faq.html">[gotofail.com2014]</a>.
+As
+<a href="http://www.theguardian.com/technology/2014/feb/25/apples-ssl-iphone-vulnerability-how-did-it-happen-and-what-next">[Arthur2014]</a> notes,
+&#8220;By &#8220;sell&#8221; he&#8217;s referring to the fact that
+you can now sell &#8220;zero-day exploits&#8221; to nation states
+and security companies - garnering up to half a million dollars or
+perhaps more&#8221;; but in the end,
+&#8220;Arguing for nefarious conspiracy is - well, not very much&#8221;.
+Because this is the sort of error that <i>should</i> have been
+detected by methods such as basic negative testing, and this
+code is published, I think it&#8217;s much more likely
+to have been accidental.
+
+<p>
+My guess is that it was accidental, the result of a merge that went wrong.
+Errors happen during software implementation.
+But whether it was intentional or on purpose, this vulnerability
+is easy to detect.
+The real question is why
+this mistake was not found before it was delivered to customers.
+
+<p>
+There is also little information on how the vulnerability was found.
+<a href="http://www.theguardian.com/technology/2014/feb/25/apples-ssl-iphone-vulnerability-how-did-it-happen-and-what-next">[Arthur2014]</a>
+reports that it
+&#8220;seems to have been from a line-by-line review of code&#8221;.
+The fixing process was bizarre as well.
+In particular, it was fixed first on iOS, but not simultaneously on MacOS,
+leaving all Mac users (and the Apple update process itself)
+vulnerable to a dangerous 0-day vulnerability for four days
+<a href="http://www.theguardian.com/technology/2014/feb/25/apples-ssl-iphone-vulnerability-how-did-it-happen-and-what-next">[Arthur2014]</a>.
+
+<p id="impact">
+The impact on users&#8217; systems was extremely serious, since this made it
+easy for attackers to do &#8220;man in the middle&#8221; attacks against
+any secured connection using SSL/TLS (including &#8220;https://&#8221; URLs).
+Knowledge of it quickly spilled into popular culture;
+as shown above, there was even a T-shirt made about it
+<a href="http://www.zazzle.com/goto_fail_t_shirt_plain_code-235322391420181248">[DesignedbyJonathan2014]</a>.
+<!--
+This "goto fail goto fail" T-shirt is clearly inspired by this
+specific vulnerability.  This is proven by 
+the "tags" applied to this T-shirt:
+goto fail, apple, ios, geek, hacker, ssl, cve, tee shirts.
+It was made on 2014-04-08 6:59AM, after the event was made public.
+The T-shirt itself was made by Zazzle.
+-->
+
+<p>
+The longer-term impact (once it was fixed) is harded to gauge, but
+I think it&#8217;s fair to say that Apple&#8217;s reputation for competently developing
+systems was damaged for a time.
+The problem wasn&#8217;t that someone had made a mistake - everyone makes mistakes.
+The problem is that this particular vulnerability was easily detected
+by a variety of countermeasures, including automated testing.
+Apple&#8217;s failure to detect this easily-detected vulnerability,
+and then putting this dangerous vulnerability into production,
+raised very serious questions in the press about the trustworthiness of
+Apple&#8217;s software develeopment processes.
+For example,
+<a href="http://digwww.com/news-10150464/apple-s-goto-fail-tells-us-nothing-good-about-cupertino-s-software-delivery-process.html"
+>Matt Baxter-Reynolds&#8217; ZDNet article &#8220;Apple&#8217;s &#8216;goto fail&#8217; tells us
+nothing good about Cupertino&#8217;s software delivery process&#8221;</a> said that
+&#8220;The fact that Apple&#8217;s infamous SSL validation bug actually got out
+into the real world is pretty terrifying&#8221;
+and
+&#8220;The real fail in all this comes from the fact that the bug was not
+detected by any automated test suites...
+Competence at automated testing is an indicator of sophistication
+of the software development team and its sponsors...
+The problem is that somehow Apple was able to put that code into
+production. Why on earth was that not caught by an automated test
+suite?&#8221;
+
+<p>
+I previously wrote about how
+<a href="heartbleed.html">Heartbleed</a> could have been countered
+ahead-of-time;
+here I apply the same kind of thinking to this vulnerability.
+The sad reality is that in 2014 <i>every</i> major SSL/TLS
+implementation had a major extremely-serious vulnerability revealed in it,
+including OpenSSL (Heartbleed), Apple&#8217;s (goto fail goto fail),
+GnuTLS (goto fail), and Microsoft&#8217;s.
+Clearly we need to do better!
+I think we should look at past problems,
+see what we can learn from them, and apply those lessons.
+
+<h1 id="goto">Misplaced blame: The goto statement</h1>
+<p>
+A few people blame the mere use of the &#8220;goto&#8221; statement
+(e.g., <a href="http://embeddedgurus.com/barr-code/2014/03/apples-gotofail-ssl-security-bug-was-easily-preventable/">[Barr2014]</a>).
+However, I think pinning blame on the goto statement is misplaced.
+As Matt Baxter-Reynolds explains,
+&#8220;The &#8216;goto&#8217; statement is quite old-fashioned...
+The problem with &#8216;goto&#8217; is that it allows developers
+to create &#8216;flow&#8217; in code that is unnatural...
+ and that&#8217;s bad because developers should always strive
+to make code easy to read.
+For me, who cares whether &#8216;goto&#8217; is used or not.
+There is nothing unclear
+about the code that contains the bug...
+&#8216;goto&#8217; may be old-fashioned, but it is not inappropriate in
+this setting.&#8221;
+<a href="http://digwww.com/news-10150464/apple-s-goto-fail-tells-us-nothing-good-about-cupertino-s-software-delivery-process.html">[Baxter-Reynolds2014]</a>.
+Similarly, Sethi found that when using other constructs
+&#8220;the code was not necessarily a lot easier to read.
+I don&#8217;t believe that the use of &#8216;goto&#8217;
+significantly contributed to this problem&#8221;
+<a href="http://www.cigital.com/justice-league-blog/2014/02/25/understanding-apple-goto-fail-vulnerability-2/">[Sethi2014]</a>.
+In particular, if you are using C, avoiding the goto statement
+is likely to lead to a lot of duplicated code that might not be
+properly maintained in parallel, leading to other problems.
+<p>
+This is even supported by a recent emperical study.
+An empirical study of goto in C code
+[<a href="https://peerj.com/preprints/826v1/">Nagappan2015</a>]
+found that in almost all cases C program developers,
+when they use goto at all, use it in reasonable ways.
+
+<p>
+Banning &#8220;goto&#8221; statements
+would not have really solved the problem,
+so let&#8217;s look elsewhere for solutions.
+
+<!--
+If you replaced "goto fail;" with "raise fail;" as available
+in many languages, you'd still have the raise always execute.
+Whether or not this would be noticed depended on what the raise did.
+If the raise simply led to returning the error code, the same
+problem would have happened,
+If the raise caused crash, then the result would have been
+denial-of-service instead of confidentiality and integrity breach,
+which would probably have been better but still a problem.
+If the raise would have been interpreted as "invalid", that
+would have been perfect.
+Complex issue, not sure how to summarize.
+-->
+
+
+<h1 id="counter">What could have countered this?</h1>
+<p>
+Here are some ways to detect this problem <i>before</i> delivery.
+As with my <a href="heartbleed.html">Heartbleed</a> paper,
+I note if the approaches use dynamic analysis
+(require execution of the program),
+static analysis (do not require execution of the program),
+or a hybrid.
+<p>
+However, I am not trying to create a complete list.
+My paper on <a href="heartbleed.html">Heartbleed</a> focused on
+how to identify it, in part because many mechanisms used to find
+security vulerabilities did <i>not</i> work with Heartbleed.
+The Apple goto fail vulnerability is quite different.
+In this case,
+there are many mechanisms that <i>everyone</i> developing
+security-relevant code should have been doing that would have
+immediately caught this vulnerability.
+Thus, there is no need to list more sophisticated measures
+(such as formal methods).
+If an organization cannot be bothered to
+use simple mechanisms low-cost mechanisms to counter vulnerabilities,
+it will not apply more sophisticated mechanisms either.
+
+<h2 id="negative-testing">Thorough negative testing in test cases (dynamic analysis)</h2>
+
+<p>
+<i>Negative testing</i> is creating tests that should cause
+failures (e.g., rejections) instead of successes.
+Thorough negative testing in test cases creates a set of tests that cover
+every type of input that <i>should</i> fail.
+
+<p>
+At the very least, <i>every</i> SSL/TLS implementer should include,
+in their regression test suites, a large set of certificates and
+protocol requests that should fail... and make sure they do.
+If your tests only show that good inputs produce good outputs, then
+those tests are mostly <i>useless</i> for security.
+You need to have <i>many</i> tests to show that data that should be
+rejected is actually rejected.
+I have previously noted that
+<a href="heartbleed.html#negative-testing">negative testing could
+also have detected Heartbleed</a>.
+
+<p>
+In many ways the Apple &#8220;goto fail&#8221; vulnerability
+is <i>much</i> more embarrassing for Apple than
+Heartbleed was for OpenSSL.
+Heartbleed exploited an obscure functionality, and the vulnerability
+involved an overread (something that many tools cannot detect).
+In contrast,
+the &#8220;goto fail&#8221; vulnerability subverted the <i>entire purpose</i>
+of the library, in a remarkably trivial way.
+This vulnerability showed that Apple has an extraordinarily poor
+or non-existent security-relevant test suite.
+
+<p>
+<a href="http://www.theguardian.com/technology/2014/feb/25/apples-ssl-iphone-vulnerability-how-did-it-happen-and-what-next">[Arthur2014]</a>
+interviewed a former programmer at Apple, who explained that,
+&#8220;Apple does not have a strong culture of testing or test-driven
+development. Apple relies overly on &#8216;dogfooding&#8217; [using its own
+products] for quality processes, which in security situations is not
+appropriate.&#8221;
+Dogfooding is great for finding user interface problems,
+which is something Apple is known for.
+However, dogfooding is
+useless for security, because it does not introduce the negative testing
+necessary for security evaluation.
+The same former programmer noted that,
+&#8220;From a good software engineering standpoint, this type
+of issue should have been found.&#8221;
+
+<p>
+Many people, including me, came to this conclusion independently.
+<a href="http://digwww.com/news-10150464/apple-s-goto-fail-tells-us-nothing-good-about-cupertino-s-software-delivery-process.html">[Baxter-Reynolds2014]</a>
+bluntly states that
+&#8220;The real fail in all this comes from the fact that
+the bug was not detected by any automated test suites.&#8221;
+
+<p>
+Developers who use SSL/TLS libraries
+often don&#8217;t test either, sadly
+[<a href="https://crypto.stanford.edu/~dabo/pubs/abstracts/ssl-client-bugs.html">Georgiev2012</a>].
+
+<p>
+I do <i>not</i> think that you should depend solely on
+thorough negative testing, or any other single technique, for security.
+Negative testing, in particular, will only find a relatively narrow
+range of vulnerabilities, such as especially poor input validation.
+Dynamic approaches, by their very nature,
+can only test an insignificant portion of the true input space anyway.
+But - and this is key - this approach can be very useful for finding
+security vulnerabilities <i>before</i> users have to deal with them.
+
+
+<h2 id="unreachable-code">Properly detect and check unreachable code, e.g., via warning flags (static analysis)</h2>
+
+<p>
+The extra &#8220;goto fail&#8221; caused a whole lot of code to become
+impossible to execute; code that cannot be executed
+is called &#8220;unreachable code&#8221;.
+The term &#8220;dead code&#8221; is also sometimes used for this situation,
+but the term &#8220;dead code&#8221; is also used by some to describe other
+situations.
+For precision, we&#8217;ll stick to the term &#8220;unreachable code&#8221;.
+
+<p>
+<a href="http://www.theguardian.com/technology/2014/feb/25/apples-ssl-iphone-vulnerability-how-did-it-happen-and-what-next">[Arthur2014]</a>
+confirms that
+if Apple had used a tool that did proper
+unreachable code detection, this problem would have been
+immediately detected.
+
+<p>
+Let&#8217;s be clear: unreachable code is not, by itself,
+necessarily a security vulnerability.
+In particular, if you just thoughtlessly removed unreachable code,
+that does <i>not</i> make the software any more secure, because
+the code was never going to run the first place.
+Instead, you should run such tools and then try to determine
+<i>why</i> the code is unreachable.
+If the code is unreachable because of some error
+(as in this case), fix the error, don&#8217;t remove the code!
+
+<p>
+Many compilers have warning flags to detect unreachable code.
+In general, developers should turn on as many warning flags as
+they can, including one to do unreachable code detection.
+Detecting unreachable code in absolutely all cases is undecidable
+(as noted by <a href="http://avandeursen.com/2014/02/22/gotofail-security/">[vanDeursen2014]</a>),
+but detecting simple cases like this is easy and certain.
+
+<p id="gcc-unreachable">
+However, there&#8217;s an ugly twist to this story involving gcc,
+one that I haven&#8217;t see emphasized elsewhere.
+The gcc compiler, a widely used compiler, once reported unreachable code.
+However, years ago the
+<a href="https://gcc.gnu.org/ml/gcc-help/2011-05/msg00360.html">gcc
+developers removed this capability</a> because the code was unstable
+<a href="https://gcc.gnu.org/ml/gcc-help/2011-05/msg00360.html">[Taylor2011]</a>.
+Even worse, it still
+accepts a parameter intended for the purpose, namely -Wunreachable-code,
+without any notification that it no longer does anything.
+I have verified that gcc version 4.8.3 still quietly accepts this option flag,
+yet it does nothing and fails to even report a warning that it
+does nothing.
+As a result, many developers may be using gcc with this
+flag enabled, thinking that it will report dead code
+(as it once did), even though it will <i>not</i> do so.
+
+<p>
+The lesson that compiler makers <i>should</i> learn here is that
+if you <i>stop</i> supporting a warning flag, you should at <i>least</i>
+report a warning if your user uses it anyway.
+Frankly, I hope that compiler makers will <i>add</i> warnings,
+never <i>remove</i> them, for situations that sometimes
+indicate a serious problem.
+
+<p>
+The lessons that <i>developers</i> should learn is to use multiple
+analysis tools, and enable some of the same functionality even if it
+seems to be redundant.
+For example, I&#8217;ve verified that clang version 3.4.2 not
+only accepts the <tt>-Wunreachable-code</tt> option, but that it actually
+works correctly and <i>can</i> detect dead code caused by a goto.
+(The clang option <tt>-Weverything</tt> enables
+<tt>-Wunreachable-code</tt> and other similar options).
+That doesn&#8217;t mean you need to use the clang compiler
+to generate the <i>final</i> executable code.
+Many people use gcc to generate final code (for example), and they
+can continue to do so while also using clang warning flags
+to help them find problems (or vice versa).
+The point is that you should use multiple tools to detect
+vulnerabilities, including
+multiple compilers&#8217;s warning flags and
+other static analysis tools,
+because using multiple tools
+increases the likelihood of finding problems ahead-of-time.
+
+
+<h2 id="braces">Always use braces, at least if it&#8217;s not the same line (static analysis)</h2>
+
+<p>
+The C programming language permits omitting braces in certain
+cases; their omission in this case led to a serious vulnerability.
+Other languages with C-like syntax permit the same thing,
+including C++, Java, and C#.
+
+<p>
+A coding style rule that tends to eliminate this problem is to
+always use braces with &#8220;if&#8221; branches, at least if the
+branches are not on the same line as the &#8220;if&#8221; statement.
+E.G., use this format:
+<pre>
+  if (condition) {
+    ... stuff ...
+  }
+</pre>
+
+<p>
+Some people would also permit omitting braces if the whole
+construct is on one line.
+After all, a merge that
+accidentally loses or duplicates a line won&#8217;t change it, and
+there&#8217;s little risk of confusing its meaning:
+<pre>
+  if (condition) stuff;
+</pre>
+
+<p>
+The usual reason for this format is that it makes it easy to
+add new actions to occur in a condition, without accidentally
+having the later actions occur at all times.
+
+<p>
+<a href="http://programmers.stackexchange.com/questions/16528/single-statement-if-block-braces-or-no">In a stack exchange coding style discussion</a>,
+<a href="http://programmers.stackexchange.com/posts/106857/revisions">User36294 has this prescient description on 2011-09-09</a>
+that described this very issue and a common cause of it:
+&#8220;I use the braces method - for all the reasons above plus one more.
+Code merges. It&#8217;s been known to happen on projects I&#8217;ve worked on that
+single-statement ifs have been broken by automatic merges. The scary
+thing is the indentation looks right even though the code is wrong,
+so this type of bug is hard to spot.&#8221;
+<a href="http://programmers.stackexchange.com/questions/16528/single-statement-if-block-braces-or-no">[StackExchange]</a>
+
+<p>
+Many coding standards and style guides already require or recommend this.
+The
+<a href="https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Coding_Style">Mozilla Coding Style</a> guide
+requires this:
+&#8220;Always brace controlled statements, even a single-line consequent of
+an if else else. This is redundant typically, but it avoids dangling
+else bugs, so it&#8217;s safer at scale than fine-tuning.&#8221;
+The
+<a href="https://www.doc.ic.ac.uk/lab/cplus/cstyle.html">Recommended C Style and Coding Standards</a> by Cannon et al
+recommend &#8220;fully bracketed&#8221; form (where <i>all</i> code is surrounded
+by braces)
+<a href="https://www.doc.ic.ac.uk/lab/cplus/cstyle.html">[Cannon]</a>.
+Michael Barr notes that the Barr Group&#8217;s
+&#8220;Embedded C Coding Standard&#8221; book rule 1.3.a
+has the same kind of requirement:
+&#8220;Braces shall always surround the blocks of code (a.k.a., compound
+statements), following if, else, switch, while, do, and for statements;
+single statements and empty statements following these keywords shall
+also always be surrounded by braces&#8221;.
+In short, Barr states that
+&#8220;Too few programmers recognize that many bugs can be kept entirely out of
+a system simply by adopting (and rigorously enforcing) a coding standard
+that is designed to keep bugs out.&#8221;
+<a href="http://embeddedgurus.com/barr-code/2014/03/apples-gotofail-ssl-security-bug-was-easily-preventable/">[Barr2014]</a>.
+<a href="https://www.thc.org/root/phun/unmaintain.html">Green&#8217;s &#8220;How To
+Write Unmaintainable Code&#8221;</a>
+similarly argues (in its usual backwards way)
+that if you want to make code <i>hard</i> to maintain,
+&#8220;Avoid {}.  Never put in any { } surrounding your if/else blocks unless
+they are syntactically obligatory. If you have a deeply nested mixture
+of if/else statements and blocks, especially with misleading indentation,
+you can trip up even an expert maintenance programmer.&#8221;
+<a href="https://www.thc.org/root/phun/unmaintain.html">[Green]</a>.
+
+<p>
+Some tools (mainly style checkers) can detect cases where braces
+are not used this way.
+<a href="https://bitbucket.org/verateam/vera/wiki/Home">Vera++
+can detect unbraced control structures</a>
+(this is rule T019,
+&#8220;Control structures should have complete curly-braced block of code&#8221;).
+The gcc flag -Wparentheses
+will warn of unbraced situations in certain cases, but not in general
+(it would not find this instance, for example).
+
+<p>
+Not everyone agrees with this style, e.g., the
+<a href="https://www.kernel.org/doc/Documentation/CodingStyle">Linux
+coding style</a> instead says
+&#8220;Do not unnecessarily use braces where a single statement will do&#8221;
+<a href="https://www.kernel.org/doc/Documentation/CodingStyle">[Linux]</a>.
+The Linux style guide does save some vertical space, but with a
+slightly increased risk of dangerous mistakes.
+In this case, I think the loss of a little vertical space is worth it.
+
+
+<h2 id="coverage">Use coverage analysis (dynamic analysis)</h2>
+<p>
+Obvious questions when you test are
+&#8220;how good is my testing?&#8221; and &#8220;have I done enough?&#8221;
+A common way to answer these questions
+is to use coverage analysis;
+the most common measures are statement coverage and branch coverage.
+As noted by
+<a href="http://avandeursen.com/2014/02/22/gotofail-security/">[vanDeursen2014]</a>,
+even basic statement coverage would have been enough to reveal that
+these lines were not tested... and any effort to track down
+<i>why</i> (or to try to create such tests) would reveal the
+extraneous goto.
+<p>
+If you do not have statement coverage, then you have statements
+in your code that are <i>never</i> executed by any test.
+<p>
+Requiring full statement coverage for
+security- or safety-critical code is not that unusual.
+A widely-used specification in the avionics world for software development is
+DO-178B and its successor DO-178C, titled
+&#8220;Software Considerations in Airborne Systems and Equipment Certification&#8221;.
+It defines levels A through E, where level A is if failure is catastrophic,
+and level C is where the failure is major.
+In both version, statement coverage is required at level C or higher.
+(This is noted by
+<a href="http://www-01.ibm.com/support/docview.wss?uid=swg21142710">IBM&#8217;s
+description of of DO-178B</a> and
+<a href="http://www.validatedsoftware.com/avionics/avionicsfaq.html">
+Validated Software Corporations&#8217; Avionics Validation
+and Certification FAQ</a>).
+
+<p>
+Statement coverage is actually a relatively <i>weak</i> measure
+for the tests of critically-important software.
+Developers of critically-important software should be using at least
+one other coverage measure, at least branch coverage
+(which is also relatively weak).
+As explained in
+<a href="http://www.hitex.com/fileadmin/pdf/products/tessy/white-papers/WP-TESSY-0104-CC_e.pdf">[Buechner2012]</a>,
+&#8220;even if 100% statement
+coverage is achieved, severe bugs still can be present.
+Therefore, please keep in mind what
+100% statement coverage actually means: All
+statements were executed during the tests at least one time.
+Not more and not less.
+We can assume that 100% statement coverage is &#8216;better&#8217;
+(i.e. results in a higher software quality,
+whatever this may be)
+than say 70% statement coverage,
+but the software quality achieved by 100%
+statement coverage is certainly not sufficient for a safety-critical project.
+If you [are considering applying] statement coverage,
+[reaching] 100% is the minimal objective.
+Statement coverage can be useful for detecting &#8216;dead code&#8217;,
+i.e. code that cannot be executed at all.
+Statement coverage can [also] reveal missing test cases.&#8221;
+
+<p>
+Some organizations will stop before getting 100% statement coverage
+and choose to manually examine the remaining code instead.
+That is a valid trade-off.
+In either case, all code is getting a basic examination, either
+by test or by review.
+
+<p>
+Frankly, I&#8217;m very tempted to add this to the
+&#8220;minimum set&#8221; - if you aren&#8217;t measuring coverage in
+code that&#8217;s highly security-sensitive, you have
+<i>no idea</i> how well you&#8217;re testing in code that
+really matters.
+
+<p>
+You do not even have to achieve 100% coverage.
+In this case, simply measuring statement coverage and noticing
+when coverage went <i>down</i> unexpectedly would have probably detected
+this vulnerability.
+
+<h2 id="indentation">Forbid misleading indentation (static analysis)</h2>
+<p>
+The vulnerability might pass a superficial code review because it
+had misleading indentation; one countermeasure is to
+forbid misleading indentation (through either reformatting or detection).
+<p>
+Arie van Deursen argues that
+&#8220;code formatting is a security feature&#8221;
+and that indentation
+&#8220;white space is a security concern.
+The correct indentation immediately shows something fishy is going on...&#8221;
+<a href="http://avandeursen.com/2014/02/22/gotofail-security/">[vanDeursen2014]</a>.
+Arie van Deursen also argues that code formatting should be done by tools,
+not by hand, and shows that clearly this code was not routinely
+formatted automatically.
+He notes that with Eclipse-format-on-save code could not be saved
+this way.
+However, van Deursen also admits that
+&#8220;hand-made layout can make a substantial difference in understandability
+of code.
+Perhaps current tools do not sufficiently acknowledge such needs,
+leading to under-use of today&#8217;s formatting tools.&#8221;
+
+<p>
+However, beware.
+Just reformatting on saving may have made this worse, unless it
+was followed by manual review.
+Reformatting code by itself would not have fixed it,
+since it would have had the same effect,
+and reformatting
+would have made it impossible for tools to detect the
+<i>inconsistent</i> indentation (which might have served as a useful warning).
+In addition, reformatting existing code creates merge difficulties
+(and thus can <i>contribute</i> to this kind of problem).
+
+<p>
+I think it is often
+a better approach is to use tools that report when indentation
+is blatantly inconsistent, or ones that allow more flexibility to
+retain hand formatting (and thus would be more acceptable by those
+who currently reformat by hand).
+Some style checkers can report inconsistent styles, which let
+people do manual formatting while warning of problems.
+
+<p>
+<a href="http://developerblog.redhat.com/2016/02/26/gcc-6-wmisleading-indentation-vs-goto-fail/">GCC (GNU Compiler Collection) version 6 adds a new
+warning for misleading indentation</a>, <tt>-Wmisleading-indentation</tt>.
+This new warning immediately detects misleading indentation
+(such as the one in this code), and can immediately find them.
+This warning was added to GCC <i>after</i> this problem came to light
+(it was implemented in the 2016 timeframe), in part as a response
+to this specific vulnerability.
+If you use GCC version 6 or later, you should use this warning
+flag and fix problems it finds.
+Even better: this flag is enabled by default in GCC if you use <tt>-Wall</tt>
+(&#8220;enable all important warnings&#8221;),
+so if you simply use <tt>-Wall</tt> you&#8217;ll get this check
+automaticlaly on newer verasions of GCC.
+
+<p>
+In 2019 (more recently) the
+<a href="https://reviews.llvm.org/D70638">clang compiler
+also added support for the <tt>-Wmisleading-indentation</tt> flag</a>.
+However, this is <i>not</i> enabled by <tt>-Wall</tt> in clang
+(at least at the time of this writing), so you need to specially enable it
+if you only use clang and not GCC.
+Even before this option was added
+the LibreOffice developers were using a
+<a href="https://cgit.freedesktop.org/libreoffice/core/tree/compilerplugins/clang/bodynotinblock.cxx">clang plug-in specifically to detect this kind of
+misleading indentation in their code</a>, so that they can prevent these kinds
+of problems.
+
+<p>
+I&#8217;ve also confirmed that
+<a href="http://kitware.github.io/KWStyle/">Kitware&#8217;s KWStyle</a> program
+can be configured to find this.
+KWStyle can report indentation that is inconsistent with
+the opening and closing braces, and that is enough to detect
+this particular problem.
+KWStyle is open source software released under the
+<a href="http://kitware.github.io/KWStyle/project/license.html">New/Revised
+3-clause BSD license</a>, and it existed when this vulnerability
+was reported.
+
+
+<!--
+To test this, I compiled it and ran:
+KWStyle -xml my.xml -vim unreachable.c
+
+It reported:
+unreachable.c:14:Number of empty lines at the end of files: 2
+unreachable.c:6:Indent is wrong 4 (should be 2)
+unreachable.c:7:Indent is wrong 4 (should be 2)
+unreachable.c:9:Indent is wrong 0 (should be 2)
+
+
+The third report, on line 7, is a stub corresponding to the
+"goto fail" vulnerability.  Below are the stub files I used to test this.
+
+File "unreachable.c" (by stub file) contained:
+#include <stdio.h>
+
+int x(a) {
+  printf("Hello\n");
+  if (a)
+    goto skip;
+    goto skip;
+  printf("Middle\n");
+skip:
+  printf("End\n");
+  return 0;
+}
+
+
+File "my.xml" contained:
+<?xml version="1.0" encoding="iso-8859-1"?>
+<Description>
+<LineLength>81</LineLength>
+<DeclarationOrder>0,1,2</DeclarationOrder>
+<Typedefs>[A-Z]</Typedefs>
+<InternalVariables>m_[A-Z]</InternalVariables>
+<SemicolonSpace>0</SemicolonSpace>
+<EndOfFileNewLine>1</EndOfFileNewLine>
+<Tabs>1</Tabs>
+<Spaces>3</Spaces>
+<Comments>/**, *, */,true</Comments>
+<Indent>SPACE,2,true,true</Indent>
+<Namespace>itk</Namespace>
+<NameOfClass>[NameOfClass],itk</NameOfClass>
+<IfNDefDefine>__[NameOfClass]_[Extension]</IfNDefDefine>
+<EmptyLines>2</EmptyLines>
+<Template>[TNV]</Template>
+<Operator>1,1</Operator>
+</Description>
+-->
+
+<p>
+Manual review preceded by reformatting
+(or at least preventing misleading indentation),
+would have almost certainly countered it as well.
+We will discuss this later in the section on
+<a href="#manual-review">manual review</a>
+
+<h2 id="detect-duplicates">Detect duplicate lines in source code (static analysis)</h2>
+
+<p>
+If merge errors can sometimes produce erroneous duplicate lines, then
+perhaps it&#8217;d be helpful to <i>check</i> for duplicate lines.
+Duplicate lines are not necessarily an error, but perhaps they
+are rare enough to specifically check.
+
+<p>
+To test this theory, I looked for duplicate lines in
+C code (.c and .h files) in the Linux kernel version 3.17.4.
+This version of the Linux kernel has
+17,088,122 lines in .c and .h files including blank and comment lines.
+<!--
+  Found using this command, which uses GNU extensions:
+  find . -name '*.[ch]' -print0 | wc -l -\-files0-from=-
+-->
+When looking for duplicate lines
+I used &#8220;uniq -d&#8221; and
+intentionally ignored blank lines, lines with just &#8220;*&#8221;
+(which are in comments and thus irrelevant),
+and &#8220;#endif&#8221; (the compiler detects unmatched endifs anyway).
+
+<!--
+find . -name '*.[ch]' -exec ./show_dups {} \; | tee | wc -l
+
+show_dups is:
+#!/bin/sh
+sed -e '/^ *$/d' -e '/^ *\* *$/d' -e '/^ *#endif *$/d' "$1" | uniq -c -d > ,1
+if [ -s ,1 ]; then
+  sed -e "s!^!$1:!" ,1
+fi
+
+
+Unfortunately this workload is too much for Cygwin, which
+collapses with:
+      0 [main] sh 9560 fork: child -1 - forked process 10884 died unexpectedly, retry 0, exit code 0xC000041D, errno 11
+./show_dups: fork: retry: Resource temporarily unavailable
+-->
+
+<p>
+In this test I found that there were 10,682 incidences of duplicate lines;
+this works out to
+one incident of duplicate lines for every 1,600 lines on average.
+<!-- 17088122./10682 -->
+That could be used, but it is a rather noisy measure.
+However, it turned out that nearly all of these incidences were in a
+few files that used code to represent data
+(primarily fonts and a logo file in
+arch/m68k/platform/68000/bootlogo-vz.h).
+It would be easy to look for duplicate lines and exclude the few files
+with many duplicates (to reduce the number of false positives).
+When I do that excluding &#8220;fonts&#8221; and &#8220;bootlogo&#8221;,
+I get only 5,769 incidences of duplicate lines, or only
+one incident of duplicate lines for every 2,962 lines on average.
+<!-- 17088122./5769 -->
+That takes much less time to do, and
+it shouldn&#8217;t take long to examine a duplicate line to determine
+if it suggests a more serious problem.
+Where duplicate lines are intentional, you could an on-line comment
+(of <i>any</i> kind) to note the duplication is intentional - then
+the lines would no longer be reported as duplicates.
+
+<p>
+Duplicate checking should not replace other
+mechanisms that can detect more problems,
+such as negative testing and enabling warnings (including
+searching for unreachable code).
+That said, this might be a useful additional measure to apply
+to software that is vitally important, especially
+if you know that your version control software (especially its merge routines)
+occasionally make this mistake.
+For example, you could apply the checking and <i>only</i> report
+duplicate lines in code involved in a merge as a potential warning
+for code to check.
+In this case, it would be trivial to do and could
+be automatically applied
+(e.g., in git this could be implemented as a client-side hook
+that warned if a merge produced duplicate lines that were not there before).
+
+
+<h2 id="error-handling">Change error-handling idiom or switch to a safer language to use exceptions (static analysis)</h2>
+
+<p>
+An indirect cause of the problem is that C does not have a
+full exception-handling mechanism
+(it has a mechanism called setjmp/longjump, but this is not the same thing).
+
+<p>
+This means that in practice, software developers using C will
+typically return error codes in their return values.
+This means that almost every call to a function must also handle
+error returns.
+The actual code
+<a href="http://opensource.apple.com/source/Security/Security-55471/libsecurity_ssl/lib/sslKeyExchange.c?txt">[Apple2014]</a>
+is a disturbingly long
+list of lines in the form (notice that <i>only</i> the call to
+do_something is the primary function; everything else is a wrapper
+to deal with errors:
+<pre>
+ if ((err = do_something(...)) != 0)
+   goto fail;
+</pre>
+
+<p>
+Arie van Deursen
+<a href="http://avandeursen.com/2014/02/22/gotofail-security/">[vanDeursen2014]</a>
+points out that this is an underlying cause of the
+Apple goto fail vulnerability.
+In short, the complexity caused by the &#8220;return error code&#8221; idiom
+is difficult to manage.
+As evidence, he points back to his earlier paper
+<a href="http://www.st.ewi.tudelft.nl/~arie/papers/exceptions/icse2006.pdf">[Bruntink2006]</a>,
+where they analyzed a 15 year-old, real-time embedded
+system with approximately 10 million lines of C code.
+They found that there were
+2.1 deviations from the return code idiom per 1000 lines of code.
+These deviations are not necessarily errors or vulnerabilities,
+but it does clearly show that developers often fail to follow the idioms.
+This shows that
+&#8220;the idiom is particularly error prone, due to the fact that it
+is omnipresent as well as highly tangled, and requires focused and
+well-thought programming.&#8221;
+<p>
+The authors propose using specialized C macros that
+make the idiom much easier to apply.
+The specific macros they developed were as follows
+(I have tweaked NO_LOG so it uses explicit braces):
+<pre>
+#define ROOT_LOG (error_value, error_var) \
+  error_var = error_value; \
+  LOG(error_value, OK);
+
+#define LINK_LOG (function_call, error_value, error_var) \
+  if (error_var == OK) { \
+    int _internal_error_var = function_call; \
+    if (_internal_error_var != OK) { \
+      LOG( error_value, _internal_error_var); \
+      error_var = error_value; \
+      } \
+  }
+
+#define NO_LOG (function_call, error_var) \
+  if (error_var == OK) { \
+    error_var = function_call; \
+  }
+</pre>
+
+<p>
+These simplify the number of control flows as seen by the programmer,
+which helps.
+However, as written these do not address resource release
+(an issue the original goto fail code had to deal with),
+so a variant of this approach may be needed in other systems.
+
+<p>
+It is possible to implement exception handling-like mechanisms
+in C <a href="http://www.adomas.org/excc/">[Paltanavicius2005]</a>,
+but as these are not well-supported it seems risky to depend on them.
+
+<p>
+Another approach, not specifically recommended by the authors,
+is to switch to a language that provides better mechanisms
+for error-handling (e.g., exception handling).
+
+
+<h2 id="default-fail">Make access failure the default (static analysis)</h2>
+
+<p>
+Real code has bugs.
+The &#8220;goto fail&#8221; bug turned in a serious security problem because
+the default value for the errorcode was 0 (no error).
+
+<p>
+What should have been done, instead, was to ensure that the default
+error code was an error (some nonzero value in this case),
+and then return no-error only after all tests
+had positively determined that things were fine.
+In this approach, skipping validation code would cause all validations
+to report an error.
+The bug could have still occurred, but it would never have been a
+security problem.
+Instead, it would have been immediately
+detected by normal testing, and if testing was that bad,
+users would quickly report it in the field.
+
+<p>
+Walt Sellers eloquently noted this in an email to me on 2017-01-14:
+&#8220;In brief: an overlooked basic problem of the &#8216;goto fail&#8217; code was the
+assumption of success until failure was proven.
+If failure was assumed until success was proven,
+the bug would not have existed.
+With this change in assumption, incorrect behavior of the code would tend to
+give incorrect denials of access rather than incorrect granting of access.
+Bugs would be noticed because people would complain that they
+were kept out. As you point out people do not complain of being let in.&#8221;
+
+
+<h2 id="manual-review">Manual review (static analysis)</h2>
+
+<p>
+Just about any manual review is very likely to have found this.
+Simply having a duplicated goto statement is highly suspicious,
+<i>even if</i> the reviewer didn&#8217;t immediately
+realize that the indentation was misleading.
+If the indentation had been cleaned up before review,
+just about any serious manual review would have found it.
+That&#8217;s because with proper indentation this problem
+is very obvious to manual review.
+
+<p>
+As Sethi reports,
+&#8220;whenever I manually review code, I use the IDE to automatically fix
+indentation before I start looking at it. This doesn&#8217;t guarantee that
+the reviewer will catch every problem, but it does make code easier to
+read and understand.
+If you perform manual code reviews, I would highly
+recommend doing this.&#8221;
+<a href="http://www.cigital.com/justice-league-blog/2014/02/25/understanding-apple-goto-fail-vulnerability-2/">[Sethi2014]</a>.
+
+
+<h1 id="heartbleed">Heartbleed countermeasures</h1>
+<p>
+<a href="heartbleed.html">Heartbleed</a> was a much more challenging
+vulnerability to find ahead-of-time.
+I have previously listed some of the mechanisms that
+could have found Heartbleed; here they are, along with
+notes on whether or not they would have countered
+Apple&#8217;s goto fail:
+<ol>
+<li><a href="heartbleed.html#negative-testing">Thorough negative testing in test cases (dynamic analysis)</a>: <b>Yes</b>.  As I discussed earlier,
+<a href="#negative-testing">thorough negative testing would certainly
+have found this vulnerability</a> as well,
+and it should have been done.
+<li><a href="heartbleed.html#fuzzing-check-standard">Fuzzing with address checking and standard memory allocator (dynamic analysis)</a>: <b>No</b>.
+Fuzzing that focused
+just on crashes would not have helped, even with address checking, since
+this was not a memory access problem.
+See below for a variant of fuzzing that <i>would</i> have worked.
+<li><a href="heartbleed.html#compile-standard">Compiling with address checking and standard memory allocator (hybrid analysis)</a>: <b>No</b>.
+Again, goto fail was not a memory access problem.
+<li><a href="heartbleed.html#review-field-required">Focused manual spotcheck requiring validation of every field (static analysis)</a>: <b>Maybe</b>.
+Manual review of that particular set of code would have almost
+certainly detected this.
+However, in a focused manual spotcheck, what matters is the focus;
+if this part of the code was <i>not</i> reviewed, then the problem
+would not be found, and
+it is not clear that this
+part of the code would have been especially reviewed.
+If it only focused on initial validation, maybe, and maybe not.
+<li><a href="heartbleed.html#fuzzer-examine-output">Fuzzing with output examination (dynamic analysis)</a>: <b>Yes</b>.
+Just about any output examination would have determined that far too many
+certificates were being accepted, yet should have been rejected.
+<li><a href="heartbleed.html#context-configured-static">Context-configured source code weakness analyzers, including annotation systems (static analysis)</a>:
+Probably.
+This was a fundamental failure in the library&#8217;s primary purpose,
+so a focused analysis is more likely to have worked.
+<li><a href="heartbleed.html#multi-implementation-coverage">Multi-implementation 100% branch coverage (hybrid analysis)</a>: <b>Yes</b>.
+Practically any test with bad certificates would have found this
+vulnerability.
+A multi-implementation branch coverage test would have had to include
+such tests.
+Indeed, as noted earlier,
+<a href="#coverage">using coverage analysis</a>
+and requiring full statement coverage would have found this.
+<li><a href="heartbleed.html#aggressive-assertions">Aggressive run-time assertions (dynamic analysis)</a>: <b>Probably not</b>.
+In this case, many of the run-time assertions would probably
+have been skipped as well.
+<li><a href="heartbleed.html#safe-language">Safer language (static analysis)</a>: <b>Maybe</b>.
+However, as noted earlier,
+most languages with C-like syntax (including Java and C#)
+have similar problems.
+Many languages that are notably <i>not</i> C-like in syntax,
+such as Ada, do not have
+this problem because they do not allow the single statement branches
+that were at the root of this problem.
+<li><a href="heartbleed.html#sound-static-analyzer">Complete static analyzer (static analysis)</a>: <b>Probably</b>.
+<li><a href="heartbleed.html#thorough-audit">Thorough human review / audit (static analysis)</a>: <b>Yes</b>.
+<li><a href="heartbleed.html#formal-methods">Formal methods (static analysis)</a>: <b>Yes</b>.
+</ol>
+
+<p>
+However, as I noted earlier,
+there is no need to list more sophisticated measures (such as formal methods).
+If an organization cannot be bothered to use simple mechanisms
+to counter vulnerabilities, they will not do more either. 
+
+
+<!--
+<h1>Some SSL/TLS testing tools</h1>
+
+<a href="http://venturebeat.com/2014/11/04/google-releases-open-source-nogotofail-network-traffic-security-testing-tool/">Google releases open source Nogotofail network traffic security testing tool</a>
+<a href="http://googleonlinesecurity.blogspot.com/2014/11/introducing-nogotofaila-network-traffic.html">Introducing nogotofail - &#8221;a network traffic security testing tool</a>
+<a href="https://github.com/google/nogotofail">nogotofail</a>
+-->
+
+<h1 id="conclusions">Conclusions</h1>
+<p>
+The Apple goto fail vulnerability was a dangerous vulnerability
+that <i>should</i> have been found by Apple.
+There are many mechanisms they could have used.
+Some include:
+<ol>
+<li><a href="#negative-testing">Thorough negative testing in test cases (dynamic analysis)</a>
+<li><a href="#unreachable-code">Properly detect and check unreachable code, e.g., via warning flags (static analysis)</a>
+<li><a href="#braces">Always use braces, at least if it&#8217;s not the same line (static analysis)</a>
+<li><a href="#coverage">Use coverage analysis (dynamic analysis)</a>
+<li><a href="#indentation">Forbid misleading indentation (static analysis)</a>
+<li><a href="#detect-duplicates">Detect duplicate lines in source code (static analysis)</a>
+<li><a href="#error-handling">Change error-handling idiom or switch to a safer language to use exceptions (static analysis)</a>
+<li><a href="#default-fail">Make access failure the default</a>
+<li><a href="#manual-review">Manual review (static analysis)</a>
+</ol>
+
+<p>
+At the very least, I would recommend
+<a href="#negative-testing">thorough negative testing in test cases</a>,
+<a href="#unreachable-code">properly detect and check unreachable code, e.g., via warning flags</a>,
+<a href="#braces">always use braces, at least if it&#8217;s not the same line</a>,
+and
+<a href="#coverage">use coverage analysis</a>
+for critically-important software like an SSL/TLS libary.
+These approaches would detect many other problems, and that array
+of techniques would have certainly countered this one.
+The other techiques listed above are promising also.
+
+<p>
+A related problem is that Apple is notoriously secretive.
+Apple has not provided more detail on exactly how the vulnerability
+got in, or why Apple failed to detect this problem
+(even though it was easy to detect).
+This secrecy makes it unnecessarily hard to learn from it.
+
+<p>
+The real problem, of course, is that lessons are often not learned.
+Apple seems to depend on using its own software internally as a
+quality assurance technique.
+That approach often works for finding user interface defects,
+but that approach is basically useless for security.
+This fact has been known for decades - though perhaps not by Apple.
+I hope that Apple has (or will) change its software development processes
+so they will be more likely to detect vulnerabilities
+in their software <i>before</i> the software is deployed.
+It is not just Apple, either.
+I hope that <i>all</i> software developers will
+learn from the mistakes of the past, and then change how they
+develop software to prevent repeating those mistakes.
+
+<p>
+If you enjoyed this paper, you might also enjoy the entire
+suite of related papers in
+my essay suite <a href="learning-from-disaster.html">Learning from Disaster</a>.
+This includes my similar essays about
+<a href="heartbleed.html">Heartbleed</a>,
+<a href="shellshock.html">Shellshock</a>, and the
+<a href="poodle-sslv3.html">POODLE attack on SSLv3</a>.
+
+<h1>References</h1>
+
+<p>
+<a href="http://opensource.apple.com/source/Security/Security-55471/libsecurity_ssl/lib/sslKeyExchange.c?txt">[Apple2014]</a>
+Apple Inc.
+sslKeyExchange.c.
+<a href="http://opensource.apple.com/source/Security/Security-55471/libsecurity_ssl/lib/sslKeyExchange.c?txt">http://opensource.apple.com/source/Security/Security-55471/libsecurity_ssl/lib/sslKeyExchange.c?txt</a>
+
+
+<p>
+<a href="http://www.theguardian.com/technology/2014/feb/25/apples-ssl-iphone-vulnerability-how-did-it-happen-and-what-next">[Arthur2014]</a>
+Arthur, Charles.
+Apple&#8217;s SSL iPhone vulnerability: how did it happen, and what next?
+2014-02-25.
+<a href="http://www.theguardian.com/technology/2014/feb/25/apples-ssl-iphone-vulnerability-how-did-it-happen-and-what-next">http://www.theguardian.com/technology/2014/feb/25/apples-ssl-iphone-vulnerability-how-did-it-happen-and-what-next</a>.
+
+<p>
+<a href="http://embeddedgurus.com/barr-code/2014/03/apples-gotofail-ssl-security-bug-was-easily-preventable/">[Barr2014]</a>
+Barr, Michael.
+Apple&#8217;s #gotofail SSL Security Bug was Easily Preventable
+2014-03-03.
+<a href="http://embeddedgurus.com/barr-code/2014/03/apples-gotofail-ssl-security-bug-was-easily-preventable/">http://embeddedgurus.com/barr-code/2014/03/apples-gotofail-ssl-security-bug-was-easily-preventable/</a>
+
+<p>
+<a href="http://digwww.com/news-10150464/apple-s-goto-fail-tells-us-nothing-good-about-cupertino-s-software-delivery-process.html">[Baxter-Reynolds2014]</a>.
+Baxter-Reynolds, Matt.
+&#8220;Apple&#8217;s &#8220;goto fail&#8221; tells us nothing good about
+Cupertino&#8217;s software delivery process&#8221;.
+2014-03-20.
+<a href="http://digwww.com/news-10150464/apple-s-goto-fail-tells-us-nothing-good-about-cupertino-s-software-delivery-process.html">http://digwww.com/news-10150464/apple-s-goto-fail-tells-us-nothing-good-about-cupertino-s-software-delivery-process.html</a>.
+
+<p>
+<a href="https://www.cs.columbia.edu/~smb/blog/2014-02/2014-02-24.html"
+>[Bellovin2014]</a>
+Bellovin, Steven M.,
+Speculation about Goto Fail, 2014-02-24.
+
+<p>
+<a href="http://www.st.ewi.tudelft.nl/~arie/papers/exceptions/icse2006.pdf">[Bruntink2006]</a>.
+Discovering Faults in Idiom-Based Exception Handling.
+Bruntink, Magiel, Arie van Deursen, and Tom Tourwe.
+2006.
+ICSE.
+<a href="http://www.st.ewi.tudelft.nl/~arie/papers/exceptions/icse2006.pdf">http://www.st.ewi.tudelft.nl/~arie/papers/exceptions/icse2006.pdf</a>
+
+<p>
+<a href="http://www.hitex.com/fileadmin/pdf/products/tessy/white-papers/WP-TESSY-0104-CC_e.pdf">[Buechner2012]</a>
+Buechner, Frank.
+&#8220;Is 100% Code Coverage Enough?&#8221;
+Hitex Development Tools Gmb.
+<a href="http://www.hitex.com/fileadmin/pdf/products/tessy/white-papers/WP-TESSY-0104-CC_e.pdf">http://www.hitex.com/fileadmin/pdf/products/tessy/white-papers/WP-TESSY-0104-CC_e.pdf</a>
+
+<p>
+<a href="https://www.doc.ic.ac.uk/lab/cplus/cstyle.html">[Cannon]</a>
+Cannon, L.W.,
+R.A. Elliott,
+L.W. Kirchhoff,
+J.H. Miller,
+J.M. Milner,
+R.W. Mitze,
+E.P. Schan,
+N.O. Whittington,
+Henry Spencer,
+David Keppel,
+and
+Mark Brader.
+<i>Recommended C Style and Coding Standards</i>.
+<a href="https://www.doc.ic.ac.uk/lab/cplus/cstyle.html">https://www.doc.ic.ac.uk/lab/cplus/cstyle.html</a>
+
+<p>
+<a href="http://www.zazzle.com/goto_fail_t_shirt_plain_code-235322391420181248">[DesignedbyJonathan2014]</a>
+DesignedbyJonathan.
+&#8220;goto fail; T-shirt (plain code)&#8221;.
+Artwork designed by DesignedbyJonathan. Made by Zazzle Apparel in San Jose, CA. Sold by Zazzle.
+Product ID: 235322391420181248.
+2014-04-08 6:59AM.
+<a href="http://www.zazzle.com/goto_fail_t_shirt_plain_code-235322391420181248">http://www.zazzle.com/goto_fail_t_shirt_plain_code-235322391420181248</a>
+
+<p>
+<a href="https://nakedsecurity.sophos.com/2014/02/24/anatomy-of-a-goto-fail-apples-ssl-bug-explained-plus-an-unofficial-patch/">[Ducklin]</a>.
+Ducklin, Paul.
+&#8220;Anatomy of a &#8216;goto fail&#8217; - Apple&#8217;s SSL bug explained, plus an unofficial patch for OS X!&#8221;
+Sophos.
+2014-02-24.
+<a href="https://nakedsecurity.sophos.com/2014/02/24/anatomy-of-a-goto-fail-apples-ssl-bug-explained-plus-an-unofficial-patch/">https://nakedsecurity.sophos.com/2014/02/24/anatomy-of-a-goto-fail-apples-ssl-bug-explained-plus-an-unofficial-patch/</a>
+
+
+<p>
+<a href="https://crypto.stanford.edu/~dabo/pubs/abstracts/ssl-client-bugs.html">[Georgiev2012]</a>.
+Georgiev, Martin, Subodh Iyengar, Suman Jana, Rishita Anubhai, Dan Boneh, and Vitaly Shmatikov.
+&#8220;The most dangerous code in the world: validating SSL certificates in non-browser software&#8221;.
+<i>ACM Conference on Computer and Communications Security</i>.
+2012.
+pp. 38-49.
+
+<p>
+<a href="https://gotofail.com/faq.html">[gotofail.com2014]</a>.
+Goto fail FAQ.
+<a href="https://gotofail.com/faq.html">https://gotofail.com/faq.html</a>.
+
+<p>
+<a href="https://www.thc.org/root/phun/unmaintain.html">[Green]</a>.
+Green, Roedy.
+&#8220;How to Write Unmaintainable Code: Ensure a job for life ;-)&#8221;.
+Canadian Mind Products.
+<a href="https://www.thc.org/root/phun/unmaintain.html">https://www.thc.org/root/phun/unmaintain.html</a>
+
+<p>
+<a href="https://www.imperialviolet.org/2014/02/22/applebug.html">[Langley2014]</a>
+Langley, Adam.
+Apple&#8217;s SSL/TLS bug.
+<i>ImperialViolet</i> (Adam Langley&#8217;s blog).
+2014-02-22.
+<a href="https://www.imperialviolet.org/2014/02/22/applebug.html">https://www.imperialviolet.org/2014/02/22/applebug.html</a>.
+
+<p>
+<a href="https://www.kernel.org/doc/Documentation/CodingStyle">[Linux]</a>.
+Linux kernel developers.
+&#8220;Linux kernel coding style&#8221;
+<i>Linux kernel</i>.
+Version as of 2014-08-26.
+Note:
+<a href="http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/log/Documentation/CodingStyle">Recent history of this document is available via
+git</a>.
+Its first commit in the git repository
+is by Linus Torvalds on 2005-04-16 22:20:36,
+but this date is misleading, since this was merely the switch
+of the entire Linux kernel (version v2.6.12-rc2) to git.
+The original document was almost certainly by Linus Torvalds, but many others
+have edited it since.
+<a href="https://www.kernel.org/doc/Documentation/CodingStyle">https://www.kernel.org/doc/Documentation/CodingStyle</a>
+
+<p>
+[<a href="https://peerj.com/preprints/826v1/">Nagappan2015</a>]
+Nagappan, Meiyappan, Romain Robbes, Yasutaka Kamei, Éric Tanter, Shane McIntosh, Audris Mockus, and Ahmed E. Hassan.
+An empirical study of goto in C code
+2015-02-11.
+<a href="https://peerj.com/preprints/826v1/">https://peerj.com/preprints/826v1/</a>.
+
+<p>
+<a href="https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2014-1266">[NVD2014]</a>
+National Vulnerability Database (NVD).
+CVE-2014-1266.
+<a href="https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2014-1266">https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2014-1266</a>.
+
+<p>
+<a href="http://www.adomas.org/excc/">[Paltanavicius2005]</a>,
+Paltanavicius, Adomas.
+Exceptions in C.
+2005-04-10.
+<a href="http://www.adomas.org/excc/">http://www.adomas.org/excc/</a>
+<!-- adomas dot paltanavicius at gmail dot com -->
+
+<p>
+<a href="https://www.schneier.com/blog/archives/2014/02/was_the_ios_ssl.html"
+>[Schneier20014]</a>
+Schneier, Bruce,
+&#8220;Was the iOS SSL Flaw Deliberate?&#8221;,
+2014-02-27.
+
+<p>
+<a href="http://www.cigital.com/justice-league-blog/2014/02/25/understanding-apple-goto-fail-vulnerability-2/">[Sethi2014]</a>
+Sethi, Amit.
+Understanding the Apple &#8216;goto fail;&#8217; Vulnerability.
+Cigital.
+2014-02-25.
+<a href="http://www.cigital.com/justice-league-blog/2014/02/25/understanding-apple-goto-fail-vulnerability-2/">http://www.cigital.com/justice-league-blog/2014/02/25/understanding-apple-goto-fail-vulnerability-2/</a>
+
+<p>
+<a href="http://programmers.stackexchange.com/questions/16528/single-statement-if-block-braces-or-no">[StackExchange]</a>
+Stack Exchange.
+&#8220;Single statement if block - braces or no?&#8221;
+<a href="http://programmers.stackexchange.com/questions/16528/single-statement-if-block-braces-or-no">http://programmers.stackexchange.com/questions/16528/single-statement-if-block-braces-or-no</a>
+
+<p>
+<a href="https://gcc.gnu.org/ml/gcc-help/2011-05/msg00360.html">[Taylor2011]</a>
+Taylor, Ian Lance (Google).
+Subject &#8220;Re: gcc -Wunreachable-code option&#8221;.
+Mailing list gcc-help at gcc dot gnu dot org.
+2011-05-25 06:21:52 -0700.
+Key text:
+&#8220;The -Wunreachable-code has been removed, because it was unstable: it
+relied on the optimizer, and so different versions of gcc would warn
+about different code.  The compiler still accepts and ignores the
+command line option so that existing Makefiles are not broken.  In some
+future release the option will be removed entirely.&#8221;
+<a href="https://gcc.gnu.org/ml/gcc-help/2011-05/msg00360.html">https://gcc.gnu.org/ml/gcc-help/2011-05/msg00360.html</a>.
+
+<p>
+<a href="http://avandeursen.com/2014/02/22/gotofail-security/">[vanDeursen2014]</a>
+van Deursen, Arie.
+&#8220;Learning from Apple&#8217;s #gotofail Security Bug&#8221;
+<a href="http://avandeursen.com/2014/02/22/gotofail-security/">http://avandeursen.com/2014/02/22/gotofail-security/</a>
+
+<p>
+<hr>
+<p>
+The T-shirt thumbnail image by
+<a href="http://www.zazzle.com/goto_fail_t_shirt_plain_code-235322391420181248">DesignedbyJonathan</a> is used under fair use doctrine
+under US copyright law and the clarifying rules established in
+<a href="http://www.linksandlaw.com/decisions-106.htm">Kelly v. Arriba Soft Corp., 280 F.3d 934 (9th Cir. 2002)</a> and
+<a href="http://www.linksandlaw.com/news-update50-perfect-ten-appeal.htm">Perfect 10 v. Google, Inc., 416 F. Supp. 2d 828 (C.D.Cal. 2006)</a>
+(<a href="http://www.linksandlaw.com/decision-163-perfect-10-pictures-google.pdf">PDF</a>).
+This is under the standard four-factor analysis of fair use.
+First, the image used is a thumbnail image, transforming the work
+and it is of necessarily poorer quality
+(since it is not high resolution like the original).
+The work is also cropped differently, making it even more transformative.
+Second, it has already been published publicly on a web site
+(as part of T-shirt sale
+offer), diminishing its value as a creative work; the first
+appearance has already occurred.
+Third, this copy is reasonable and necessary in light of the intended use.
+Fourth, the market for the original photograph is not substantially
+diminished; to the contrary, the presence of the image increases exposure
+of the original (and thus enhances the sales opportunities).
+No market for smaller images is in evidence, either.
+See the
+<a href="https://www.eff.org/cases/kelly-v-arriba-soft">EFF&#8217;s discussion on
+Kelly v. Arriba Soft</a> for more.
+
+
+<!-- See also:
+http://www.linksandlaw.com/news-update53-legality-thumbnails.htm
+-->
+
+
+<p>
+<hr>
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2014 David A. Wheeler.
+
+<!--
+Future Idea:
+Default-deny: Set error value to "bug" by default, not "0".
+But that won't really work in this code.
+
+-->
+
+
+</body>
+</html>

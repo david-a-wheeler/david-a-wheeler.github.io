@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>MiniSAT User Guide: How to use the MiniSAT SAT Solver</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A user guide (documentation) for the MiniSAT (MiniSAT2) program, a minimalistic, open-source Boolean satisfiability problem (SAT) solver. It describes how to use MiniSAT, including its input format, options, and output format.">
+<meta name="keywords" content="miniSAT, miniSAT2, SAT, satisfiability, boolean satisfiability solver, documentation, howto, user guide, input, format, open source, open source software, formal methods, free software, FLOSS, David, Wheeler, David A. Wheeler, David Wheeler">
+<meta name="generator" content="vim">
+</head>
+<body>
+<h1>MiniSAT User Guide: How to use the MiniSAT SAT Solver</h1>
+<p>
+<i>by <a href="https://dwheeler.com">David A. Wheeler</a>, version 1.00 (2008-06-28)</i>
+<p>
+MiniSat is a minimalistic, open-source Boolean satisfiability problem
+(SAT) solver, developed for both researchers and developers; it
+is released under the "MIT license".
+<p>
+A SAT solver can determine if it is possible to find assignments to boolean
+variables that would make a given expression true, if the expression is
+written with only AND, OR, NOT, parentheses, and boolean variables.
+If it's satisfiable, most SAT solvers (including MiniSAT)
+can also show a set of assignments that make the expression true.
+Many problems can be broken down into a large SAT problem
+(perhaps with thousands of variables), so SAT solvers have a variety
+of uses.
+<p>
+This article is a brief
+user guide (documentation) for the MiniSAT (MiniSAT2) program.
+It describes how to use MiniSAT, including its input format, options,
+and output format.
+<p>
+<p>
+<h1>Conjunctive Normal Form (CNF)</h1>
+<p>
+Like many SAT solvers, MiniSAT requires that its input be in
+conjunctive normal form (CNF or cnf).
+CNF is built from these building blocks:
+<ul>
+<li><i>term</i>: A term is either a boolean variable (e.g., x4)
+or a negated boolean variable (NOT x4, written here as -x4).
+<li><i>clause</i>: A clause is a set of one or more terms, connected with OR
+(written here as |); boolean variables may not repeat  inside a clause.
+<li><i>expression</i>: An expression is a set of one or more clauses,
+each connected by AND (written here as &amp;).
+</ul>
+<p>
+An example of CNF is:
+<pre>
+  (x1 | -x5 | x4) &amp;
+  (-x1 | x5 | x3 | x4) &amp;
+  (-x3 | x4).
+</pre>
+<p>
+Any boolean expression can be converted into CNF;
+algorithms and code for doing so are available elsewhere
+(e.g., see "Artificial Intelligence: A modern Approach"
+by Russel and Norvig, 1995).
+
+<p>
+<h1>MiniSAT input format</h1>
+<p>
+MiniSAT, like most SAT solvers, accepts its input in a simplified
+"DIMACS CNF" format, which is a simple text format.
+Every line beginning "c" is a comment.
+The first non-comment line must be of the form:
+<pre>
+ p cnf NUMBER_OF_VARIABLES NUMBER_OF_CLAUSES
+</pre>
+<p>
+Each of the non-comment lines afterwards defines a clause.
+Each of these lines is a space-separated list of variables;
+a positive value means that corresponding variable
+(so 4 means x4), and a negative value means the negation of that variable
+(so -5 means -x5).
+Each line must end in a space and the number 0.
+<p>
+So the CNF expression above would be written as:
+<pre>
+ c Here is a comment.
+ p cnf 5 3
+ 1 -5 4 0
+ -1 5 3 4 0
+ -3 -4 0
+</pre>
+<p>
+The "p cnf" line means that this is SAT problem in CNF format with
+5 variables and 3 clauses.   The first line after it is the first clause,
+meaning x1&nbsp;|&nbsp;-x5&nbsp;|&nbsp;x4.
+<p>
+You can view this as a single expression.
+Alternatively, you can view this as a set of clauses, and the
+solver's job is to find the set of boolean variable assignments that
+make all the clauses true.
+<p>
+The
+<a href="http://www.satcompetition.org/2004/format-solvers2004.html">
+SAT 2004 competition</a> has more information.
+
+<p>
+<h1>Invoking MiniSAT</h1>
+<p>
+MiniSAT's usage is:
+<pre>
+ minisat [options] [INPUT-FILE [RESULT-OUTPUT-FILE]]
+</pre>
+<p>
+The INPUT-FILE is in DIMACS CNF format as described above, either
+plain text or gzipped.
+You can invoke it with the options "-h" or "--help" to see the other options.
+<p>
+The program's options include:
+<pre>
+  -pre           = {none,once} [Turn on preprocessor]
+  -asymm
+  -rcheck
+  -grow          = NUM [ must be greater than 0 ]
+  -polarity-mode = {true,false,rnd}
+  -decay         = NUM [ 0 - 1 ]
+  -rnd-freq      = NUM [ 0 - 1 ]
+  -dimacs        = OUTPUT-FILE
+  -verbosity     = {0,1,2}
+</pre>
+<p>
+Options with a value must be immediately followed by "=" and its value, e.g.:
+<pre>
+ minisat -pre=once 
+</pre>
+<p>
+For many problems, using the preprocessor is a good idea (-pre=once).
+<p>
+
+<p>
+<h1>MiniSAT output format</h1>
+<p>
+When run, miniSAT sends to standard error a number of different
+statistics about its execution.
+It will output to standard output either
+"SATISFIABLE" or "UNSATISFIABLE" (without the quote marks), depending
+on whether or not the expression is satisfiable or not.
+<p>
+If you give it a RESULT-OUTPUT-FILE, miniSAT will write text to the file.
+The first line will be "SAT" (if it is satisfiable) or "UNSAT"
+(if it is not).
+If it is SAT, the second line will be set of assignments to the
+boolean variables that satisfies the expression.
+(There may be many others; it simply has to produce <i>one</i> assignment).
+<p>
+So for the example above, it will produce in the output file:
+<pre>
+ SAT
+ 1 2 -3 4 5 0
+</pre>
+<p>
+This means that it <i>is</i> satisfiable, with
+x1=t, x2=t, x3=f, x4=t, and x5=t (where t is true and f is false).
+Going back to our original example, we should see that this is a
+solution:
+<pre>
+ (x1 | -x5 | x4)  = t | -t | t = t
+ (-x1 | x5 | x3 | x4)  = -t | t | f | t = t
+ (-x3 | x4) = -f | t = t
+</pre>
+
+<p>
+<h1>Getting more solutions</h1>
+<p>
+If you want to get another solution, the "obvious" way is to
+add, as a new clause, the negated form of the previous solution.
+E.G., for our example, we could take:
+<pre>
+ 1 2 -3 4 5 0
+</pre>
+and create this new input (note that the count of clauses has increased):
+<pre>
+ p cnf 5 4
+ 1 -5 4 0
+ -1 5 3 4 0
+ -3 -4 0
+ -1 -2 3 -4 -5 0
+</pre>
+<p>
+If we put this in file "second.in", and run:
+<pre>
+ minisat second.in second.out
+</pre>
+We will get a new solution; here's second.out:
+<pre>
+ SAT
+ 1 -2 -3 4 5 0
+</pre>
+IE., x1=t, x2=f, x3=f, x4=t, and x5=t.
+This is a different solution from the previous one, because x2=f instead of
+x2=t.
+We can confirm this (it's the same as last time,
+because x2 isn't even in any of the clauses):
+<pre>
+ (x1 | -x5 | x4)  = t | -t | t = t
+ (-x1 | x5 | x3 | x4)  = -t | t | f | t = t
+ (-x3 | x4) = -f | t = t
+</pre>
+
+
+<p>
+<h1>For more information</h1>
+<p>
+You can get more information from:
+<ul>
+<li>
+<a href="http://en.wikipedia.org/wiki/Boolean_satisfiability_problem">
+Wikipedia's article "Boolean satisfiability problem"</a>
+<li>
+<a href="http://en.wikipedia.org/wiki/Conjunctive_normal_form">
+Wikipedia's article "Conjunctive normal form"</a>
+<li>
+<a href="http://www.satlive.org/">SAT Live!</a> - links/news about the
+SAT problem
+<li><a href="http://www.satisfiability.org/">
+The International Conferences on
+Theory and Applications of Satisfiability Testing (SAT)</a>
+<li>
+<a href="http://www.satlib.org">SATLIB - The Satisfiability Library</a>
+<li>
+<a href="https://dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)... with Lots on Formal Methods (aka high confidence or high integrity)</a> has a long list of FLOSS tools that support high assurance efforts,
+including SAT solvers.
+</ul>
+
+<p>
+<hr>
+<p>
+This article was written by
+<a href="https://dwheeler.com">David A. Wheeler</a>, and is released
+to the public domain.
+If you use it or reference it, please credit David A. Wheeler
+(though this is not a requirement for its use).
+You can get this version at
+<a href="https://dwheeler.com/essays/minisat-user-guide-1.0.html">
+https://dwheeler.com/essays/minisat-user-guide-1.0.html</a>, or
+the latest version at
+<a href="https://dwheeler.com/essays/minisat-user-guide.html">
+https://dwheeler.com/essays/minisat-user-guide.html</a>.
+
+</body>
+

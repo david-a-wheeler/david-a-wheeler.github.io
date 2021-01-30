@@ -1,0 +1,766 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Improving make</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Improving make">
+<meta name="keywords" content="???">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Improving make</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2014-10-27 (original 2014-10-21)</h2>
+
+<p>
+<i>This article describes how to improve the standard and the implementations
+of
+<a href="https://en.wikipedia.org/wiki/Make_%28software%29"><tt>make</tt></a>,
+and some of the progress already made.
+<tt>Make</tt> is a widely-used software build tool, but the POSIX standard
+that covers it lacks key functions.
+As a result, <tt>make</tt> is difficult to use portably in many
+common cases.
+This article is primarily inspired by Peter Miller&#8217;s paper
+<a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.20.2572">Recursive
+Make Considered Harmful</a> (1997).
+This article is intended for those who already understand <tt>make</tt>
+and software build processes.
+</i>
+
+<h1 id="introduction">Introduction</h1>
+<p>
+The <tt>make</tt> tool is a very widely-used build tool for
+software development.
+The <tt>make</tt> tool was
+<a href="http://minnie.tuhs.org/cgi-bin/utree.pl?file=V7/usr/src/cmd/make/ident.c">first created by Stuart Feldman in April 1976 at Bell Labs</a>,
+and was originally described in
+<a href="http://onlinelibrary.wiley.com/doi/10.1002/spe.4380090402/abstract">&#8220;Make - A Program for Maintaining Computer Programs&#8221;
+by Stuart I. Feldman
+(Software - Practice and Experience, Vol. 9, 255-265, 1979)</a>.
+<a href="http://awards.acm.org/award_winners/feldman_1240498.cfm">In 2003 Dr. Feldman received the ACM Software System Award
+for creating <tt>make</tt> because it is such an important tool</a>.
+There are certainly other build tools
+including Apache Ant (often used for Java), Apache Maven
+(also often used for Java as long as you can accept its preset structure),
+<a href="http://www.gradle.org/docs/current/userguide/userguide.html">Gradle</a> (which uses its own language, Groovy, for actions),
+Rake,
+Scons (a Python-based system),
+<a href="http://fare.tunes.org/files/asdf3/asdf3-2014.html">ASDF 3</a>
+(for Common Lisp),
+and
+<a href="http://www.cappuccino-project.org/blog/2010/04/introducing-jake-a-build-tool-for-javascript.html">Jake</a>.
+There are other tools that layer themselves on top of <tt>make</tt>,
+such as Cmake and automake
+(<a href="https://dwheeler.com/autotools">automake is part of the autotools</a>).
+<a href="https://en.wikipedia.org/wiki/List_of_build_automation_software">Wikipedia even maintains a list of build automation software</a>.
+However, for a variety of reasons, <tt>make</tt> is still very widely used
+directly,
+especially when you&#8217;re writing code where performance really matters
+(such as most C and C++ code).
+<tt>Make</tt> is standardized (it&#8217;s part of the POSIX standard),
+widely available, and widely understood.
+<tt>Make</tt> is also baked into a huge number of larger systems.
+Yes, <tt>make</tt> has some weirdnesses (in particular the standard
+requires tabs in certain places), but it is still a handy tool.
+Recent articles like
+<a href="http://hadihariri.com/2014/04/21/build-make-no-more/">Build Tools - Make, no more</a>,
+<a href="http://www.sitepoint.com/using-gnu-make-front-end-development-build-tool/">Using GNU Make as a Front-end Development Build Tool</a>, and
+<a href="https://algorithms.rdio.com/post/make/">The Ultimate Frontend Build Tool: make</a> all state that <tt>make</tt>
+is often a very useful tool, even today.
+Improving the standards for <tt>make</tt>
+also helps tools that layer on top of it,
+including automake and Cmake.
+<p>
+<a href="http://xkcd.com/303"><img src="../images/compiling.png" width="413" height="360" align="right" alt="The #1 Programmer Excuse for Legitimately Slacking off: 'My code's compiling'.  From XKCD.com #303, Randall Munroe, CC-BY-NC 2.5"></a>
+<p>
+For example,
+most <tt>make</tt> implementations support parallel compilation,
+so using <tt>make</tt> typically means that
+the parallel capabilities of the underlying machine are easily used.
+This saves a <i>lot</i> of developer time.
+On one system I measured a from-scratch build
+of the Linux kernel version 3.10.5 using <tt>make</tt>; it
+took 166.85 minutes with 1 CPU and 28.5 minutes (optimizable to 23.86)
+with 16 CPUs
+(<a href="https://www.ida.org/~/media/Corporate/Files/Publications/IDA_Documents/ITSD/2014/D-4996.ashx"><i>Parallel Compilation on Virtual Machines
+in a Development Cloud Environment</i>
+by David A. Wheeler, IDA Document D-4996, September 2013</a>).
+That saves about two hours each time you compile,
+and many developers constantly do a small edit followed by a compile!
+This speedup through parallelism is enabled by exploiting dependency
+information, information that <tt>make</tt> is designed to support.
+Compilations are typically faster because not everything needs to
+be done, but again, tools like <tt>make</tt> can quickly determine
+what can be skipped, resulting in even faster results in practice.
+<!--
+Using "-j 16" made it slightly better, 193.39 minutes vs. 23.86 minutes.
+"Parallel Compilation on Virtual Machines in a Development Cloud Environment"
+by David A. Wheeler
+IDA Document D-4996
+September 2013
+-->
+
+<p>
+However, the POSIX standard version of <tt>make</tt>
+is extraordinarily feature-poor; it lacks many basic
+functions that people need in practice.
+As a result, most people create makefiles (the input files to <tt>make</tt>)
+that require specific implementations instead of just following
+the POSIX standard.
+Typically that specific implementation is GNU make;
+since GNU <tt>make</tt> runs on nearly every Unix-like system, and is FLOSS,
+this is an easy requirement to meet.
+GNU <tt>make</tt> is a great tool, but it&#8217;s absurd that even
+common uses of <tt>make</tt> essentially require non-standard extensions
+and cannot be used on most other <tt>make</tt> implementations.
+One of GNU make author&#8217;s
+<a href="http://mad-scientist.net/make/rules.html">rules of make</a> is
+&#8220;Use GNU make.
+Don&#8217;t hassle with writing portable makefiles,
+use a portable make instead!&#8221;.
+Today many people <i>do</i> follow this advice, because
+using only portable <tt>make</tt> can be painful even for common cases.
+GNU <tt>make</tt> includes a lot of excellent functionality,
+and if you need its advanced features, enjoy!
+But many people do not need advanced features.
+Today there are oft-needed capabilities lacking in the standard,
+and they are often available only in syntactically-incompatible ways.
+I would like to see the POSIX standard for <tt>make</tt> extended,
+and widely implemented,
+so that in typical cases people who want to use <tt>make</tt>
+can stick to a standard portable subset that easily handles common cases.
+
+<p>
+Peter Miller&#8217;s paper
+<a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.20.2572">Recursive
+Make Considered Harmful</a> (1997) is rightfully considered
+a really important work about software development.
+In that paper he notes that the common way of using <tt>make</tt> is
+a bad idea, and that developers should use <tt>make</tt> in a
+<i>non-recursive</i> way instead.
+Peter Miller&#8217;s paper and the related paper <a href="http://evbergen.home.xs4all.nl/nonrecursive-make.html">Implementing non-recursive make (by Emile van Bergen)</a> discuss how to implement <i>efficient</i> makefiles.
+Sadly,
+<a href="http://article.gmane.org/gmane.linux.debian.user.news/547">Peter Miller died on 2014-07-27</a>,
+but his good ideas live on.
+I&#8217;ve been trying to get the POSIX standard extended so that
+<i>standard</i> <tt>make</tt> is rich enough to use in typical cases,
+and in particular, that it properly supports non-recursive make.
+If something
+is too hard to do correctly, then people won&#8217;t do it correctly.
+In particular, if something commonly done is hard to do portably,
+then people won&#8217;t do it portably.
+
+<h1 id="improvements">Specific improvements</h1>
+<p>
+So here are a few extensions to <tt>make</tt>,
+and their status in both the POSIX specification and in implementations.
+In most cases at this time they are proposed improvements
+to the standard <tt>make</tt>.
+
+<h2 id="immediate">Immediate evaluation, not just deferred evaluation</h2>
+<p>
+Peter Miller noted the need for immediate evaluation (sections 5.1 and 5.2).
+Standard &#8220;variables&#8221; in <tt>make</tt> are not variables at all,
+but macros.
+Every macro reference must be transitively evaluated,
+leading to an exponential growth in execution time as projects get large...
+and today&#8217;s projects are often very large.
+What&#8217;s more, this transitive evaluation is rarely useful.
+In most cases people using <tt>make</tt> want <i>immediate</i> evaluation
+of variables, not deferred evaluation;
+immediate evaluation is more familiar to most developers
+and does not lead to exponentially-growing overhead.
+<p>
+I proposed fixing this
+<a href="http://austingroupbugs.net/view.php?id=330">by adding
+immediate evaluation support to the POSIX specification as bug#330</a>.
+I am happy to report that the
+POSIX committee accepted this proposal and has
+added support for immediate evaluation.
+(This change also added the widely-used
+&#8220;+=&#8221; and &#8220;?=&#8221; assignment operators, which is more good news.)
+POSIX uses the syntax &#8220;::=&#8221;,
+which eliminates the exponential growth in time and does not interfere
+with the syntax of existing systems.
+GNU <tt>make</tt> has added support for the POSIX syntax, so users of GNU make
+can use the standard POSIX syntax today (hooray!).
+<p>
+I&#8217;m delighted by this addition.
+Software systems are getting bigger and bigger; this capability
+eliminates a common reason that build times grew exponentially.
+<p>
+However, we are <i>not</i> done.
+People who control other <tt>make</tt> implementations,
+such as the *BSDs, need
+to add support for the syntax to their <tt>make</tt> implementation
+so that this capability is <i>truly</i> portable.
+(The *BSDs have a somewhat-similar functionality using &#8220;:=&#8221;, but
+they do not currently support the POSIX standard syntax and semantics.)
+Tools like automake should support it as well in some way.
+This capability will only be truly portable if it is
+widely implemented, and
+people are more likely to use this important capability if it is portable.
+
+<h2 id="shell">Shell invocation and function calls</h2>
+<p>
+Peter Miller&#8217;s recommendations
+relied on GNU make&#8217;s function call notation.
+Standard makefiles have no way to do function calls anywhere
+macro substitutions are allowed, nor do they provide a way
+to execute shell programs and then put the result in a macro variable.
+This makes it hard to create makefiles that easily adjust
+to their environment.
+For example, here&#8217;s part of section 5.2 showing the
+recommended rewrite (using &#8220;:=&#8221; instead of the POSIX &#8220;::=&#8221;):
+<pre>
+SRC := $(shell echo ’Ouch!’ \
+  1&gt;&amp;2 ; echo *.[cy])
+OBJ := \
+  $(patsubst %.c,%.o,\
+  $(filter %.c,$(SRC))) \
+  $(patsubst %.y,%.o,\
+  $(filter %.y,$(SRC)))
+</pre>
+<p>
+I think two mechanisms need to be added to standard POSIX make.
+We need both
+a simple mechanism for shell invocations,
+as well as a general function call notation:
+<ol>
+<li><tt>make</tt> should support a simple mechanism for
+shell invocation.
+Shell invocation is so common that there should be a simple,
+easily-read mechanism specifically for it.
+In particular, shell invocations can involve complicated expressions;
+having a mechanism that doesn&#8217;t conflict with a character like
+a closing parenthesis reduces error and increases readability.
+<a href="http://austingroupbugs.net/view.php?id=337">POSIX bug report #337</a>
+from me proposes adding
+standard support for &#8220;!=&#8221; (macro shell assignment).
+The &#8220;=&#8221; hints that &#8220;this is an assignment&#8221;, the &#8220;!&#8221; hints that
+&#8220;this is a shell&#8221;.
+At the time of this writing this proposal has neither been accepted nor
+rejected by the POSIX committee, but I am hopeful it will be accepted.
+This capability has been present in the *BSDs for many, many years.
+<a href="http://git.savannah.gnu.org/cgit/make.git/commit/?id=b34438bee83ee906a23b881f257e684a0993b9b1">GNU <tt>make</tt> added support for &#8220;!=&#8221; in 2011
+(I wrote the patch)</a>.
+As a result, if you need shell invocation to work relatively portably,
+&#8220;!=&#8221; is the closest available today
+(it works on GNU make and the various *BSD makes).
+This is great, because it creates a simple mechanism for doing a common thing.
+For example, the SRC line above from
+Peter Miller&#8217;s paper could be written simply as:
+<pre>
+     SRC != echo 'Ouch!' 1>&amp;2 ; echo *.[cy]
+</pre>
+<li><tt>make</tt> should support macro function calls for
+the general case where you need a more flexible way to invoke
+functions within <tt>make</tt> and possibly combining them with
+results from calls to external programs (like the shell).
+<a href="http://austingroupbugs.net/view.php?id=512">POSIX bug #512</a>
+by me proposes adding them, with a small set of common ones
+such as patsubst (pattern substitution).
+</ol>
+<p>
+In theory you could get the necessary capability with
+only one or the other, but I think that kind of minimal
+support is a bad idea.
+Most <tt>make</tt> implementations support both
+&#8220;!=&#8221; (for easy shell invocation) <i>and</i> some sort
+of function call or mini-language system.
+Each syntax is better in different situations, and we want it to be
+<i>easy</i> to write portable makefiles.
+
+
+<h2 id="automatic-dependencies">Automatic dependencies</h2>
+<p>
+<tt>Make</tt> works well once you tell it the dependencies;
+it uses the dependency information to figure out what needs to be done,
+and in what order.
+However, in many cases you want dependency generation automatically generated.
+<p>
+It is <i>easy</i> to do automatic dependency determination
+with <tt>make</tt>, but you have to use various non-standard extensions
+to completely get there.
+That said, various changes in the POSIX specification of <tt>make</tt>
+have resulted in this being much more portable than it used to be,
+and I hope for further improvements in the future.
+<p>
+This section first discusses current approaches for automatic dependency
+handling.
+It then discusses the two key required functions necessary for it:
+<a href="#include">lists of possibly non-existent include files</a>,
+and
+<a href="#dependency-generation">compiler-generated dependency information</a>.
+This section ends with a few other comments.
+
+<h3 id="approach-automatic-dependencies">Current approaches for automatic dependencies</h3>
+
+<p>
+Historically a common way to do automatic dependency generation was to
+have a special target called &#8220;depend&#8221;, and then run
+&#8220;make depend&#8221; to compute it.
+As noted in <a href="http://make.paulandlesley.org/autodep.html">Advanced Auto-Dependency Generation</a>, this is a simple approach
+but it has serious problems.
+Dependencies typically go out-of-date (because developers forget to
+re-run make depend), and this inefficiently requires rechecking of many 
+files that have not changed.
+It also creates an extra step for later users.
+We can do better; I do not recommend using a &#8220;make depend&#8221;
+approach today.
+
+<p>
+There is a related issue:
+in many cases &#8220;make depend&#8221; would invoke a separate
+program, such as <tt>makedepend</tt>, that would parse the source code
+(typically C) and generate the dependency information.
+If you use a separate tool (like <tt>makedepend</tt>)
+other than the compiler to determine dependencies,
+there is always the risk that they will compute
+different dependencies.
+This difference can create subtle problems.
+Thus, where possible, it is best if the compiler actually being
+used reports the dependencies (since it has the true information).
+
+<p>
+Current recommended approaches for automatic dependency generation
+are discussed in places such as
+<a href="https://www.gnu.org/software/automake/history/html_node/Dependency-Tracking-Evolution.html">history of automake</a>,
+the <a href="https://www.gnu.org/software/make/manual/html_node/Automatic-Prerequisites.html">GNU make manual</a>,
+Miller&#8217;s paper section 5.4,
+<a href="http://evbergen.home.xs4all.nl/nonrecursive-make.html">Implementing non-recursive make (by Emile van Bergen)</a>, and
+<a href="http://make.paulandlesley.org/autodep.html">Advanced Auto-Dependency Generation</a>.
+Tom Tromey developed the overall approach, which is simple and ingenious.
+Basically, have the compiler generate dependency information when it is run,
+in a <tt>make</tt>-compatible format.
+Where possible, generating this information
+should be a side-effect of compilation.
+Each compilation unit should produce
+a <i>separate</i> file of dependency information.
+This dependency information, as stored in all these files,
+is then &#8220;included&#8221; by the makefile.
+See the citations for more details if you&#8217;re curious.
+
+<p>
+For this approach to work:
+<ol>
+<li>We need <tt>make</tt> to load many include files, without failing if
+the files do not (yet) exist.
+We need this mechanism so that <tt>make</tt> can load
+the dependencies that are automatically generated during
+a compilation.
+If no automatic dependency information is available,
+we do not need to know more; by definition we need to compile it!
+This avoids re-execution of make using &#8220;make depend&#8221;.
+<li>We need to actually generate the dependency information that <tt>make</tt>
+will read.
+The compiler should do this, really.
+If possible, it should usually generate dependencies even for
+files that are probed but do not exist;
+that way, if the file is added later it will be
+automatically detected and used.
+<li>All generated prerequisites need to be listed as
+targets with no commands or prerequisites;
+otherwise, removing or renaming
+prerequisite will cause <tt>make</tt> fail with
+&#8220;No rule to make target...&#8221; errors.
+This can be easily done by the compiler or by postprocessing
+whatever generates the dependency information.
+Note that we don&#8217;t need to change <tt>make</tt> for this to work.
+</ol>
+
+<p>
+Thus, we need to add two basic capabilities to the older POSIX standards:
+<a href="#include"><tt>make</tt> must be able to include a list
+of include files (some of which might not exist)</a>,
+and we need to
+<a href="#dependency-generation">convince compilers
+to provide this dependency information that <tt>make</tt> will use</a>.
+The next two subsections discuss each one.
+
+
+<h3 id="include">Lists of possibly non-existent include files</h3>
+<p>
+The POSIX specification for <tt>make</tt> has long included
+a standard method for including files.
+However, originally POSIX was not quite powerful enough to
+support automatic dependency generation.
+For years I&#8217;ve been working with the POSIX standards committee
+to address this.
+I am happy to report that these issues
+have been fixed in the POSIX specification, as I describe here.
+
+<p>
+The original <tt>make</tt> include mechanism had a key weakness:
+it would cause <tt>make</tt> to fail
+if the file didn&#8217;t exist.
+This is a problem when are trying to use <tt>make</tt> to
+create that file in the first place, which is always the case
+for dependency information generated through compilation.
+I proposed
+<a href="http://austingroupbugs.net/view.php?id=333">POSIX bug#333</a>
+to support &#8220;silent include&#8221; as &#8220;-include&#8221;;
+this is like include,
+but does not cause a crash if the file does not exist.
+This change has been accepted by the POSIX committee, and
+both GNU <tt>make</tt> and NetBSD <tt>make</tt> already implement it.
+I do not know how many other <tt>make</tt> implementations currently
+support it; I hope that those that lack it will soon add it.
+
+<p>
+I also proposed, in
+<a href="http://austingroupbugs.net/view.php?id=518">POSIX bug #518</a>,
+that POSIX require <tt>make</tt> implementations to support
+multiple files in its &#8220;include&#8221; directive.
+The include mechanism is key for automatic dependency handling;
+many compilers can generate dependency information, but the
+makefile needs to easily read that information from many files
+(with one dependency file for every source file).
+Without this, you would have to regenerate a single large dependency
+file, which would slow down compilation for no reason.
+As a result, it becomes <i>much</i> easier to create a list of
+include files to include
+(they can be automatically determined from the list of files to compile).
+This proposal has also been accepted by the POSIX committee, and
+I know that GNU make (at least) supports this.
+
+<p>
+The result: standard <tt>make</tt> now has the functions necessary
+for including dependency information that is automatically generated,
+and that is a key requirement for automatic dependency handling.
+However, we also need to automatically <i>generate</i> the information
+that <tt>make</tt> will read.
+
+
+<h3 id="dependency-generation">Compiler-generated dependency information</h3>
+
+<p>
+In many common cases tools should be able to automatically
+determine the dependencies, typically as a side-effect of compilation.
+Most compilers (e.g., for C and C++) can provide this information,
+though there is no standard way to request it.
+For example, the GNU C compiler has various flags that generate
+dependency information,
+including &#8220;-M&#8221;, &#8220;-MM&#8221;,
+&#8220;-MF&#8221;, &#8220;-MG&#8221;, &#8220;-MT&#8221;, &#8220;-MP&#8221;,
+&#8220;-MQ&#8221;, &#8220;-MD&#8221;, and &#8220;-MMD&#8221;.
+The LLVM/clang compiler also implements some of these.
+Automake (part of autotools) includes a tool, depcomp,
+that automatically determines the compiler flags to make the
+compiler generate dependency information, and directly generates
+optimized makefiles (for speed) when using gcc version 3 or later.
+As an example, here is a snippet of an automake-generated makefile
+when using gcc version 3 or greater:
+<pre>
+    include src/$(DEPDIR)/hello.Po
+
+    .c.o:
+            depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+            $(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+            $(am__mv) $$depbase.Tpo $$depbase.Po
+</pre>
+
+<p>
+Sadly, there is no standard way to request that a compiler do this.
+<a href="http://austingroupbugs.net/view.php?id=328">POSIX bug#328</a>
+by a bird-loving participant has proposed
+that broader automatic dependency functionality be added to make.
+This would require some way of standardizing how to ask compilers to
+generate this information.
+Back in 2011 I was more bullish about using a separate makedepend tool,
+because that would be easier to standardize, but today I have
+more concerns about subtle inconsistencies between a separate tool
+and the compiler.
+<p>
+It is not easy to standardize this capability, for a variety of reasons.
+In particular,
+turns out to be hard to standardize compiler option flags; it
+might be easier to standardize new environment variable values.
+I think it would be great to find standards for common cases if we can.
+
+<h3>Automatic dependencies today</h3>
+<p>
+If you need this functionality immediately, most people would use
+non-standard extensions or a layered tool (often automake or CMake)
+to implement at least the part that generates the dependency information.
+It only takes a few lines in common cases (e.g., if you only use gcc).
+<p>
+As noted earlier,
+<a href="https://www.gnu.org/software/automake/history/html_node/Dependency-Tracking-Evolution.html">automake implements automatic dependencies</a>,
+through a few scripts on top of make.
+The
+<a href="https://www.gnu.org/software/make/manual/html_node/Automatic-Prerequisites.html">GNU make manual explains how to add a few makefile lines
+that implement automatic dependency generation
+(what they call <i>automatic prerequisites</i>)</a>.
+GCC has flags to generate dependency information (e.g.,
+-MD and -MF), and some other
+compilers (notably clang) support them.
+Since these are very widely used, many people have already solved this
+by requiring a few GCC extensions or by using automake.
+<p>
+But this should not be necessary; it should be easy to
+<i>portably</i> have automatic dependency generation for common cases
+just with the POSIX standard and have it work everywhere.
+
+<h2 id="variable-indirection">Variable indirection</h2>
+<p>
+A macro reference (aka a variable reference) is easy in <tt>make</tt>.
+Whenever you want to refer to the contents of FOO, you can just
+write <tt>$(FOO)</tt>.
+A variable <i>indirection</i> occurs whenever a variable name itself
+includes <i>another</i> variable reference, e.g.,
+<tt>$(FOO_$(d))</tt>.
+<p>
+Variable indirection is surprisingly useful in make.
+In particular, they are useful the same way that associative arrays are
+useful in many other languages.
+For example, they allow for easy selection between sets of values,
+such as selecting different file sets for different platforms.
+
+<p>
+<a href="http://evbergen.home.xs4all.nl/nonrecursive-make.html">Implementing non-recursive make</a> shows a general approach for having
+Makefile fragments in each directory while
+using a non-recursive make as described by Peter Miller.
+His approach tweaks Peter Miller&#8217;s general approach by
+automatically handling directory names.
+His approach depends on variable indirection, using
+macro references such as <tt>$(TGTS_$(d))</tt>.
+<p>
+Variable indirection is not currently part of the POSIX standard,
+but I have proposed it as
+<a href="http://austingroupbugs.net/view.php?id=336">POSIX bug #336</a>.
+As of this writing it has neither been accepted nor rejected,
+but I have high hopes.
+Eric Blake reports that automake would like this standardized as well.
+
+<p>
+Eric Blake also reports that a huge number of <tt>make</tt> implementations
+already support this in practice.
+These includes not only GNU make, but also those in
+NetBSD, FreeBSD, OpenBSD, and even the old ones in
+IRIX 6.5, AIX 4.3.3, Tru64 4.0D, Solaris 2.6, and HP-UX 10.20.
+Variable indirection is typically very easy to implement if you can
+find a <tt>make</tt> implementation that doesn&#8217;t already support it.
+In my mind, the POSIX standard should bless what is already
+common practice.
+
+<h2 id="conditionals">Conditionals</h2>
+<p>
+Practically all <tt>make</tt> implementations include an
+if-then-else conditional, generally of two kinds:
+an &#8220;is-defined&#8221; conditional (e.g., &#8220;ifdef&#8221;, &#8220;.ifdef&#8221;, or &#8220;#ifdef&#8221;)
+and a more general conditional (e.g., &#8220;if&#8221;, &#8220;ifeq&#8221;, or &#8220;#if&#8221;).
+However, there is no <i>standard</i> way to invoke it!
+Conditionals are important to <tt>make</tt> it easy to do different things
+depending on the platform.
+My
+<a href="http://austingroupbugs.net/view.php?id=805">POSIX bug#805 proposal</a>
+recommends adding this functionality to the standard.
+<p>
+Again, if you need this functionality immediately, most people would use
+a specific <tt>make</tt> implementation (typically GNU make) or a layered tool
+(often automake).
+But that should not be necessary.
+
+<h2 id="pattern-rules">Pattern rules</h2>
+<p>
+Many <tt>make</tt> users will be surprised to know that pattern rules like
+&#8220;%.o: %.c&#8221; are not in the current POSIX standard.
+My proposal
+<a href="http://austingroupbugs.net/view.php?id=513">POSIX bug #513</a>
+recommends adding this widely-used extension to the standard.
+
+<h2 id="pattern-substitution">Pattern substitution</h2>
+<p>
+I do not want to give the impression that POSIX has little and
+is unwilling to fix it.
+In <a href="http://austingroupbugs.net/view.php?id=519">POSIX bug #519</a>
+I proposed adding support for pattern substitutions, e.g.,
+&#8220;$(foo:%.o=%.c)&#8221;.
+These are already widely-supported, they just weren&#8217;t in the standard.
+After deliberation, this was accepted by the POSIX committee.
+
+<h2 id="vpath">VPATH (Virtual PATH)</h2>
+<p>
+Miller&#8217;s original paper discussed using virtual paths (VPATH builds)
+in section 6 of his paper.
+I proposed virtual paths (VPATHs) to be standardized in
+<a href="http://austingroupbugs.net/view.php?id=766">POSIX bug #766</a>.
+GNU make, for example, supports VPATH builds, and automake
+works hard to support its version of VPATH builds.
+<p>
+However, a lack of consensus for any particular VPATH semantic
+led to rejection of this proposal by the POSIX committee.
+I am disappointed, but this is not such a serious problem.
+Modern systems typically have lots of storage space, reducing the
+need for VPATH support in the first place.
+You can always make another copy of the files every time you want
+to use them, and if that&#8217;s not desired, various tricks with hard and soft
+links also make the lack of standard VPATH support less of a problem.
+In practice, most people download their own personal copy of a program
+to work on (e.g., using git).
+Indeed, the design of <tt>git</tt> specifically assumes that storage
+space is not a problem, and it is widely used.
+Since the need for VPATH support is less pressing today,
+I have not tried to pursue VPATH standardization further.
+
+<h2 id="miscellaneous">Miscellaneous proposals</h2>
+<p>
+There are various other miscellaneous functions that are
+widely used or useful, but have not been in older POSIX standards.
+<p>
+I proposed <a href="http://austingroupbugs.net/view.php?id=523">POSIX bug#523</a> to add support for <tt>.PHONY</tt>.
+This functionality was supported in at least GNU make,
+NetBSD make, FreeBSD make, OpenBSD make, and fastmake...
+but it was not in the POSIX standard.
+Thankfully, this has been accepted by the POSIX committee.
+<p>
+I also proposed
+<a href="http://austingroupbugs.net/view.php?id=514">POSIX bug#514</a>
+for enhancing internal macros.
+Currently &#8220;$&lt;&#8221; has odd limitations, and the POSIX standard
+lacks the common extensions &#8220;$^&#8221; and &#8220;$+&#8221;.
+At the time of this writing these are still under discussion.
+<p>
+Improvements in the POSIX standard for other tools can also
+help <tt>make</tt>, since <tt>make</tt> is typically used by calling
+out to other tools.
+I am happy to report there has been some progress there too.
+For example, I proposed that POSIX should be modified to
+<a href="http://austingroupbugs.net/view.php?id=528">support extended regular expressions (EREs) in sed (bug #528)</a>.
+This has been accepted in POSIX, it is already supported by GNU and FreeBSD,
+and
+<a href="http://lists.busybox.net/pipermail/busybox/2013-October/079919.html">I submitted patches for busybox to do this that have also been accepted</a>.
+I also submitted a proposal to
+<a href="http://austingroupbugs.net/view.php?id=779">add
+an &#8220;ignore case&#8221; flag to sed&#8217;s &#8220;s&#8221; command</a> in POSIX.
+<p>
+Of course, I'm most aware of proposals I made.
+There are other proposals for the specification or implementations
+that should help as well, and I welcome them.
+
+
+<h2 id="non-proposals">Non-proposals</h2>
+<p>
+I have <i>not</i> tried to address how to modify <tt>make</tt> so
+it can fully deal with &#8220;unusual&#8221; filenames
+such as those including spaces
+or shell metacharacters like &#8220;&amp;&#8221;.
+I also know of no one who has proposed a standard way to do it.
+It would be useful for <tt>make</tt> to be able to handle these cases.
+Sadly, changing <tt>make</tt> to deal with them is challenging.
+Supporting spaces in filenames turns out to be particularly difficult,
+because nearly all makefiles and related tools
+use spaces as <i>separators</i> between filenames.
+Escape mechanisms have their own problem, especially when dealing
+with Windows (where the backslash character is a directory separator).
+The
+<a href="https://savannah.gnu.org/bugs/?712">GNU make developers
+are interested in dealing with spaces in filenames</a>, but
+this effort is non-trivial.
+In practice, software development simultaneously
+develops code and build environment changes, so it is usually
+easy to limit filenames for software development
+to only characters that do not cause problems
+(such as Latin alphanumerics, periods,
+underscores, non-leading dashes, and commas).
+Thus, while I think this <i>should</i> be fixed, it&#8217;s
+difficult to fix, and there&#8217;s typically no pressing
+need to fix it.
+
+<p>
+I also have not tried to simplify handling of
+<tt>make</tt> metacharacters in filenames like <tt>$</tt>.
+It is possible to handle them in make, but in some cases it is painful.
+The typical advice, though, is to just not <tt>$</tt> in
+filenames processed by <tt>make</tt>.
+Again, there&#8217;s typically no pressing need to fix it.
+
+<p>
+I certainly have <i>not</i> tried to help <tt>make</tt>
+deal with the
+<a href="fixing-unix-linux-filenames.html">absurdly permissive
+Unix/Linux/POSIX filename rules</a>
+such as allowing newline, tab, leading dash, and non-UTF-8 filenames.
+For these cases I think it would be better for Unix-like systems to
+<a href="http://austingroupbugs.net/view.php?id=251">forbid filenames
+from having constructs such as control characters at all, as
+proposed in POSIX bug#251</a>.
+After all,
+<a href="filenames-in-shell.html">common patterns in shell
+do not work with all Unix/Linux/POSIX filenames</a>;
+it can be hard to write shell scripts to fully handle them,
+and <tt>make</tt> actions use shell.
+
+
+
+<h1 id="conclusions">Conclusions</h1>
+
+<p>
+If you are interested in this area, encourage the POSIX committee
+to accept these proposals (or improve them), and get them
+implemented in various <tt>make</tt> implementations if they
+are not already in place.
+I think they are doing an important job.
+Of course, building software is only one part of the issue;
+if you are worried about countering attacks on the development and
+build environment, see my
+<a href="https://dwheeler.com/trusting-trust">work on countering
+the trusting trust attack</a> and
+<a href="https://dwheeler.com/trusting-trust/#reproduceable">related
+work on reproduceable (deterministic) builds</a>.
+
+<p>
+Not all programs use <tt>make</tt>, but it is a widely-used tool.
+The list of proposals does not mean that these are the best possible
+ways to improve <tt>make</tt>, or only possible options.
+However, I think we should update our tools
+so they are easy and pleasant to use, especially when wise heads
+like Peter Miller have identified problems with the tools.
+
+
+<p>
+<i>
+This paper is dedicated to the memory of Peter Miller, who died in 2014.
+Miller&#8217;s paper on recursive <tt>make</tt>
+has helped millions of developers around the world.
+<a href="https://graydon.livejournal.com/186550.html">Miller&#8217;s
+version control system Aegis inspired Monotone,
+which then inspired git and mercurial</a>;
+I don&#8217;t think we would have tools like
+git without Aegis leading the way.
+Miller&#8217;s work on gettext() led to FLOSS support of
+people around the world in their native language.
+In short, we are all better off because Peter Miller was here.
+I am happy to note that
+<a href="http://web.archive.org/web/20140819122904/http://miller.emu.id.au/pmiller/">he hoped to live to see his son&#8217;s graduation in June 2014</a>,
+and he succeeded;
+<a href="http://blogs.operationaldynamics.com/pmiller/">he managed
+a post in July 2014</a>, and
+<a href="http://article.gmane.org/gmane.linux.debian.user.news/547">he died
+on 2014-07-27</a>.
+Peter: I did not know you well, but I know you will be missed.
+</i>
+
+<p>
+<hr>
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2014 David A. Wheeler.
+
+</body>
+</html>
+

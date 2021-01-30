@@ -1,0 +1,422 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>POODLE attack against SSLv3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="POODLE attack">
+<meta name="keywords" content="POODLE, SSL, SSLv3, TLS">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">POODLE attack against SSLv3</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2014-10-26 (originally 2014-10-14)</h2>
+
+
+<p>
+There is a newly-announced attack on SSL version 3 (SSLv3)
+called POODLE (Padding Oracle On Downgraded Legacy Encryption).
+This allows an attacker to steal tokens such as
+secure HTTP cookies or HTTP Authorization header contents, and then
+masquerade as the user.
+More information is available in the paper
+<a href="https://www.openssl.org/~bodo/ssl-poodle.pdf">This POODLE bites: exploiting the SSL 3.0 fallback</a>
+by Bodo Möller, Thai Duong, and Krzysztof Kotowicz.
+You can also see the <a href="http://googleonlinesecurity.blogspot.de/2014/10/this-poodle-bites-exploiting-ssl-30.html">corresponding blog post</a>.
+Other information sources include the blog post
+<a href="https://www.imperialviolet.org/2014/10/14/poodle.html">POODLE attacks on SSLv3 (Adam Langley)</a>,
+<a href="https://blog.hboeck.de/archives/858-Dancing-protocols,-POODLEs-and-other-tales-from-TLS.html">Dancing protocols, POODLEs and other tales from TLS by Johannes (Hanno) Böck</a>,
+and
+<a href="http://www.csoandy.com/files/dancing-poodles.html">Dancing Poodles (Andy Ellis)</a>.
+This vulnerability is much harder to exploit than
+<a href="https://dwheeler.com/essays/heartbleed.html">Heartbleed</a> or
+<a href="https://dwheeler.com/essays/shellshock.html">Shellshock</a>,
+but under the right conditions it is still a bad thing.
+This is <i>not</i> a vulnerability specific to OpenSSL
+(as <a href="https://dwheeler.com/essays/heartbleed.html">Heartbleed</a>
+was), but instead, <i>any</i> system that uses the original SSLv3 protocol
+is vulnerable.
+This paper is part of the
+essay suite <a href="learning-from-disaster.html">Learning from Disaster</a>.
+</p>
+
+<h1>Simple solution: Disable SSLv3</h1>
+<p>
+In many cases the simple solution is to disable support for
+the hideously obsolete SSLv3.
+<a href="https://tools.ietf.org/html/rfc6101">SSL version 3.0
+was defined in an internet draft whose last draft version was
+released on November 18, 1996</a>.
+The replacement for SSLv3, TLS version 1.0, was defined back in
+<i>January 1999</i>, and since then the specifications for
+TLS versions 1.1 and 1.2 have been released.
+Every protocol update counters known attacks.
+So POODLE is an attack on a cryptographic protocol that was
+developed at least 18 years ago, was replaced 15 years ago, and is
+three versions back from the current TLS protocol.
+I think 15 years is long enough time for a transition!
+It&#8217;s been known for a long time
+that SSLv3 has weaknesses and security issues;
+that&#8217;s why TLS superceded it long ago.
+
+<p>
+Cryptographic algorithms have a limited lifetime, because attackers
+keep finding new ways to break them.
+See <a href="http://valerieaurora.org/hash.html">&#8220;Lifecycles of popular crytographic hashes&#8221; by Valerie Aurora</a> for a vivid example.
+The same is typically true of cryptographic protocols like SSL/TLS -
+attackers will keep finding new ways to break them,
+so improved cryptographic protocols need to be developed, implemented,
+and deployed.
+The <i>real</i> problem is that some suppliers, system developers, and
+administrators are unprepared for reality - they mistakenly presume
+that there is no need for easy upgrades.
+
+<p>
+As is often the case, one of the problems is Internet Explorer 6 (IE6).
+IE6 does not directly support TLS 1.0 by default.
+At this point, if you are a user with IE6,
+it is time to upgrade or switch to a different browser.
+In particular, note that
+<a href="http://windows.microsoft.com/en-ca/internet-explorer/ie-system-requirements#ie=ie-8">Windows XP users can install Service Pack 2 (SP2),
+and then install
+Internet Explorer 8</a>,
+or another browser that <i>does</i> support TLS 1.0 such as Firefox.
+<a href="https://en.wikipedia.org/wiki/Transport_Layer_Security">Wikipedia&#8217;s
+article on TLS has more information about web browser support for
+different versions of the SSL/TLS protocol</a>.
+Part of the reason that there are still so many IE6 deployments is that
+people thought that ignoring the standards was okay, and that it
+was acceptable to develop web applications that only ran on IE6.
+Now that IE6 is a minority browser, everyone who followed the standards
+is just fine... while those who wrote IE6-only applications are
+making their customers vulnerable.
+
+<p>
+Google recommends supporting
+<a href="https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00">TLS_FALLBACK_SCSV</a> as the solution.
+This prevents protocol downgrade attacks
+on the Transport Layer Security (TLS) protocol.
+However, this is merely a draft - to my knowledge there is no
+final specification.
+This also is not universally supported.
+In contrast, TLS 1.0 <i>is</i> widely supported.
+Thus, I think requiring
+<a href="https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00">TLS_FALLBACK_SCSV</a> is not an immediately useful approach for addressing POODLE.
+
+<p>
+That said, supporting TLS_FALLBACK_SCSV <i>is</i> a good longer-term strategy.
+<a href="https://www.openssl.org/news/secadv_20141015.txt">OpenSSL
+added support for TLS_FALLBACK_SCSV on 2014-10-15</a>, and OpenSSL is
+widely used.
+So the good news is that we may see an improved fallback widely
+implemented.
+
+<h1>Web browsers</h1>
+<p>
+Each web browser has a different way to disable SSLv3:
+<ul>
+<li>In Firefox view &#8220;about:config&#8221; and
+<a href="http://kb.mozillazine.org/Security.tls.version.*">set security.tls.version.min to at least 1</a>.
+<li>In Chrome you currently have to set a command line flag
+&#8220;--ssl-version-min=tls1&#8221;; it no longer has a preferences setting to do this.
+Chrome will soon disable automatic fallback to SSLv3, and in a few
+months they hope to disable SSLv3 completely.
+<li>On Internet Explorer 9, go to Internet options, select the tab Advanced,
+and uncheck &#8220;Use SSL 3.0&#8221; (your organization may override this).
+</ul>
+
+<h1>Web servers</h1>
+<p>
+Web servers, of course, also have different ways of doing this.
+Apache server adminstrators can disable SSLv3 using SSLProtocol, e.g.,
+<tt>SSLProtocol -SSLv2 -SSLv3 ...</tt> where the &#8220;...&#8221; lists the
+protocols you <i>do</i> accept.
+Unfortunately, you&#8217;ll have to decide if it&#8217;s okay
+to reject IE6 users.
+
+
+<h1 id="learned">What have we learned?</h1>
+<p>
+I like to try to determine <i>what have we learned</i>?
+Here the lessons are easier.
+<p>
+In particular, it&#8217;s a waste of time
+to focus too much on the technical details of cryptographic protocols.
+POODLE is an attack on a cryptographic protocol
+(SSLv3) that was developed at least 18 years ago,
+and was replaced 15 years ago (by TLS version 1).
+I think 15 years is long enough time for a transition!
+Also, the fact that the older protocol (SSLv3) had issues
+was no secret; that&#8217;s why a replacement was created.
+<a href="https://www.dfranke.us/posts/2014-10-14-how-poodle-happened.html">&#8220;How POODLE Happened&#8221; (by Daniel Fox Franke, 2014-10-14)</a>
+has a nice timeline and a brief description of known vulnerabilities
+in various versions of SSL/TLS.
+<p>
+Instead, I think we can focus on a few real lessons:
+we need to
+<a href="#update-crypto">update and age out cryptographic protocols</a>,
+ensure that our cryptographic protocols
+<a href="#counter-downgrade-attacks">counter downgrade attacks</a>,
+<a href="#verify-mac-first">verify the MAC
+before doing any cryptographic operation</a>,
+and
+<a href="#simple-version-numbering">use simple version numbering</a>
+systems.
+
+
+<h2 id="update-crypto">Update and age out cryptographic protocols</h2>
+<p>
+Cryptographic algorithms and protocols have a lifetime.
+It is best to update them, have a transition plan, and a timeline
+to smoothly update them... but they do not last forever.
+Frankly, it&#8217;s absurd that SSLv3 held on as long as it did.
+The problem wasn&#8217;t the protocol, it was the industry&#8217;s inability
+to update.
+Since SSLv3 we have had TLS version 1.0, 1.1, and 1.2, each of which
+fixes vulnerabilities and problems in the previous version.
+Yet there are many systems that do not support protocols beyond
+TLS version 1.0.
+<p>
+Backwards compatibility is important and valuable.
+But security issues, and in particular cryptographic algorithms and
+protocols, are fundamentally different than other things.
+Because smart attackers look for tiny weaknesses,
+you have to plan to more-aggressively <i>update</i> to new versions and
+<i>retire</i> old ones.
+<p>
+We need to ensure that the <i>latest</i>, most secure versions of
+widely-used protocols are quickly implemented in widely-used implementations
+(including open source software implementation), and get
+those deployed on shipping systems.
+<p>
+This is all well and good, but by itself this advice
+ignores an important reality.
+Service provider have a significant problem:
+if their customers do not upgrade, then they
+must support the obsolete (dangerous) protocols
+or they risk losing customers.
+So we need to address this head-on, as described next.
+
+<h2 id="counter-downgrade-attacks">Counter downgrade attacks</h2>
+<p>
+All protocols, both in theory and as implemented, must be
+<i>specifically designed</i> to prevent downgrade attacks.
+This is a technical approach, and an important one.
+<p>
+Since cryptographic protocols and algorithms are updated to counter
+attacks, attackers learned long ago that a great way to subvert systems
+is to convince them to downgrade to older protocols and algorithms.
+Then the attackers can reuse the older &#8220;fixed&#8221; vulnerabilities.
+<p>
+SSL/TLS implementations, unfortunately, were in practice
+very vulnerable.
+Since some old servers didn&#8217;t originally understand TLS
+handshakes, the clients implemented a retry without TLS
+(using SSL instead), under the assumption that the server
+was so old that it didn&#8217;t support TLS.
+However, this created an easy attack - an attacker could simply
+block the TLS request, and clients would switch to the more-vulnerable
+older protocols (SSL) instead.
+If an attacker can selectively block requests, causing systems to
+use a different protocol, then it doesn&#8217;t matter if there
+is a more secure protocol; attackers can force systems to
+use the vulnerable protocol.
+<p>
+<a href="https://blog.hboeck.de/archives/858-Dancing-protocols,-POODLEs-and-other-tales-from-TLS.html">Johannes (Hanno) Böck</a>
+uses the term &#8220;evil protocol dance&#8221; for this
+behavior, where a system just keeps trying protocols
+until it finds something that works.
+This behavior is reasonable when there are no security issues,
+but it should never be used for security protocols because
+it allows downgrade attacks.
+</a>
+<p>
+In general,
+if an attacker can force your protocol or its implementation
+to downgrade to a weaker protocol when it is not necessary,
+then it is busted.
+
+<h2 id="verify-mac-first">Verify the MAC before doing any cryptographic operation</h2>
+
+<p>
+Here is another technical approach, for those who are interested
+in the underlying technology.
+
+<p>
+Moxie Marlinspike recommends a useful rule-of-thumb
+for designers of secure protocols that he calls the
+<a href="http://www.thoughtcrime.org/blog/the-cryptographic-doom-principle/">Cryptographic Doom Principle</a>.
+This principle is,
+&#8220;If you have to perform any cryptographic operation
+before verifying the
+<a href="https://en.wikipedia.org/wiki/Message_authentication_code">[Message Authenication Code (MAC)]</a>
+on a message you&#8217;ve received,
+it will somehow inevitably lead to doom.&#8221;
+Put another way, always verify the MAC of a message
+(to detect tampering) before doing anything else with it.
+<p>
+SSLv3 violated this principle; it decrypts before it verifies the MAC.
+This led to SSLv3 being vulnerable to the POODLE attack
+(it also creates vulnerabilities to attacks devised by Vaudenay).
+Moxie Marlinspike states, and I agree, that
+&#8220;subtle crypo mistakes are SO easy to make&#8221; -
+and this is another example.
+
+<h2 id="simple-version-numbering">Use simple version numbering schemes</h2>
+<p>
+One absurd problem is that the name and version change between
+&#8220;SSL 3.0&#8221; and &#8220;TLS 1.0&#8221;
+has led to a lot of security vulnerabilities.
+Many users presume that 3 is more than 1, and thus, that TLS 1.0 is
+older than SSL 3.0.
+The reverse is actually the case; TLS 1.0 <i>replaces</i> the
+older SSL 3.0.
+But that absurd name and version change continues to cause grief.
+For example, Chrome once had a mechanism to enable and disable SSLv3,
+but they removed it because too many users misunderstood which one
+was older.
+The result was that Chrome users (even expert ones)
+became <i>less</i> safe once POODLE was revealed, because Chrome users
+had no practical mechanism to disable the vulnerable protocol.
+Complicated version identification schemes (aka version numbering
+schemes) make it difficult for users and administrators to
+<a href="#update-crypto">properly update their software and their software
+configurations</a>.
+
+<p>
+<a href="http://trendingcurrentevents.com/bill-gates-count-10-windows-meme/"><img align="right" src="../images/Bill-Gates-Count-to-10-Windows-Meme.jpg" width="491" height="423" alt="Hi, my name is Bill Gates and today I'll teach you how to count to ten: 1, 2, 3, 95, 98, NT, 2000, XP, VISTA, 7, 8 10"></a>
+
+<p>
+Version numbering should be <i>really simple and clear</i>, yet
+many other programs make the same mistake.
+For example,
+Microsoft Windows is a well known-example of a program
+that has completely failed to have a simple version numbering scheme.
+
+<p>
+Another program with a shamefully complicated version numbering scheme
+is <a href="http://frama-c.com/">Frama-C</a>.
+Frama-C is a suite of tools for analyzing software, and it
+has lot of great features.
+However, here is
+<a href="http://frama-c.com/download.html">the absurd sequence
+of Frama-C version numbers</a>:
+Hydrogen,
+Helium,
+Lithium,
+Beryllium,
+Boron,
+Carbon,
+Nitrogen,
+Oxygen,
+Fluorine,
+Neon.
+So... if you&#8217;re running Oxygen, is Neon an upgrade?
+If you have to think about it (or look it up), your
+version numbering system is too complicated.
+
+<p>
+Yet another example of bad version numbering systems is
+<a href="https://en.wikipedia.org/wiki/TeX">TeX</a>.
+Since version 3 updates are indicated by adding an extra digit
+at the end of the decimal to approach pi;
+The most recent update (on 2014-01-12) released version 3.14159265.
+This is painful to compare as well.
+
+<p>
+If you&#8217;re ever involved in a program or standard, please just keep
+the version numbers (and perhaps names) consistent and simple; your users
+will thank you.
+People have many things to do each day;
+keeping track of a complicated versioning system
+is not something they want to do.
+
+<p>
+There are
+<a href="https://en.wikipedia.org/wiki/Software_versioning">various
+approaches for identifying software versions</a>.
+What you want is a system that is <i>easy</i> to use, so that it is
+immediately obvious to everyone which version is older and which version
+is newer.
+One reasonable approach is using the release date, often
+in ISO date format (e.g., 2014-10-24), but this convention
+has problems if updates of older branches are ever released.
+
+<p>
+Most people use sequence-based identifiers (such as 1.1)
+version identifiers, since they easily handle updates of multiple branches.
+People easily understand them, and many systems already
+support them as
+&#8220;natural sorting&#8221; or &#8220;version sorting&#8221;
+(natural sorting sorts sequences of one or more digits in numeric order,
+not by character code, and may vary other things as well).
+For more about natural sorting, see posts by
+<a href="http://www.davekoelle.com/alphanum.html">David Koelle</a>,
+<a href="http://sourcefrog.net/projects/natsort/">Martin Pool</a>,
+<a href="http://blog.codinghorror.com/sorting-for-humans-natural-sort-order/">Coding Horror</a>, and
+<a href="http://rosettacode.org/wiki/Natural_sorting">Rosetta Code</a>.
+A useful variant of sequence-based identifiers is
+<a href="http://semver.org/">semantic versioning</a> (such as 1.1.0).
+Semantic versioning is
+clear, and since this format always has 2 periods, version
+identifiers using semantic versioning cannot be
+confused with simple numbers.
+Sometimes version numbers are skipped based on various superstitions
+(e.g., skipping <a href="https://en.wikipedia.org/wiki/Tetraphobia">4</a> or
+<a href="https://en.wikipedia.org/wiki/Triskaidekaphobia">13</a>).
+Be careful: do not use the pre-release version numbering scheme
+(with a hyphen) in semantic versioning.
+Such version numbers are not allowed by
+practically all Linux package management systems
+(including rpm-based ones like Red Hat Enterprise Linux, CentOS, Fedora,
+and SuSE, and deb-based ones like Debian and Ubuntu).
+Other than its pre-release portion, semantic versioning makes sense.
+
+<h1>Conclusions</h1>
+<p>
+In 2014 the primary problem with POODLE isn&#8217;t
+technology, nor is the problem really that SSLv3 is vulnerable.
+<p>
+<i>The real problem is that SSLv3 is still supported at all</i>.
+SSLv3 is a cryptographic protocol with known problems, has been
+replaced three times with updated and more secure
+algorithms, and there has been 15 years to transition away from SSLv3.
+That is <i>plenty</i> of time by any definition.
+SSLv3 should have no longer been in use.
+<p>
+We need to help and encourage systems to systematically
+implement updated cryptographic algorithms and protocols, and
+smartly <i>remove</i> the older and weaker ones.
+These have a lifetime, just like people do.
+And just like people, we need to plan for their demise.
+
+<p>
+<hr>
+<p>
+If you enjoyed this paper, you might also enjoy the entire
+suite of related papers in
+my essay suite <a href="learning-from-disaster.html">Learning from Disaster</a>.
+This includes similar essays on topics such as
+<a href="heartbleed.html">Heartbleed</a>,
+<a href="shellshock.html">Shellshock</a>,
+and the
+<a href="apple-goto-fail.html">Apple goto fail vulnerability</a>.
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+
+<p>
+(C) Copyright 2014 David A. Wheeler.
+
+</body>
+</html>
+

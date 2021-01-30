@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Python Notes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="???">
+<meta name="keywords" content="???">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Python Notes</h1>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2011-08-01</h2>
+
+<p>
+Python is a widely-used scripting language that has a lot of built-in
+functionality.  Programs written in it will tend to not be as fast as C
+or C++, but they can be quickly written, making it useful for some kinds
+of analysis.  There is a &quot;Python 2&quot; series and a &quot;Python
+3&quot; series; Python 3 is newer, but as of this writing, most libraries
+continue to use Python 2.
+</p>
+<p>
+You can use Python to quickly read a CSV file and then process it.  Here's a template if Excel generated the CSV file:
+<pre>
+  #!/usr/bin/env python
+  import csv
+  myReader = csv.reader(open('eggs.csv', 'rb'), dialect='excel')
+  # If you want to read in headers as its own line, do this:
+  #   headers = myReader.next()
+  # You can then refer to columns position indexes by name as headers.index('COLUMN_NAME')
+  for row in myReader:
+    # Process it here, e.g., row[0] is the first (0th) column value.
+</pre>
+</p>
+
+<p>
+You can also use the &quot;CSV&quot; library to write csv files.  Here's an example, where files are read in a line at a time, split on whitespace, and written as CSV; you can give the filenames on the command line, or redirect standard input:
+<pre>
+  #!/usr/bin/env python
+  import csv,fileinput,sys
+  myWriter = csv.writer(sys.stdout, dialect='excel')
+  # To write out headers:
+  # myWriter.writerow(['Heading1', 'Heading2'])
+  for line in fileinput.input():
+    myWriter.writerow(line.split())
+</pre>
+
+
+<p>
+<hr>
+<p>
+Feel free to see my home page at
+<a href="https://dwheeler.com">https://dwheeler.com</a>.
+You may also want to look at my paper
+<a href="https://dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> and my book on
+<a href="https://dwheeler.com/secure-programs">how to develop
+secure programs</a>.
+
+<p>
+(C) Copyright 2011 David A. Wheeler.
+
+</body>
+</html>
+
