@@ -1,0 +1,2953 @@
+
+#### Retrust beginning
+
+Linux version 2.6.11-1.14_FC3 (bhcompile@bugs.build.redhat.com) (gcc version 3.4.3 20050227 (Red Hat 3.4.3-22)) #1 Thu Apr 7 19:23:49 EDT 2005
+Name        : gcc                          Relocations: (not relocatable)
+Version     : 3.4.3                             Vendor: Red Hat, Inc.
+Release     : 22.fc3                        Build Date: Mon 14 Mar 2005 01:49:51 PM EST
+Install Date: Thu 14 Apr 2005 09:40:01 PM EDT      Build Host: tweety.build.redhat.com
+Group       : Development/Languages         Source RPM: gcc-3.4.3-22.fc3.src.rpm
+Size        : 12776588                         License: GPL
+Signature   : DSA/SHA1, Tue 12 Apr 2005 01:11:58 PM EDT, Key ID b44269d04f2a6fd2
+Packager    : Red Hat, Inc. <http://bugzilla.redhat.com/bugzilla>
+URL         : http://gcc.gnu.org
+Summary     : The GNU cc and gcc C compilers.
+Description :
+The gcc package includes the cc and gcc GNU compilers for compiling C
+code.
+gcc (GCC) 3.4.3 20050227 (Red Hat 3.4.3-22.fc3)
+Copyright (C) 2004 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+AUTHOR_EMAIL=dwheeler@dwheeler.com
+BASH=/bin/bash
+BASH_ARGC=()
+BASH_ARGV=()
+BASH_LINENO=([0]="0")
+BASH_SOURCE=([0]="./retrust")
+BASH_VERSINFO=([0]="3" [1]="00" [2]="14" [3]="1" [4]="release" [5]="i386-redhat-linux-gnu")
+BASH_VERSION='3.00.14(1)-release'
+COLORTERM=gnome-terminal
+COMMIT_AUTHOR_EMAIL=dwheeler@dwheeler.com
+DBUS_SESSION_BUS_ADDRESS=unix:abstract=/tmp/dbus-nkvyDwVg0X
+DESKTOP_SESSION=default
+DESKTOP_STARTUP_ID=
+DIRSTACK=()
+DISPLAY=:0.0
+EUID=500
+GDMSESSION=default
+GNOME_DESKTOP_SESSION_ID=Default
+GNOME_KEYRING_SOCKET=/tmp/keyring-8tJwtd/socket
+GROUPS=()
+GTK_RC_FILES=/etc/gtk/gtkrc:/home/dwheeler/.gtkrc-1.2-gnome2
+G_BROKEN_FILENAMES=1
+HISTSIZE=1000
+HOME=/home/dwheeler
+HOSTNAME=lydia
+HOSTTYPE=i386
+IFS=$' \t\n'
+INPUTRC=/etc/inputrc
+KDEDIR=/usr
+LANG=en_US.UTF-8
+LESS=-X
+LESSOPEN='|/usr/bin/lesspipe.sh %s'
+LOGNAME=dwheeler
+LS_COLORS='no=00:fi=00:di=00;34:ln=00;36:pi=40;33:so=00;35:bd=40;33;01:cd=40;33;01:or=01;05;37;41:mi=01;05;37;41:ex=00;32:*.cmd=00;32:*.exe=00;32:*.com=00;32:*.btm=00;32:*.bat=00;32:*.sh=00;32:*.csh=00;32:*.tar=00;31:*.tgz=00;31:*.arj=00;31:*.taz=00;31:*.lzh=00;31:*.zip=00;31:*.z=00;31:*.Z=00;31:*.gz=00;31:*.bz2=00;31:*.bz=00;31:*.tz=00;31:*.rpm=00;31:*.cpio=00;31:*.jpg=00;35:*.gif=00;35:*.bmp=00;35:*.xbm=00;35:*.xpm=00;35:*.png=00;35:*.tif=00;35:'
+MACHTYPE=i386-redhat-linux-gnu
+MAIL=/var/spool/mail/dwheeler
+MONITOR=strace-info
+OPTERR=1
+OPTIND=1
+OSTYPE=linux-gnu
+PATH=/usr/kerberos/bin:/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin:/home/dwheeler/bin
+PIPESTATUS=([0]="0")
+PPID=19777
+PS4='+ '
+PWD=/home/dwheeler/diversity-try/diversity.6
+QTDIR=/usr/lib/qt-3.3
+SESSION_MANAGER=local/lydia:/tmp/.ICE-unix/13093
+SHELL=/bin/bash
+SHELLOPTS=braceexpand:hashall:interactive-comments
+SHLVL=4
+SSH_AGENT_PID=13121
+SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+SSH_AUTH_SOCK=/tmp/ssh-UepYi13120/agent.13120
+TERM=xterm
+UID=500
+USER=dwheeler
+WINDOWID=46531627
+XAUTHORITY=/home/dwheeler/.Xauthority
+_=--version
+copystage () 
+{ 
+    echo;
+    echo "#### Copying $1 into $2";
+    cp -pr $1 $2;
+    cd $2;
+    echo "### Now patching for 8-bit casting problem, 0.0 difference";
+    perl -p -i -e 's/int reg, indir;/int reg, indir; int8_t tmp8;/;' i386-asm.c;
+    perl -p -i -e 's/if \(op->e\.v == \(int8_t\)op->e\.v\)/if (tmp8 = op->e.v, op->e.v == tmp8)/;' i386-asm.c;
+    perl -p -i -e 's/int mod, reg1, reg2;/int mod, reg1, reg2; int8_t tmp8;/;' i386-asm.c;
+    perl -p -i -e 's/int mod, reg1, reg2, sib_reg1;/int mod, reg1, reg2, sib_reg1; int8_t tmp8;/;' i386-asm.c;
+    perl -p -i -e 's/} else if \(op->e\.v == \(int8_t\)op->e\.v && !op->e.sym\) {/} else if (tmp8 = op->e.v, op->e.v == tmp8 && !op->e.sym) {/;' i386-asm.c;
+    perl -p -i -e 's/int i, modrm_index, reg, v, op1, is_short_jmp;/int i, modrm_index, reg, v, op1, is_short_jmp; int8_t tmp8;/;' i386-asm.c;
+    perl -p -i -e 's/if \(jmp_disp == \(int8_t\)jmp_disp\) {/if (tmp8=jmp_disp, jmp_disp == tmp8) {/;' i386-asm.c;
+    perl -p -i -e 's/ 0\.0\)/ (f1-f1) )/;' tcc.c
+}
+
+### Hashes of source files:
+
+6db41cbfc90415b94f2e53c1a1e5db0ef8105eb8  tcc-0.9.20.tar.gz
+19ef0fb67bbe57867a590d07126694547b27ef41  tcc-0.9.21.tar.gz
+84100525696af2252e7f0073fd6a9fcc6b2de266  tcc-0.9.22.tar.gz
+c883b88e874a9bb9163eb14dc43b178c  tcc-0.9.20.tar.gz
+364eb218266e5bd4dc97752e6c111d14  tcc-0.9.21.tar.gz
+62869f2cbf1d8a9b4ea1603311426228  tcc-0.9.22.tar.gz
+-rw-rw-r--  1 dwheeler dwheeler 199391 Oct  5  2003 tcc-0.9.20.tar.gz
+-rw-rw-r--  1 dwheeler dwheeler 236366 Oct 25  2004 tcc-0.9.21.tar.gz
+-rw-rw-r--  1 dwheeler dwheeler 237210 Nov  8  2004 tcc-0.9.22.tar.gz
+tcc-0.9.20/
+tcc-0.9.20/Makefile
+tcc-0.9.20/Makefile.uClibc
+tcc-0.9.20/configure
+tcc-0.9.20/VERSION
+tcc-0.9.20/README
+tcc-0.9.20/TODO
+tcc-0.9.20/COPYING
+tcc-0.9.20/Changelog
+tcc-0.9.20/tcc-doc.texi
+tcc-0.9.20/tcc-doc.html
+tcc-0.9.20/tcc.1
+tcc-0.9.20/tcc.c
+tcc-0.9.20/i386-gen.c
+tcc-0.9.20/tccelf.c
+tcc-0.9.20/tcctok.h
+tcc-0.9.20/tccasm.c
+tcc-0.9.20/i386-asm.c
+tcc-0.9.20/i386-asm.h
+tcc-0.9.20/bcheck.c
+tcc-0.9.20/libtcc1.c
+tcc-0.9.20/elf.h
+tcc-0.9.20/stab.h
+tcc-0.9.20/stab.def
+tcc-0.9.20/stddef.h
+tcc-0.9.20/stdarg.h
+tcc-0.9.20/stdbool.h
+tcc-0.9.20/float.h
+tcc-0.9.20/varargs.h
+tcc-0.9.20/tcclib.h
+tcc-0.9.20/libtcc.h
+tcc-0.9.20/libtcc_test.c
+tcc-0.9.20/ex1.c
+tcc-0.9.20/ex2.c
+tcc-0.9.20/ex3.c
+tcc-0.9.20/ex4.c
+tcc-0.9.20/ex5.c
+tcc-0.9.20/tcctest.c
+tcc-0.9.20/boundtest.c
+tcc-0.9.20/gcctestsuite.sh
+tcc-0.9.20/texi2pod.pl
+tcc-0.9.21/
+tcc-0.9.21/Makefile
+tcc-0.9.21/Makefile.uClibc
+tcc-0.9.21/configure
+tcc-0.9.21/VERSION
+tcc-0.9.21/README
+tcc-0.9.21/TODO
+tcc-0.9.21/COPYING
+tcc-0.9.21/Changelog
+tcc-0.9.21/tcc-doc.texi
+tcc-0.9.21/tcc-doc.html
+tcc-0.9.21/tcc.1
+tcc-0.9.21/tcc.c
+tcc-0.9.21/tccelf.c
+tcc-0.9.21/tcctok.h
+tcc-0.9.21/tccasm.c
+tcc-0.9.21/i386-asm.c
+tcc-0.9.21/i386-asm.h
+tcc-0.9.21/tcccoff.c
+tcc-0.9.21/coff.h
+tcc-0.9.21/i386-gen.c
+tcc-0.9.21/c67-gen.c
+tcc-0.9.21/arm-gen.c
+tcc-0.9.21/bcheck.c
+tcc-0.9.21/libtcc1.c
+tcc-0.9.21/elf.h
+tcc-0.9.21/stab.h
+tcc-0.9.21/stab.def
+tcc-0.9.21/stddef.h
+tcc-0.9.21/stdarg.h
+tcc-0.9.21/stdbool.h
+tcc-0.9.21/float.h
+tcc-0.9.21/varargs.h
+tcc-0.9.21/tcclib.h
+tcc-0.9.21/libtcc.h
+tcc-0.9.21/libtcc_test.c
+tcc-0.9.21/ex1.c
+tcc-0.9.21/ex2.c
+tcc-0.9.21/ex3.c
+tcc-0.9.21/ex4.c
+tcc-0.9.21/ex5.c
+tcc-0.9.21/tcctest.c
+tcc-0.9.21/boundtest.c
+tcc-0.9.21/gcctestsuite.sh
+tcc-0.9.21/texi2pod.pl
+tcc-0.9.22/
+tcc-0.9.22/Makefile
+tcc-0.9.22/Makefile.uClibc
+tcc-0.9.22/configure
+tcc-0.9.22/VERSION
+tcc-0.9.22/README
+tcc-0.9.22/TODO
+tcc-0.9.22/COPYING
+tcc-0.9.22/Changelog
+tcc-0.9.22/tcc-doc.texi
+tcc-0.9.22/tcc-doc.html
+tcc-0.9.22/tcc.1
+tcc-0.9.22/tcc.c
+tcc-0.9.22/tccelf.c
+tcc-0.9.22/tcctok.h
+tcc-0.9.22/tccasm.c
+tcc-0.9.22/i386-asm.c
+tcc-0.9.22/i386-asm.h
+tcc-0.9.22/tcccoff.c
+tcc-0.9.22/coff.h
+tcc-0.9.22/i386-gen.c
+tcc-0.9.22/c67-gen.c
+tcc-0.9.22/arm-gen.c
+tcc-0.9.22/bcheck.c
+tcc-0.9.22/libtcc1.c
+tcc-0.9.22/elf.h
+tcc-0.9.22/stab.h
+tcc-0.9.22/stab.def
+tcc-0.9.22/stddef.h
+tcc-0.9.22/stdarg.h
+tcc-0.9.22/stdbool.h
+tcc-0.9.22/float.h
+tcc-0.9.22/varargs.h
+tcc-0.9.22/tcclib.h
+tcc-0.9.22/libtcc.h
+tcc-0.9.22/libtcc_test.c
+tcc-0.9.22/ex1.c
+tcc-0.9.22/ex2.c
+tcc-0.9.22/ex3.c
+tcc-0.9.22/ex4.c
+tcc-0.9.22/ex5.c
+tcc-0.9.22/tcctest.c
+tcc-0.9.22/boundtest.c
+tcc-0.9.22/gcctestsuite.sh
+tcc-0.9.22/texi2pod.pl
+
+### Creating chain of tiny C compilers. First, bootstrap tcc.
+
+
+#### Copying tcc-0.9.22 into tcc-0.9.20-chain-bootstrap
+### Now patching for 8-bit casting problem, 0.0 difference
+### PATCH!
+### gcc 3.4.3 won't compile tcc-0.9.20 directly, because
+### gcc's checking is more stringent now. In tcc-0.9.20,
+### functions are defined like this:
+###  void *__bound_ptr_add(void *p, int offset) __attribute__((regparm(2)));
+### but in others the  __attribute__((regparm(2)) is omitted.
+### gcc now perceives that as inconsistent.
+### We can pretend we're part of the bootstrap compiler (a preprocessor)
+### and just throw away the regparm() stuff; it's just an optimization.
+
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.20-chain-bootstrap
+C compiler       strace-info gcc
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+strace-info gcc -O2 -Wall -c -o libtcc1.o libtcc1.c
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_LARGEFILE) = 3
+open("/usr/lib/gcc/i386-redhat-linux/3.4.3/specs", O_RDONLY) = 3
+open("/tmp/cc3sf76q.s", O_RDWR|O_CREAT|O_EXCL, 0600) = 3
+--- SIGCHLD (Child exited) @ 0 (0) ---
+--- SIGCHLD (Child exited) @ 0 (0) ---
+ar rcs libtcc1.a libtcc1.o
+strace-info gcc -O2 -g -Wall -mpreferred-stack-boundary=2 -march=i386 -falign-functions=0 -fno-strict-aliasing -o tcc_g tcc.c -ldl
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_LARGEFILE) = 3
+open("/usr/lib/gcc/i386-redhat-linux/3.4.3/specs", O_RDONLY) = 3
+open("/tmp/ccTZ8Mbo.s", O_RDWR|O_CREAT|O_EXCL, 0600) = 3
+--- SIGCHLD (Child exited) @ 0 (0) ---
+open("/tmp/cc1nwpyw.o", O_RDWR|O_CREAT|O_EXCL, 0600) = 3
+--- SIGCHLD (Child exited) @ 0 (0) ---
+--- SIGCHLD (Child exited) @ 0 (0) ---
+strip -s -R .comment -R .note -o tcc tcc_g
+
+#### Copying tcc-0.9.20 into tcc-0.9.20-chain-stage2
+### Now patching for 8-bit casting problem, 0.0 difference
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual  directory   /usr/local/man
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.20-chain-stage2
+C compiler       strace-info ../tcc-0.9.20-chain-bootstrap/tcc -B../tcc-0.9.20-chain-bootstrap -I../tcc-0.9.20-chain-bootstrap
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+strace-info ../tcc-0.9.20-chain-bootstrap/tcc -B../tcc-0.9.20-chain-bootstrap -I../tcc-0.9.20-chain-bootstrap -O2 -Wall -c -o libtcc1.o libtcc1.c
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("libtcc1.c", O_RDONLY)             = 3
+open("libtcc1.o", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+ar rcs libtcc1.a libtcc1.o
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual  directory   /usr/local/man
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.20-chain-stage2
+C compiler       strace-info ../tcc-0.9.20-chain-bootstrap/tcc -B. -I.
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+config.h is unchanged
+strace-info ../tcc-0.9.20-chain-bootstrap/tcc -B. -I. -O2 -g -Wall -mpreferred-stack-boundary=2 -march=i386 -falign-functions=0 -o tcc_g tcc.c -ldl
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/crt1.o", O_RDONLY)       = 3
+open("/usr/lib/crti.o", O_RDONLY)       = 3
+open("tcc.c", O_RDONLY)                 = 3
+open("config.h", O_RDONLY)              = 4
+open("./stdlib.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdlib.h", O_RDONLY) = 4
+open("./features.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/features.h", O_RDONLY) = 5
+open("./sys/cdefs.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/cdefs.h", O_RDONLY) = 6
+open("./gnu/stubs.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gnu/stubs.h", O_RDONLY) = 6
+open("./stddef.h", O_RDONLY)            = 5
+open("./bits/waitflags.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitflags.h", O_RDONLY) = 5
+open("./bits/waitstatus.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitstatus.h", O_RDONLY) = 5
+open("./endian.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/endian.h", O_RDONLY) = 6
+open("./bits/endian.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/endian.h", O_RDONLY) = 7
+open("./xlocale.h", O_RDONLY)           = -1 ENOENT (No such file or directory)
+open("/usr/local/include/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/xlocale.h", O_RDONLY) = 5
+open("./sys/types.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/types.h", O_RDONLY) = 5
+open("./bits/types.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/types.h", O_RDONLY) = 6
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("./bits/typesizes.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/typesizes.h", O_RDONLY) = 7
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("./sys/select.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/select.h", O_RDONLY) = 6
+open("./bits/select.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/select.h", O_RDONLY) = 7
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 7
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 7
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 7
+open("./sys/sysmacros.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/sysmacros.h", O_RDONLY) = 6
+open("./bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 6
+open("./bits/sched.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sched.h", O_RDONLY) = 7
+open("./alloca.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/alloca.h", O_RDONLY) = 5
+open("./stdio.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdio.h", O_RDONLY)  = 4
+open("./libio.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/libio.h", O_RDONLY)  = 5
+open("./_G_config.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/_G_config.h", O_RDONLY) = 6
+open("./wchar.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 7
+open("./bits/wchar.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wchar.h", O_RDONLY) = 8
+open("./gconv.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gconv.h", O_RDONLY)  = 7
+open("./wchar.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 8
+open("./stdarg.h", O_RDONLY)            = 6
+open("./bits/stdio_lim.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stdio_lim.h", O_RDONLY) = 5
+open("./bits/sys_errlist.h", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sys_errlist.h", O_RDONLY) = 5
+open("./string.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/string.h", O_RDONLY) = 4
+open("./errno.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/errno.h", O_RDONLY)  = 4
+open("./bits/errno.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/errno.h", O_RDONLY) = 5
+open("./linux/errno.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/linux/errno.h", O_RDONLY) = 6
+open("./asm/errno.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/errno.h", O_RDONLY) = 7
+open("./math.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/math.h", O_RDONLY)   = 4
+open("./bits/huge_val.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_val.h", O_RDONLY) = 5
+open("./bits/huge_valf.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_valf.h", O_RDONLY) = 5
+open("./bits/huge_vall.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_vall.h", O_RDONLY) = 5
+open("./bits/inf.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/inf.h", O_RDONLY) = 5
+open("./bits/nan.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/nan.h", O_RDONLY) = 5
+open("./bits/mathdef.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathdef.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./unistd.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/unistd.h", O_RDONLY) = 4
+open("./bits/posix_opt.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/posix_opt.h", O_RDONLY) = 5
+open("./bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/environments.h", O_RDONLY) = 5
+open("./bits/confname.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/confname.h", O_RDONLY) = 5
+open("./getopt.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/getopt.h", O_RDONLY) = 5
+open("./signal.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 4
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("./bits/signum.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/signum.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 5
+open("./bits/siginfo.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/siginfo.h", O_RDONLY) = 5
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 6
+open("./bits/sigaction.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigaction.h", O_RDONLY) = 5
+open("./bits/sigcontext.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 5
+open("./asm/sigcontext.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/sigcontext.h", O_RDONLY) = 6
+open("./bits/sigstack.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigstack.h", O_RDONLY) = 5
+open("./sys/ucontext.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/ucontext.h", O_RDONLY) = 5
+open("./signal.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 6
+open("./bits/sigcontext.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 6
+open("./bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 5
+open("./bits/sigthread.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigthread.h", O_RDONLY) = 5
+open("./fcntl.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/fcntl.h", O_RDONLY)  = 4
+open("./bits/fcntl.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/fcntl.h", O_RDONLY) = 5
+open("./sys/stat.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/stat.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("./bits/stat.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stat.h", O_RDONLY) = 6
+open("./setjmp.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/setjmp.h", O_RDONLY) = 4
+open("./bits/setjmp.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/setjmp.h", O_RDONLY) = 5
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 4
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("./sys/time.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/time.h", O_RDONLY) = 4
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("elf.h", O_RDONLY)                 = 4
+open("./inttypes.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/inttypes.h", O_RDONLY) = 5
+open("./stdint.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdint.h", O_RDONLY) = 6
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("stab.h", O_RDONLY)                = 4
+open("stab.def", O_RDONLY)              = 5
+open("./dlfcn.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/dlfcn.h", O_RDONLY)  = 4
+open("./bits/dlfcn.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/dlfcn.h", O_RDONLY) = 5
+open("libtcc.h", O_RDONLY)              = 4
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-gen.c", O_RDONLY)            = 4
+open("i386-asm.c", O_RDONLY)            = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tccasm.c", O_RDONLY)              = 4
+open("tccelf.c", O_RDONLY)              = 4
+open("/usr/local/lib/libdl.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libdl.so", O_RDONLY)     = 3
+open("/usr/local/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/local/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib/ld-linux.so.2", O_RDONLY)    = 5
+open("/usr/local/lib/libc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so", O_RDONLY)      = 3
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/lib/libc_nonshared.a", O_RDONLY) = 4
+open("./libtcc1.a", O_RDONLY)           = 3
+open("/usr/lib/crtn.o", O_RDONLY)       = 3
+open("tcc_g", O_WRONLY|O_CREAT|O_TRUNC, 0777) = 3
+strip -s -R .comment -R .note -o tcc tcc_g
+
+#### Copying tcc-0.9.21 into tcc-0.9.21-chain-update
+### Now patching for 8-bit casting problem, 0.0 difference
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.21-chain-update
+C compiler       strace-info ../tcc-0.9.20-chain-stage2/tcc -B../tcc-0.9.20-chain-stage2 -I../tcc-0.9.20-chain-stage2
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+strace-info ../tcc-0.9.20-chain-stage2/tcc -B../tcc-0.9.20-chain-stage2 -I../tcc-0.9.20-chain-stage2 -O2 -Wall -c -o libtcc1.o libtcc1.c
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("libtcc1.c", O_RDONLY)             = 3
+open("libtcc1.o", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+ar rcs libtcc1.a libtcc1.o
+strace-info ../tcc-0.9.20-chain-stage2/tcc -B../tcc-0.9.20-chain-stage2 -I../tcc-0.9.20-chain-stage2 -O2 -g -Wall -mpreferred-stack-boundary=2 -march=i386 -falign-functions=0 -o tcc_g tcc.c -ldl
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/crt1.o", O_RDONLY)       = 3
+open("/usr/lib/crti.o", O_RDONLY)       = 3
+open("tcc.c", O_RDONLY)                 = 3
+open("config.h", O_RDONLY)              = 4
+open("../tcc-0.9.20-chain-stage2/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdlib.h", O_RDONLY) = 4
+open("../tcc-0.9.20-chain-stage2/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/features.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/cdefs.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gnu/stubs.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/stddef.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitflags.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitstatus.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/endian.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/endian.h", O_RDONLY) = 7
+open("../tcc-0.9.20-chain-stage2/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/xlocale.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/types.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/types.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("../tcc-0.9.20-chain-stage2/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/typesizes.h", O_RDONLY) = 7
+open("../tcc-0.9.20-chain-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("../tcc-0.9.20-chain-stage2/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/select.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/select.h", O_RDONLY) = 7
+open("../tcc-0.9.20-chain-stage2/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 7
+open("../tcc-0.9.20-chain-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 7
+open("../tcc-0.9.20-chain-stage2/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 7
+open("../tcc-0.9.20-chain-stage2/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/sysmacros.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sched.h", O_RDONLY) = 7
+open("../tcc-0.9.20-chain-stage2/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/alloca.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdio.h", O_RDONLY)  = 4
+open("../tcc-0.9.20-chain-stage2/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/libio.h", O_RDONLY)  = 5
+open("../tcc-0.9.20-chain-stage2/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/_G_config.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 7
+open("../tcc-0.9.20-chain-stage2/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wchar.h", O_RDONLY) = 8
+open("../tcc-0.9.20-chain-stage2/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gconv.h", O_RDONLY)  = 7
+open("../tcc-0.9.20-chain-stage2/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 8
+open("../tcc-0.9.20-chain-stage2/stdarg.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stdio_lim.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sys_errlist.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/string.h", O_RDONLY) = 4
+open("../tcc-0.9.20-chain-stage2/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/errno.h", O_RDONLY)  = 4
+open("../tcc-0.9.20-chain-stage2/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/errno.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/linux/errno.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/errno.h", O_RDONLY) = 7
+open("../tcc-0.9.20-chain-stage2/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/math.h", O_RDONLY)   = 4
+open("../tcc-0.9.20-chain-stage2/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_val.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_valf.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_vall.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/inf.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/nan.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathdef.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/unistd.h", O_RDONLY) = 4
+open("../tcc-0.9.20-chain-stage2/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/posix_opt.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/environments.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/confname.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/getopt.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 4
+open("../tcc-0.9.20-chain-stage2/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/signum.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 5
+open("../tcc-0.9.20-chain-stage2/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/siginfo.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigaction.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/sigcontext.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigstack.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/ucontext.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigthread.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/fcntl.h", O_RDONLY)  = 4
+open("../tcc-0.9.20-chain-stage2/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/fcntl.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/stat.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("../tcc-0.9.20-chain-stage2/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stat.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/setjmp.h", O_RDONLY) = 4
+open("../tcc-0.9.20-chain-stage2/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/setjmp.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 4
+open("../tcc-0.9.20-chain-stage2/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/time.h", O_RDONLY) = 4
+open("../tcc-0.9.20-chain-stage2/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("elf.h", O_RDONLY)                 = 4
+open("../tcc-0.9.20-chain-stage2/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/inttypes.h", O_RDONLY) = 5
+open("../tcc-0.9.20-chain-stage2/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdint.h", O_RDONLY) = 6
+open("../tcc-0.9.20-chain-stage2/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("stab.h", O_RDONLY)                = 4
+open("stab.def", O_RDONLY)              = 5
+open("../tcc-0.9.20-chain-stage2/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/dlfcn.h", O_RDONLY)  = 4
+open("../tcc-0.9.20-chain-stage2/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/dlfcn.h", O_RDONLY) = 5
+open("libtcc.h", O_RDONLY)              = 4
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-gen.c", O_RDONLY)            = 4
+open("i386-asm.c", O_RDONLY)            = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tccasm.c", O_RDONLY)              = 4
+open("tccelf.c", O_RDONLY)              = 4
+open("/usr/local/lib/libdl.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libdl.so", O_RDONLY)     = 3
+open("/usr/local/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/local/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib/ld-linux.so.2", O_RDONLY)    = 5
+open("../tcc-0.9.20-chain-stage2/libtcc1.a", O_RDONLY) = 3
+open("/usr/local/lib/libc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so", O_RDONLY)      = 3
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/lib/libc_nonshared.a", O_RDONLY) = 4
+open("/usr/lib/crtn.o", O_RDONLY)       = 3
+open("tcc_g", O_WRONLY|O_CREAT|O_TRUNC, 0777) = 3
+strip -s -R .comment -R .note -o tcc tcc_g
+
+#### Copying tcc-0.9.21 into tcc-0.9.21-chain-stage2
+### Now patching for 8-bit casting problem, 0.0 difference
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.21-chain-stage2
+C compiler       strace-info ../tcc-0.9.21-chain-update/tcc -B../tcc-0.9.21-chain-update -I../tcc-0.9.21-chain-update
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+strace-info ../tcc-0.9.21-chain-update/tcc -B../tcc-0.9.21-chain-update -I../tcc-0.9.21-chain-update -O2 -Wall -c -o libtcc1.o libtcc1.c
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("libtcc1.c", O_RDONLY)             = 3
+open("libtcc1.o", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+ar rcs libtcc1.a libtcc1.o
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.21-chain-stage2
+C compiler       strace-info ../tcc-0.9.21-chain-update/tcc -B. -I.
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+config.h is unchanged
+strace-info ../tcc-0.9.21-chain-update/tcc -B. -I. -O2 -g -Wall -mpreferred-stack-boundary=2 -march=i386 -falign-functions=0 -o tcc_g tcc.c -ldl
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/crt1.o", O_RDONLY)       = 3
+open("/usr/lib/crti.o", O_RDONLY)       = 3
+open("tcc.c", O_RDONLY)                 = 3
+open("config.h", O_RDONLY)              = 4
+open("./stdlib.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdlib.h", O_RDONLY) = 4
+open("./features.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/features.h", O_RDONLY) = 5
+open("./sys/cdefs.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/cdefs.h", O_RDONLY) = 6
+open("./gnu/stubs.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gnu/stubs.h", O_RDONLY) = 6
+open("./stddef.h", O_RDONLY)            = 5
+open("./bits/waitflags.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitflags.h", O_RDONLY) = 5
+open("./bits/waitstatus.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitstatus.h", O_RDONLY) = 5
+open("./endian.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/endian.h", O_RDONLY) = 6
+open("./bits/endian.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/endian.h", O_RDONLY) = 7
+open("./xlocale.h", O_RDONLY)           = -1 ENOENT (No such file or directory)
+open("/usr/local/include/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/xlocale.h", O_RDONLY) = 5
+open("./sys/types.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/types.h", O_RDONLY) = 5
+open("./bits/types.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/types.h", O_RDONLY) = 6
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("./bits/typesizes.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/typesizes.h", O_RDONLY) = 7
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("./sys/select.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/select.h", O_RDONLY) = 6
+open("./bits/select.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/select.h", O_RDONLY) = 7
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 7
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 7
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 7
+open("./sys/sysmacros.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/sysmacros.h", O_RDONLY) = 6
+open("./bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 6
+open("./bits/sched.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sched.h", O_RDONLY) = 7
+open("./alloca.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/alloca.h", O_RDONLY) = 5
+open("./stdio.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdio.h", O_RDONLY)  = 4
+open("./libio.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/libio.h", O_RDONLY)  = 5
+open("./_G_config.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/_G_config.h", O_RDONLY) = 6
+open("./wchar.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 7
+open("./bits/wchar.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wchar.h", O_RDONLY) = 8
+open("./gconv.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gconv.h", O_RDONLY)  = 7
+open("./wchar.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 8
+open("./stdarg.h", O_RDONLY)            = 6
+open("./bits/stdio_lim.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stdio_lim.h", O_RDONLY) = 5
+open("./bits/sys_errlist.h", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sys_errlist.h", O_RDONLY) = 5
+open("./string.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/string.h", O_RDONLY) = 4
+open("./errno.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/errno.h", O_RDONLY)  = 4
+open("./bits/errno.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/errno.h", O_RDONLY) = 5
+open("./linux/errno.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/linux/errno.h", O_RDONLY) = 6
+open("./asm/errno.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/errno.h", O_RDONLY) = 7
+open("./math.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/math.h", O_RDONLY)   = 4
+open("./bits/huge_val.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_val.h", O_RDONLY) = 5
+open("./bits/huge_valf.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_valf.h", O_RDONLY) = 5
+open("./bits/huge_vall.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_vall.h", O_RDONLY) = 5
+open("./bits/inf.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/inf.h", O_RDONLY) = 5
+open("./bits/nan.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/nan.h", O_RDONLY) = 5
+open("./bits/mathdef.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathdef.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./unistd.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/unistd.h", O_RDONLY) = 4
+open("./bits/posix_opt.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/posix_opt.h", O_RDONLY) = 5
+open("./bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/environments.h", O_RDONLY) = 5
+open("./bits/confname.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/confname.h", O_RDONLY) = 5
+open("./getopt.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/getopt.h", O_RDONLY) = 5
+open("./signal.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 4
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("./bits/signum.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/signum.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 5
+open("./bits/siginfo.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/siginfo.h", O_RDONLY) = 5
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 6
+open("./bits/sigaction.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigaction.h", O_RDONLY) = 5
+open("./bits/sigcontext.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 5
+open("./asm/sigcontext.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/sigcontext.h", O_RDONLY) = 6
+open("./bits/sigstack.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigstack.h", O_RDONLY) = 5
+open("./sys/ucontext.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/ucontext.h", O_RDONLY) = 5
+open("./signal.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 6
+open("./bits/sigcontext.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 6
+open("./bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 5
+open("./bits/sigthread.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigthread.h", O_RDONLY) = 5
+open("./fcntl.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/fcntl.h", O_RDONLY)  = 4
+open("./bits/fcntl.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/fcntl.h", O_RDONLY) = 5
+open("./sys/stat.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/stat.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("./bits/stat.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stat.h", O_RDONLY) = 6
+open("./setjmp.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/setjmp.h", O_RDONLY) = 4
+open("./bits/setjmp.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/setjmp.h", O_RDONLY) = 5
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 4
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("./sys/time.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/time.h", O_RDONLY) = 4
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("elf.h", O_RDONLY)                 = 4
+open("./inttypes.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/inttypes.h", O_RDONLY) = 5
+open("./stdint.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdint.h", O_RDONLY) = 6
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("stab.h", O_RDONLY)                = 4
+open("stab.def", O_RDONLY)              = 5
+open("./dlfcn.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/dlfcn.h", O_RDONLY)  = 4
+open("./bits/dlfcn.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/dlfcn.h", O_RDONLY) = 5
+open("libtcc.h", O_RDONLY)              = 4
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-gen.c", O_RDONLY)            = 4
+open("i386-asm.c", O_RDONLY)            = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tccasm.c", O_RDONLY)              = 4
+open("tccelf.c", O_RDONLY)              = 4
+open("/usr/local/lib/libdl.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libdl.so", O_RDONLY)     = 3
+open("/usr/local/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/local/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib/ld-linux.so.2", O_RDONLY)    = 5
+open("./libtcc1.a", O_RDONLY)           = 3
+open("/usr/local/lib/libc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so", O_RDONLY)      = 3
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/lib/libc_nonshared.a", O_RDONLY) = 4
+open("/usr/lib/crtn.o", O_RDONLY)       = 3
+open("tcc_g", O_WRONLY|O_CREAT|O_TRUNC, 0777) = 3
+strip -s -R .comment -R .note -o tcc tcc_g
+
+#### Copying tcc-0.9.22 into tcc-0.9.22-chain-update
+### Now patching for 8-bit casting problem, 0.0 difference
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.22-chain-update
+C compiler       strace-info ../tcc-0.9.21-chain-stage2/tcc -B../tcc-0.9.21-chain-stage2 -I../tcc-0.9.21-chain-stage2
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+strace-info ../tcc-0.9.21-chain-stage2/tcc -B../tcc-0.9.21-chain-stage2 -I../tcc-0.9.21-chain-stage2 -O2 -Wall -c -o libtcc1.o libtcc1.c
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("libtcc1.c", O_RDONLY)             = 3
+open("libtcc1.o", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+ar rcs libtcc1.a libtcc1.o
+strace-info ../tcc-0.9.21-chain-stage2/tcc -B../tcc-0.9.21-chain-stage2 -I../tcc-0.9.21-chain-stage2 -O2 -g -Wall -mpreferred-stack-boundary=2 -march=i386 -falign-functions=0 -fno-strict-aliasing -o tcc_g tcc.c -ldl
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/crt1.o", O_RDONLY)       = 3
+open("/usr/lib/crti.o", O_RDONLY)       = 3
+open("tcc.c", O_RDONLY)                 = 3
+open("config.h", O_RDONLY)              = 4
+open("../tcc-0.9.21-chain-stage2/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdlib.h", O_RDONLY) = 4
+open("../tcc-0.9.21-chain-stage2/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/features.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/cdefs.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gnu/stubs.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/stddef.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitflags.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitstatus.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/endian.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/endian.h", O_RDONLY) = 7
+open("../tcc-0.9.21-chain-stage2/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/xlocale.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/types.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/types.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("../tcc-0.9.21-chain-stage2/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/typesizes.h", O_RDONLY) = 7
+open("../tcc-0.9.21-chain-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("../tcc-0.9.21-chain-stage2/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/select.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/select.h", O_RDONLY) = 7
+open("../tcc-0.9.21-chain-stage2/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 7
+open("../tcc-0.9.21-chain-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 7
+open("../tcc-0.9.21-chain-stage2/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 7
+open("../tcc-0.9.21-chain-stage2/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/sysmacros.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sched.h", O_RDONLY) = 7
+open("../tcc-0.9.21-chain-stage2/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/alloca.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdio.h", O_RDONLY)  = 4
+open("../tcc-0.9.21-chain-stage2/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/libio.h", O_RDONLY)  = 5
+open("../tcc-0.9.21-chain-stage2/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/_G_config.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 7
+open("../tcc-0.9.21-chain-stage2/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wchar.h", O_RDONLY) = 8
+open("../tcc-0.9.21-chain-stage2/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gconv.h", O_RDONLY)  = 7
+open("../tcc-0.9.21-chain-stage2/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 8
+open("../tcc-0.9.21-chain-stage2/stdarg.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stdio_lim.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sys_errlist.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/string.h", O_RDONLY) = 4
+open("../tcc-0.9.21-chain-stage2/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/errno.h", O_RDONLY)  = 4
+open("../tcc-0.9.21-chain-stage2/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/errno.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/linux/errno.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/errno.h", O_RDONLY) = 7
+open("../tcc-0.9.21-chain-stage2/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/math.h", O_RDONLY)   = 4
+open("../tcc-0.9.21-chain-stage2/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_val.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_valf.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_vall.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/inf.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/nan.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathdef.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/unistd.h", O_RDONLY) = 4
+open("../tcc-0.9.21-chain-stage2/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/posix_opt.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/environments.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/confname.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/getopt.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 4
+open("../tcc-0.9.21-chain-stage2/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/signum.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 5
+open("../tcc-0.9.21-chain-stage2/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/siginfo.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigaction.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/sigcontext.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigstack.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/ucontext.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigthread.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/fcntl.h", O_RDONLY)  = 4
+open("../tcc-0.9.21-chain-stage2/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/fcntl.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/stat.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("../tcc-0.9.21-chain-stage2/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stat.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/setjmp.h", O_RDONLY) = 4
+open("../tcc-0.9.21-chain-stage2/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/setjmp.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 4
+open("../tcc-0.9.21-chain-stage2/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/time.h", O_RDONLY) = 4
+open("../tcc-0.9.21-chain-stage2/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("elf.h", O_RDONLY)                 = 4
+open("../tcc-0.9.21-chain-stage2/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/inttypes.h", O_RDONLY) = 5
+open("../tcc-0.9.21-chain-stage2/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdint.h", O_RDONLY) = 6
+open("../tcc-0.9.21-chain-stage2/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("stab.h", O_RDONLY)                = 4
+open("stab.def", O_RDONLY)              = 5
+open("../tcc-0.9.21-chain-stage2/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/dlfcn.h", O_RDONLY)  = 4
+open("../tcc-0.9.21-chain-stage2/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/dlfcn.h", O_RDONLY) = 5
+open("libtcc.h", O_RDONLY)              = 4
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-gen.c", O_RDONLY)            = 4
+open("i386-asm.c", O_RDONLY)            = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tccasm.c", O_RDONLY)              = 4
+open("tccelf.c", O_RDONLY)              = 4
+open("/usr/local/lib/libdl.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libdl.so", O_RDONLY)     = 3
+open("/usr/local/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/local/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib/ld-linux.so.2", O_RDONLY)    = 5
+open("../tcc-0.9.21-chain-stage2/libtcc1.a", O_RDONLY) = 3
+open("/usr/local/lib/libc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so", O_RDONLY)      = 3
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/lib/libc_nonshared.a", O_RDONLY) = 4
+open("/usr/lib/crtn.o", O_RDONLY)       = 3
+open("tcc_g", O_WRONLY|O_CREAT|O_TRUNC, 0777) = 3
+strip -s -R .comment -R .note -o tcc tcc_g
+
+#### Copying tcc-0.9.22 into tcc-0.9.22-chain-stage2
+### Now patching for 8-bit casting problem, 0.0 difference
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.22-chain-stage2
+C compiler       strace-info ../tcc-0.9.22-chain-update/tcc -B../tcc-0.9.22-chain-update -I../tcc-0.9.22-chain-update
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+strace-info ../tcc-0.9.22-chain-update/tcc -B../tcc-0.9.22-chain-update -I../tcc-0.9.22-chain-update -O2 -Wall -c -o libtcc1.o libtcc1.c
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("libtcc1.c", O_RDONLY)             = 3
+open("libtcc1.o", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+ar rcs libtcc1.a libtcc1.o
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.22-chain-stage2
+C compiler       strace-info ../tcc-0.9.22-chain-update/tcc -B. -I.
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+config.h is unchanged
+strace-info ../tcc-0.9.22-chain-update/tcc -B. -I. -O2 -g -Wall -mpreferred-stack-boundary=2 -march=i386 -falign-functions=0 -fno-strict-aliasing -o tcc_g tcc.c -ldl
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/crt1.o", O_RDONLY)       = 3
+open("/usr/lib/crti.o", O_RDONLY)       = 3
+open("tcc.c", O_RDONLY)                 = 3
+open("config.h", O_RDONLY)              = 4
+open("./stdlib.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdlib.h", O_RDONLY) = 4
+open("./features.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/features.h", O_RDONLY) = 5
+open("./sys/cdefs.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/cdefs.h", O_RDONLY) = 6
+open("./gnu/stubs.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gnu/stubs.h", O_RDONLY) = 6
+open("./stddef.h", O_RDONLY)            = 5
+open("./bits/waitflags.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitflags.h", O_RDONLY) = 5
+open("./bits/waitstatus.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitstatus.h", O_RDONLY) = 5
+open("./endian.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/endian.h", O_RDONLY) = 6
+open("./bits/endian.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/endian.h", O_RDONLY) = 7
+open("./xlocale.h", O_RDONLY)           = -1 ENOENT (No such file or directory)
+open("/usr/local/include/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/xlocale.h", O_RDONLY) = 5
+open("./sys/types.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/types.h", O_RDONLY) = 5
+open("./bits/types.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/types.h", O_RDONLY) = 6
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("./bits/typesizes.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/typesizes.h", O_RDONLY) = 7
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("./sys/select.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/select.h", O_RDONLY) = 6
+open("./bits/select.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/select.h", O_RDONLY) = 7
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 7
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 7
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 7
+open("./sys/sysmacros.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/sysmacros.h", O_RDONLY) = 6
+open("./bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 6
+open("./bits/sched.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sched.h", O_RDONLY) = 7
+open("./alloca.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/alloca.h", O_RDONLY) = 5
+open("./stdio.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdio.h", O_RDONLY)  = 4
+open("./libio.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/libio.h", O_RDONLY)  = 5
+open("./_G_config.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/_G_config.h", O_RDONLY) = 6
+open("./wchar.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 7
+open("./bits/wchar.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wchar.h", O_RDONLY) = 8
+open("./gconv.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gconv.h", O_RDONLY)  = 7
+open("./wchar.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 8
+open("./stdarg.h", O_RDONLY)            = 6
+open("./bits/stdio_lim.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stdio_lim.h", O_RDONLY) = 5
+open("./bits/sys_errlist.h", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sys_errlist.h", O_RDONLY) = 5
+open("./string.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/string.h", O_RDONLY) = 4
+open("./errno.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/errno.h", O_RDONLY)  = 4
+open("./bits/errno.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/errno.h", O_RDONLY) = 5
+open("./linux/errno.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/linux/errno.h", O_RDONLY) = 6
+open("./asm/errno.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/errno.h", O_RDONLY) = 7
+open("./math.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/math.h", O_RDONLY)   = 4
+open("./bits/huge_val.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_val.h", O_RDONLY) = 5
+open("./bits/huge_valf.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_valf.h", O_RDONLY) = 5
+open("./bits/huge_vall.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_vall.h", O_RDONLY) = 5
+open("./bits/inf.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/inf.h", O_RDONLY) = 5
+open("./bits/nan.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/nan.h", O_RDONLY) = 5
+open("./bits/mathdef.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathdef.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./unistd.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/unistd.h", O_RDONLY) = 4
+open("./bits/posix_opt.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/posix_opt.h", O_RDONLY) = 5
+open("./bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/environments.h", O_RDONLY) = 5
+open("./bits/confname.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/confname.h", O_RDONLY) = 5
+open("./getopt.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/getopt.h", O_RDONLY) = 5
+open("./signal.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 4
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("./bits/signum.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/signum.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 5
+open("./bits/siginfo.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/siginfo.h", O_RDONLY) = 5
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 6
+open("./bits/sigaction.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigaction.h", O_RDONLY) = 5
+open("./bits/sigcontext.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 5
+open("./asm/sigcontext.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/sigcontext.h", O_RDONLY) = 6
+open("./bits/sigstack.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigstack.h", O_RDONLY) = 5
+open("./sys/ucontext.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/ucontext.h", O_RDONLY) = 5
+open("./signal.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 6
+open("./bits/sigcontext.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 6
+open("./bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 5
+open("./bits/sigthread.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigthread.h", O_RDONLY) = 5
+open("./fcntl.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/fcntl.h", O_RDONLY)  = 4
+open("./bits/fcntl.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/fcntl.h", O_RDONLY) = 5
+open("./sys/stat.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/stat.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("./bits/stat.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stat.h", O_RDONLY) = 6
+open("./setjmp.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/setjmp.h", O_RDONLY) = 4
+open("./bits/setjmp.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/setjmp.h", O_RDONLY) = 5
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 4
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("./sys/time.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/time.h", O_RDONLY) = 4
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("elf.h", O_RDONLY)                 = 4
+open("./inttypes.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/inttypes.h", O_RDONLY) = 5
+open("./stdint.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdint.h", O_RDONLY) = 6
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("stab.h", O_RDONLY)                = 4
+open("stab.def", O_RDONLY)              = 5
+open("./dlfcn.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/dlfcn.h", O_RDONLY)  = 4
+open("./bits/dlfcn.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/dlfcn.h", O_RDONLY) = 5
+open("libtcc.h", O_RDONLY)              = 4
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-gen.c", O_RDONLY)            = 4
+open("i386-asm.c", O_RDONLY)            = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tccasm.c", O_RDONLY)              = 4
+open("tccelf.c", O_RDONLY)              = 4
+open("/usr/local/lib/libdl.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libdl.so", O_RDONLY)     = 3
+open("/usr/local/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/local/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib/ld-linux.so.2", O_RDONLY)    = 5
+open("/usr/local/lib/libc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so", O_RDONLY)      = 3
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/lib/libc_nonshared.a", O_RDONLY) = 4
+open("./libtcc1.a", O_RDONLY)           = 3
+open("/usr/lib/crtn.o", O_RDONLY)       = 3
+open("tcc_g", O_WRONLY|O_CREAT|O_TRUNC, 0777) = 3
+strip -s -R .comment -R .note -o tcc tcc_g
+
+#### Okay! Now let's do diverse double-compiling!
+
+
+#### Copying tcc-0.9.22 into tcc-0.9.22-bootstrap
+### Now patching for 8-bit casting problem, 0.0 difference
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.22-bootstrap
+C compiler       strace-info gcc
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+strace-info gcc -O2 -Wall -c -o libtcc1.o libtcc1.c
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_LARGEFILE) = 3
+open("/usr/lib/gcc/i386-redhat-linux/3.4.3/specs", O_RDONLY) = 3
+open("/tmp/ccICeE3C.s", O_RDWR|O_CREAT|O_EXCL, 0600) = 3
+--- SIGCHLD (Child exited) @ 0 (0) ---
+--- SIGCHLD (Child exited) @ 0 (0) ---
+ar rcs libtcc1.a libtcc1.o
+strace-info gcc -O2 -g -Wall -mpreferred-stack-boundary=2 -march=i386 -falign-functions=0 -fno-strict-aliasing -o tcc_g tcc.c -ldl
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_LARGEFILE) = 3
+open("/usr/lib/gcc/i386-redhat-linux/3.4.3/specs", O_RDONLY) = 3
+open("/tmp/ccyYAQ0v.s", O_RDWR|O_CREAT|O_EXCL, 0600) = 3
+--- SIGCHLD (Child exited) @ 0 (0) ---
+open("/tmp/ccuywrzK.o", O_RDWR|O_CREAT|O_EXCL, 0600) = 3
+--- SIGCHLD (Child exited) @ 0 (0) ---
+--- SIGCHLD (Child exited) @ 0 (0) ---
+strip -s -R .comment -R .note -o tcc tcc_g
+
+#### Copying tcc-0.9.22 into tcc-0.9.22-stage2
+### Now patching for 8-bit casting problem, 0.0 difference
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.22-stage2
+C compiler       strace-info ../tcc-0.9.22-bootstrap/tcc -B../tcc-0.9.22-bootstrap -I../tcc-0.9.22-bootstrap
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+strace-info ../tcc-0.9.22-bootstrap/tcc -B../tcc-0.9.22-bootstrap -I../tcc-0.9.22-bootstrap -O2 -Wall -c -o libtcc1.o libtcc1.c
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("libtcc1.c", O_RDONLY)             = 3
+open("libtcc1.o", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+ar rcs libtcc1.a libtcc1.o
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.22-stage2
+C compiler       strace-info ../tcc-0.9.22-bootstrap/tcc -B. -I.
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+config.h is unchanged
+strace-info ../tcc-0.9.22-bootstrap/tcc -B. -I. -O2 -g -Wall -mpreferred-stack-boundary=2 -march=i386 -falign-functions=0 -fno-strict-aliasing -o tcc_g tcc.c -ldl
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/crt1.o", O_RDONLY)       = 3
+open("/usr/lib/crti.o", O_RDONLY)       = 3
+open("tcc.c", O_RDONLY)                 = 3
+open("config.h", O_RDONLY)              = 4
+open("./stdlib.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdlib.h", O_RDONLY) = 4
+open("./features.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/features.h", O_RDONLY) = 5
+open("./sys/cdefs.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/cdefs.h", O_RDONLY) = 6
+open("./gnu/stubs.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gnu/stubs.h", O_RDONLY) = 6
+open("./stddef.h", O_RDONLY)            = 5
+open("./bits/waitflags.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitflags.h", O_RDONLY) = 5
+open("./bits/waitstatus.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitstatus.h", O_RDONLY) = 5
+open("./endian.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/endian.h", O_RDONLY) = 6
+open("./bits/endian.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/endian.h", O_RDONLY) = 7
+open("./xlocale.h", O_RDONLY)           = -1 ENOENT (No such file or directory)
+open("/usr/local/include/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/xlocale.h", O_RDONLY) = 5
+open("./sys/types.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/types.h", O_RDONLY) = 5
+open("./bits/types.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/types.h", O_RDONLY) = 6
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("./bits/typesizes.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/typesizes.h", O_RDONLY) = 7
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("./sys/select.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/select.h", O_RDONLY) = 6
+open("./bits/select.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/select.h", O_RDONLY) = 7
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 7
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 7
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 7
+open("./sys/sysmacros.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/sysmacros.h", O_RDONLY) = 6
+open("./bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 6
+open("./bits/sched.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sched.h", O_RDONLY) = 7
+open("./alloca.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/alloca.h", O_RDONLY) = 5
+open("./stdio.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdio.h", O_RDONLY)  = 4
+open("./libio.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/libio.h", O_RDONLY)  = 5
+open("./_G_config.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/_G_config.h", O_RDONLY) = 6
+open("./wchar.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 7
+open("./bits/wchar.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wchar.h", O_RDONLY) = 8
+open("./gconv.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gconv.h", O_RDONLY)  = 7
+open("./wchar.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 8
+open("./stdarg.h", O_RDONLY)            = 6
+open("./bits/stdio_lim.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stdio_lim.h", O_RDONLY) = 5
+open("./bits/sys_errlist.h", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sys_errlist.h", O_RDONLY) = 5
+open("./string.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/string.h", O_RDONLY) = 4
+open("./errno.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/errno.h", O_RDONLY)  = 4
+open("./bits/errno.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/errno.h", O_RDONLY) = 5
+open("./linux/errno.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/linux/errno.h", O_RDONLY) = 6
+open("./asm/errno.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/errno.h", O_RDONLY) = 7
+open("./math.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/math.h", O_RDONLY)   = 4
+open("./bits/huge_val.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_val.h", O_RDONLY) = 5
+open("./bits/huge_valf.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_valf.h", O_RDONLY) = 5
+open("./bits/huge_vall.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_vall.h", O_RDONLY) = 5
+open("./bits/inf.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/inf.h", O_RDONLY) = 5
+open("./bits/nan.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/nan.h", O_RDONLY) = 5
+open("./bits/mathdef.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathdef.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./bits/mathcalls.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("./unistd.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/unistd.h", O_RDONLY) = 4
+open("./bits/posix_opt.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/posix_opt.h", O_RDONLY) = 5
+open("./bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/environments.h", O_RDONLY) = 5
+open("./bits/confname.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/confname.h", O_RDONLY) = 5
+open("./getopt.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/getopt.h", O_RDONLY) = 5
+open("./signal.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 4
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("./bits/signum.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/signum.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 5
+open("./bits/siginfo.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/siginfo.h", O_RDONLY) = 5
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 6
+open("./bits/sigaction.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigaction.h", O_RDONLY) = 5
+open("./bits/sigcontext.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 5
+open("./asm/sigcontext.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/sigcontext.h", O_RDONLY) = 6
+open("./bits/sigstack.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigstack.h", O_RDONLY) = 5
+open("./sys/ucontext.h", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/ucontext.h", O_RDONLY) = 5
+open("./signal.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 6
+open("./bits/sigcontext.h", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 6
+open("./bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 5
+open("./bits/sigthread.h", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigthread.h", O_RDONLY) = 5
+open("./fcntl.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/fcntl.h", O_RDONLY)  = 4
+open("./bits/fcntl.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/fcntl.h", O_RDONLY) = 5
+open("./sys/stat.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/stat.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("./bits/stat.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stat.h", O_RDONLY) = 6
+open("./setjmp.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/setjmp.h", O_RDONLY) = 4
+open("./bits/setjmp.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/setjmp.h", O_RDONLY) = 5
+open("./bits/sigset.h", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("./time.h", O_RDONLY)              = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 4
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("./sys/time.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/time.h", O_RDONLY) = 4
+open("./bits/time.h", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("elf.h", O_RDONLY)                 = 4
+open("./inttypes.h", O_RDONLY)          = -1 ENOENT (No such file or directory)
+open("/usr/local/include/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/inttypes.h", O_RDONLY) = 5
+open("./stdint.h", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdint.h", O_RDONLY) = 6
+open("./bits/wordsize.h", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("stab.h", O_RDONLY)                = 4
+open("stab.def", O_RDONLY)              = 5
+open("./dlfcn.h", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/include/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/dlfcn.h", O_RDONLY)  = 4
+open("./bits/dlfcn.h", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/dlfcn.h", O_RDONLY) = 5
+open("libtcc.h", O_RDONLY)              = 4
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-gen.c", O_RDONLY)            = 4
+open("i386-asm.c", O_RDONLY)            = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tccasm.c", O_RDONLY)              = 4
+open("tccelf.c", O_RDONLY)              = 4
+open("/usr/local/lib/libdl.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libdl.so", O_RDONLY)     = 3
+open("/usr/local/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/local/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib/ld-linux.so.2", O_RDONLY)    = 5
+open("/usr/local/lib/libc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so", O_RDONLY)      = 3
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/lib/libc_nonshared.a", O_RDONLY) = 4
+open("./libtcc1.a", O_RDONLY)           = 3
+open("/usr/lib/crtn.o", O_RDONLY)       = 3
+open("tcc_g", O_WRONLY|O_CREAT|O_TRUNC, 0777) = 3
+strip -s -R .comment -R .note -o tcc tcc_g
+
+#### Copying tcc-0.9.22 into tcc-0.9.22-stage3
+### Now patching for 8-bit casting problem, 0.0 difference
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.22-stage3
+C compiler       strace-info ../tcc-0.9.22-stage2/tcc -B../tcc-0.9.22-stage2 -I../tcc-0.9.22-stage2
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+strace-info ../tcc-0.9.22-stage2/tcc -B../tcc-0.9.22-stage2 -I../tcc-0.9.22-stage2 -O2 -Wall -c -o libtcc1.o libtcc1.c
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("libtcc1.c", O_RDONLY)             = 3
+open("libtcc1.o", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+ar rcs libtcc1.a libtcc1.o
+strace-info ../tcc-0.9.22-stage2/tcc -B../tcc-0.9.22-stage2 -I../tcc-0.9.22-stage2 -O2 -g -Wall -mpreferred-stack-boundary=2 -march=i386 -falign-functions=0 -fno-strict-aliasing -o tcc_g tcc.c -ldl
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/crt1.o", O_RDONLY)       = 3
+open("/usr/lib/crti.o", O_RDONLY)       = 3
+open("tcc.c", O_RDONLY)                 = 3
+open("config.h", O_RDONLY)              = 4
+open("../tcc-0.9.22-stage2/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdlib.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage2/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/features.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/cdefs.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gnu/stubs.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/stddef.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitflags.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitstatus.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/endian.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/endian.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage2/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/xlocale.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/types.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/types.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage2/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/typesizes.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("../tcc-0.9.22-stage2/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/select.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/select.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage2/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 7
+open("../tcc-0.9.22-stage2/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage2/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/sysmacros.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sched.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage2/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/alloca.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdio.h", O_RDONLY)  = 4
+open("../tcc-0.9.22-stage2/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/libio.h", O_RDONLY)  = 5
+open("../tcc-0.9.22-stage2/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/_G_config.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 7
+open("../tcc-0.9.22-stage2/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wchar.h", O_RDONLY) = 8
+open("../tcc-0.9.22-stage2/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gconv.h", O_RDONLY)  = 7
+open("../tcc-0.9.22-stage2/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 8
+open("../tcc-0.9.22-stage2/stdarg.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stdio_lim.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sys_errlist.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/string.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage2/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/errno.h", O_RDONLY)  = 4
+open("../tcc-0.9.22-stage2/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/errno.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/linux/errno.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/errno.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage2/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/math.h", O_RDONLY)   = 4
+open("../tcc-0.9.22-stage2/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_val.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_valf.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_vall.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/inf.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/nan.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathdef.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/unistd.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage2/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/posix_opt.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/environments.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/confname.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/getopt.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage2/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/signum.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 5
+open("../tcc-0.9.22-stage2/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/siginfo.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigaction.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/sigcontext.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigstack.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/ucontext.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigthread.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/fcntl.h", O_RDONLY)  = 4
+open("../tcc-0.9.22-stage2/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/fcntl.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/stat.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("../tcc-0.9.22-stage2/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stat.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/setjmp.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage2/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/setjmp.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 4
+open("../tcc-0.9.22-stage2/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/time.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage2/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("elf.h", O_RDONLY)                 = 4
+open("../tcc-0.9.22-stage2/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/inttypes.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage2/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdint.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage2/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("stab.h", O_RDONLY)                = 4
+open("stab.def", O_RDONLY)              = 5
+open("../tcc-0.9.22-stage2/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/dlfcn.h", O_RDONLY)  = 4
+open("../tcc-0.9.22-stage2/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/dlfcn.h", O_RDONLY) = 5
+open("libtcc.h", O_RDONLY)              = 4
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-gen.c", O_RDONLY)            = 4
+open("i386-asm.c", O_RDONLY)            = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tccasm.c", O_RDONLY)              = 4
+open("tccelf.c", O_RDONLY)              = 4
+open("/usr/local/lib/libdl.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libdl.so", O_RDONLY)     = 3
+open("/usr/local/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/local/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib/ld-linux.so.2", O_RDONLY)    = 5
+open("/usr/local/lib/libc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so", O_RDONLY)      = 3
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/lib/libc_nonshared.a", O_RDONLY) = 4
+open("../tcc-0.9.22-stage2/libtcc1.a", O_RDONLY) = 3
+open("/usr/lib/crtn.o", O_RDONLY)       = 3
+open("tcc_g", O_WRONLY|O_CREAT|O_TRUNC, 0777) = 3
+strip -s -R .comment -R .note -o tcc tcc_g
+
+#### Copying tcc-0.9.22 into tcc-0.9.22-stage4
+### Now patching for 8-bit casting problem, 0.0 difference
+Binary  directory   /usr/local/bin
+Library directory   /usr/local/lib
+Include directory   /usr/local/include
+Manual directory    /usr/local/man
+Doc directory       /usr/local/share/doc/tcc
+Source path      /home/dwheeler/diversity-try/diversity.6/tcc-0.9.22-stage4
+C compiler       strace-info ../tcc-0.9.22-stage3/tcc -B../tcc-0.9.22-stage3 -I../tcc-0.9.22-stage3
+make             make
+CPU              x86
+Big Endian       no
+gprof enabled    no
+Creating config.mak and config.h
+strace-info ../tcc-0.9.22-stage3/tcc -B../tcc-0.9.22-stage3 -I../tcc-0.9.22-stage3 -O2 -Wall -c -o libtcc1.o libtcc1.c
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("libtcc1.c", O_RDONLY)             = 3
+open("libtcc1.o", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+ar rcs libtcc1.a libtcc1.o
+strace-info ../tcc-0.9.22-stage3/tcc -B../tcc-0.9.22-stage3 -I../tcc-0.9.22-stage3 -O2 -g -Wall -mpreferred-stack-boundary=2 -march=i386 -falign-functions=0 -fno-strict-aliasing -o tcc_g tcc.c -ldl
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/lib/libNoVersion.so.1", O_RDONLY) = 3
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/tls/libc.so.6", O_RDONLY)    = 3
+open("/usr/lib/crt1.o", O_RDONLY)       = 3
+open("/usr/lib/crti.o", O_RDONLY)       = 3
+open("tcc.c", O_RDONLY)                 = 3
+open("config.h", O_RDONLY)              = 4
+open("../tcc-0.9.22-stage3/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdlib.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdlib.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage3/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/features.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/features.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/cdefs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/cdefs.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gnu/stubs.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gnu/stubs.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/stddef.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitflags.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitflags.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/waitstatus.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/waitstatus.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/endian.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/endian.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/endian.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage3/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/xlocale.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/xlocale.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/types.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/types.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/types.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage3/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/typesizes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/typesizes.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage3/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("../tcc-0.9.22-stage3/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/select.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/select.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/select.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage3/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage3/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 7
+open("../tcc-0.9.22-stage3/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage3/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/sysmacros.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/sysmacros.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sched.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sched.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage3/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/alloca.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/alloca.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdio.h", O_RDONLY)  = 4
+open("../tcc-0.9.22-stage3/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/libio.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/libio.h", O_RDONLY)  = 5
+open("../tcc-0.9.22-stage3/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/_G_config.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/_G_config.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 7
+open("../tcc-0.9.22-stage3/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wchar.h", O_RDONLY) = 8
+open("../tcc-0.9.22-stage3/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/gconv.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/gconv.h", O_RDONLY)  = 7
+open("../tcc-0.9.22-stage3/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/wchar.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/wchar.h", O_RDONLY)  = 8
+open("../tcc-0.9.22-stage3/stdarg.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stdio_lim.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stdio_lim.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sys_errlist.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sys_errlist.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/string.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/string.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage3/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/errno.h", O_RDONLY)  = 4
+open("../tcc-0.9.22-stage3/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/errno.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/linux/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/linux/errno.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/errno.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/errno.h", O_RDONLY) = 7
+open("../tcc-0.9.22-stage3/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/math.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/math.h", O_RDONLY)   = 4
+open("../tcc-0.9.22-stage3/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_val.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_val.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_valf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_valf.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/huge_vall.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/huge_vall.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/inf.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/inf.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/nan.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/nan.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathdef.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathdef.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/mathcalls.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/mathcalls.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/unistd.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/unistd.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage3/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/posix_opt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/posix_opt.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/environments.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/environments.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/confname.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/confname.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/getopt.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/getopt.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage3/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/signum.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/signum.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 5
+open("../tcc-0.9.22-stage3/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/siginfo.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/siginfo.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigaction.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigaction.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/asm/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/asm/sigcontext.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigstack.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigstack.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/ucontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/ucontext.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/signal.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/signal.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigcontext.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigcontext.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/pthreadtypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/pthreadtypes.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigthread.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigthread.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/fcntl.h", O_RDONLY)  = 4
+open("../tcc-0.9.22-stage3/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/fcntl.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/fcntl.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/stat.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 6
+open("../tcc-0.9.22-stage3/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/stat.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/stat.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/setjmp.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage3/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/setjmp.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/setjmp.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/sigset.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/sigset.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/time.h", O_RDONLY)   = 4
+open("../tcc-0.9.22-stage3/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/sys/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/sys/time.h", O_RDONLY) = 4
+open("../tcc-0.9.22-stage3/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/time.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/time.h", O_RDONLY) = 5
+open("elf.h", O_RDONLY)                 = 4
+open("../tcc-0.9.22-stage3/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/inttypes.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/inttypes.h", O_RDONLY) = 5
+open("../tcc-0.9.22-stage3/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/stdint.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/stdint.h", O_RDONLY) = 6
+open("../tcc-0.9.22-stage3/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/wordsize.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/wordsize.h", O_RDONLY) = 7
+open("stab.h", O_RDONLY)                = 4
+open("stab.def", O_RDONLY)              = 5
+open("../tcc-0.9.22-stage3/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/dlfcn.h", O_RDONLY)  = 4
+open("../tcc-0.9.22-stage3/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/include/bits/dlfcn.h", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/include/bits/dlfcn.h", O_RDONLY) = 5
+open("libtcc.h", O_RDONLY)              = 4
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tcctok.h", O_RDONLY)              = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-gen.c", O_RDONLY)            = 4
+open("i386-asm.c", O_RDONLY)            = 4
+open("i386-asm.h", O_RDONLY)            = 5
+open("i386-asm.h", O_RDONLY)            = 5
+open("tccasm.c", O_RDONLY)              = 4
+open("tccelf.c", O_RDONLY)              = 4
+open("/usr/local/lib/libdl.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libdl.so", O_RDONLY)     = 3
+open("/usr/local/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/local/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/ld-linux.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib/ld-linux.so.2", O_RDONLY)    = 5
+open("/usr/local/lib/libc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libc.so", O_RDONLY)      = 3
+open("/lib/libc.so.6", O_RDONLY)        = 4
+open("/usr/lib/libc_nonshared.a", O_RDONLY) = 4
+open("../tcc-0.9.22-stage3/libtcc1.a", O_RDONLY) = 3
+open("/usr/lib/crtn.o", O_RDONLY)       = 3
+open("tcc_g", O_WRONLY|O_CREAT|O_TRUNC, 0777) = 3
+strip -s -R .comment -R .note -o tcc tcc_g
+
+### Here are the hash results for compiler (tcc) and runtime (libtcc1.o)
+
+2e11287d6635ed0168585bd01f88f168573049ec  tcc-0.9.21-chain-update/tcc
+371c66ed12ac5a4887587995e36485a16923a221  tcc-0.9.22-chain-update/tcc
+55a51fa0f11530372eab27d360836d9fde4ea59b  tcc-0.9.20-chain-stage2/tcc
+c1ec831ae153bf33bff3df3c248b12938960a5b6  tcc-0.9.22-chain-stage2/tcc
+c1ec831ae153bf33bff3df3c248b12938960a5b6  tcc-0.9.22-stage2/tcc
+c1ec831ae153bf33bff3df3c248b12938960a5b6  tcc-0.9.22-stage3/tcc
+c1ec831ae153bf33bff3df3c248b12938960a5b6  tcc-0.9.22-stage4/tcc
+d2a88c3fbaf919c4dd21530cf0ac2f3f28897905  tcc-0.9.21-chain-stage2/tcc
+ea4287584bab3f834be6dcd4ec1392cde6bd385c  tcc-0.9.20-chain-bootstrap/tcc
+ea4287584bab3f834be6dcd4ec1392cde6bd385c  tcc-0.9.22-bootstrap/tcc
+
+
+2b7d678da3545106150c682888850536aa2cf2d5  tcc-0.9.20-chain-bootstrap/libtcc1.o
+2b7d678da3545106150c682888850536aa2cf2d5  tcc-0.9.22-bootstrap/libtcc1.o
+68f1d01dedeefcc61a37c42c6f3876a0a24fdbae  tcc-0.9.21-chain-update/libtcc1.o
+794841efe4aad6e25f6dee89d4b2d0224c22389b  tcc-0.9.20-chain-stage2/libtcc1.o
+794841efe4aad6e25f6dee89d4b2d0224c22389b  tcc-0.9.21-chain-stage2/libtcc1.o
+794841efe4aad6e25f6dee89d4b2d0224c22389b  tcc-0.9.22-chain-stage2/libtcc1.o
+794841efe4aad6e25f6dee89d4b2d0224c22389b  tcc-0.9.22-chain-update/libtcc1.o
+794841efe4aad6e25f6dee89d4b2d0224c22389b  tcc-0.9.22-stage2/libtcc1.o
+794841efe4aad6e25f6dee89d4b2d0224c22389b  tcc-0.9.22-stage3/libtcc1.o
+794841efe4aad6e25f6dee89d4b2d0224c22389b  tcc-0.9.22-stage4/libtcc1.o

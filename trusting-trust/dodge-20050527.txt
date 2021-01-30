@@ -1,0 +1,145 @@
+http://lists.gnu.org/archive/html/tinycc-devel/2005-05/msg00027.html
+
+*tinycc-devel*
+
+[Top <../>][All Lists </archive/html>]
+Advanced </archive/cgi-bin/namazu.cgi?idxname=tinycc-devel>
+
+------------------------------------------------------------------------
+[Date Prev <msg00026.html>][Date Next <msg00028.html>][Thread Prev
+<msg00025.html>][Thread Next <msg00028.html>][Date Index
+<index.html#00027>][Thread Index <threads.html#00027>]
+
+
+    Re: [Tinycc-devel] Mysterious tcc behavior: why does 0.0 takes 12 bytes
+
+------------------------------------------------------------------------
+*From*: 	Dave Dodge
+*Subject*: 	Re: [Tinycc-devel] Mysterious tcc behavior: why does 0.0
+takes 12 bytes when NOT long double?
+*Date*: 	Fri, 27 May 2005 00:32:04 -0400
+*User-agent*: 	Mutt/1.4.2i
+
+------------------------------------------------------------------------
+
+On Thu, May 26, 2005 at 12:11:41AM -0400, David A. Wheeler wrote:
+>/ Here's an odd thing - I've noticed that tcc 0.9.22,/
+>/ when compiling itself, writes _12_ bytes, not _8_,/
+>/ for the "0.0" in its source code (the last 4 bytes look/
+>/ like garbage). It does NOT do this/
+>/ with a simple test case that just has 0.0 in it./
+>/ /
+>/ Why is this? Is this a symptom of something more serious?/
+>/ Frankly, this looks like a bug of some kind./
+
+The 0.0 in the sourcecode is being compared to a long double variable,
+so the usual arithmetic conversions kick in, and it's being implicitly
+converted to a 12-byte long double before being stored.  Notice that
+the type is 0xa (VT_LDOUBLE) instead of 0x9 (VT_DOUBLE).  You get
+similar behavior if you compile this:
+
+    int foo1(double f) { return f == 0.0; }
+    int foo2(long double f) { return f == 0.0; }
+
+DEBUG: type of 0.0 is DOUBLE
+DEBUG: Constant float in gv(), size=8, align=4, offset=0,type=0x9
+DEBUG: wrote ptr[0]=0x0
+DEBUG: wrote ptr[1]=0x0
+
+DEBUG: type of 0.0 is DOUBLE
+DEBUG: Constant float in gv(), size=12, align=4, offset=8,type=0xa
+DEBUG: wrote ptr[0]=0x0
+DEBUG: wrote ptr[1]=0x0
+DEBUG: wrote ptr[2]=0x0
+
+The need for conversion is noticed by gen_op:
+
+        /* compute bigger type and do implicit casts */
+        if (bt1 == VT_LDOUBLE || bt2 == VT_LDOUBLE) {
+            t = VT_LDOUBLE;
+
+Then gen_cast performs the conversion of a constant double to
+a constant long double here:
+
+                else if (dbt == VT_LDOUBLE && sbt == VT_DOUBLE)
+                    vtop->c.ld = (long double)vtop->c.d;
+
+Long doubles are 80 bits on x86, right?  So that only uses 10 bytes of
+storage even though 12 are being stored (I assume the use of 12 bytes
+is some sort of alignment or ABI constraint).  That suggests that the
+last two bytes are junk and don't affect the value.  Notice in your
+example of the third word having 0xc90000, the c9 junk is within in
+the last two bytes.
+
+Another example:
+
+#include <stdio.h>
+int main(void)
+{
+        union{ long double ld; unsigned int ui[3]; }x;
+        x.ld = 0.0;
+        printf("%x %x %x\n",x.ui[0],x.ui[1],x.ui[2]);
+        return 0;
+}
+
+DEBUG: type of 0.0 is DOUBLE
+DEBUG: Constant float in gv(), size=12, align=4, offset=4,type=0xa
+DEBUG: wrote ptr[0]=0x0
+DEBUG: wrote ptr[1]=0x0
+DEBUG: wrote ptr[2]=0x0
+
+It wrote 24 zero bytes, but when it uses the FPU to copy them into
+the union the last two bytes of the copy are junk:
+
+$ ./a.out
+0 0 40130000
+    ^^^^
+                                                  -Dave Dodge
+
+
+
+------------------------------------------------------------------------
+reply via email to
+
+------------------------------------------------------------------------
+[Prev in Thread <msg00025.html>] 	*Current Thread* 	[Next in Thread
+<msg00028.html>]
+
+    * *[Tinycc-devel] TCC CVS Win32 status <msg00019.html>*, /James
+      Dunne/, 2005/05/24
+          o *[Tinycc-devel] Mysterious tcc behavior: why does 0.0 takes
+            12 bytes when NOT long double? <msg00022.html>*, /David A.
+            Wheeler/, 2005/05/26
+                + *Re: [Tinycc-devel] Mysterious tcc behavior: why does
+                  0.0 takes 12 bytes when NOT long double?
+                  <msg00023.html>*, /Jesse Liley/, 2005/05/26
+                      # *Re: [Tinycc-devel] Mysterious tcc behavior: why
+                        does 0.0 takes 12 bytes when NOT long double?
+                        <msg00024.html>*, /aaron667/, 2005/05/26
+                      # *Re: [Tinycc-devel] Mysterious tcc behavior: why
+                        does 0.0 takes 12 bytes when NOT long double?
+                        <msg00026.html>*, /Henrik Nordstrom/, 2005/05/26
+                + *Re: [Tinycc-devel] Mysterious tcc behavior: why does
+                  0.0 takes 12 bytes when NOT long double?
+                  <msg00025.html>*, /Ivan Popov/, 2005/05/26
+                + *Re: [Tinycc-devel] Mysterious tcc behavior: why does
+                  0.0 takes 12 bytes when NOT long double?*, /Dave
+                  Dodge/ *<=*
+                      # *Re: [Tinycc-devel] Mysterious tcc behavior: why
+                        does 0.0 takes 12 bytes when NOT long double?
+                        <msg00028.html>*, /Dave Dodge/, 2005/05/27
+
+------------------------------------------------------------------------
+
+    * Prev by Date: *Re: [Tinycc-devel] Mysterious tcc behavior: why
+      does 0.0 takes 12 bytes when NOT long double? <msg00026.html>*
+    * Next by Date: *Re: [Tinycc-devel] Mysterious tcc behavior: why
+      does 0.0 takes 12 bytes when NOT long double? <msg00028.html>*
+    * Previous by thread: *Re: [Tinycc-devel] Mysterious tcc behavior:
+      why does 0.0 takes 12 bytes when NOT long double? <msg00025.html>*
+    * Next by thread: *Re: [Tinycc-devel] Mysterious tcc behavior: why
+      does 0.0 takes 12 bytes when NOT long double? <msg00028.html>*
+    * Index(es):
+          o *Date* <index.html#00027>
+          o *Thread* <threads.html#00027>
+

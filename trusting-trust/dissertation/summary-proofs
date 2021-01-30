@@ -1,0 +1,86 @@
+Diverse Double-Compiling (DDC) Formal Proofs
+David A. Wheeler
+2007-11-02
+
+Here are the formal proofs of the Diverse Double-Compiling (DDC)
+technique. The proof goals are named "source_corresponds_to_executable",
+"always_equal", and "cP_corresponds_to_sP".
+
+The following figure shows the claimed origin of compiler-under-test cA
+(the process on the left), as well as the DDC technique itself (on the right).
+Note that the claimed origin of cA may not be true in the real world.
+Each box is a compilation step; arcs going in are inputs, and the
+arc going out is the output.  In the DDC technique (on the right-hand-side):
+* a trusted compiler cTGP is used to compile source code sP on
+  environment e1.  It will receive environmental inputs e1effects.
+  Source code sP is written in language lsP.  The resulting executable
+  is named "stage1".
+* That executable stage1 is then used to compile source code sA
+  on environment e2.  It will receive environmental inputs e2effects.
+  Source code sA is written in language lsA. The result is "stage2".
+
+The node-and-arc figures are graphs showing the final proofs, as created
+by prover9 and turned into graphical format by Wheeler's "gvizify" tool
+and graphviz.  The assumptions are shown in boxes; the goal is shown in
+an octagon; conversion of those assumptions to clausal form are shown
+by unsurrounded text; and all other steps are enclosed in ellipses.
+For any step, the incoming arcs show the clauses justifying that step.
+Prover9 creates proofs by contradiction; it creates a negation of
+the goal, and when it manages to prove that the negation is false,
+the theorem is proved.  Thus, all valid proofs end with "$F" (false).
+The first figure shows the first proof.  The second proof is more complex;
+the next three figures show that proof (broken into 2 lemmas and a
+final proof), and the final figure shows the entire proof in one chart
+(though it's hard to read).  Since all of them end with "$F", both
+theorems have been proven.
+
+The text files that file show the input to prover9.  These files include
+many comments explaining the various assumptions.  The key input
+are the assumptions and goals, which uses standard first-order logic with
+equality.  In this notation "all" means "for all", -> means "implies",
+"&" means "logical and", "|" means "logical or", and "-" means "not".
+An unbound variable is surrounded by an implied "for all...".
+
+PROOF #1:
+
+The first proof, named "source_corresponds_to_executable", is the key DDC
+proof.  It proves that given certain assumptions, if compiler-under-test
+cA is bit-for-bit equal with the DDC output stage2, then the compiler
+executable cA exactly corresponds to the source code sA.
+Note that sA may contain "malicious" code - the proof does not prove the
+absence of malicious code in the source code.  However, since the executable
+and source code have been proved to correspond, source code analysis
+techniques (including widescale review) can be used with confidence.
+
+PROOF #2:
+
+But why would cA and stage2 ever be equal?  Perhaps this is an unlikely
+event in normal circumstances.  The second proof, "always_equal", shows
+that given a reasonable set of assumptions that would often be true,
+these two executables WOULD always be identical.  The second proof is
+somewhat complex, so first two lemmas are proved: stage1_corresponds_sP
+and stage1_cP_eq_results (the second lemma depends on the first one).
+Then we finally prove "always_equal", showing that in a very common
+set of circumstances, these two executables WILL be equal.  Some of the
+assumptions are that the executable cA was actually created by compiling
+sA (not some other, potentially malicious source code), and that the
+parent compiler cP exactly corresponds to its putative source code sP.
+If these assumptions are not true, then cA and stage2 need not be
+equal... and then that will be caught by DDC.
+
+One oddity should be noted  - the "converttext(...)" function, which
+I added later.  This enables the proof to cover more situations,
+namely, where the differing environments have different
+text conventions such as different newline conventions or character sets.
+This function simply models the conversions.
+In particular, this enables me to show how Unix/Linux systems
+and Windows systems can work as a check on each other, if desired.
+
+PROOF #3:
+The final proof (in file cP-corresponds-sP.in) supports proof #2.
+We assumed that cP corresponded to sP, for generality's sake.
+After all, cP might have been created by hand.
+But in many cases, cP will have been compiled from sP using a compiler,
+and this proof shows that under reasonable conditions, cP corresponds to sP.
+
+

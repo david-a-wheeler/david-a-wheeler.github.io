@@ -1,0 +1,19 @@
+% Find inconsistency.
+% Usage:
+% prover9 -f bog.in > bog.out
+
+set(prolog_style_variables).
+
+formulas(assumptions).
+% "forall X" is assumed if not stated otherwise.
+bog(X) -> semisolid(X).              % bogs are semisolid.
+bog(X) -> bodyofwater(X).            % bogs are bodies of water.
+
+% Being semisolid and being a body of water are mutually exclusive.
+(-semisolid(X)) | (-bodyofwater(X)).
+
+% You MUST state that a bog exists.  In FOL, saying
+% "forall X, Y is true" does NOT assert that an X exists.
+% So "All Martians are green" is fine in FOL if there are no Martians.
+exists X bog(X).                     % A bog exists.
+end_of_list.

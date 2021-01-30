@@ -1,0 +1,2243 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Fully Countering Trusting Trust through Diverse Double-Compiling (DDC) - Countering Trojan Horse attacks on Compilers</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="David A. Wheeler's Page on Countering 'Trusting Trust' through Diverse Double-Compiling (DDC) - Countering Trojan Horse attacks on Compilers">
+<meta name="keywords" content="Trusting trust, trojan horse, compiler, compilers, compilation, subversion, malicious, malicious compiler, subverted compiler, Thompson, Ken Thompson, ACSAC, ACSAC 2005, diverse double-compiling, diverse double compiling, DDC, Reflections on Trusting Trust, reproducible builds, reproduceable builds, deterministic builds, Spencer, Karger, Schell, Draper, McDermott, Unix, C compiler, tcc, gcc, David, Wheeler, David A. Wheeler, micro-taint, microtaint, micro-tainting, microtainting, Perl, regular expressions">
+
+</head>
+<body bgcolor="#FFFFFF">
+<center>
+<h1><font color="#339900">David A. Wheeler&#8217;s Page on Fully Countering Trusting Trust through Diverse Double-Compiling (DDC) - Countering Trojan Horse attacks on Compilers</font></h1></center>
+<p>
+Here&#8217;s information about my work to counter the &#8220;Trusting Trust&#8221; attack.
+The &#8220;Trusting Trust&#8221; attack is an incredibly nasty attack in computer security;
+up to now it&#8217;s been presumed to be the essential uncounterable attack.
+I&#8217;ve worried about it for a long time,
+essentially since Ken Thompson publicly described it.
+After all, if there&#8217;s a <i>known</i> attack that cannot
+be effectively countered, should we be using computers at all?
+Thankfully, I think there is an effective countermeasure, which I have named
+&#8220;Diverse Double-Compiling&#8221; (DDC).
+
+<p>
+This page notes my
+<a href="#2009">2009 PhD dissertation</a> and its preceding
+<a href="#acsac">2005 ACSAC paper</a>, a little about
+<a href="#citing">citing my work</a>, and
+<a href="#detailed_data">detailed data (to duplicate the experiments)</a>,
+It then has sections on
+<a href="misconceptions">countering misconceptions</a>,
+<a href="applying-hardware">what about applying this to hardware?</a>,
+<a href="patents">Software patents and application programmer interface (API) copyrights</a>,
+<a href="credits">credit where credit is due</a>, and
+<a href="talking-about">who&#8217;s talking about it?</a>.
+We then have a section on
+<a href="real-world">real-world application of DDC</a>, specifically
+discussing GNU Mes.
+It includes a large section on
+<a href="related">some related material</a>.
+
+
+<p>
+<h1 id="2009">2009 PhD dissertation</h1>
+<a href="dissertation/wheeler-trusting-trust-video.html">
+<img height="240" width="320" src="dissertation/wheeler-presentation-start.jpg" border="0" clear="right">
+</a>
+<p>
+<b><a href="dissertation/html/wheeler-trusting-trust-ddc.html">Fully Countering Trusting Trust through Diverse Double-Compiling</a></b>
+(<a href="dissertation/wheeler-trusting-trust-ddc.pdf">PDF version</a>,
+<a href="dissertation/html/wheeler-trusting-trust-ddc.html">HTML version</a>,
+<a href="dissertation/wheeler-trusting-trust-ddc.odt">OpenDocument text version</a>,
+<a href="https://perma.cc/PCK7-ZX7G">Perma.cc link to PDF</a>,
+<a href="https://arxiv.org/abs/1004.5534">arXiv:1004.5534 of PDF</a>,
+<a href="http://mars.gmu.edu/handle/1920/5667">GMU Mason Archival
+Repository Service (MARS)</a>)
+is my 2009 PhD dissertation explaining how to counter the
+&#8220;trusting trust&#8221; attack by using the &#8220;Diverse Double-Compiling&#8221; (DDC)
+technique.
+This dissertation was accepted by my PhD committee on October 26, 2009.
+<p>
+<a href="dissertation/wheeler-trusting-trust-video.html">The video
+of my official public defense</a> (webm or mp4) is also available;
+this presentation was given on <b>November 23, 2009, 1-3pm</b>
+(<a href="countering-trusting-trust.rss">podcast/RSS available</a>).
+The presentation materials are also available in
+<a href="dissertation/fully-countering-trusting-trust-ddc-presentation.pdf">
+PDF</a> and
+<a href="dissertation/fully-countering-trusting-trust-ddc-presentation.odp">
+OpenDocument (ODP)</a>
+formats.
+The public defense was held at
+<a href="http://www.gmu.edu">George Mason University</a>,
+Fairfax, Virginia, <a href="http://itu.gmu.edu/innovationhall/aboutih.html">Innovation Hall</a>, room 105
+[<a href="http://itu.gmu.edu/innovationhall/images/academiciv.gif">location on campus</a>] [<a href="http://maps.google.com/maps?f=q&amp;source=s_q&amp;hl=en&amp;geocode=&amp;q=38.828240,+-77.307578&amp;sll=38.828258,-77.307615&amp;sspn=0.011417,0.01929&amp;ie=UTF8&amp;ll=38.827539,-77.307336&amp;spn=0.011417,0.01929&amp;z=16">Google map</a>].
+<!--
+I passed the public defense, so I&#8217;ve completed the requirements
+for a PhD at George Mason University.
+-->
+<p>
+Here&#8217;s the abstract of the dissertation:
+<blockquote>
+<i>
+An Air Force evaluation of Multics, and Ken Thompson&#8217;s Turing award
+lecture (&#8220;<a href="https://dl.acm.org/citation.cfm?id=358210">Reflections
+on Trusting Trust</a>&#8221;), showed that compilers can
+be subverted to insert malicious Trojan horses into critical software,
+including themselves.  If this &#8220;trusting trust&#8221; attack goes undetected,
+even complete analysis of a system&#8217;s source code will not find the
+malicious code that is running.  Previously-known countermeasures have
+been grossly inadequate.  If this attack cannot be countered, attackers
+can quietly subvert entire classes of computer systems, gaining complete
+control over financial, infrastructure, military, and/or business
+system infrastructures worldwide.  This dissertation&#8217;s thesis is that
+the trusting trust attack can be detected and effectively countered
+using the &#8220;Diverse Double-Compiling&#8221; (DDC) technique, as demonstrated by
+(1) a formal proof that DDC can determine if source code and generated
+executable code correspond, (2) a demonstration of DDC with four compilers
+(a small C compiler, a small Lisp compiler, a small maliciously corrupted
+Lisp compiler, and a large industrial-strength C compiler, GCC), and
+(3) a description of approaches for applying DDC in various real-world
+scenarios.  In the DDC technique, source code is compiled twice: once
+with a second (trusted) compiler (using the source code of the compiler&#8217;s
+parent), and then the compiler source code is compiled using the result
+of the first compilation.  If the result is bit-for-bit identical with
+the untrusted executable, then the source code accurately represents
+the executable.
+</i>
+</blockquote>
+<p>
+The dissertation includes a section explaining how it extends
+<a href="#acsac">my previous 2005 ACSAC paper</a>.
+The dissertation generalizes the ACSAC paper
+(now compilers don&#8217;t need to self-parent), includes formal proofs, and
+includes demonstrations with GCC (to demonstrate scaleability)
+and with a malicious compiler.
+<p>
+If you read the dissertation you should also look at the
+<a href="dissertation-errata.html"><b>dissertation errata</b></a>
+(the errata are trivial and
+do not impact the fundamentals of anything in the dissertation).
+<p>
+My thanks go to the committee members, who were very helpful.
+A special thanks go to Dr. Ravi Sandhu; I wanted to do a PhD dissertation
+that was completely off the beaten path, and he was flexible enough to
+let me do it.
+He also had some great advice for getting through the process.
+Dr. Daniel A. Menasc&#233; asked me to demonstrate the approach with a
+malicious compiler (which I did).
+Dr. Jeff Offutt asked me about its relationship to
+N-version programming (so I added material about how this is different
+than N-version programming).
+Dr. Paul Ammann had some interesting comments about the N-version programming
+material; it turns out that he was personally involved in that landmark study!
+Dr. Yutao Zhong asked me about T-diagrams (so I added material about why
+I did <i>not</i> use them).
+Everyone on the committee asked good questions, especially in the
+private presentations before the public defense; thank you!
+
+
+<p>
+<h1 id="acsac">2005 ACSAC paper</h1>
+<p>
+Here&#8217;s my 2005 paper, which was formally reviewed and published by ACSAC:
+<p>
+<a href="http://www.acsa-admin.org/2005/abstracts/47.html">Countering Trusting Trust through Diverse Double-Compiling</a> (DDC),
+David A. Wheeler,
+<i>Proceedings of the Twenty-First
+<a href="http://www.acsa-admin.org/">Annual Computer
+Security Applications Conference</a>
+(ACSAC)</i>, December 5-9, 2005, Tucson, Arizona, pp. 28-40,
+Los Alamitos: IEEE Computer Society.
+ISBN 0-7695-2461-3, ISSN 1063-9527, IEEE Computer Society Order Number P2461.
+If you cannot get that paper from ACSAC, here&#8217;s a local copy of
+<a href="wheelerd-trust.pdf">Countering Trusting Trust through Diverse Double-Compiling (DDC)</a> as posted by ACSAC.
+You can also get
+<a href="acsac-countering-trusting-trust-20050922-alt.pdf">
+this alternative PDF of
+&#8220;Countering Trusting Trust through Diverse Double-Compiling (DDC)&#8221;</a>
+and
+<a href="acsac-countering-trusting-trust-20050922.odt">
+OpenDocument form of
+&#8220;Countering Trusting Trust through Diverse Double-Compiling (DDC)&#8221;</a>.
+(<a href="acsac2005-can-post.txt">I have the rights to publish it here</a>
+as well.)
+
+<!--
+<p>
+Here&#8217;s the abstract of that paper:
+<blockquote>
+<i>
+An Air Force evaluation of Multics, and Ken Thompson&#8217;s famous Turing
+award lecture &#8220;Reflections on Trusting Trust,&#8221; showed that compilers
+can be subverted to insert malicious Trojan horses into critical software,
+including themselves.  If this attack goes undetected, even complete
+analysis of a system&#8217;s source code will not find the malicious code
+that is running, and methods for detecting this particular attack
+are not widely known.  This paper describes a practical technique,
+termed diverse double-compiling (DDC), that detects this attack and
+some compiler defects as well.  Simply recompile the source code twice:
+once with a second (trusted) compiler, and again using the result of
+the first compilation. If the result is bit-for-bit identical with
+the untrusted binary, then the source code accurately represents the
+binary. This technique has been mentioned informally, but its issues and
+ramifications have not been identified or discussed in a peer-reviewed
+work, nor has a public demonstration been made. This paper describes the
+technique, justifies it, describes how to overcome practical challenges,
+and demonstrates it.
+</i>
+</blockquote>
+-->
+
+<p>
+I&#8217;m honored to have been accepted by the ACSAC 2005 conference.
+They get lots of good submissions, yet in 2005 they rejected 77% of
+their submitted papers.
+One reason that I submitted to ACSAC is that I believe publication on the
+web is absolutely critical for widespread use of a result;
+ACSAC has been publishing on the web for a long time now, and is an
+<a href="http://www.earlham.edu/~peters/writing/jbiol.htm">open access</a>
+conference.
+</p>
+<p>
+There&#8217;s a minor change in notation between the ACSAC paper and the
+later dissertation:
+<table border="1">
+<tr><th>Item</th><th>ACSAC (2005)</th><th>Dissertation (2009)</th></tr>
+<tr><td>Trusted compiler</td><td>T</td><td>c<sub>T</sub></td></tr>
+<tr><td>Compiler under test</td><td>A</td><td>c<sub>A</sub></td></tr>
+<tr><td>Parent compiler</td><td>-</td><td>c<sub>P</sub></td></tr>
+</table>
+
+<p>
+I have a presentation based on the ACSAC paper.
+I gave the original presentation at ACSAC; I&#8217;ve since updated it a little
+based on various feedback I&#8217;ve received.
+</p>
+<p>
+You can get the presentation in:
+<ul>
+<li><a href="counter-trusting-trust-presentation-20060228.pdf">PDF format</a>
+<li><a href="counter-trusting-trust-presentation-20060228.odp">OpenDocument format</a> -- this is the international standard for exchanging presentations.  If you can&#8217;t read this format, a good solution is to get <a href="http://www.libreoffice.org/">LibreOffice</a> or <a href="http://www.openoffice.org">OpenOffice.org</a>, which rae a freely-available office document readers and editors that <a href="http://opendocumentfellowship.org/Main/HomePage">support the OpenDocument standard</a>.  Any other program that supports OpenDocument presentations would be fine too, of course.
+</ul>
+<p>
+Note: The ACSAC 2005 paper
+&#8220;Countering Trusting Trust through Diverse Double-Compiling&#8221;
+has a typo.
+In the last paragraph of section 4, just ahead of the figure, it says:
+&#8220;if c(sA,c(sA,T)), A, and c(sA,T) are identical, ...&#8221;.
+The &#8220;c(sA,T)&#8221; should be &#8220;c(sA,A)&#8221;; you can confirm this because the
+figure clearly shows &#8220;c(sA,A)&#8221; not &#8220;c(sA,T)&#8221;.
+My thanks to Ulf Dittmer for pointing this out to me!
+
+
+<p>
+<h1 id="citing">Citing my work (it&#8217;s David A. Wheeler, please)</h1>
+<p>
+If you cite my work,
+<i>at least</i> include my middle initial &#8220;A.&#8221;, and if at all possible
+please use &#8220;David A. Wheeler&#8221;.  Please do not cite me as
+&#8220;David Wheeler&#8221; or &#8220;D. Wheeler&#8221; in any written work
+(including electronic media like the Internet).
+There are too many David Wheelers,
+so it&#8217;s like not giving me credit at all.
+If you are required by forces outside your control to use initials,
+at least use &#8220;D. A. Wheeler&#8221;.
+However, I would really appreciate it if you showed me the
+courtesy of using my name as I use it, <i>instead</i> of changing it.
+In general, please cite the names that people actually use; please don&#8217;t
+change them into someone else&#8217;s name.
+Thanks.
+This doesn't apply to talking in person, of course; usually there
+aren&#8217;t that many David Wheelers in the room that it&#8217;s
+confusing :-).
+
+<p>
+<h1 id="detailed_data">Detailed data to duplicate the experiments</h1>
+<p>
+I strongly believe that scientific work must be repeatable.
+Sadly, much of the so-called computational sciences are no longer a science,
+because it is increasingly not possible to reproduce work.
+This problem is no secret; it is discussed in papers such as
+<a href="http://academiccommons.columbia.edu/catalog/ac:140124">&#8220;Reproducible Research: Addressing the Need for Data and Code Sharing in Computational Science&#8221; by Victoria C. Stodden (Computing in Science & Engineering, 2010)</a>.
+It's not just computer science either; there is a widespread
+<a href="https://en.wikipedia.org/wiki/Replication_crisis">replication crisis in science</a>.
+See also the blog post on the paper
+<a href="https://medium.com/@richarddmorey/new-paper-why-most-of-psychology-is-statistically-unfalsifiable-4c3b6126365a">Why most of psychology is statistically unfalsifiable</a>.
+<a href="http://journals.sagepub.com/doi/pdf/10.1177/0956797611417632">"False-Positive Psychology: Undisclosed
+Flexibility in Data Collection and Analysis
+Allows Presenting Anything as Significant" by
+Joseph P. Simmons, Leif D. Nelson, and Uri Simonsohn</a>
+discusses some of dubious practices
+that allow practically anything to be "experimentally proven".
+Science is not the only source of truth, but if you're going to call it
+science, it needs to actually <i>be</i> science.
+<p>
+In contrast, I <i>do</i> provide the information necessary to
+reproduce this work.
+For the ACSAC paper, <a href="tcc.html">see my Tiny C Compiler (tcc) page for
+how to duplicate the ACSAC experiment, as well as
+other tcc-related work too</a>.
+For the PhD dissertation,
+<a href="https://dwheeler.com/trusting-trust/dissertation">see the
+separate page on detailed data for the PhD dissertation</a>.
+These provide enough information to repeat or extend the experiments.
+
+<p>
+<h1 id="misconceptions">Countering misconceptions</h1>
+<p>
+Some misconceptions seems to be especially hard to shake, so let me
+counter them here (as well).
+<p>
+<h2><b>The DDC approach does <i>not</i> assume that two completely
+different compilers will produce the same binary output,
+given the same input.</b></h2>
+<p>
+I say it in the ACSAC paper, and again in the dissertation,
+but somehow it does not sink in, so let me try again.
+<p>
+Both the ACSAC paper and dissertation do <b>not</b> assume that
+different compilers produce equal results.
+In fact, both specifically state
+that different compilers normally produce <b>different</b> results.
+In fact, as noted in the paper, it&#8217;s an improvement
+if the trusted compiler generates code for a different CPU architecture
+than the compiler under test (say, M68000 and 80x86).
+Clearly, if they&#8217;re generating code for
+different CPUs, the binary output of the two compilers
+<i>cannot</i> always be identical in the general case!
+<p>
+This approach <i>does</i> require that the trusted compiler be able to compile
+the source code of the parent of the compiler under test.
+You can&#8217;t use a Java compiler to directly compile C code.
+<p>
+For the pedants: Yes, sometimes it&#8217;s possible to write machine code that
+runs on multiple yet radically different CPU architectures,
+depending on the architectures.
+You may even be able to devise code that
+determines which architecture it&#8217;s running on,
+and then jumps to the &#8220;right&#8221; code for that architecture.
+These would exploit the exact values of various machine codes, and are
+certainly clever hacks.
+But if you want to do that,
+<a href="http://en.wikipedia.org/wiki/Fat_binary">fat binaries</a>
+with multiple segments (each for a different architecture)
+are a better approach &mdash; they&#8217;re designed to do that cleanly.
+In any case, that&#8217;s not the point; the point is that
+the compiler-under-test and the trusted compiler are not
+required to generate identical code as output.
+
+<p>
+<h2>Non-deterministic hardware is okay in DDC</h2>
+<p>
+DDC does require that the parent compiler must be deterministic
+when it compiles the compiler under test.
+That&#8217;s <i>not</i> the same as
+assuming that two different compilers always
+produce identical results.
+A compiler is deterministic if, when
+run twice on identical input (with all the same option flags, etc.),
+it produces the same output.
+You can use a random number generator, as long as you give the user
+control over the random number generator seed
+(gcc, for example, has a command line option for setting the seed).
+For example, on a Unix/Linux system, you should be able to do this:
+<pre>
+  $ mycompiler input.c     # Compile, store result in "a.out".
+  $ mv a.out a.out.saved   # Save old result.
+  $ mycompiler input.c     # Do it again
+  $ cmp a.out a.out.saved  # If always identical, it's determinstic.
+</pre>
+
+<p>
+This is a relatively easy constraint, and one that most compiler authors
+want to be true anyway (since non-deterministic compilers are hard to debug).
+Compilers generally <i>are</i> deterministic, with the possible
+exception of embedded timestamps &mdash; and I discuss how to handle
+embedded timestamps in the paper.
+Sometimes you may need to use a flag (e.g., to set a random number
+generator seed as in the GCC C++ compiler).
+
+<p>
+The parent compiler may internally use constructs that are
+individually non-deterministic (such as threads with
+non-deterministic scheduling), but if it does it must use
+those mechanisms in a way that ensures that the output will be the same on
+each execution given the same input.
+Today&#8217;s underlying CPUs have all sorts of non-deterministic properties
+(e.g., from threading multiple cores, or timing variances);
+&#8220;modern CPUs are inherently random and a complex
+general purpose OS on top amplifies
+this inherent randomness substantially&#8221;
+[<a href="http://lwn.net/images/conf/rtlws11/random-hardware.pdf">&#8220;Analysis of inherent randomness of the Linux kernel&#8221;</a>
+by Nicholas Mc Guire, Peter Okech, and Georg Schiesser].
+But if the CPU were so non-deterministic that
+you could not reliably write data in a particular order,
+you couldn&#8217;t get a compiler or any other program to run.
+So the parent compiler simply needs to be written in way that ensures
+that these effects will not impact its results.
+For example, the parent compiler could use
+locks to ensure that thread scheduling variation does not cause
+variation in the results.
+In practice, developers tend to do this anyway.
+
+<p>
+The trusted compiler (&#8220;compiler T&#8221; in the ACSAC paper, and
+&#8220;compiler cT&#8221; in the dissertation)
+doesn&#8217;t need to be deterministic.
+<p>
+See assumption sP_portable_and_deterministic in the dissertation
+if you want more details.
+
+<p>
+<h2>DDC&#8217;s use of trusted compiler(s) fundamentally increases trustworthiness</h2>
+<p>
+Some past approaches used a second compiler, but they basically just
+switched which compiler you had to trust completely.
+Indeed, you might make things worse, if you switch from an unsubverted
+compiler to a subverted compiler.
+<p>
+DDC, in contrast, uses additional compilers as a <i>check</i> on the first.
+This fundamentally changes things, because now an attacker must
+simultaneously subvert both the original compiler,
+and <i>all</i> of the compilers used in DDC.
+Subverting multiple compilers is much harder than subverting one, especially
+since the defender can choose which compilers to use in DDC
+and can choose the compilers used in DDC after the attack has been performed.
+
+<p>
+<h2>Why not use the trusted compiler for everything?</h2>
+<p>
+Using a different trusted compiler greatly increases the
+confidence that the compiler executable corresponds with its source code.
+When a second compiler is used as part of DDC, an attacker must subvert
+multiple executables and executable-generation processes to perform the
+&#8220;trusting trust&#8221; attack without detection.
+If you only used the trusted compiler,
+you&#8217;re back to the original problem,
+which I view as total trust on a single compiler executable without a
+viable verification process.
+<p>
+Also, as explained in
+<a href="https://dwheeler.com/trusting-trust/dissertation/html/wheeler-trusting-trust-ddc.html#4.6.Why%20not%20always%20use%20the%20trusted%20compiler">
+section 4.6</a>,
+there are many reasons the trusted compiler might not be suitable for
+general use.
+It may be slow, produce slow code, generate code for a
+different CPU architecture than desired, be costly, or have undesirable
+software license restrictions.
+It may lack many useful functions necessary for general-purpose use.
+In DDC, the trusted compiler only needs to be able to compile the parent;
+there is no need for it to provide other functions.
+<p>
+Finally, note that the &#8220;trusted&#8221; compiler(s) could be malicious
+and still work well well for DDC.
+We just need justified confidence that any triggers or payloads
+in a trusted compiler do not affect the DDC process when applied
+to the compiler-under-test.
+That is much, much easier to justify.
+
+<p>
+<h2>Does applying DDC by itself guarantee the compiler isn't malicious?</h2>
+<p>
+No, applying DDC <i>by itself</i> does not guarantee that the
+compiler isn't malicious, or that the compiler is not doing something
+surprising to you, or that the compiler has no defects.
+For example, in 2016 it was discovered that
+<a href="https://www.infoq.com/news/2016/06/visual-cpp-telemetry">
+Microsoft Visual Studio 2015 Update 2 was quietly inserting telemetry calls into compiled programs by default</a>,
+even though this was not well documented and could harm privacy.
+That's not the sort of thing that DDC could typically detect.
+<p>
+Passing the DDC test
+simply means that you can read compiler source code to see
+what the compiler does,
+instead of having to review executable (binary) code.
+But that's a difference that matters: Developers are used to looking
+at source code, since that's what they normally do.
+DDC turns an intractable challenge into a normal review process.
+
+<p>
+<h2>What does &#8220;fully&#8221; mean?</h2>
+<p>
+By &#8220;fully&#8221; I mean that
+&#8220;the trusting trust attack can be
+detected and effectively countered&#8221;
+(as I say in the thesis).
+A little background may help illustrate why I use the word
+&#8220;fully&#8221;.
+
+<p>
+First, complaining that people trust others is a waste of time.
+You <i>must</i> trust others in a modern world.
+No one grows all their own food, builds their own shelters from their own
+materials, and provides all their other needs by themselves;
+we all trust others.
+However, there is a serious systemic problem
+if you cannot independently verify what you trust.
+You should strive to &#8220;<i>trust, but verify</i>&#8221;.
+
+<p>
+I believe the fundamental problem caused by the trusting trust attack was that
+it was impractical to independently verify that what you depended on
+(the executable) corresponds to its human-readable
+representation (the source code).
+This is because program-handling programs can subvert the
+relationship between what humans review and what is actually used.
+Ken Thompson&#8217;s paper is not titled &#8220;Reflections on trust&#8221;; it is
+&#8220;Reflections on trusting trust&#8221;.
+Again, I believe problem was not trust,
+but the lack of a meaningful process for independent verification.
+
+<p>
+With DDC, we now have a <i>practical process</i>
+to <i>independently verify</i>
+that source code and executable correspond.
+DDC <i>fully</i> counters the problem
+that we <i>lacked</i> a practical independent verification process
+for program-handling programs (like compilers).
+
+<p>
+I believe it&#8217;s important that
+we understand the limitations of any result.
+<a href="./dissertation/html/wheeler-trusting-trust-ddc.html#8.14.How%20can%20an%20attacker%20counter%20DDC">Section 8.14</a>
+explains, in detail, how an attacker can subvert DDC.
+Because DDC has been proven using a formal mathematical proof,
+the <i>only</i> way to counter DDC is
+to falsify one of the proof assumptions.
+A defender can make such falsification <i>very</i> difficult.
+For example,
+the <i>defender</i>, not the attacker, gets to choose the compiler(s)
+used as the trusted compiler(s); the defender can even write one himself.
+It&#8217;s true that an unwise defender can depend on components that are
+not really diverse, but section 6 describes how to get that diversity.
+Once the defender knows that diversity is a goal,
+the defender can come up with all sorts of ways to provide it.
+
+<p>
+My goal was to create a process for independent verification.
+DDC provides an independent verification process, and one that
+can be practically applied.
+I applied the DDC process to four different compiler executables,
+and one of them was the widely-used gcc.
+Therefore, DDC fully meets the need for an independent verification process
+that can be practically applied.
+
+<p>
+So why did I put the word <i>fully</i> in the dissertation title at all?
+Well, I needed to find some way to
+diffentiate the titles of the ACSAC paper and the PhD dissertation.
+I realized that my older ACSAC paper had an important limitation:
+it only applied to self-parented compilers.
+Many compilers are not self-parented, and thus, the older ACSAC paper
+process could not apply to many compiler executables in use.
+In contrast, the 2009 dissertation can address all compilers,
+self-parenting or not.
+Thus, the dissertation &#8220;fully&#8221; provides a process
+for verifying compiler executables, whether they are self-parented or not.
+I should note that even if I wanted to, I cannot change the title now :-).
+
+
+<!-- Added 2006-01-03 -->
+<!-- Now in dissertation, don't need them here:
+<p>
+<h1>Other questions</h1>
+<p>
+Some people have sent in questions, here are some answers.
+Also, please read the paper &mdash; it anticipates and answers many questions.
+
+<ol>
+<li><i>What about interpreters/scripting languages, like Perl, Python, TCL, Ruby, etc.?</i>
+<p>
+If the interpreter always takes source code and re-interprets it at
+run-time, each time, there's no problem of hidden binaries
+<i>at that level</i>.
+Scripting language implementations
+are generally written using a combination of a lower-level language (say C)
+to implement the lowest-level interpreter / bytecode engine,
+combined with a higher-level language (typically themselves).
+DDC just tells you that source and binary match.
+For code in the scripting language, you can already see the code, so
+there's no problem of "do the source and binary match" &mdash; just regenerate it.
+For the lower-level interpreter, you can see its source code.
+So the only area in these cases where there is a mysterious,
+potentially subverted executable, is the lower-level engine &mdash; and that
+was generated by the lower-level language compiler.
+So you don't need DDC for the upper levels in those cases;
+DDC would be applied to the lower-level compiler.
+You still need to review the source code, of course.
+<li><i>What about compilers that don't compile themselves?</i>
+<p>
+Compilers that don't compile themselves can already be handled
+with traditional mechanisms.  If compiler A is compiled by compiler B,
+and if compiler B is trustworthy, just recompile compiler A and see
+if compiler A reappears.
+If compiler B is not trustworthy, but was compiled by compiler C,
+then repeat that... and so on.
+<p>
+The problem is that sooner or later you hit a "bottom";
+you have a compiler that compiles itself, or a loop of compilers
+that compile themselves, or a chain going back endlessly to the dawn
+of time that you can't possibly check (and so <i>practically</i>
+you've hit the bottom).  This is the "trusting trust" problem;
+sooner or later you hit a bottom, and there seems to be no
+way to address trust at that point.  This is where DDC comes in; it
+breaks the chain of trust that <i>appears</i> unending
+so that you can once again determine that the
+binary really is generated from the given source.
+
+<li><i>What if the compiler isn't self-generating, but is always generated from a previous version?</i>
+<p>
+Just repeat the steps in DDC in a manner analogous to how the compiler
+was created.  This means you'll have two different source code sets as
+input... which means you'll have more source code to check, but it's
+otherwise fine.
+This is still DDC, just a trivial variation on the process.
+I discuss this further, below.
+
+<li><i>Why not just always use the trusted compiler T?</i>
+Compiler T is only used for checking compiler A; there may be a lot of
+reasons compiler T isn't suitable for general use.
+For example,
+Compiler T may be slow, produce slow code, generate code for a different
+CPU architecture,  lack functions you need
+(the trusted compiler only needs to be able to compile the other
+compiler), or have a software license you don't like.
+</ol>
+-->
+
+<!-- Now in dissertation.
+<p>
+<h1>Obvious extension: Compiler isn&#8217;t self-compiled</h1>
+<p>
+The 2005 ACSAC paper only discusses self-parenting compilers.
+The 2009 dissertation generalizes this, and covers cases where the compiler
+is <i>not</i> self-parenting; see the dissertation for more.
+(I added a section about this on the website in January 2006,
+but the dissertation has more details so I have since removed it from
+this page.)
+
+Added this section January 19, 2006, though I've been DOING it
+for a while before that. For example, Aaron and I developed
+a detailed chart on January 3, 2006, which did this very
+this with gcc. I had already noted this possibility long
+before that, but didn't want to complicate the paper with that case.
+I probably should have included this material, in retrospect, but
+I was already at 13 pages when the maximum was 10 :-).
+Some have noted that the compiler doesn't have to be self-compiled.
+That's true; the paper doesn't delve into the details of that case,
+but it's an obvious extension.
+You can still apply DDC, you just have to account for the additional
+compiler involved used to <i>generate</i> A... I'll call this other
+compiler binary P, for which you'll need the source code.
+<p>
+So, let's define some terms:
+<ul>
+<li>c(Q,s) = source s compiled by binary compiler Q
+<li>A = binary of compiler under test
+<li>sA = source of a compiler, which we hope to show is the source code of A]]
+<li>P = binary of the compiler that generated A (the "parent" of A); in the
+paper I made the simplifying assumption that this was A, but it's not required
+for DDC to work
+<li>sP = source of P
+<li>T = binary of trusted compiler; it must be able to compile sP
+</ul>
+
+<p>
+The DDC stages get very slightly modified, as follows:
+<ul>
+<li>Stage 0 determines A0 = c(P,sA), and then sees if A0==A.  In theory, this is how A was created in the first place, so "of course" it should work.  But I've found that in practice this isn't so easy; many organizations' configuration control isn't sufficiently controlled to make this easy.
+<li>Stage 1 determines P1 = c(T,sP).  This is a trusted recompilation of the parent.
+<li>Stage 2 determines A2 = c(P1, sA).  Now see if A2==A0==A; if it does,
+you're all set.
+</ul>
+
+<p>
+In the original paper, A is also its parent P.
+
+<p>
+The assumptions get slightly modified, but by very little.
+All the original assumptions hold,  but the source code that the
+result depends on (termed "s") is now not just sA, but sA union sP.
+If there are few differences between sP and sA, this may be easily
+performed by examining the "diff" between them, and then examining one
+in depth; otherwise, you'll have to examine both if you're
+worried that the compiler source code might contain mischief.
+The process depends on all libraries used in the entire DDC process;
+that was true before, but if P and A are significantly different that
+set may become much bigger than if P and A are the same thing.
+Note that trusted compiler T must be able to compile sP, and of course
+the parent compilers (P and P1) must be able to compile the source code sA.
+
+<p>
+I originally thought this extension was fairly obvious, although it wasn't
+mentioned directly in the paper; inside my company I'd already been
+doing this sort of thing.
+I had originally been interested in just the self-regenerated case,
+I thought adding this would make it even more complicated, and
+I was already exceeding the page limit (it's a 13-page paper, the
+limit was 10). Some existing compilers (such as gcc)
+use the self-regeneration check to test themselves, so the
+self-regenerated case is quite common.
+When you use self-regeneration, you eliminate a lot of dependencies on
+the parent (P), which is a good thing &mdash; it reduces what you have to
+review, in particular.
+Thus, I chose to not delve into this more general variation.
+In retrospect, I should have included this information, because
+it shows that the DDC approach is actually more general than shown
+in the paper.
+Ah well, sometimes the decisions you make are wrong in retrospect.
+My thanks to Ben Laurie for convincing me that this should be
+discussed more directly... and so here it is!
+
+<p>
+Note that this is how you can break a loop of compilers that mutually
+depend on each other for self-regeneration.
+In this case, you use T to "break" the loop.
+Note that P doesn't need to be a radically different compiler; it
+might just be an older version of A.
+Libraries can be handled by considering them as part of the compiler
+(if they're run) or part of the source (if they're used as input data that's
+<i>not</i> run).  Indeed, P and A might be based on the same compiler,
+but use different versions of libraries; the effect is the same.
+-->
+
+<p>
+<h1 id="applying-hardware">What about applying this to hardware?</h1>
+<p>
+I mentioned applying this DDC approach to hardware
+in the dissertation and at the ACSAC conference.
+Obviously, if your software is okay, but the hardware is subverted,
+you&#8217;re still subverted.
+The ACSAC presentation and dissertation talk about this in more detail.
+DDC can be applied to hardware as well as software.
+As I also mentioned, there are two problem areas: legal and technical.
+<p>
+The legal problem is that increasingly chip designers
+and chip manufacturers cannot legally know what is <i>supposed</i>
+to be on the chip.
+For example, developers of the various &#8220;IP cores&#8221; used on chips
+typically forbid chip designers and manufactureres from obtaining or
+using this information.
+<p>
+The key technical problem is creating a meaningful
+&#8220;equality&#8221; test in hardware.
+I speculate that various techniques, such as scanning electron microscopes,
+could be used to help implement an equality test.
+Other hardware validation mecahnisms
+(e.g., see
+<a href="http://www.semiwiki.com/forum/content/3221-semiconductor-ip-validation-gets-faster.html">Semiconductor IP Validation Gets Faster</a>), might
+also play a role.
+But it is fundamentally harder to implement equality tests for
+hardware (compared to software).
+I cited several papers in my dissertation about this.
+You can learn more about the challenge from papers pubished since then,
+such as
+<a href="http://people.umass.edu/gbecker/BeckerChes13.pdf">&#8220;Stealthy Dopant-Level Hardware Trojans&#8221;
+by Georg T. Becker, Francesco Regazzoni, Christof Paar,
+and Wayne P. Burleson</a>
+(<a href="https://www.schneier.com/blog/archives/2013/09/surreptitiously.html">Bruce Schneier briefly discusses this</a>), as well as
+<a href="http://www.crosstalkonline.org/storage/issue-archives/2013/201311/201311-Goertzel.pdf">&#8220;Integrated Circuit Security Threats and Hardware Assurance Countermeasures&#8221; by Karen Mercedes Goertzel (CrossTalk, November/December 2013)</a>
+[<a href="http://www.academia.edu/5182829/Integrated_Circuit_Security_Threats_and_Hardware_Assurance_Countermeasures">alternate URL</a>].
+<a href="http://static1.1.sqspcdn.com/static/f/543048/26931843/1464016046717/A2_SP_2016.pdf">"A2: Analog Malicious Hardware" by Kaiyuan Yang, Matthew Hicks, Qing Dong, Todd Austin, and Dennis Sylvester</a>
+show "how a fabrication-time attacker can
+leverage  analog  circuits  to  create  a  hardware  attack  that  is
+small  (i.e.,  requires  as  little  as  one  gate)  and  stealthy  (i.e.,
+requires an unlikely trigger sequence before effecting a chip’s
+functionality)."
+<a href="https://www.wired.com/2016/06/demonically-clever-backdoor-hides-inside-computer-chip/">Researchers at University of Michigan demonstrated in 2016 a sabotaged processor called A2</a>; it could be planted by a single employee at a chip factory.
+<p>
+However, while there are challenges, there is also hope.
+As noted in
+<a href="https://spectrum.ieee.org/nanoclast/semiconductors/design/xray-tech-lays-chip-secrets-bare">"X-Ray Tech Lays Chip Secrets Bare" by Samuel K. Moore (<i>IEEE Spectrum</i>, 2019-10-07</a>,
+researchers in Switzerland and the U.S. have a non-destructive technique that
+has the poential to reverse engineer an entire chip without damaging it.
+This approach, called
+<a href="http://dx.doi.org/10.5281.zenodo,2657340">ptychographic
+X-ray laminography</a>, could possibly "be used by
+integrated circuit designers to verify that manufactured chips
+match their designs."
+<p> 
+Countering subverted hardware is
+definitely an area for potential future research.
+
+<!--
+I think this approach can apply to hardware too,
+but let's discuss what that means first.
+<p>
+First, what some people call "hardware" is actually software.  BIOS files and microcode are still software, and you can still handle them the same way.
+<p>
+Generally, when people worry about hardware
+subversion, people are worried about the more obvious subversion:
+a CPU chip or support chip could be directly modified to do something bad
+(like allow unknown remote control or include a shutoff date).
+In my mind, it's more likely that either the chip will have that placed
+in its design by a human, or that the attack will be
+sneakily put into its implementation during the
+manufacturing process.
+You might manipulate a tool (say, its software or configuration)
+or manipulate a tool's results (like a mask or the physical chip).
+There <i>are</i> technical ways of countering this:
+<ol>
+<li>If you're worried about subversion at the design level, then you need to
+find a way to review the designs (and make sure that what you review is
+what was used).
+<li>If a software tool inserts the subversion, you need to look at the
+software tool's source code. If you think its binary is evil but the source
+is clean, just recompile it and check... we're still in the software domain,
+and it's not self-generating if it's a direct attack like this.
+(See below for the self-regenerating case, where DDC reappears.)
+<li>
+If a tool output (e.g., the chip itself or a mask)
+has been subverted, if the tool can be made to be deterministic,
+in theory you should be able to rerun that tool and then
+compare the "expected" results with the "actual" results.
+If you're worried about all steps, you can rerun each step in sequence
+and see if there's a difference.
+You'll need an "equality" operator for masks and chips, which is much
+harder; see below where I discuss that.
+</ol>
+<p>
+If you interested in this area, consider
+<a href="http://dl.acm.org/citation.cfm?id=2596666">A Red Team/Blue Team Assessment of Functional Analysis Methods for Malicious Circuit Identification
+(Adam Waksman, Jeyavijayan Rajendran,
+Matthew Suozzo,
+Simha Sethumadhavan),
+Proceedings DAC '14 Proceedings of the 51st Annual Design Automation Conference,
+Pages 1-4</a>.
+This describes the
+FANCI (Functional Analysis for Nearly-Unused Circuit Identification)
+tool that analyzes digital designs to detect nearly-unused circuits,
+which may indicate a trigger or payload of a stealthy backdoor.
+<p>
+Okay, so there's a <i>technical</i> method for detecting and
+countering direct subversion of hardware.
+There's a sneakier, though in my mind a far less likely threat:
+what if the hardware has been subverted so that
+<i>the hardware subverts the hardware development process of the
+next generation</i>?
+At the software level I think this is likely &mdash; it's already been done at
+least once, and it's easy to do, because the abstraction levels typically
+match.
+At the hardware level, hardware subversion of its own development process
+is <i>much</i> harder to do because hardware is at such a different level
+of abstraction &mdash; it's very difficult to create useful automated triggers
+and payloads in hardware that trigger on the hardware design process.
+Even if you manually trigger, it's tricky to create the right payloads.
+And in any case, there are so many other kinds of
+hard-to-counter attacks at the hardware level
+that I don't see hardware self-subversion as very likely;
+why bother being fancy when the direct attack would work?
+<p>
+But let's put on our triple-layer tinfoil hats, and say that we want
+to counter hardware self-subversion.
+Hardware self-subversion is where the hardware is designed to
+subvert the design of the next generation of the hardware.
+<p>
+Although there's no conclusive proof, I think the DDC
+approach could counter hardware-level self-subversion.
+(I have a B.S. in Electronics Engineering,
+so I can speak about this topic with some authority!)
+There's a technical challenge to overcome, but the biggest problem
+is that you may not be allowed to get the information you need.
+<p>
+First, the technical challenge.
+For this to work on hardware, you need an "equality" operator.
+I believe a scanning electron microscope, with varying angles/positions,
+could be coaxed into doing the job of determining if a chip was "equal to"
+another chip (real or virtual).
+That's especially true if it were supplemented with other test techniques.
+This would only show (with high probability) that one PARTICULAR chip is okay,
+of course; another chip might be malicious.  That's true for the software
+approach too, it's just that checking for "equality" is a lot easier
+for software than for hardware.
+<p>
+But the REAL problem is that huge amounts of hardware data, including
+the ACTUAL layout of the chip, is usually kept proprietary from even the
+chip designers.  You have to know what the CORRECT hardware result is before
+a comparison makes sense. In the software world, software developers
+would not find it acceptable if they couldn't at least SEE the bytes
+that their compilers output.  In contrast, hardware chips are routinely
+modified in the many manufacturing steps in ways not disclosed to the
+chip designers.
+<p>
+Engineers who use Verilog or VHDL and think that they know
+what's actually on their chips are in for a rude shock.
+The libraries that the tools
+show are NOT what are really used on chips, for example. And because
+of quantum mechanical effects, at smaller scales there are "corrections"
+that some companies will do to your chip's
+layouts/wiring that you're forbidden (by contract!) to see.  In most
+of the world the chip designers aren't anywhere near the foundaries,
+and this separation is misleading many chip designers into thinking that
+they know what's on their chips.  (I find this complete separation
+very disturbing and dangerous.) And that's if you designed the chip;
+today most people buy IP Cores from random organizations worldwide.  In that
+case they have NO idea exactly what's supposed to be
+on what they buy, nor any way to find out.
+<p>
+In fact, this lack of information is the real problem.  If you can't
+get this kind of information, an attacker doesn't need to
+implement a hardware-subverting-hardware attack.
+Instead, they just insert the attack.
+If we're to trust future hardware, we need to find a way to get the
+information we need so that we <i>can</i> trust it.
+<p>
+But hey, one impossible problem at a time, okay :-)?
+-->
+
+<p>
+<h1 id="patents">Software patents and application programmer interface (API) copyrights</h1>
+<p>
+The approach described here only works when you can create
+alternative implementations of computer languages (compilers).
+There is no technical problem in doing so, but some organizations are
+trying to make it difficult to <i>legally</i> create alternative
+implementations.
+<p>
+Any limitation on creating or distributing alternative implementations
+of a computer languages creates a dangerous threat to any user of that
+computer language.
+It also creates a threat to any user of programs developed (directly or
+indirectly) with that language.
+<p>
+Computer application programmer interfaces (APIs) and languages are generally
+held to be outside the scope of copyright.
+Specific <i>implementations</i> and their <i>documentation</i>
+can be copyrighted, but APIs and languages are fundamentally ideas
+and not just fixed expressions.
+This was long understood, but many rulings in 2012 (in the US and Europe)
+make this even clearer... though there are some stormclouds
+that threaten this.
+The <a href="http://www.groklaw.net/pdf3/OraGoogle-1202.pdf">
+Oracle v. Google &#8220;Order RE Copyrightability
+of Certain Replicated Elements of the Java Application programming Interface&#8221;
+of 2012</a>
+found that
+&#8220;So long as the specific code used to implement a method is different,
+anyone is free under the Copyright Act to write his or her own code
+to carry out exactly the same function or specification of any methods
+used in the Java API. It does not matter that the declaration or
+method header lines are identical.
+Under the rules of Java, they must be identical to declare a
+method specifying the same functionality&#8221; even when the
+implementation is different.
+When there is only one way to express an idea or function,
+then everyone is free to do so and
+no one can monopolize that expression.
+And, while the Android method and class names could
+have been different from the names of their counterparts in Java
+and still have worked, copyright
+protection never extends to names or short phrases as a matter of law. ...
+This command structure is a system or method of operation under
+Section 102(b) of the Copyright Act and, therefore, cannot be copyrighted.&#8221;
+(<a href="http://www.groklaw.net/article.php?story=20120531173633275">Groklaw
+has this as text</a>.)
+Similarly, the Court of Justice of the European Union found
+<a href="http://curia.europa.eu/jcms/upload/docs/application/pdf/2012-05/cp120053en.pdf">in SAS Institute v. World Programming Ltd., Judgment in Case C-406/10, that &#8220;The functionality of a computer program and the programming language cannot be protected by copyright.&#8221;</a>
+(<a href="http://curia.europa.eu/juris/documents.jsf?num=C-406/10">Here are the actual judgements of C-406/10</a>.)
+Copyright, under U.S. law, specifically does not cover any
+&#8220;idea, procedure, process,
+system, method of operation, concept, principle, or discovery&#8221;;
+the history and justification of this (note that the list is much more
+than just ideas)
+is given in
+<a href="http://people.ischool.berkeley.edu/~pam/papers/102_b_%20dr4.pdf">
+&#8220;Why Copyright Law Excludes Systems and
+Processes from the Scope of Its Protection&#8221; by Pamela Samuelson</a>.
+However,
+on May 9, 2014, the Federal Circuit partially
+reversed the district court ruling, ruling in Oracle's favor
+on the copyrightability issue,
+and remanding the issue of fair use to the district court.
+I hope this will be construed narrowly; if broadly interpreted, then
+copyright might effectively prevent all future competition.
+As a practical matter, software must work with each other; if a
+a company can prevent compatible implementions, then that company
+can effectively prevent meaningful competition and
+verification measures like DDC.
+See
+<a href="https://www.eff.org/press/releases/computer-scientists-ask-supreme-court-rule-apis-cant-be-copyrighted">Computer Scientists Ask Supreme Court to Rule APIs Can’t Be Copyrighted</a> for more information about
+APIs and copyright.
+<p>
+Sadly, the risk from patents is still significant, as discussed in the
+dissertation.
+See <a href="https://dwheeler.com/essays/software-patents.html">my
+page on software patents</a> for more.
+
+<p>
+<h1 id="thoughts">Other thoughts on the dissertation</h1>
+<p>
+I used the word &#8220;trusted&#8221; when referring to the &#8220;trusted compiler&#8221;.
+I should note that there is a big difference between the words
+&#8220;trusted&#8221; and &#8220;trustworthy&#8221;.
+Something is trustworthy if there is evidence that it is worthy of trust;
+something is trusted if someone trusts it (hopefully because they have
+determined that it is trustworthy).
+If you use DDC, you need to use a trusted compiler &mdash; since you are
+trusting its results, by definition it is trusted.
+You <i>should</i> choose a trustworthy compiler as the trusted compiler,
+however.
+<p>
+The good news is that you do not need to use a totally perfect,
+never-makes-a-mistake compiler; such compilers are rare.
+Instead, you just have to use a compiler that meets the conditions
+described in the paper, which are much easier conditions to meet.
+<p>
+I tried to summarize some lessons learned on how to use
+tools to prove things in my short paper
+<a href="https://dwheeler.com/formal_methods/how-to-prove-stuff.html">
+&#8220;How to prove stuff automatically&#8221;</a>.
+<p>
+After my paper was published I learned of another subverted compiler
+example (in the trusting trust sense) in
+<a href="https://www.quora.com/What-is-a-coders-worst-nightmare/answer/Mick-Stute?srid=tQ46&amp;share=1">Mike Stute's answer to
+"What is a coder's worst nightmare?"</a>.
+He tried to modify a program but found he couldn't do it successfully.
+After 15 days of work, "I suddenly realize it's in the compiler...
+every time you compile the original code and run it
+puts in the subliminal message code into the source code...
+Several days later.. we recompile the compiler from the source.
+That solves it...  Except it didn't...
+The ex-grad student had poisoned the compiler to poison itself when it
+was recompiled...
+We also found that if /sbin/login is compiled it puts
+in a backdoor allowing anyone who uses a specific password
+to login in as the root user. This computer is accessible by modem and Tymnet.
+Finally this gets the computing center's attention.
+Genius! But put to a horrible cause."
+
+<p>
+<h1 id="credits">Credit where credit is due</h1>
+<p>
+As I clearly note in the paper, I didn&#8217;t come up with the original idea
+for the DDC countermeasure.
+The
+<a href="spencer-19981123.txt">original idea
+was dreamed up by the amazingly bright Henry Spencer</a>.
+However, he never pursued it; in fact over time he&#8217;d forgotten about it.
+I took his few sentences describing his idea and greatly expanded on it,
+including a much more detailed and analyzed description of it, as well as
+justifying and demonstrating it.
+For example, his original approach presumed self-parenting,
+a limitation my PhD dissertation removes.
+My thanks to him for his original idea, and for his helpful comments since.
+<p>
+I also want to credit those who made the world aware of the problem
+in the first place: Paul Karger, Roger Schell, and Ken Thompson.
+Paul Karger and Roger Schell&#8217;s groundbreaking analysis of Multics
+was the first time that this issue was identified.
+A key step in fixing a problem is knowing there&#8217;s a problem in the first place!
+I had several great conversations with Paul Karger, who was very
+enthusiastic about this work and provided several helpful comments.
+Sadly, <a href="http://www.ieee-security.org/Cipher/Newsbriefs/2010/karger.html">Paul Karger died in 2010</a>, and that is a loss for the world;
+the good news is that when he died, he knew about my solution
+and was quite happy about it.
+I also talked with Roger Schell about it.
+I also want to thank Ken Thompson, who (among his legion of
+accomplishments) demonstrated this attack and made far more people
+aware of the problem.
+
+<p>
+<h1><a name="talking-about">Who&#8217;s talking about it?</a></h1>
+<p>
+The first syllabus that included my ACSAC 2005 paper as required reading is
+<a href="http://www.nku.edu/~waldenj1/classes/2006/spring/csc593/schedule.html">
+CSC 593: Secure Software Engineering Seminar</a>,
+a Spring 2006 class taught by Dr. James Walden at Northern Kentucky University.
+He paired my paper with Ken Thompson&#8217;s classic 1984 paper
+<a href="https://dl.acm.org/citation.cfm?id=358210"><i>Reflections
+on Trusting Trust</i></a>.
+It was also a subject of a class session
+at George Mason University (GMU)&#8217;s
+&#8220;Advanced Topics in Computer Security: Cyber-Identity, Authority and Trust&#8221;
+(IT962) taught by Ravi Sandhu. I had the honor of visiting for the day
+and giving the presentation myself for their Spring 2006 session.
+<a href="http://ls6-www.informatik.uni-dortmund.de/uploads/tx_ls6ext/resi05_01.pdf">
+Technische Universitat Dortmund&#8217;s
+Lehrstuhl Informatik VI (Dr. Ulrich Flegel and Dr. Michael Meier)
+(WS 2007/2008)</a>
+include it, too.
+It's specifically noted in
+<a href="http://linuxluddites.com/mp3/podcast-21/">Linux Luddites
+podcast #21 (August 2,2014) starting at 1:41</a> as well.
+
+<p>
+The ACSAC paper is cited in various places, including
+<a href="http://www.google.com/url?sa=t&source=web&ct=res&cd=1&url=http%3A%2F%2Fedocs.nps.edu%2Fnpspubs%2Fscholarly%2Ftheses%2F2008%2FJun%2F08Jun_Schearer.pdf&ei=ZSTKStbKH9CtlAfk6JSSAw&usg=AFQjCNEWIu2SAQ1Rbeo3qtLkP-bU2YD8Ow">
+&#8220;Increasing Open Source Software Integration
+on the Department of Defense Unclassified Desktop&#8221;
+by Steven Anthony Schearer (June 2008), a
+Naval Postgraduate School (NPS) thesis</a>,
+<a href="http://docs.di.fc.ul.pt/jspui/handle/10455/2992">
+&#8220;How Practical Are Intrusion-Tolerant Distributed Systems?&#8221;
+by Obelheiro et al.
+(Sep 2006), Department of Informatics, University of Lisbon</a>, and
+<a href="http://epublications.bond.edu.au/context/theses/article/1047/index/1/type/native/viewcontent/">
+the PhD thesis
+&#8220;Tamper-resistant Peer-to-Peer Storage for File Integrity Checking&#8221;
+by Alexander Zangerl, Bond University, School of Information Technology
+(August 2006)</a>.
+
+
+<p>
+The ACSAC paper has been noted or discussed at many locations, including
+<a href="http://seclists.org/lists/bugtraq/2005/Dec/0156.html">
+Bugtraq</a>,
+<a href="http://catless.ncl.ac.uk/Risks/24.13.html#subj12">
+comp.risks (the Risks digest)</a>,
+<a href="http://www.schneier.com/blog/archives/2006/01/countering_trus.html">
+Bruce Schneier&#8217;s weblog (the source for Crypto-Gram)</a>,
+<a href="http://lambda-the-ultimate.org/node/view/1184">
+Lambda the ultimate</a>,
+<a href="http://securecoding.org/pipermail/sc-l/2005/000029.html">
+SC-L (the Secure Coding mailing list)</a>,
+<a href="http://www.linuxsecurity.com/content/view/120991/65/">
+LinuxSecurity.com</a>,
+<a href="http://www.chi-publishing.com/index.php?newsID=574">
+Chi Publishing&#8217;s Information Security Bulletin</a>,
+<a href="http://en.wikipedia.org/wiki/Backdoor">Wikipedia&#8217;s &#8220;Backdoor&#8221;
+article</a>,
+<a href="http://sourceforge.net/mailarchive/forum.php?thread_id=9240254&amp;forum_id=45046">
+Open Web Application Security Project (OWASP) (mailing list)</a>,
+and others.
+<p>
+<a href="http://www.schneier.com/blog/archives/2006/01/countering_trus.html">
+Bruce Schneier&#8217;s page in particular
+includes a lengthy commentary about it</a>, and both
+his site and Lamba-the-Ultimate have various blog entries.
+The article
+<a href="http://www.leuf.net/ww/wikidn?OpenSourceIsSecurable">
+Open Source is Securable</a>
+discusses the paper and its ramifications -- in particular, it&#8217;s finally
+possible to make very strong claims through source code analysis.
+
+<p>
+<a href="http://imgur.com/a/BWbnU#0">BartK&#8217;s &#8220;Defeating the Trust Attack&#8221;</a>
+summarized the PhD dissertation; this triggered
+<a href="http://www.reddit.com/r/programming/comments/1m4mwn/a_simple_way_of_defeating_the_compiler_backdoor/">a spirited reddit discussion
+in September 2013</a>.
+
+<p>
+<a href="https://news.ycombinator.com/item?id=12666923">There was a lively
+discussion of the dissertation on Y Combinator's "Hacker News"
+in October 2016</a>.
+
+<p>
+<h1>Isn&#8217;t this dissertation unusual?</h1>
+<p>
+Sure.  In particular, this dissertation brings together
+technical areas that aren&#8217;t often combined.
+The practical demonstrations
+involved analyzing machine code (not just assembly code!)
+produced by C compilers, as well as S-expressions generated by Lisp.
+To <i>prove</i> that this really worked, I ended up using
+first-order predicate logic (a mathematical logic notation) and
+various tools to help automate its use.
+My mathematical models ended up having to account for stuff like
+different text encoding systems, because I wanted the models to
+accurately model the real world enough to really counter the attack.
+Some dissertations go deeply into the technical details of machine code,
+while others fly into the abstractions of mathematical proof;
+far fewer do both.
+Frankly, I think that unusual combination makes the result
+more interesting; I hope you do too.
+
+<p>
+A lot of people were <i>sure</i> that what I&#8217;m doing could not be done,
+so I did everything I could to prove it correct.
+I don&#8217;t just provide a mathematical proof; I provide a formal proof,
+where absolutely every step is spelled out
+(most proofs in math books &#8220;skip the details&#8221; but I do not).
+I presented the proof in Hilbert (3-column) style, giving justifications
+for absolutely every step.
+I directly used the output of a prover tool; I could have massaged it for
+clarity, but by using the output directly, I avoid the charge that I made
+a mistake in its transformation, and even more importantly I could
+use a separate tool (ivy) to double-check the proof.
+A lot of people do not have a background in this
+area of mathematics, so I
+give references to where the various steps come from, and I explain
+in detail each of the starting mathematical statements.
+
+<!--
+
+<h1>Critique</h1>
+<p>
+<a href="http://pjakma.wordpress.com/2010/09/20/critique-of-diverse-double-compiling/">
+Paul Jakma</a> has a critique titled
+"Critique of Diverse Double-Compiling"
+(20th September 2010).
+http://pjakma.files.wordpress.com/2010/09/critique-ddc.pdf
+
+Discussion:
+https://lwn.net/Articles/555730/
+https://lwn.net/Articles/555866/
+
+See slides for Ken Thompson's comments and response.
+
+-->
+
+<h1 id="real-world">Real-world application of DDC</h1>
+<p>
+This section discusses the application of DDC in the real world.
+I know of at least one real-world application of DDC,
+specifically for the GNU Mes C compiler.
+So let's discuss that!
+
+<h2 id="gnu-mes">DDC Application: GNU Mes C Compiler boostrap</h2>
+
+<p>
+<a href="https://www.gnu.org/software/mes/">GNU Mes</a> is
+"a Scheme interpreter and C compiler for bootstrapping the GNU
+System. Since version 0.22 it has again helped to halve the size
+of opaque, uninspectable binary seeds that are currently being used
+in the Reduced Binary Seed bootstrap of GNU Guix. The final goal
+is to help create a full source bootstrap as part of the bootstrappable
+builds effort for UNIX-like operating systems."
+
+<p>
+Rephrased differently, the idea is that GNU Mes, if trustworthy, can be
+used as a starting point to rebuild everything else from source code, giving
+you much greater confidence that the source code is an accurate representation.
+GNU Mes can in turn be used to bootstrap an entire distribution, and in
+particular is used to bootstrap GNU Guix (a complete operating system).
+But how can you be sure that the executable of GNU Mes is trustworthy?
+That seems like a chicken-and-egg kind of problem.
+One way to gain confidence is DDC.
+
+<p>
+The post
+<a href="https://reproducible-builds.org/news/2019/12/21/reproducible-bootstrap-of-mes-c-compiler/">Reproducible bootstrap of Mes C compiler</a>
+describes their application of DDC to gain confidence in the Mes C compiler's
+binary.
+They used three different distributions
+(GNU Guix, Nix, and Debian) with three different major versions of GCC to
+recompile GNU Mes.
+They later used the tcc compiler as well (though details about that
+are sketchy).
+In all cases they recreated a bit-for-bit identical result of the GNU Mes
+C compiler!
+
+<p>
+As with all real-world uses there are limitations.
+DDC must be executed using only trusted processes and programs,
+and "trusted" in this case means that
+there is "justified confidence that it does not have triggers and
+payloads that would affect the results of DDC" (DDC dissertation
+section 6).
+
+<p>
+The application described here shows that several different distributions
+with different executables produce the same underlying result.
+However,
+three of these applications are using the same compiler, specifically GCC
+(albeit different versions).
+These tests use similar and highly related distributions; they even
+use many of the same underlying components like glibc, the Linux kernel, and so
+on (though again, with different versions).
+
+<p>
+So while this <i>does</i> use DDC, and it does increase confidence,
+it increases confidence so only to a limited extent because the
+checking systems are relatively similar.
+They hope to attempt to use an even
+more diverse set of compilers in the future, which would give even greater
+confidence.
+
+<p>
+This is an awesome application of DDC, and I believe it's the first
+publicly acknowledged use of DDC on a binary (beyond what I did).
+Basically, GNU Mes is designed to provide a safe starting point, and
+DDC can be used to verify that GNU Mes is providing a safe starting point.
+This application
+of DDC can be improved over time, and that is <i>wonderful</i>.
+
+<p>
+<h1 id="related">Some related material</h1>
+
+<p>
+Many people have worked in related areas,
+in particular, to implement
+<a href="#reproducible">reproducible (deterministic) builds</a>
+(which enable exact recreation of executables given source code)
+or proving that programs do what they say they do.
+I mention some of the issues, and counter-measures, in
+<a href="http://www.rsaconference.com/events/us15/agenda/sessions/1613/countering-development-environment-attacks">"Countering Development Environment Attacks"
+at the 2015 RSA Conference in San Francisco</a>
+(this was a presentation by Dan Reddy and me).
+
+<p>
+Here are some pointers.
+
+<h2 id="attacks">Toolchain attacks: Real and claimed</h2>
+
+<p>
+It's <i>important</i> to protect the development environment, including
+its development toolchain.
+Ken Thompson demonstrated an attack on the toolchain in the 1980s,
+and it was a full-blown "trusting trust" attack.
+My dissertation also discussed an attack on the Delphi compiler.
+
+<p>
+<a href="https://securitylab.github.com/research/octopus-scanner-malware-open-source-supply-chain"
+>"The Octopus Scanner Malware: Attacking the open source supply chain"
+by Alvaro Muñoz (2020-05-28)</a>
+discusses the Octopus Scanner malware,
+"designed to enumerate and backdoor NetBeans projects,
+and which uses the build process and its resulting artifacts to spread itself."
+
+<p>
+Operation ShadowHammer was disclosed in March 2019 by Kaspersky Lab,
+and one thing it did was sabotage developer tools.
+As noted in
+<a href="https://spectrum.ieee.org/tech-talk/telecom/security/operation-shadowhammer-exploited-weaknesses-in-the-software-pipeline"
+>"Operation ShadowHammer Exploited Weaknesses in the Software Pipeline"
+by Fahmida Rashid, <i>IEEE Spectrum</i>, 1 May 2019</a>,
+"Attackers also targeted at least three gaming companies...
+the attackers made a one-line change to their targets’ integrated
+development environment (IDE), a software program that developers use
+to write code. The effect was that whenever Microsoft Visual Studio
+compiled code with a specific Microsoft-owned library, the IDE used a
+similarly-named library file instead.
+Compilers and development platforms are at the core of the
+software supply chain...
+One infected compiler on a few developers’ machines can result in
+thousands of Trojanized software applications installed on millions of
+end-user computers.
+“It’s a poisonous seed. Plant your poisonous seed in a safe place, and it will turn into the poisonous tree with fruit.” ...
+Since the compiler pulls in relevant pieces of code from linked libraries and other components, using the tampered library meant code the developer did not intend to include was added to the application. A source code review won’t find the issue because the problem isn’t anywhere in the original code and the developer doesn’t know about the alternate library.
+“When your compiler lies to you, your product always contains a backdoor, no matter what the source code is,” Kamluk said."
+
+<p>
+In 2015 it was revealed that
+<a href="https://www.fireeye.com/blog/executive-perspective/2015/09/protecting_our_custo.html">over 4,000 Apple iOS applications were subverted and got
+into the Apple app store</a> through an attack called XCodeGhost.
+This attack convinced developers to use a subverted version
+of Apple's XCode development environment.
+Many
+<a href="http://9to5mac.com/2015/09/24/apps-infected-by-xcodeghost/">popular applications were infected via XCodeGhost</a>,
+including Angry Birds 2 and WeChat.
+FireEye estimated that XcodeGhost added malicious code to over 4000 apps.
+<a href="http://www.cnbc.com/2015/09/20/apples-ios-app-store-suffers-first-major-attack.html">CNBC reported</a> that
+Apple was "cleaning up its iOS App Store to remove malicious iPhone and iPad programs identified in the first large-scale attack on the popular mobile software outlet.  The company disclosed the effort after several cyber security firms reported finding a malicious program dubbed XcodeGhost that was embedded in hundreds of legitimate apps...
+The hackers embedded the malicious code in these apps by convincing developers of legitimate software to use a tainted, counterfeit version of Apple's software for creating iOS and Mac apps, which is known as Xcode, Apple said."
+<a href="http://www.reuters.com/article/2015/09/20/us-apple-china-malware-idUSKCN0RK0ZB20150920">Reuters carried a similar report</a>.
+Wikipedia has an article on
+<a href="https://en.wikipedia.org/wiki/XcodeGhost">XcodeGhost</a.
+
+<p>
+<a href="http://manishearth.github.io/blog/2016/12/02/reflections-on-rusting-trust/">Manish Goregaokar's "Reflections on Rusting Trust"</a>
+demonstrates an implementation of the "trusting trust" attack in the
+Rust programming language.
+This isn't an attack, it's a demo of the attack, but it's a nice demo.
+There's a
+<a href="https://news.ycombinator.com/item?id=13091941">Hacker News</a>
+and
+<a href="https://www.reddit.com/r/rust/comments/5g5hib/reflections_on_rusting_trust/">Reddit</a>
+discussion of it.
+
+<p>
+<a href="https://theoutline.com/post/1953/how-a-vc-funded-company-is-undermining-the-open-source-community">"How a VC-funded company is undermining the open-source community" (<i>The Outline</i>, 2017)</a>
+makes a number of claims about
+actions of Kite, a venture capital-funded startup.
+The article states that that Kite has been
+modifying developer tools for Kite's benefit.
+It's not the same as the trusting trust attack at all, but
+it does suggest that tools for developers are a potential target.
+
+<!--
+In 2015, the article
+<a href="https://firstlook.org/theintercept/2015/03/10/ispy-cia-campaign-steal-apples-secrets/">"The CIA Campaign to Steal Apple’s Secrets"
+by Jeremy Scahill and Josh Begley (<i>The Intercept</i>)</a>
+said there had been a
+"multi-year, sustained effort to break the security
+of Apple's iPhones and iPads" and that one vector was that they
+"had created a modified version of Apple’s proprietary
+software development tool, Xcode,
+which could sneak surveillance backdoors into any apps or programs
+created using the [XCode] tool."
+<a href="https://www.schneier.com/blog/archives/2015/03/how_the_cia_mig.html">Bruce Schneier commented on the article</a>;
+he commented that
+it's "a classic application of Ken Thompson's work".
+<a href="https://freedom-to-tinker.com/blog/dwallach/on-compromising-app-developers-to-go-after-their-users/">Dan Wallach goes into more detail on
+how subversion of XCode could work</a>.
+-->
+
+
+<h2 id="safe-builds">Safe builds</h2>
+<p>
+It's important to build software in a safe way.
+
+<p>
+<a href="https://www.qubes-os.org/news/2016/05/30/build-security/">Security challenges for the Qubes build process</a>
+has an interesting discussion.
+They state their goals as:
+<ol>
+<li>"We want to build (and distribute) non-backdoored software.
+<li>We don’t want the build process itself to be able to compromise the developer’s machine."
+</ol>
+<p>
+To do this, they focus on these tasks:
+<ol>
+<li>"To perform verification of all the input sources, git repo commits, and other components (such as the stock RPMs and DEBs we also use), i.e. that they have proper digital signatures created by the select keys that we chose to trust."
+<li>"Provide strong sandboxes for building the less trusted parts of the Qubes OS, such as the various templates, so that even if the (properly signed) sources or other components turn out to be malicious*, the rest of the generated system, such as the Xen hypervisor and dom0, are not affected (nor is the developer’s machine)."
+</ol>
+<p>
+They include this important footnote: "* Of course, one should understand that the mere fact that packages or sources are properly signed, even with key(s) we have decided to trust, doesn’t guarantee that the code has not been backdoored. This could happen if one of the developers turned out to be malicious or was somehow coerced to introduce a backdoor, e.g. via some kind of a warrant or blackmail, or if their laptop were somehow compromised. We would like to defend against such potential situations."
+
+<h2 id="reproducible"><span id="reproduceable">Reproducible (deterministic) builds</span></h2>
+
+<p>
+Creating <a href="https://reproducible-builds.org">reproducible builds</a>
+(aka deterministic builds)
+is an excellent way to detect many development-time attacks, and
+is a precondition for applying DDC.
+The <a href="https://reproducible-builds.org">reproducible-builds.org</a>
+web site has some great information on the topic.
+The video
+<a href="https://www.youtube.com/watch?v=ooJXRBf72M0">Reproducible builds: Two years in the trenches (2017)</a>
+summarizes their work.
+They developed a tool called
+<a href="https://diffoscope.org/">diffoscope</a> that I wish I'd had!
+Here's a few pointers you may find useful.
+
+<p>
+<a href="https://www.linuxfoundation.org/en/blog/preventing-supply-chain-attacks-like-solarwinds/"
+>"Preventing Supply Chain Attacks like SolarWinds" (Linux Foundation
+blog post) by David A. Wheeler (me!)</a>
+discusses how to counter subverted build processes, like that in SolarWinds,
+by using <i>verified reproducible builds</i>.
+Basically, use reproducible builds to <i>independently verify</i> that
+your build result is correct.
+For a detailed technical discussion on how SolarWinds Orion was
+subverted, including a discussion of
+SUNSPOT (the malware that inserted the backdoor) and
+SUNBURST (the backdoor itself), see
+<a href="https://www.crowdstrike.com/blog/sunspot-malware-technical-analysis/"
+>"SUNSPOT: An Implant in the Build Process" by the
+CrowdStrike Intelligence Team (2020-01-11)</a>.
+
+
+<p>
+<a href="https://core.telegram.org/reproducible-builds"
+>Telegram supports reproducible builds</a> so that others can verfify that
+its open sourrce code is the same as the code avaialble in the
+Apple App Store and Google Play.
+As of early 2021 it's considered "somewhat experimental".
+<a href="https://core.telegram.org/reproducible-builds#reproducible-builds-for-ios"
+>Telegram notes that Reproducible Builds are especially hard for iOS</a>
+due to Apple's current policies and MacOS limitations.
+As they say:
+(1) "Apple insists on using FairPlay encryption to “protect” even
+free apps from “app pirates” which makes obtaining the executable
+code of apps impossible without a jailbroken device." and (2)
+"macOS doesn't support containers like Docker."
+It's still possible, but challenging.
+
+<p>
+<a href="https://csrc.nist.gov/CSRC/media/Projects/cyber-supply-chain-risk-management/documents/SSCA/Fall_2019/WedAM1.1_Source_and_Executable_Core.pdf"
+>"Source and Executable" by Mike Lai (Microsoft)</a>
+discussed reproducible builds and
+was given at the NIST/DHS Software and Supply Chain Assurance (SSCA)
+Forum in late 2019.
+
+<p>
+I've been told that the
+the Russian “Non-Documented Functionality” (NDF) certification regime
+may have specifically required demonstrating a reproducible build,
+and that at least at one time Microsoft did meet these NDF requirements.
+However, I have not been able to confirm this.
+One problem is that I don't speak Russian.
+Maybe someone can look at sites such as this
+<a href="https://npo-echelon.ru/en/company/echelon/"
+>Echelon</a> site to confirm this?
+
+<p>
+<a href="https://www.duo.uio.no/bitstream/handle/10852/65737/thesis_yrjan_skrimstad.pdf"
+>"Improving Trust in Software through Diverse Double-Compiling and
+Reproducible Builds" by Yrjan Skrimstad (University of Oslo, 2018)</a>
+is perhaps the closest paper to my work (since it builds on it).
+In my work I noted that it was possible to use more than one "trusted"
+compiler (that is, more than 2 grandparent compilers)
+to increase the difficulty for the attacker.
+This work by Yrjan Skrimstad expands that further, discussing
+implications when there are more than two such compilers.
+It demonstrates the trusting trust attack (using a quine)
+in the Go programming language, and then
+and demonstrates how to use DDC (with 3 grandparents) to detect the attack.
+It also discusses the relationship between DDC and reproducible builds.
+This work by Yrjan Skrimstad is demonstrated in the
+<a href="https://github.com/yrjan/untrustworthy_go"
+>GitHub repo yrjan/untrustworthy_go</a>.
+
+<p>
+The Tor project is very concerned about reproducible (deterministic) builds:
+<ul>
+<li>
+<a href="https://mailman.stanford.edu/pipermail/liberationtech/2013-June/009257.html">Mike Perry of the Tor project explained on 2013-06-18</a>
+that,
+&#8220;I didn&#8217;t spend six agonizing weeks (and counting)
+getting deterministic builds to work for
+Tor Browser to prove that I was honest or trustworthy.
+I did it because I don&#8217;t believe that software development
+models based on single party trust can actually be secure against
+serious adversaries anymore, given the current trends in computer
+security and &#8216;cyberwar&#8217;...
+I don&#8217;t believe it is possible to
+keep a software-based GPG key secure anymore,
+nor do I believe it is possible to keep even an
+offline build machine secure from malware injection anymore...
+This is where deterministic builds come in:
+any individual can use our anonymity network
+to download our source code, verify it against public
+signed, audited, and mirrored git repositories,
+and reproduce our builds exactly...
+Otherwise, I really don&#8217;t think we&#8217;ll have working computers left in
+5-10 years from now :/.&#8221;
+Deterministic builds aren&#8217;t enough if the compiler executable is
+subverted, but thankfully, DDC enables multi-party verification
+of compiler executables (you still have to check the source, but
+that is a much easier problem).
+</li>
+<li>
+<a href="https://blog.torproject.org/blog/deterministic-builds-part-one-cyberwar-and-global-compromise">Deterministic Builds Part One: Cyberwar and Global Compromise</a> and
+<a href="https://blog.torproject.org/blog/deterministic-builds-part-two-technical-details">Deterministic Builds Part Two: Technical Details</a>
+has a lot of material about Tor and deterministic builds.
+</li>
+</ul>
+
+<p>
+<a href="http://blogs.kde.org/2013/06/19/really-source-code-software">
+&#8220;Is that really the source code for this software?&#8221; by Jos van den Oever 
+(2013-06-19)</a>
+posts about the problems of trying to
+recreate executables from source code.
+Sometimes it&#8217;s not so bad, e.g., for Debian,
+&#8220;The binary package that was built from a Debian source package was
+not identical to the published binary package, but the differences are
+limited to timestamps and the build id in the executables.&#8221;
+But sometimes it&#8217;s very difficult, just as I had found years earlier,
+because you often need a lot more build information than you can get.
+You need much more than the source code and build script; you need
+to know the exact versions of all relevant build software, its
+configuration, and so on.
+But it is <i>possible</i> to record all that information, so that the
+process can be repeated... and you can repeat the process to make sure
+that you got it all.
+If you record that information, then you have the problem of
+&#8220;how do I know that my build tools are not malicious?&#8221;
+At that point, DDC comes to the rescue... because DDC can help you
+verify that.
+
+<p>
+The <a href="https://wiki.debian.org/ReproducibleBuilds">Debian ReproducibleBuilds project</a>
+has the goal of making it
+possible to reproduce, byte for byte, every build of every package in Debian.
+They have made a <i>lot</i> of progress, and I am
+really delighted to see it.
+Their
+<a href="https://reproducible.debian.net/index_issues.html">Overview of known issues related to reproducible builds</a>
+shows what commonly causes problems;
+these include embedded generated timestamps from various causes
+(this is a big one) and
+random/unsorted ordering.
+For example,
+<a href="https://reproducible-builds.org/specs/source-date-epoch/">SOURCE_DATE_EPOCH specification</a>
+provides a simple mechanism to turn complicated timestamp issues into
+something simple.
+Also, the
+<a href="http://sources.debian.net/">sources.debian.net</a> site
+provides convenient browsing access to the Debian source code.
+<a href="http://motherboard.vice.com/read/how-debian-is-trying-to-shut-down-the-cia-and-make-software-trustworthy-again">How Debian Is Trying to Shut Down the CIA and Make Software Trustworthy Again</a> also discusses this.
+
+<p>
+<a href="https://securityblog.redhat.com/2013/09/18/reproducible-builds-for-fedora/">Reproducible Builds for Fedora</a> is a similar project to
+deterministically reproduce the packages of Fedora.
+
+<p>
+<a href="https://f-droid.org/">F-Droid</a> and
+<a href="https://guardianproject.info/">The Guardian Project</a>
+are working on reproducible builds for Android.
+For more information, see
+<a href="https://lwn.net/Articles/633106/">LWN.net</a>,
+<a href="https://guardianproject.info/2014/06/09/our-first-deterministic-build-lil-debi-0-4-7/">info on the first reproducible build by Guardian (a developers' tool)</a>,
+<a href="https://guardianproject.info/2015/02/11/complete-reproducible-app-distribution-achieved/">their success with the utility app Checkey</a>.
+
+<p>
+<a href="https://madiba.encs.concordia.ca/~x_decarn/truecrypt-binaries-analysis/">How I compiled TrueCrypt 7.1a for Win32 and matched the official binaries</a> describes a deterministic build (with explanable differences)
+was achieved for TrueCrypt.
+This is an encryption software capable of on-the-fly
+encryption on file-, partition- or disk-based virtual disks, yet its
+authors are anonymous, leading some to worry that the executables
+were backdoored.
+Note: Though its source code is visible, it does not use a standard OSS
+license and it imposes restrictions that probably mean is it is not OSS;
+<a href="http://lists.freedesktop.org/archives/distributions/2008-October/000276.html">it is not considered FLOSS by many major Linux distributions
+including Debian, Ubuntu, Fedora, openSUSE, and Gentoo</a>.
+More recently, the TrueCrypt developers have stopped development, and
+its lack of a real OSS license may inhibit anyone else supporting it.
+
+<p>
+<a href="https://gitian.org/">Gitian</a>
+is a &#8220;secure source-control oriented software distribution method
+[so] you can download trusted binaries
+that are verified by multiple builders.&#8221;
+
+<p>
+<a href="https://www.vagrantup.com/">Vagrant</a>
+is designed to "create and configure
+lightweight, reproducible, and portable development environments".
+<a href="http://opensource.com/business/15/9/ato-interview-seth-vargo">Seth Vargo</a> discusses it briefly.
+
+<p>
+The paper
+<a href="https://gatowololo.github.io/resources/publications/dettrace.pdf"
+>"Reproducible Containers" by Omar S. Navarro Leija et al</a>
+will be presented in March 2020 at the
+25th International Conference on Architectural Support for
+Programming Languages and Operating Systems (ASPLOS) 2020
+(this is a conference of the Association for Computing Machinery (ACM)).
+This paper "describes DetTrace, a reproducible container abstraction for
+Linux implemented in user space."
+This looks <i>really</i> promising.
+The
+<a href="https://github.com/dettrace/dettrace"
+>implementation is OSS (MIT license)</a>.
+<!--
+https://asplos-conference.org/wp-content/uploads/2020/abstracts/paper_2_0.html
+-->
+
+<p>
+<a href="http://buildroot.net">Buildroot</a> is a simple mechanism for
+creating embedded Linux systems through cross-compilation.
+
+<p>
+<a href="http://ball.askemos.org/">Byzantine Askemos Language Layer (BALL)</a>
+is an implementation of the
+<a href="http://askemos.org/">Askemos Distributed Virtual Machine</a>.
+It creates an &#8220;autonomous virtual execution environment for applications&#8221;
+which unlike traditional cloud environments is
+specifically designed to provide fault tolerance and
+to be tamper-proof.
+It executes the code on several different machines,
+runtime libraries, compilers, operating systems and so on
+in parallel and compares cryptographic signatures.
+Thus, this tries to counter subversion of various lower-level components.
+
+<p>
+Christophe Rhodes has discussed
+the problems of reproducing builds of Steel Bank Common Lisp (SBCL)
+on different systems in
+<a href="http://christophe.rhodes.io/notes/blog/posts/2014/still_working_on_reproducible_builds/">Still working on reproducible builds</a>
+and
+<a href="http://christophe.rhodes.io/notes/blog/posts/2014/reproducible_builds_-_a_month_ahead_of_schedule/">Reproducible builds - a month ahead of schedule</a>.
+While his notes are specific to SBCL, they illustrate more general issues.
+He notes that one of the reasons that SBCL separated from its parent
+CMCL was to
+"make the result of its build
+be independent of the compiler used to build it."
+His goal was not primarily to counter attack, but to eliminate
+hard-to-find bugs:
+"... how do we know there aren't odd differences that depend
+on the host compiler lurking,
+which will not obviously affect normal operation but will
+cause hard-to-debug trouble later? (In fact there were plenty of those, popping up at inopportune moments).
+I’ve been working intermittently on dealing with this, by attempting to
+make the Common Lisp code that SBCL!Compiler is written in sufficiently
+portable that executing it on different implementations generates
+bitwise-identical output. Because then, and only then, can we be
+confident that we are not depending in some unforseen way on a particular
+implementation-specific detail...".
+Here are some of the issues that he (and perhaps other
+the SBCL developers) found and fixed, as an example of what to look for:
+<ol>
+<li>The Common Lisp specification permits implementations to compute
+<tt>(write-to-string '(quote foo) :pretty nil)</tt>
+as either <tt>"(QUOTE FOO)"</tt> or <tt>"'FOO"</tt>.
+To create a reproducible build
+they had to use a workaround (involving function name counters)
+so that the difference would not matter.
+<li>A related problem happens with backquote: the Common Lisp specification
+allows implementations to determine if values coalesce, but this
+can produce different results; the solution is to change the code
+so that its results are guaranteed.
+<li>The various set-related functions
+(e.g., set-difference, uniion, intersection, etc.) do not
+return sets in an order, which can result in differing builds.
+The solution is to sort the result of set operations, to force them
+to a specific known order.
+<li>A call to maphash was used to affect the Lisp image directly.
+In general, hash tables do not guarantee any particular order when you
+walk their contents, so you need to force an ordering if you iterate
+over their contents.
+<li>Implementation-defined constants, especially
+most-positive-fixnum and most-negative-fixnum,
+but also array-dimension-limit and internal-time-units-per-second.
+<li>Some functions like random and sxhash are understably different,
+which cause access patterns to differ.
+<li>The <tt>sort</tt> routine in Lisp is not specified to be stable,
+so when trying to make it deterministic with multiple stages,
+<tt>stable-sort</tt> should be used instead.
+<li>Initial values of arrays are undefined, so don't depend on their value!
+</ol>
+
+<p>
+The key thing to note is that creating compilers that can easily
+have reproducible (deterministic) builds on other compilers
+typically takes work in the real world... but it is very doable.
+
+
+<p>
+There are various tools that can help you create reproducible builds.
+For example, if build paths are embedded, you can force fixed
+directory values to make them reproducible.
+There are tools that enable this without requiring root permission,
+including my tools
+<a href="https://dwheeler.com/user-union/">user-union</a>
+and
+<a href="https://dwheeler.com/auto-destdir/">auto-destdir</a>,
+as well as tools like
+<a href="http://proot.me/">proot</a>.
+
+<h2 id="boostrappable">Bootstrappable builds</h2>
+<p>
+<a href="http://bootstrappable.org/">Bootstrappable builds</a>
+focuses on minimizing the amount of bootstrap binaries.
+They're not just interested in the direct "bootstrap" code
+to boot a computer, but also what is necessary to generate the
+direct bootstrap code.
+The problem bootstrappable builds is trying to address is a real one,
+namely, they are worried about subverted bootstrap code.
+<p>
+In the ideal sense they want to build up
+"compilers and interpreters and tools from nothing" - but of course
+you can't <i>really</i> build up from nothing - there has to be
+a starting point.
+DDC provides a great complement to bootstrappable builds -
+bootstrappable builds tries to limit the binaries you depend on, and
+DDC can be used to verify the those binaries that you depend on.
+<p>
+One example of this approach is
+<a href="https://github.com/oriansj/stage0"
+>stage0</a>.
+
+<h2 id="formal-methods">Formal methods / proofs</h2>
+
+<p>
+Coq is being used by Xavier Leroy (main developer of OCaml) to write a
+certified compiler,
+<a href="http://pauillac.inria.fr/~xleroy/research.html#compcert">
+compcert</a>, that guarantees that semantics of a C
+source program is kept up to PowerPC assembly.
+<a href="http://pauillac.inria.fr/~xleroy/compcert-backend/">
+The *specification* (unfortunately not the Coq proofs) of the
+compiler back-end is available as GPL software</a>.
+
+<p>
+You might also be interested in the results of the MITRE Vlisp project.
+<a href="ftp://ftp.cs.indiana.edu/pub/scheme-repository/doc/pubs/vlisp/README">
+Vlisp README</a> says:
+&#8220;The Verified Programming Language Implementation project has developed
+a formally verified implementation of the Scheme programming language,
+called Vlisp...  An overview of the project is
+presented in the Vlisp Guide.
+<a href="http://library.readscheme.org/">
+More accessible PDFs about Vlisp are available too</a>.
+<!--
+You can obtain paper copies of these
+reports by sending a request to ramsdell@mitre.org, or to the
+following U. S. Mail address:
+ John D. Ramsdell
+ MS A118
+ The MITRE Corporation
+ 202 Burlington Road
+ Bedford MA, 01730-1420 "
+-->
+Another paper that you may find interesting is
+<a href="http://www.swiss.ai.mit.edu/ftpdir/users/jar/archive/whole.ps">
+Jonathan A. Rees. &#8220;A Security Kernel Based on the Lambda-Calculus&#8221;.
+PhD. Thesis. February 1995</a>.
+
+<h2>Underhanded code / Malicously-misleading code</h2>
+<p>
+In my PhD dissertation I note the problem of code that intentionally written
+to look (to a human) like it does one thing, but actually does another.
+In my dissertation I called this "maliciously-misleading code"; more recently
+the term "underhanded code" seems to have become more common.
+Either way, it's not a good thing.
+There are contests such as the
+Obfuscated V Contest and Underhanded C Contest
+showing that it's very possible, and a 2003 attempted attack on the Linux
+kernel shows that it is not merely an academic issue.
+<p>
+If you are interested in the topic of underhanded code,
+I suggest looking at my paper
+<a href="https://www.ida.org/-/media/feature/publications/i/in/initial-analysis-of-underhanded-source-code/d-13166.ashx"
+>“Initial Analysis of Underhanded Source Code”
+by David A. Wheeler, IDA Document D-13166, April 2020</a>
+(here's a <a href="https://perma.cc/FVQ8-EKWA">Perma.cc link to the
+PDF of D-13166</a>).
+
+<h2>Miscellaneous</h2>
+
+<p>
+Attackers can exploit compiler bugs by intentionally
+writing code that triggers the bug in a way that subverts the program.
+This is yet another way to write maliciously-misleading programs
+(a general topic I discuss in my dissertation).
+This attack is not the same same as the "trusting trust" attack that DDC
+counters, but it is certainly related.
+The paper
+<a href="https://www.alchemistowl.org/pocorgtfo/pocorgtfo08.pdf">"Deniable Backdoors Using Compiler Bugs"
+by Scott Bauer, Pascal Cuoq, and John Regehr,
+<i>Pastor Manul Laphroaig’s Export–Controlled Church Newsletter</i>,
+June 20, 2015</a>,
+demonstrates how a compiler defect (publicly known or found
+via techniques such as fuzzing) can be exploited.
+In their case, they demonstrated how <tt>sudo</tt> could be exploited
+via innocent-looking code.
+<a href="http://blog.regehr.org/archives/1241">John Regehr's blog post
+about "Defending Against Compiler-Based Backdoors" (2015-06-21)
+points this out</a>, noting that
+"the advantages of this kind of backdoor include
+subtlety, deniability, and target-specificity" - and he then makes
+some great points.
+In particular, he notes that
+compiler developers need to fix known miscompilation bugs as
+rapidly as possible and use fuzz tools; compilers are security-sensitive
+in a way that is often not appreciated.
+Maintainers of open source packages need to be suspicious of baroque
+patch submissions and consider rewriting patches.
+Such attacks are much more fragile than the traditional
+"trusting trust" attack, but they can occur in any program,
+are potentially very dangerous, and are currently difficult to detect.
+In the short term, it might be best to focus on detecting and
+eliminating defects in widely-used compilers.
+No one will complain about getting rid of compiler defects,
+we have lots of techniques today that we can use,
+and if compiler defects become more difficult to trigger these
+backdoor attempts would typically become more obvious.
+But that short-term strategy is not enough; I hope that people
+will develop longer-term strategies too.
+
+<p>
+<a href="http://www.npl.co.uk/upload/pdf/random_testing.pdf">
+&#8220;Some Remarks about Random Testing&#8221; by B A Wichmann</a>,
+<a href="http://www.npl.co.uk/">National Physical Laboratory</a>,
+Teddington, Middlesex, TW11 0LW, UK,
+May 1998,
+discusses creating random tests for compilers.
+
+<p>
+<a href="http://kegel.com/crosstool/">Kegel&#8217;s building and testing
+gcc/glibc cross toolchains</a> has lots of good information.
+
+<p>
+<a href="http://xania.org/201205/gcc-explorer">GCC explorer</a>
+interactively shows the assembly output from GCC (given various inputs).
+
+<p>
+<a href="https://godbolt.org/">Compiler explorer</a>
+interactively shows the assembly output from a variety of compilers
+and languages.
+
+<p>
+A<a href="https://en.wikipedia.org/wiki/Quine_(computing)"
+>quine</a> is a
+"computer program which takes no input and produces a copy of its own
+source code as its only output."
+Compilers written to attack themselves are highly related to quines
+(depending on your definition,
+you could consider them a special case of quines).
+<a href="http://www.madore.org/~david/computers/quine.html"
+>"Quines (self-replicating programs)" by David Madore</a> discusses
+quines in more detail.
+Perhaps the most amazing quine
+<a href="https://github.com/mame/quine-relay"
+>mame quine relay</a>,
+an
+<a href="https://esoteric.codes/blog/the-128-language-quine-relay"
+>Ouroborous quine</a> that starts as a Ruby program to
+generate a Rust program, which generates a Scala program, which
+generates a Scheme program, and so on through 128 languages.
+
+<p>
+<a href="http://en.wikipedia.org/wiki/Reprap">
+The RepRap Project</a> is developing inexpensive 3D printer designs that
+will hopefully (eventually) be able to create themselves.
+Very interesting, and in the future, possibly quite relevant.
+
+<p>
+The
+<a href="http://www.openproofs.org">Open proofs web site</a>
+encourages the development of &#8220;open proofs&#8221;, where the
+implementation, proofs, and required tools are all open source software.
+
+<p>
+<a href="http://thread.gmane.org/gmane.comp.gcc.devel/114407">
+Mark Mitchell&#8217;s &#8220;Using C++ in GCC is OK&#8221;
+(Sun, 30 May 2010 17:26:16 -0700)</a>
+officially reported that
+&#8220;the GCC Steering Committee and the FSF have
+approved the use of C++ in GCC itself.  Of course, there&#8217;s no reason for
+us to use C++ features just because we can.  The goal is a better
+compiler for users, not a C++ code base for its own sake.&#8221;
+<a href="http://gcc.gnu.org/ml/gcc/2010-05/msg00757.html">
+Mark Mitchell later explains that he expects that GCC will use C++
+cautiously</a>.
+For DDC,
+this means that applying DDC to the GCC code base will require a
+C++ compiler (at least one that supports the parts that GCC uses), not
+just a C compiler.
+I used Intel&#8217;s icc, which was a C++ compiler anyway, so that would not have
+especially affected my example... and it certainly does not change
+the validity of the approach.
+
+<p>
+This paper has a number of connections back to the halting problem.
+<a href="http://youtu.be/92WHN-pAFCs">Proof That Computers Can't Do Everything (The Halting Problem)</a> is a delightful video that shows the traditional
+proof of the halting problem, but in a clever way.
+You might also want to see
+<a href="http://youtu.be/msp2y_Y5MLE">Beyond Computation: The P vs NP Problem - Michael Sipser</a>.
+
+<p>
+Build tools like <tt>make</tt> are important for any large system.
+<a href="https://dwheeler.com/essays/make.html">Improving make</a>
+describes my efforts to improve the POSIX standard for make as well
+as make implementations,
+in particular to support the insights in
+<a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.20.2572">Peter Miller’s Recursive Make Considered Harmful</a>.
+
+
+<p>
+The Juniper backdoor is interesting - it appears that
+a crypto backdoor was itself backdoor'ed.
+There are interesting comments by
+<a href="http://blog.cryptographyengineering.com/2015/12/on-juniper-backdoor.html">Matthew Green</a>
+and
+<a href="https://rpw.sh/blog/2015/12/21/the-backdoored-backdoor/">rpw</a>.
+
+<p>
+<a href="https://blog.ycombinator.com/hacking-dna-the-story-of-crispr-ken-thompson-and-the-gene-drive/">"Hacking DNA: The Story of CRISPR, Ken Thompson, and the Gene Drive" by Geoff Ralston (April 3, 2017)</a>
+discusses CRISPR, and in passing discusses
+Ken Thompson's work.
+
+<p>
+<a href="http://www.locusmag.com/Perspectives/2017/09/cory-doctorow-demon-haunted-world/">"Cory Doctorow: Demon-Haunted World" in Locus Magazine
+(2017-09-02)</a>
+notes that
+"none of the world’s problems are ours to solve ... so long as the
+computers we rely on are sneaking around behind our backs, treating us
+as their enemies."
+
+<!--
+<p>
+<a href="http://www.cs.utexas.edu/users/moore/publications/acl2-books/acs/index.html">
+Wolfgang Goerigk illustrated the attack using ACL2</a>.
+Here's the summary:
+"Compiler Verification Revisited (Wolfgang Goerigk) This study illustrates a fact observed by Ken Thompson in his Turing Award Lecture: the machine code of a correct compiler can be altered to contain a Trojan Horse so that the compiler passes almost every test, including the so-called ``bootstrap test'' in which it compiles its own source code with identical results, and still be capable of generating ``bad'' code. The compiler, the object code machine, and the experiments are formalized in ACL2."
+<a href="http://www.cs.utexas.edu/users/moore/acl2/v3-1/distrib/acl2-sources/books/workshops/1999/compiler/">The sample code and ACL2 proofs are online</a>.
+-->
+
+<p>
+<a href="http://www.vegardno.net/2018/06/compiler-fuzzing.html">Compiler fuzzing, part 1</a> discusses some results from fuzzing compilers.
+
+<p>
+<a href="https://blog.trailofbits.com/2020/06/05/breaking-the-solidity-compiler-with-a-fuzzer/"
+>Breaking the Solidity Compiler with a Fuzzer</a> discusses how they
+enhanced the American Fuzzy Lop (AFL) fuzzer to fuzz C-like languages and find
+defects in the Solidity compiler.
+
+<p>
+<h2>Specifications/Standards</h2>
+<p>
+The
+<a href="https://www2.opengroup.org/ogsys/catalog/c147">Open Trusted Technology Provider Standard (O-TTPS), Version 1.1:
+Mitigating Maliciously Tainted and Counterfeit Products</a> from the Open Group
+may be of interest to you.
+Per its website description, "The O-TTPS is an open standard containing a set of organizational guidelines, requirements, and recommendations for integrators, providers, and component suppliers to enhance the security of the global supply chain and the integrity of commercial off-the-shelf (COTS) information and communication technology (ICT). This standard if properly adhered to will help assure against maliciously tainted and counterfeit products throughout the COTS ICT product life cycle encompassing the following phases: design, sourcing, build, fulfillment, distribution, sustainment, and disposal.
+The Open Group Trusted Technology Forum (OTTF) is a global initiative that invites industry, government, and other interested participants to work together to evolve this document and other OTTF deliverables."
+
+<p>
+<a href="https://github.com/theupdateframework/tuf">TUF (The Update Framework)</a> helps developers secure their new or existing software update systems. 
+Between the system-level package managers,
+<a href="http://www.modulecounts.com/">programming language specific package managers/repositories</a>, and application-specific update systems,
+there are a lot of software updaters around.. and they all need to
+be secure.
+
+<p>
+<h1><a name="key-papers">How to get key previous papers</a></h1>
+<p>
+
+This paper cites key previous papers, here is how to get those
+(I provide multiple links to increase the likelihood you can get them):
+
+<ul>
+<li>Karger, P.A., and Schell, R.R. Multics Security Evaluation: Vulnerability Analysis. ESD-TR-74-193, Vol II, June 1974, p 52.
+Copies are available at
+<a href="https://www.acsac.org/2002/papers/classic-multics-orig.pdf">ACSAC</a>
+<a href="https://csrc.nist.gov/csrc/media/publications/conference-paper/1998/10/08/proceedings-of-the-21st-nissc-1998/documents/early-cs-papers/karg74.pdf">NIST</a>,
+and
+<a href="http://seclab.cs.ucdavis.edu/projects/history/papers/karg74.pdf">UC Davis security lab</a>.
+This was the original paper that identified the attack.
+The <a href="http://multicians.org/security.html">multicians security page</a>
+provides interesting context about this important paper.
+
+<li>Thomson, Ken, "Reflections on trusting trust", Communications of the ACM CACM, Volume 27 Issue 8, Aug 1984, Pages 761-763.  This is the first published demonstration of the attack as previously identified in the Multics paper. Copies are available at
+<a href="https://dl.acm.org/citation.cfm?id=358210">ACM</a>,
+<a href="https://web.archive.org/web/20150309043401/cm.bell-labs.com/who/ken/trust.html">Ken Thompson's Bell Labs site (archived)</a>, and
+<a href="https://www.ece.cmu.edu/~ganger/712.fall02/papers/p761-thompson.pdf">CMU</a>.
+</ul>
+
+<p>
+<h1><a name="openoffice">Hints on using OpenOffice.org/LibreOffice and OpenDocument</a></h1>
+<p>
+I used
+<a href="http://www.openoffice.org">OpenOffice.org</a>
+to write the dissertation, and it worked out <i>very nicely</i>.
+OpenOffice.org is a great program for writing larger documents.
+<a href="http://www.documentfoundation.org/download/">The Document Foundation&#8217;s LibreOffice Productivity Suite</a> is derived
+from OpenOffice.org (as I used it), and it also supports OpenDocument,
+so what I say here about OpenOffice.org
+will also apply to LibreOffice (in general).
+(As of early 2011 it appears that
+<a href="http://www.technewsworld.com/story/72329.html?wlc=1303794319&wlc=1303827127">LibreOffice is replacing OpenOffice.org</a>, with a far more
+active community.)
+<p>
+I developed an
+<a href="https://dwheeler.com/misc/gmu-sample-format.odt">
+OpenDocument template for George Mason University (GMU)</a>
+that did nearly all the formatting for me automatically.
+That made it easy to concentrate on the text instead
+of the formatting.
+<!--
+<a href="http://thesis.gmu.edu/dtformsnew.htm">My Open Document format template for George Mason University theses is now available at GMU</a>,
+so others can easily find it (and improve on it).
+-->
+<p>
+The <i>most important</i> rule for writing large documents
+using OpenOffice.org or any other word processor is to
+automate everything you can, and in particular, <i>always use styles</i>.
+<b>Never</b> set the font size, font type, etc., for a range of chararacters
+or a paragraph (one exception: using italics/bold to emphasize a word is okay).
+Instead, all formatting information like that
+should be attached to a paragraph style,
+and then make sure that each paragraph has the right paragraph style.
+Use &#8220;Text&nbsp;body&#8221; (not &#8220;Default&#8221;) for normal text, and the various
+&#8220;Heading&nbsp;1&#8221;, &#8220;Heading&nbsp;2&#8221;, and
+so on for headings.
+Similarly, use Insert &gt; Cross-Reference to refer to other parts of
+the document; that way, the program can renumber things correctly.
+<p>
+OpenOffice.org gives you lots of control over how words break (or not)
+on a line; for more, see
+<a href="http://openoffice.blogs.com/openoffice/2008/10/easy-way-to-insert-nonbreaking-hyphen-etc-in-openofficeorg-writer.html">
+&#8220;Easy way to insert nonbreaking hyphen, etc. in OpenOffice.org Writer&#8221;
+(by Solveig Haugland)</a>.
+Basically, to get more control over hyphenation, go to
+Tools &gt; Options &gt; Language Settings &gt; Languages
+and select the &#8220;Enabled for Complex Text Layout&#8221; option. 
+Now you can use &#8220;Insert&gt;Formatting Mark&#8221; menu to insert more control
+over formatting.
+The &#8220;no width no break&#8221; character, aka the &#8220;glue&#8221; character&#8221;, &#8220;glues&#8221;
+the characters it&#8217;s between to prevent line breaks there which would
+otherwise there.
+Similarly, the &#8220;no width optional break&#8221; character, when inserted, tells
+OpenOffice.org that it&#8217;s okay to insert a line break there where
+normally it would not do so.
+You can also insert non-breaking spaces, non-breaking hyphens, and
+optional hyphens.
+<p>
+In most cases, the paragraph styles should make paragraphs break
+across pages in the right way
+(e.g., the paragraph styles
+should have reasonable default &#8220;widow&#8221; and &#8220;orphan&#8221; settings, and
+header paragraph styles should have &#8220;keep with next paragraph&#8221; set).
+But in some cases the paragraphs won&#8217;t break across 
+pages well because the program doesn&#8217;t &#8220;understand&#8221; text.
+For example, if you have text that leads into the next paragraph,
+you may need to right-click on that paragraph
+and set &#8220;keep with next paragraph&#8221;.
+In special cases you may want a different widow or orphan setting, too.
+<p>
+OpenOffice.org supports formulas, which I use quite a bit.
+Its &#8220;stack&#8221; and &#8220;matrix&#8221; options are sometimes very useful for
+multi-line formulas, for example.
+For in-line formulas, I recommend making formula borders 0.
+You can do this while editing formulas by
+selecting Format&gt;Spacing, category Borders, and then making the
+all borders 0 (indeed, I suggest making this the default).
+Otherwise, there&#8217;s embedded extra space in formulas that looks odd when you
+try to combine formulas with punctuation.
+<p>
+For the final version, I used Tools &gt; Update All (to update the
+table of contents, cross-references, etc.),
+moved to the beginning and saved, and then ran
+File &gt; Export as PDF.
+
+<p>
+<h1>Miscellaneous</h1>
+
+<p>
+After doing endless numbers of tedious compiles,
+<a href="http://xkcd.com/303/">Xkcd&#8217;s cartoon about compiling</a>
+made me smile.
+<a href="http://xkcd.com/1266/">The big picture solution
+to the halting problem</a> is also relevant :-).
+
+<p>
+Dilbert has mentioned long compiling times too:
+<a href="http://dilbert.com/2013-06-22/">Dilbert 2013-06-22</a>
+<a href="http://dilbert.com/strips/comic/2005-09-23/">Dilbert 2005-09-23</a>
+<a href="http://dilbert.com/strips/comic/1998-06-21/">Dilbert 1998-06-21</a>.
+<a href="http://books.google.com/books?id=7jF1vg_A8OIC&amp;pg=PA143#v=onepage&amp;q&amp;f=false">Dilbert once noticed that
+&#8220;maybe there&#8217;s a bug in the compiler program itself!&#8221;</a>.
+<a href="http://dilbert.com/strips/comic/2000-03-19/">Dilbert also makes
+it clear why software single source strategies are a bad idea</a>.
+
+<p>
+I gave a brief example of <i>readable</i> Lisp s-expressions;
+the
+<a href="http://readable.sourceforge.net">readable Lisp s-expressions project
+has specifications and implementations for curly-infix-expresssions,
+neoteric-expressions, and sweet-expressions</a>, which can make
+Lisp notation a <b>lot</b> easier to read.
+
+<p>
+<a href="mortality.pvs">Mortality.pvs is a short demo of how to
+express the &#8220;All men are mortal&#8221; example using PVS</a>.
+
+<p>
+<a href="http://www.ve3syb.ca/software/irix/irix-gcc.html">
+Here&#8217;s how to install gcc on SGI IRIX</a>.
+
+<p>
+<a href="http://www.eresi-project.org/">
+ERESI</a> (ERESI Reverse Engineering Software Interface)
+is a &#8220;unified multi-architecture binary analysis framework targeting
+operating systems based on the Executable &amp; Linking Format (ELF).&#8221;.
+<!--
+<a href="http://bastard.sourceforge.net/">Bastard</a> is a disassembler.
+Seems to be inactive. -->
+<a href="http://www-128.ibm.com/developerworks/power/library/pa-spec12/">
+developerworks has a nice article on ELF</a>.
+<a href="http://www.muppetlabs.com/~breadbox/software/elfkickers.html">
+Elfkickers</a> was written by Brian Raiter, who also wrote
+<a href="http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html">
+A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux</a>
+and
+<a href="http://www.muppetlabs.com/~breadbox/txt/al.html">
+Albert Einstein&#8217;s Theory of Relativity:
+In Words of Four Letters or Less</a>.
+This <a href="http://www.linuxjournal.com/article/1059">old article
+explains ELF&#8217;s advantages</a>.
+
+<p>
+I have tried to make sure that this paper will stick around
+into the future.
+Here&#8217;s the <a href="http://digilib.gmu.edu:8080/dspace/handle/1920/5667">GMU page for my dissertation &#8220;Fully Countering Trusting Trust through Diverse Double-Compiling&#8221;</a>, as well as the
+<a href="http://arxiv.org/abs/1004.5534">arXiv.org copy of
+&#8220;Fully Countering Trusting Trust through Diverse Double-Compiling&#8221;</a> and the
+<a href="http://disexpress.umi.com/dxweb#download?&amp;type=pdf&amp;dpubno=3393623">UMI ProQuest copy of my PhD dissertation
+&#8220;Fully Countering Trusting Trust through Diverse Double-Compiling&#8221;</a>
+(via <a href="http://disexpress.umi.com/dxweb">ProQuest search</a>).
+<a href="https://web.archive.org/web/20130413043959/https://dwheeler.com/trusting-trust/dissertation/wheeler-trusting-trust-ddc.pdf">Archive.org also has a copy</a>.
+These are just additional copies, with the same information.
+The PDF file, as I submitted it, has these properties:
+<table border="1">
+<tr><th>Title</th><td>Fully Countering Trusting Trust through Diverse Double-Compiling</td></tr>
+<tr><th>Author</th><td>David A. Wheeler</td></tr>
+<tr><th>Date</th><td>Fall Semester 2009 (actually 2009-11-30)</td></tr>
+<tr><th>Filename</th><td>wheeler-trusting-trust-ddc.pdf</td></tr>
+<tr><th>Length</td><td>1,971,698 bytes</td></tr>
+<tr><th>Pages</td><td>199</td></tr>
+<tr><th>MD5 hash</th><td>5320ff082ec060e7f58409b3877cb687</td></tr>
+<tr><th>SHA-1 hash</th><td>20c8b702dd4b7c6586f2 59eb98f577dbadd359dd</td></tr>
+<tr><th>SHA-256 hash</td><td>024bccc5254eaffe9466f12afe39f72b
+154f63a6919f4e1add5d0513092b2052</td></tr>
+<tr><th>SHA-512 hash</th>
+<td>0004998431af5da486a87794969a5314
+07cb607ffc411c966a23343a58636c20
+72ceb85835ffe6eef727696ffc41b1dd
+d6d9e0fd090cbc85a33041c25acd2e55</td></tr>
+</table>
+
+
+
+<p>
+<h1 id="micro-tainting">Micro-tainting</h1>
+<p>
+An aside: At ACSAC 2005, Aleks Kissinger (from the University of Tulsa) also
+presented work that he and I had done on micro-tainting.
+Since that seems to have disappeared from the web, I thought I should
+briefly describe it here.
+<p>
+Aleks&#8217; presentation was titled
+&#8220;Fine-Grained Taint Analysis using Regular Expressions,&#8221;
+which was part of the
+<a href="http://www.acsa-admin.org/2005/wip.html">Works in Progress</a>.
+Basically, we noted that instead of assigning &#8220;taint&#8221; to a whole value, such as a string, you could
+assign taint on subcomponents, such as each character.
+Then you could assign rules that identified the input paths and
+what could come in --
+typically zero or more tainted characters -- and rules on output paths.
+We concentrated on defining regular expressions for what is legal,
+though any other expression for patterns such as BNFs would be fine too.
+We noted that you could then check statically or dynamically.
+For the static case, when you work backwards, if the check &#8220;fails&#8221; you can
+even trivially derive the input patterns that cause security failures
+(and from that information it should be easy to figure out how to fix it).
+Aleks has recently made some good progress by transforming the regular
+expressions into DFAs.
+There was another ACSAC presentation on doing taint analysis with Java,
+but this was the traditional &#8220;whole variable&#8221; approach that is used in
+many languages, but through which many vulnerabilities slip by.
+We hope this micro-tainting approach will lead to improved tools for detecting
+security vulnerabilities in software, <i>before</i> that software is
+delivered to end-users.
+<p>
+There <i>is</i> related work that we know about
+that has been going on in the University of Virginia (UVA),
+though we only found out about it halfway through our work (via Usenix).
+More information about the UVA work is in
+<a href="http://dependability.cs.virginia.edu/publications/2005/sec2005.pdf">
+&#8220;Automatically Hardening Web Applications Using Precise Tainting&#8221;
+by Anh Nguyen-Tuong, Salvatore Guarnieri, Doug Greene, Jeff Shirley, and
+David Evans</a>.
+They focus on PHP, and only on the dynamic case; we were interested in
+both, but <i>especially</i> interested in the static case (where
+you can show that certain vulnerabilities <i>never</i> occur and thus
+don&#8217;t need any run-time overhead to deal with them).
+<p>
+Other related work includes the
+<a href="http://www.brics.dk/JSA/">BRICS Java String Analyzer</a> (GPL;
+uses the BSD-licensed dk.brics.automaton).
+<a href="http://people.csail.mit.edu/akiezun/hampi/">Hampi</a> might be
+able to implement this statically, which would be fantastic.
+<p>
+There is a long history of work on data flow, static typing, and
+security (such as work by
+<a href="http://www.cs.nps.navy.mil/people/faculty/volpano/papers/">
+Dennis Volpano et al</a>).
+That&#8217;s good work, but not really focused on what we were looking at.
+Those works tend to view variables as a whole, while instead we&#8217;re
+tracking <i>much</i> smaller units of data.
+We&#8217;re also tracking sequences (like arrays) which contain data
+with different levels of security; most such works handled arrays
+like a single unit (a simplification that is fundamentally at odds
+with our approach).
+<p>
+<hr>
+<p>
+You can also view
+<a href="education-timeline.html">my formal education timeline</a>,
+<a href="https://dwheeler.com/secure-programs">my book on
+writing secure programs</a>,
+<a href="https://dwheeler.com/flawfinder">FlawFinder</a>, or
+<a href="https://dwheeler.com">my home page</a>.
+</body>
+</html>
+

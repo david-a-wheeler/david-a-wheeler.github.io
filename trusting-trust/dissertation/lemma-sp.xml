@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE proofs SYSTEM "proof3.dtd">
+
+<?xml-stylesheet type="text/xsl" href="proof3.xsl"?>
+
+<proofs number_of_proofs="1">
+
+<source>lemma-sp.out</source>
+
+<heading><![CDATA[
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 19450 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Thu Oct 18 10:25:44 2007
+The command was "prover9 -t 60 -f lemma-sp.in".
+]]></heading>
+
+<proof number="1" length="13" max_count="18">
+
+<comments><![CDATA[
+% Proof 1 at 0.00 (+ 0.00) seconds: stage1_corresponds_sP.
+% Length of proof is 13.
+% Level of proof is 4.
+% Maximum clause weight is 15.
+% Given clauses 0.
+]]></comments>
+
+  <clause id="1" type="assumption">
+    <literal><![CDATA[
+      accurately_translates(A,B,C,D,E,F) -> exactly_correspond(compile(C,A,D,E,F),C,B,F)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(define_exactly_correspond)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(non_clause)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="2" type="assumption">
+    <literal><![CDATA[
+      (all A accurately_translates(cTGP,lsP,sP,A,e1,e2))
+    ]]></literal>
+    <attribute><![CDATA[
+      label(cTGP_compiles_sP)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(non_clause)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="3" type="goal">
+    <literal><![CDATA[
+      exactly_correspond(stage1,sP,lsP,e2)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(stage1_corresponds_sP)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(lemma)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(non_clause)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(goal)
+    ]]></attribute>
+    <justification jstring="[goal].">
+      <j1 rule="goal"/>
+    </justification>
+  </clause>
+
+  <clause id="4" type="clausify">
+    <literal><![CDATA[
+      accurately_translates(cTGP,lsP,sP,A,e1,e2)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(cTGP_compiles_sP)
+    ]]></attribute>
+    <justification jstring="[clausify(2)].">
+      <j1 rule="clausify" parents="2"/>
+    </justification>
+  </clause>
+
+  <clause id="5" type="clausify">
+    <literal><![CDATA[
+      -accurately_translates(A,B,C,D,E,F)
+    ]]></literal>
+    <literal><![CDATA[
+      exactly_correspond(compile(C,A,D,E,F),C,B,F)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(define_exactly_correspond)
+    ]]></attribute>
+    <justification jstring="[clausify(1)].">
+      <j1 rule="clausify" parents="1"/>
+    </justification>
+  </clause>
+
+  <clause id="6" type="assumption">
+    <literal><![CDATA[
+      compile(A,B,C,D,E) = extract(run(B,retarget(A,E),C,D))
+    ]]></literal>
+    <attribute><![CDATA[
+      label(define_compile)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="7" type="assumption">
+    <literal><![CDATA[
+      stage1 = compile(sP,cTGP,e1effects,e1,e2)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(definition_stage1)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="8">
+    <literal><![CDATA[
+      stage1 = extract(run(cTGP,retarget(sP,e2),e1effects,e1))
+    ]]></literal>
+    <justification jstring="[para(6(a,1),7(a,2))].">
+      <j1 rule="para" parents="6 7"/>
+    </justification>
+  </clause>
+
+  <clause id="9" type="deny">
+    <literal><![CDATA[
+      -exactly_correspond(stage1,sP,lsP,e2)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(stage1_corresponds_sP)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(lemma)
+    ]]></attribute>
+    <attribute><![CDATA[
+      answer(stage1_corresponds_sP)
+    ]]></attribute>
+    <justification jstring="[deny(3)].">
+      <j1 rule="deny" parents="3"/>
+    </justification>
+  </clause>
+
+  <clause id="10">
+    <literal><![CDATA[
+      -exactly_correspond(extract(run(cTGP,retarget(sP,e2),e1effects,e1)),sP,lsP,e2)
+    ]]></literal>
+    <justification jstring="[para(8(a,1),9(a,1))].">
+      <j1 rule="para" parents="8 9"/>
+    </justification>
+  </clause>
+
+  <clause id="11">
+    <literal><![CDATA[
+      exactly_correspond(compile(sP,cTGP,A,e1,e2),sP,lsP,e2)
+    ]]></literal>
+    <justification jstring="[resolve(4,a,5,a)].">
+      <j1 rule="resolve" parents="4 5"/>
+    </justification>
+  </clause>
+
+  <clause id="12">
+    <literal><![CDATA[
+      exactly_correspond(extract(run(cTGP,retarget(sP,e2),A,e1)),sP,lsP,e2)
+    ]]></literal>
+    <justification jstring="[para(6(a,1),11(a,1))].">
+      <j1 rule="para" parents="6 11"/>
+    </justification>
+  </clause>
+
+  <clause id="13">
+    <literal><![CDATA[
+      $F
+    ]]></literal>
+    <attribute><![CDATA[
+      answer(stage1_corresponds_sP)
+    ]]></attribute>
+    <justification jstring="[resolve(12,a,10,a)].">
+      <j1 rule="resolve" parents="12 10"/>
+    </justification>
+  </clause>
+
+</proof>
+
+</proofs>

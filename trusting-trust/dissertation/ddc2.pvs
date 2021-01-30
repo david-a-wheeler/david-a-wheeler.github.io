@@ -1,0 +1,120 @@
+% Proof of trivial form of "Diverse Double-Compiling" (DDC) using PVS.
+% by David A. Wheeler, 2007-08-29.
+
+% Beginning of attempt to use types for source and object code.
+
+% This version is intentionally simple.  It completely ignores the
+% environment, it presumes all compilers are deterministic
+% (not all need to be), it presumes that the compiler is self-regenerating
+% (not necessary), and so on.  But this simple version is easier to
+% understand, and reviewing it makes it easier to understand the more
+% complicated proof.
+
+ddc2: THEORY
+ BEGIN
+
+  CIO: TYPE+  % Compile input/output data.  Can be a compiler.
+  input : VAR CIO  % Arbitrary input.
+
+  % These source and objectcode subtypes help prevent some errors:
+  source_code : TYPE+ FROM CIO
+  source : VAR source_code
+
+  object_code : TYPE+ FROM CIO         % Object code ("binary").
+  executable, compiler, compiler1, compiler2: VAR object_code
+
+  run(executable, input) : CIO       % returns output
+  % Oops.  Need Axiom that compiling sA produces a compiler :-(.
+
+  compile(source : CIO, compiler : CIO) : CIO =  % returns object
+     run(compiler, source) % Will discuss environment later.
+
+  functionally_equal(compiler1 : CIO, compiler2 : CIO,
+                     source : CIO, input : CIO) : bool =
+          (run(compile(source,compiler1),input) =
+           run(compile(source,compiler2),input) )
+  % Two compilers are functionally equal for given source and input
+  % if they both compile that source, run it with the same input, and
+  % produce the same output.  E.G., two different C compilers can take
+  %    #include <stdio.h>
+  %    main() { printf("Hello world, I got character %c\n", getc()); }
+  % and generate different executable files, but if both are run and given
+  % the same input, they should produce the same output.
+
+  A  : CIO % This is the Compiler we want to test.
+  sA : CIO % Source code, putatively of A (but might not be).
+
+  ACorrectA : CIO % An executable that exactly implements sA.
+  % This may or may not be the same as A.  If A is malicious, it won't be.
+  % ACorrectA may or may not exist in real life; we are merely asserting
+  % that it COULD exist.
+
+  CorrectA : CIO = compile(sA, ACorrectA)
+  % An executable created by compiling sA using ACorrectA.
+  % Again, this might not exist in real life, but we are asserting that
+  % it COULD exist in real life.  Since sA describes a deterministic compiler,
+  % CorrectA _should_ be the same as A, but it might not be.
+
+  CorrectA_self_compiles: AXIOM
+    compile(sA, CorrectA) = CorrectA
+  % The CorrectA will compile to itself.  Note, however, that even if A can
+  % compile to itself, it might not be the correct A, but something else.
+  % This implies that ACorrectA produces deterministic results when given sA.
+  % NOTE: This wasn't in my original hand-created proof; it appears that
+  % I forgot this assumption in the manual proof.
+
+  T : CIO  % Trusted compiler
+
+  trusted_compiler_functionally_equal: AXIOM
+      functionally_equal(T, CorrectA, sA, sA)
+
+  % Longer-term, would be this weakening of assumptions be okay?:
+  % correctA_functionally_equal: AXIOM
+  %    functionally_equal(ACorrectA, CorrectA, sA, sA)
+
+  stage1 : CIO = compile(sA, T)  % Result of stage1
+  stage2 : CIO = compile(sA, stage1)
+
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%% PROOFS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  T_CorrectA_same_results: LEMMA
+    run(compile(sA, T), sA) = run(compile(sA,CorrectA), sA)
+  % (lemma "functionally_equal")
+  % (lemma "trusted_compiler_functionally_equal")
+  % (grind)
+
+  % Claim 1:
+  stage1_eq_CorrectA: CLAIM
+    run(stage1, sA) = run(CorrectA, sA)
+  % (lemma "trusted_compiler_functionally_equal")
+  % (expand "functionally_equal")
+  % (expand "stage1")
+  % (rewrite "CorrectA_self_compiles")
+
+  % Claim 2, which is that "anything malicious in A can't affect the
+  % DDC process", is vacuously true. A is never run, and we presume that
+  % the DDC tools correctly process A as data,
+  % so it can't affect anything.  Note the latter point: If the "compare for
+  % equality" tool fails on A (e.g., has a buffer overflow), or if the
+  % tool fails to get the A that's actually executed (but gets some other
+  % object instead), it will produce false answers.
+
+  % Claim 3:
+  stage2_is_CorrectA: CLAIM
+    stage2 = CorrectA
+  % (REWRITE "stage2")
+  % (REWRITE "compile")
+  % (REWRITE "stage1")
+  % (REWRITE "T_CorrectA_same_results")
+  % (REWRITE "CorrectA_self_compiles")
+  % (LEMMA "CorrectA_self_compiles")
+  % (GRIND)
+
+ % Final theorem.  If the output of stage2 equals A (the compiler under test),
+ % the A doesn't contain a Trojan horse (given the assumptions above).
+ no_trojan: THEOREM
+   ((stage2 = A) => (A = CorrectA))
+ % (grind :theories "ddc0")
+
+END ddc2

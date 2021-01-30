@@ -1,0 +1,166 @@
+============================== Prover9 ===============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 11719 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Tue Nov 20 15:05:16 2007
+The command was "prover9 -t 60 -f lemma-stage1-cp.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file lemma-stage1-cp.in
+
+set(prolog_style_variables).
+set(restrict_denials).
+
+formulas(assumptions).
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).
+exactly_correspond(stage1,sP,lsP,e2) # label(stage1_corresponds_sP) # label(previous_lemma).
+deterministic(Source,Language) & portable(Source,Language) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_determinism).
+deterministic(sP,lsP) # label(sP_deterministic).
+portable(sP,lsP) # label(sP_portable).
+end_of_list.
+
+formulas(goals).
+converttext(run(stage1,Input,EnvEffects1,e2),e2,Environment) = converttext(run(cP,Input,EnvEffects2,eA),eA,Environment) # label(stage1_cP_eq_results) # label(lemma).
+end_of_list.
+
+============================== end of input ==========================
+
+% From the command line: assign(max_seconds, 60).
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 deterministic(Source,Language) & portable(Source,Language) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_determinism) # label(non_clause).  [assumption].
+2 converttext(run(stage1,Input,EnvEffects1,e2),e2,Environment) = converttext(run(cP,Input,EnvEffects2,eA),eA,Environment) # label(stage1_cP_eq_results) # label(lemma) # label(non_clause) # label(goal).  [goal].
+
+============================== end of process non-clausal formulas ===
+
+============================== PROCESS INITIAL CLAUSES ===============
+
+% Clauses before input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+exactly_correspond(stage1,sP,lsP,e2) # label(stage1_corresponds_sP) # label(previous_lemma).  [assumption].
+-deterministic(A,B) | -portable(A,B) | -exactly_correspond(C,A,B,D) | -exactly_correspond(E,A,B,F) | converttext(run(E,V6,V7,F),F,V8) = converttext(run(C,V6,V9,D),D,V8) # label(define_determinism).  [clausify(1)].
+deterministic(sP,lsP) # label(sP_deterministic).  [assumption].
+portable(sP,lsP) # label(sP_portable).  [assumption].
+converttext(run(stage1,c1,c2,e2),e2,c3) != converttext(run(cP,c1,c4,eA),eA,c3) # label(stage1_cP_eq_results) # label(lemma).  [deny(2)].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== PREDICATE ELIMINATION =================
+
+Eliminating deterministic/2
+3 deterministic(sP,lsP) # label(sP_deterministic).  [assumption].
+4 -deterministic(A,B) | -portable(A,B) | -exactly_correspond(C,A,B,D) | -exactly_correspond(E,A,B,F) | converttext(run(E,V6,V7,F),F,V8) = converttext(run(C,V6,V9,D),D,V8) # label(define_determinism).  [clausify(1)].
+Derived: -portable(sP,lsP) | -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(3,a,4,a)].
+
+============================== end predicate elimination =============
+
+Auto_denials:
+  % copying label stage1_cP_eq_results to answer in negative clause
+
+Term ordering decisions:
+Predicate symbol precedence:  predicate_order([ =, portable, exactly_correspond ]).
+Function symbol precedence:  function_order([ lsP, sP, cP, e2, eA, stage1, c1, c2, c3, c4, converttext, run ]).
+After inverse_order:  (no changes).
+Unfolding symbols: (none).
+
+Auto_inference settings:
+  % set(paramodulation).  % (positive equality literals)
+    % set(paramodulation) -> set(back_demod).
+  % set(hyper_resolution).  % (nonunit Horn with equality)
+    % set(hyper_resolution) -> set(pos_hyper_resolution).
+  % set(neg_ur_resolution).  % (nonunit Horn with equality)
+  % assign(para_lit_limit, 4).  % (nonunit Horn with equality)
+
+Auto_process settings:  (no changes).
+
+restricted denial: (wt=17): 8 converttext(run(stage1,c1,c2,e2),e2,c3) != converttext(run(cP,c1,c4,eA),eA,c3) # label(stage1_cP_eq_results) # label(lemma) # answer(stage1_cP_eq_results).  [deny(2)].
+
+============================== end of process initial clauses ========
+
+============================== CLAUSES FOR SEARCH ====================
+
+% Clauses after input processing:
+
+formulas(usable).
+8 converttext(run(stage1,c1,c2,e2),e2,c3) != converttext(run(cP,c1,c4,eA),eA,c3) # label(stage1_cP_eq_results) # label(lemma) # answer(stage1_cP_eq_results).  [deny(2)].
+end_of_list.
+
+formulas(sos).
+5 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+6 exactly_correspond(stage1,sP,lsP,e2) # label(stage1_corresponds_sP) # label(previous_lemma).  [assumption].
+7 portable(sP,lsP) # label(sP_portable).  [assumption].
+9 -portable(sP,lsP) | -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(3,a,4,a)].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== end of clauses for search =============
+
+============================== SEARCH ================================
+
+% Starting search at 0.00 seconds.
+
+given #1 (I,wt=5): 5 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+
+given #2 (I,wt=5): 6 exactly_correspond(stage1,sP,lsP,e2) # label(stage1_corresponds_sP) # label(previous_lemma).  [assumption].
+
+given #3 (I,wt=3): 7 portable(sP,lsP) # label(sP_portable).  [assumption].
+
+given #4 (I,wt=30): 9 -portable(sP,lsP) | -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(3,a,4,a)].
+
+============================== PROOF =================================
+
+% Proof 1 at 0.00 (+ 0.00) seconds: stage1_cP_eq_results.
+% Length of proof is 11.
+% Level of proof is 4.
+% Maximum clause weight is 30.
+% Given clauses 4.
+
+1 deterministic(Source,Language) & portable(Source,Language) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_determinism) # label(non_clause).  [assumption].
+2 converttext(run(stage1,Input,EnvEffects1,e2),e2,Environment) = converttext(run(cP,Input,EnvEffects2,eA),eA,Environment) # label(stage1_cP_eq_results) # label(lemma) # label(non_clause) # label(goal).  [goal].
+3 deterministic(sP,lsP) # label(sP_deterministic).  [assumption].
+4 -deterministic(A,B) | -portable(A,B) | -exactly_correspond(C,A,B,D) | -exactly_correspond(E,A,B,F) | converttext(run(E,V6,V7,F),F,V8) = converttext(run(C,V6,V9,D),D,V8) # label(define_determinism).  [clausify(1)].
+5 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+6 exactly_correspond(stage1,sP,lsP,e2) # label(stage1_corresponds_sP) # label(previous_lemma).  [assumption].
+7 portable(sP,lsP) # label(sP_portable).  [assumption].
+8 converttext(run(stage1,c1,c2,e2),e2,c3) != converttext(run(cP,c1,c4,eA),eA,c3) # label(stage1_cP_eq_results) # label(lemma) # answer(stage1_cP_eq_results).  [deny(2)].
+9 -portable(sP,lsP) | -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(3,a,4,a)].
+11 converttext(run(stage1,A,B,e2),e2,C) = converttext(run(cP,A,D,eA),eA,C).  [hyper(9,a,7,a,b,6,a,c,5,a),flip(a)].
+12 $F # answer(stage1_cP_eq_results).  [resolve(11,a,8,a)].
+
+============================== end of proof ==========================
+
+============================== STATISTICS ============================
+
+Given=4. Generated=7. Kept=7. proofs=1.
+Usable=5. Sos=0. Demods=0. Limbo=1, Disabled=7. Hints=0.
+Weight_deleted=0. Literals_deleted=0.
+Forward_subsumed=0. Back_subsumed=0.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+Demod_attempts=0. Demod_rewrites=0.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=0. Nonunit_bsub_feature_tests=1.
+Megabytes=0.04.
+User_CPU=0.00, System_CPU=0.00, Wall_clock=0.
+
+============================== end of statistics =====================
+
+============================== end of search =========================
+
+THEOREM PROVED
+
+Exiting with 1 proof.
+
+Process 11719 exit (max_proofs) Tue Nov 20 15:05:16 2007

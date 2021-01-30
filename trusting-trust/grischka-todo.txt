@@ -1,0 +1,338 @@
+Grischka-todo
+by David A. Wheeler
+May 3, 2007   4:52PM(EST)
+
+On Sep. 29, 2005, grischka posted on the Tinycc-devel mailing list a
+massive patch to tcc; this patch enabled tcc to compile gcc 2.95.3-7,
+made some improvements for Windows hosting, and so on.
+The email was titled "GCC by TCC (some fixes)":
+http://lists.gnu.org/archive/html/tinycc-devel/2005-09/msg00054.html
+
+Problem is, it was a single massive patch that did WAY too many things
+at once, and its tests were not integrated into tcc's test framework.
+As a result, the patch just sat there.
+
+I've tried to extract useful code from it, turning it into a set of patches
+that each do ONE thing. (I'm always amazed that people think massive
+multipurpose patches are okay.  Who can review or discuss such stuff?
+See "Break your changes up" at http://lwn.net/Articles/160191/
+by Greg K-H).  Below are is info on what HAS been pulled out of the
+grischka patch and what hasn't been pulled out of it.
+
+Extracted by me and posted to the tcc mailing list:
+==================================================
++ @case_1) passing function pointers and structures through ?:
++ @case_2) saving registers through jumps with ||, &&, !
++ @case_3) keep rvalue of bitfield assignment: bit1 = bit2 = 1;
++ @case_5) keep 'static' property for local function pointers
++ @case_6) cast short/bool -> float [as two patches: 6.1 and 6.2]
++ @case_7) incompatible pointer assigment degraded to warning.
++ case_8) Implement alloca() for x86-32 [on Linux]
++ @case_9) indirections with function pointers (***fn)();
++ @case_10) cast double -> ull (bug in libtcc1.c:__shldi3) (tricky to test;
+       it's actually a bug in the signedness of long long shift operators)
+@=Accepted in Rob Landley's tcc fork
+
+
+Extracted by others and posted to the tcc mailing list:
+==================================================
++ @tccelf.c: an issue with loop vars mentioned earlier by someone else.
+  Wheeler confirmed resolved in tinycc-rl-1.0.0.
+(Any Volunteers for what's not extracted yet?)
+
+
+Not extracted (yet?): 
+====================
++ case_4) stringyfy behaviour (problem not solved, just to make it work)
++ case_8) alloca implementation for win32 on x86-32 (linux version in patch)
++ (other) tcc.c: slight cleanup with backslash conversion
++ tccpe.c: windows resources support (pe_load_resource_file)
++ tccpe.c: a major fix with relocation for dlls
+  (The patch includes a complete rewrite of tccpe.c)
++ _mingw.h: additions to support current mingw headers
++ Anything else not documented, but in the patch.
+
+
+The patch includes a separate test case and a rewritten version of tccpe.c,
+not shown here.  Below is the set of diffs, but with the already-posted
+stuff removed.
+
+
+
+
+
+diff -uwr --exclude tccpe.c ../tcc-cvs/tinycc/tinycc/tcc.c ./tcc.c
+--- ../tcc-cvs/tinycc/tinycc/tcc.c	Sun Sep 04 02:20:04 2005
++++ ./tcc.c	Sat Sep 24 15:25:46 2005
+@@ -717,12 +717,7 @@
+ #define TOK_UIDENT TOK_DEFINE
+ 
+ #ifdef WIN32
+-int __stdcall GetModuleFileNameA(void *, char *, int);
+-void *__stdcall GetProcAddress(void *, const char *);
+-void *__stdcall GetModuleHandleA(const char *);
+-void *__stdcall LoadLibraryA(const char *);
+-int __stdcall FreeConsole(void);
+-
++/* ----------------------------------------------------------- */
+ #define snprintf _snprintf
+ #define vsnprintf _vsnprintf
+ #ifndef __GNUC__
+@@ -730,7 +725,31 @@
+   #define strtof (float)strtod
+   #define strtoll (long long)strtol
+ #endif
+-#elif defined(TCC_UCLIBC) || defined(__FreeBSD__)
++
++void normalize_slashes(char *p) {
++    while (*p) {
++        if (*p == '\\') *p = '/';
++        ++p;
++    }
++}
++
++char *get_tcc_path(char *buffer, int sizeofbuffer) {
++    char *p;
++
++    GetModuleFileNameA(NULL, buffer, sizeofbuffer);
++    p = strrchr(buffer, '\\');
++    if (NULL == p)
++        p = buffer;
++    *p = 0;
++    normalize_slashes(strlwr(buffer));
++    return buffer;
++}
++/* ----------------------------------------------------------- */
++#else /* !WIN32 */
++/* ----------------------------------------------------------- */
++#define normalize_slashes(path) /* do nothing */
++
++ #if defined(TCC_UCLIBC) || defined(__FreeBSD__)
+ /* currently incorrect */
+ long double strtold(const char *nptr, char **endptr)
+ {
+@@ -745,6 +764,8 @@
+ extern float strtof (const char *__nptr, char **__endptr);
+ extern long double strtold (const char *__nptr, char **__endptr);
+ #endif
++/* ----------------------------------------------------------- */
++#endif /* !WIN32 */
+ 
+ static char *pstrcpy(char *buf, int buf_size, const char *s);
+ static char *pstrcat(char *buf, int buf_size, const char *s);
+@@ -850,6 +871,9 @@
+ void pe_setup_paths(struct TCCState *s1, int *p_output_type, const char **p_outfile, char *first_file);
+ unsigned long pe_add_runtime(struct TCCState *s1);
+ int tcc_output_pe(struct TCCState *s1, const char *filename);
++struct pe_rsrc_header;
++int pe_test_resource_file(struct pe_rsrc_header *p, int size);
++int pe_load_resource_file(struct TCCState *s1, FILE *fp);
+ 
+ /* tccasm.c */
+ 
+@@ -1833,7 +1857,6 @@
+ {
+     int fd;
+     BufferedFile *bf;
+-    int i, len;
+ 
+     fd = open(filename, O_RDONLY | O_BINARY);
+     if (fd < 0)
+@@ -1848,10 +1871,7 @@
+     bf->buf_end = bf->buffer;
+     bf->buffer[0] = CH_EOB; /* put eob symbol */
+     pstrcpy(bf->filename, sizeof(bf->filename), filename);
+-    len = strlen(bf->filename);
+-    for (i = 0; i < len; i++)
+-        if (bf->filename[i] == '\\')
+-            bf->filename[i] = '/';
++    normalize_slashes(bf->filename);
+     bf->line_num = 1;
+     bf->ifndef_macro = 0;
+     bf->ifdef_stack_ptr = s1->ifdef_stack_ptr;
+@@ -3955,7 +3975,8 @@
+                         cstr_ccat(&cstr, ' ');
+                     TOK_GET(t, st, cval);
+                     cstr_cat(&cstr, get_tok_str(t, &cval));
+-                    notfirst = 1;
++                    // notfirst = 1;
++                    //gr case_4 - hmm, should we?
+                 }
+                 cstr_ccat(&cstr, '\0');
+ #ifdef PP_DEBUG
+@@ -9032,7 +9091,7 @@
+ #if 0
+             {
+                 char buf[500];
+-                type_to_str(buf, sizeof(buf), &type, get_tok_str(v, NULL));
++                type_to_str(buf, sizeof(buf), t, get_tok_str(v, NULL));
+                 printf("type = '%s'\n", buf);
+             }
+ #endif
+@@ -9211,6 +9271,7 @@
+                                   ELF32_ST_INFO(STB_LOCAL, STT_SECTION), 0, 
+                                   text_section->sh_num, NULL);
+         getcwd(buf, sizeof(buf));
++        normalize_slashes(buf);
+         pstrcat(buf, sizeof(buf), "/");
+         put_stabs_r(buf, N_SO, 0, 0, 
+                     text_section->data_offset, text_section, section_sym);
+@@ -9840,10 +9901,15 @@
+ #ifdef CHAR_IS_UNSIGNED
+     s->char_is_unsigned = 1;
+ #endif
+-#if defined(TCC_TARGET_PE) && 0
++
++#ifdef TCC_TARGET_PE
++#if 0
+     /* XXX: currently the PE linker is not ready to support that */
+     s->leading_underscore = 1;
+ #endif
++    /* beware of missing stdcall (WINAPI) declarations */
++    s->warn_implicit_function_declaration = 1;
++#endif
+     return s;
+ }
+ 
+@@ -10010,6 +10076,12 @@
+             ret = tcc_load_coff(s1, fd);
+         } else
+ #endif
++#ifdef TCC_TARGET_PE
++        /* data bytes required for verification here: 28 */
++        if (pe_test_resource_file((struct pe_rsrc_header *)&ehdr, ret)) {
++            ret = pe_load_resource_file(s1, fdopen(file->fd, "rb"));
++        } else
++#endif
+         {
+             /* as GNU ld, consider it is an ld script if not recognized */
+         try_load_script:
+@@ -10252,8 +10324,8 @@
+ static int64_t getclock_us(void)
+ {
+ #ifdef WIN32
+-    struct _timeb tb;
+-    _ftime(&tb);
++    struct timeb tb;
++    ftime(&tb);
+     return (tb.time * 1000LL + tb.millitm) * 1000LL;
+ #else
+     struct timeval tv;
+@@ -10624,20 +10696,8 @@
+ #ifdef WIN32
+     /* on win32, we suppose the lib and includes are at the location
+        of 'tcc.exe' */
+-    {
+-        static char path[1024];
+-        char *p, *d;
+-        
+-        GetModuleFileNameA(NULL, path, sizeof path);
+-        p = d = strlwr(path);
+-        while (*d)
+-        {
+-            if (*d == '\\') *d = '/', p = d;
+-            ++d;
+-        }
+-        *p = '\0';
+-        tcc_lib_path = path;
+-    }
++    char tcc_path[260];
++    tcc_lib_path = get_tcc_path(tcc_path, sizeof tcc_path);
+ #endif
+ 
+     s = tcc_new();
+diff -uwr --exclude tccpe.c ../tcc-cvs/tinycc/tinycc/tiny_impdef.c ./tiny_impdef.c
+--- ../tcc-cvs/tinycc/tinycc/tiny_impdef.c	Fri Apr 15 01:52:54 2005
++++ ./tiny_impdef.c	Fri Sep 23 18:05:56 2005
+@@ -220,7 +220,6 @@
+ 	char infile[MAX_PATH];
+ 	char buffer[MAX_PATH];
+ 	char outfile[MAX_PATH];
+-	char libname[80];
+ 
+ 	hHeap = NULL;
+ 	hFile = NULL;
+diff -uwr --exclude tccpe.c ../tcc-cvs/tinycc/tinycc/win32/examples/fib.c ./win32/examples/fib.c
+--- ../tcc-cvs/tinycc/tinycc/win32/examples/fib.c	Sun Apr 17 16:04:16 2005
++++ ./win32/examples/fib.c	Fri Sep 23 19:36:38 2005
+@@ -1,3 +1,4 @@
++#include <stdlib.h>
+ #include <stdio.h>
+ 
+ int fib(n)
+diff -uwr --exclude tccpe.c ../tcc-cvs/tinycc/tinycc/win32/include/_mingw.h ./win32/include/_mingw.h
+--- ../tcc-cvs/tinycc/tinycc/win32/include/_mingw.h	Sun Apr 17 16:04:16 2005
++++ ./win32/include/_mingw.h	Sun Sep 11 05:22:32 2005
+@@ -29,19 +29,29 @@
+ #define __MINGW32_VERSION 2.0
+ #define __MINGW32_MAJOR_VERSION 2
+ #define __MINGW32_MINOR_VERSION 0
++#define __MINGW32__ 1.0
+ 
+-#define __MSVCRT__
++#define __MSVCRT__ 1
+ #define __MINGW_IMPORT  extern
++#define __MINGW_ATTRIB_NORETURN
++#define __MINGW_ATTRIB_CONST
++#define __MINGW_ATTRIB_MALLOC
++#define __MINGW_ATTRIB_PURE
++
+ #define _CRTIMP
+ #define __CRT_INLINE    extern __inline__
+ 
+-#define _WIN32
+-#define WIN32
++#define WIN32 1
++#define _WIN32 1
++#define __i386__ 1
+ 
+ #ifndef _WINT_T
+ #define _WINT_T
+ typedef unsigned int wint_t;
+ #endif
++
++void *__alloca(unsigned);
++#define alloca __alloca
+ 
+ /* for winapi */
+ #define NONAMELESSUNION
+diff -uwr --exclude tccpe.c ../tcc-cvs/tinycc/tinycc/win32/lib/chkstk.S ./win32/lib/chkstk.S
+--- ../tcc-cvs/tinycc/tinycc/win32/lib/chkstk.S	Sun Apr 17 16:04:52 2005
++++ ./win32/lib/chkstk.S	Fri Sep 23 18:07:56 2005
+@@ -26,4 +26,25 @@
+ 	mov     4(%eax),%eax
+ 	push    %eax
+ 	ret
++
++.globl __alloca
++__alloca:
++    pop     %edx
++    pop     %eax
++    add     $3,%eax
++    and     $-4,%eax
++P1:
++    cmp     $4096,%eax
++    jge      P2
++    sub     %eax,%esp
++    test    %eax,(%esp)
++    mov     %esp, %eax
++    push    %edx
++    push    %edx
++    ret
++P2:
++    sub     $4096,%esp
++    sub     $4096,%eax
++    test    %eax,(%esp)
++    jmp P1
+ 
+diff -uwr --exclude tccpe.c ../tcc-cvs/tinycc/tinycc/win32/lib/wincrt1.c ./win32/lib/wincrt1.c
+--- ../tcc-cvs/tinycc/tinycc/win32/lib/wincrt1.c	Sun Apr 17 16:04:52 2005
++++ ./win32/lib/wincrt1.c	Fri Sep 23 15:21:00 2005
+@@ -1,6 +1,7 @@
+ //+---------------------------------------------------------------------------
+ 
+ #include <windows.h>
++#include <stdlib.h>
+ 
+ #define __UNKNOWN_APP    0
+ #define __CONSOLE_APP    1

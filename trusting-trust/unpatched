@@ -1,0 +1,111 @@
+
+# Now let's pretend we're moving "forward" in time to the unpatched
+# program, should produce the unpatched program!!
+
+rm -fr tcc-0.9.22-unpatched? tcc-0.9.22-orig?
+
+MONITOR=""
+
+## Now let's go back and compile the unpatched file with the PATCHED version
+# PREVIOUSLIB=$NEWDIR
+PREVIOUSLIB=tcc-0.9.22-stage4
+PREVIOUSCOMPILER=$PREVIOUSLIB
+NEWDIR=tcc-0.9.22-unpatched1
+cp -pr tcc-0.9.22 $NEWDIR
+cd $NEWDIR
+./configure --cc="$MONITOR ../$PREVIOUSCOMPILER/tcc -B../$PREVIOUSLIB -I../$PREVIOUSLIB "
+make libtcc1.a
+make tcc
+cd ..
+
+PREVIOUSLIB=$NEWDIR
+PREVIOUSCOMPILER=$PREVIOUSLIB
+NEWDIR=tcc-0.9.22-unpatched2
+cp -pr tcc-0.9.22 $NEWDIR
+cd $NEWDIR
+./configure --cc="$MONITOR ../$PREVIOUSCOMPILER/tcc -B../$PREVIOUSLIB -I../$PREVIOUSLIB "
+make libtcc1.a
+make tcc
+cd ..
+
+PREVIOUSLIB=$NEWDIR
+PREVIOUSCOMPILER=$PREVIOUSLIB
+NEWDIR=tcc-0.9.22-unpatched3
+cp -pr tcc-0.9.22 $NEWDIR
+cd $NEWDIR
+./configure --cc="$MONITOR ../$PREVIOUSCOMPILER/tcc -B../$PREVIOUSLIB -I../$PREVIOUSLIB "
+make libtcc1.a
+make tcc
+cd ..
+
+PREVIOUSLIB=$NEWDIR
+PREVIOUSCOMPILER=$PREVIOUSLIB
+NEWDIR=tcc-0.9.22-unpatched4
+cp -pr tcc-0.9.22 $NEWDIR
+cd $NEWDIR
+./configure --cc="$MONITOR ../$PREVIOUSCOMPILER/tcc -B../$PREVIOUSLIB -I../$PREVIOUSLIB "
+make libtcc1.a
+make tcc
+cd ..
+
+
+
+# Now create tcc the way you would have originally; same result?
+
+NEWDIR=tcc-0.9.22-orig1
+cp -pr tcc-0.9.22 $NEWDIR
+cd $NEWDIR
+./configure --cc=gcc
+make libtcc1.a
+make tcc
+cd ..
+
+PREVIOUSLIB=$NEWDIR
+PREVIOUSCOMPILER=$PREVIOUSLIB
+NEWDIR=tcc-0.9.22-orig2
+cp -pr tcc-0.9.22 $NEWDIR
+cd $NEWDIR
+./configure --cc="$MONITOR ../$PREVIOUSCOMPILER/tcc -B../$PREVIOUSLIB -I../$PREVIOUSLIB "
+make libtcc1.a
+make tcc
+cd ..
+
+PREVIOUSLIB=$NEWDIR
+PREVIOUSCOMPILER=$PREVIOUSLIB
+NEWDIR=tcc-0.9.22-orig3
+cp -pr tcc-0.9.22 $NEWDIR
+cd $NEWDIR
+./configure --cc="$MONITOR ../$PREVIOUSCOMPILER/tcc -B../$PREVIOUSLIB -I../$PREVIOUSLIB "
+make libtcc1.a
+make tcc
+cd ..
+
+PREVIOUSLIB=$NEWDIR
+PREVIOUSCOMPILER=$PREVIOUSLIB
+NEWDIR=tcc-0.9.22-orig4
+cp -pr tcc-0.9.22 $NEWDIR
+cd $NEWDIR
+./configure --cc="$MONITOR ../$PREVIOUSCOMPILER/tcc -B../$PREVIOUSLIB -I../$PREVIOUSLIB "
+make libtcc1.a
+make tcc
+cd ..
+
+PREVIOUSLIB=$NEWDIR
+PREVIOUSCOMPILER=$PREVIOUSLIB
+NEWDIR=tcc-0.9.22-orig5
+cp -pr tcc-0.9.22 $NEWDIR
+cd $NEWDIR
+./configure --cc="$MONITOR ../$PREVIOUSCOMPILER/tcc -B../$PREVIOUSLIB -I../$PREVIOUSLIB "
+make libtcc1.a
+make tcc
+cd ..
+
+echo
+echo "### Here are the hash results for compiler (tcc) and runtime (libtcc1.o)"
+echo
+
+sha1sum */tcc | sort
+echo
+echo
+sha1sum */libtcc1.o | sort
+

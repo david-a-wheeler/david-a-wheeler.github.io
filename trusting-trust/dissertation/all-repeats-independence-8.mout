@@ -1,0 +1,204 @@
+============================== Mace4 =================================
+Mace4 (32) version Aug-2007, Aug 2007.
+Process 6898 was started by dwheeler on dwheeler3-pc.ida.org,
+Sat Nov  6 18:00:52 2010
+The command was "mace4 -c -t 60 -f all-repeats-independence-8.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file all-repeats-independence-8.in
+
+set(prolog_style_variables).
+
+formulas(assumptions).
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).
+portable_and_deterministic(Source,Language,Input) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_portable_and_deterministic).
+portable_and_deterministic(sP,lsP,retarget(sA,eArun)) # label(sP_portable_and_deterministic).
+compile(Source,Compiler,EnvEffects,RunOn,Target) = extract(converttext(run(Compiler,retarget(Source,Target),EnvEffects,RunOn),RunOn,Target)) # label(define_compile).
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
+cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).
+-(accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv)) # label(define_exactly_correspond).
+(all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP).
+end_of_list.
+
+% From the command line: assign(max_seconds, 60).
+
+============================== end of input ==========================
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 portable_and_deterministic(Source,Language,Input) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_portable_and_deterministic) # label(non_clause).  [assumption].
+2 -(accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv)) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+3 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+
+============================== end of process non-clausal formulas ===
+
+============================== CLAUSES FOR SEARCH ====================
+
+formulas(mace4_clauses).
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).
+-portable_and_deterministic(A,B,C) | -exactly_correspond(D,A,B,E) | -exactly_correspond(F,A,B,V6) | converttext(run(F,C,V7,V6),V6,V8) = converttext(run(D,C,V9,E),E,V8) # label(define_portable_and_deterministic).
+portable_and_deterministic(sP,lsP,retarget(sA,eArun)) # label(sP_portable_and_deterministic).
+compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
+cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).
+accurately_translates(A,B,C,D,E,F) # label(define_exactly_correspond).
+-exactly_correspond(compile(A,B,C,D,E),A,F,E) # label(define_exactly_correspond).
+accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).
+end_of_list.
+
+============================== end of clauses for search =============
+
+% The maximum domain element in the input is 0.
+
+============================== DOMAIN SIZE 2 =========================
+
+============================== MODEL =================================
+
+interpretation( 2, [number=1, seconds=0], [
+
+        function(cA, [ 0 ]),
+
+        function(cP, [ 0 ]),
+
+        function(cT, [ 0 ]),
+
+        function(e1, [ 0 ]),
+
+        function(e1effects, [ 0 ]),
+
+        function(e2, [ 0 ]),
+
+        function(e2effects, [ 0 ]),
+
+        function(eA, [ 0 ]),
+
+        function(eAeffects, [ 0 ]),
+
+        function(eArun, [ 0 ]),
+
+        function(lsP, [ 0 ]),
+
+        function(sA, [ 0 ]),
+
+        function(sP, [ 1 ]),
+
+        function(stage1, [ 1 ]),
+
+        function(stage2, [ 0 ]),
+
+        function(extract(_), [ 0, 1 ]),
+
+        function(retarget(_,_), [
+			   0, 0,
+			   1, 0 ]),
+
+        function(converttext(_,_,_), [
+			   0, 0,
+			   0, 0,
+			   1, 0,
+			   1, 0 ]),
+
+        function(run(_,_,_,_), [
+			   0, 0,
+			   0, 0,
+			   1, 1,
+			   1, 1,
+			   0, 0,
+			   0, 0,
+			   1, 1,
+			   1, 1 ]),
+
+        function(compile(_,_,_,_,_), [
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   1, 0,
+			   1, 0,
+			   1, 0,
+			   1, 0,
+			   1, 0,
+			   1, 0,
+			   1, 0,
+			   1, 0 ]),
+
+        relation(portable_and_deterministic(_,_,_), [
+			   0, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0 ]),
+
+        relation(exactly_correspond(_,_,_,_), [
+			   0, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0 ]),
+
+        relation(accurately_translates(_,_,_,_,_,_), [
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1,
+			   1, 1 ])
+]).
+
+============================== end of model ==========================
+
+============================== STATISTICS ============================
+
+For domain size 2.
+
+Current CPU time: 0.00 seconds (total CPU time: 0.03 seconds).
+Ground clauses: seen=1191, kept=1191.
+Selections=2735, assignments=5426, propagations=5353, current_models=1.
+Rewrite_terms=464944, rewrite_bools=66600, indexes=299.
+Rules_from_neg_clauses=60, cross_offs=60.
+
+============================== end of statistics =====================
+
+User_CPU=0.03, System_CPU=0.00, Wall_clock=0.
+
+Exiting with 1 model.
+
+Process 6898 exit (max_models) Sat Nov  6 18:00:52 2010
+The process finished Sat Nov  6 18:00:52 2010

@@ -1,0 +1,159 @@
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+Received: from [129.246.254.14] by secure.runbox.com with http
+ (uid:258406) (RMM 4.0); Fri, 12 Dec 2008 19:48:29 GMT
+From: "David A. Wheeler" <dwheeler@dwheeler.com>
+Reply-To: dwheeler@dwheeler.com
+To: menasce@gmu.edu, ravi.sandhu@utsa.edu
+CC: dwheeler@ida.org
+Subject: "Trusting trust" status
+Date: Fri, 12 Dec 2008 14:48:29 -0500 (EST)
+X-Sender: 258406
+X-Mailer: RMM
+X-Trial-User: no
+
+Hi - I wanted to give you a status report on my trusting trust work.
+
+As expected, scaling up to do "trusting trust" on a _real_, industrial-stre=
+ngth
+compiler is hard.  I'm not finished, but I think I'm homing in on a
+useful approach involving the Intel C compiler, "simple" recompilation
+(vs. cross-compilation), and using gcc 3.0.4 as the compiler-under-test.
+
+I'm going to need more time, though; I hope that's okay.
+I'll be submitting a request for more time separately.
+
+Details below on what I've been doing.  It's more a litany of
+"things that didn't work", but as I noted, I think I've honed in on
+a sequence that _is_ working.
+
+--- David A. Wheeler
+
+
+=3D=3D DETAILS =3D=3D
+
+The only source-available compiler that is universally acknowledged as
+"industrial strength" is gcc.  So fundamentally, I must find a way to
+apply the "trusting trust" test (DDC) to gcc, using some other trusted comp=
+iler.
+
+I tried to use the "tcc" compiler as my trusted compiler for quite some tim=
+e.
+They've fixed many of the bugs that I had trouble with in the last go-aroun=
+d,
+and it can compile the Linux kernel, so you'd think it'd be good enough.
+And there are tremendous advantages to having source for the trusted compil=
+er -
+I can use the compilers to check each other, have a third compiler check bo=
+th
+(and do it in stages), and so on.
+
+But I've reluctantly abandoned tcc.  The simple truth is that tcc isn't
+capable of the job.  This test is exquisitely sensitive;
+it doesn't require a "bug-free" trusted compiler, but it does (essentially)
+require that the source code of the compiler-under-test not trigger
+a bug in the trusted compiler.  The test is fundamentally a "trigger" test,
+showing where 2 compilers differ in their semantic interpretation;
+a bug in the trusted compiler, if triggered, will produce different results=
+...
+just like malicious code in a malicious compiler will trigger different res=
+ults.
+Tcc just isn't mature enough for the job; too many bugs.
+
+I tried another compiler with source available, "lcc" (from Princeton).
+But it wasn't able to handle the job either, and it's not really supported
+anyway (it's not open source software, which is part of the issue).
+
+I think there's a simple reason that other source-available compilers
+are not ready for this task: gcc "works too well".  gcc is by no means
+perfect, but for MOST people it's "good enough".  It produces acceptably
+good object code, and it can generate code for just about any processor in =
+use.
+There are compilers that produce better object code - but for most users
+it's not _enough_ better to matter.  Creating a cross-compiler is a
+madhouse of complications... but people have figured out how to do it
+for "common cases", so compiler _users_ don't need to.
+
+After examining alternatives, I've decided to spend most of
+my time working with the "Intel C++ compiler" (icc) as the trusted compiler.
+The name is misleading; it _also_ includes a C compiler.
+There are other compilers available, but this appears to be
+one of the better ones (after looking into many).
+The MS C compiler isn't bad, but it's tied to MS Windows;
+while gcc can be compiled on Windows, it makes lots of Unixy
+assumptions, and trying to mix the two is very likely to cause lots
+of thorny problems.  I'm trying to solve one problem at a time :-).
+
+Which brings me to cross-compiling.  Cross-compiling gcc is
+outrageously complicated.  It's _possible_, of course, but it's so
+painful that there are fancy scripts to do it.  Of course, these scripts
+don't expect _my_ kind of use; they essentially assume that you already
+have a working gcc.  But since I must use a different trusted compiler
+instead, these scripts work against me.  Since the DDC process
+permits cross-compiling, I'd been trying to modify these scripts.
+However, I more recently realized that this is NOT necessary.
+The DDC process permits native compilation,
+and I only need to show that DDC _works_.
+So although I spent a lot of time trying to get cross-compiling working
+with DDC, I've finally realized that isn't _necessary_ for my thesis.
+Getting native compilation working is much easier, and is
+sufficient for the purpose, so I should do that instead.
+It actually isn't even limiting; you could build a
+verified compiler on one platform, and then use
+it to do cross-compilation, producing another verified complier.
+
+So, using the Intel C++ compiler and native compiling,
+I've tried to get many different gcc versions to get through DDC.
+I only need one to get through, to show that it works... and once I
+solve the problems of one, other versions will be much easier.
+Basically, by using gcc to compile gcc as the "compiler under test",
+I can then use icc as my trusted compiler, compile gcc source using the
+DDC process, and get the answer.
+
+I've had a number of remarkable problems.  I'm using the
+stock gcc4 binary of Fedora 9, which should be capable of all sorts of
+goodness.  Many gcc versions cause me problems when I try to compile them:
+* 2.95.3 invokes a basic bug:
+  when compiled by gcc4, its stage2 is different than stage3.
+  That's never supposed to happen, so no point in running it through DDC.
+* 3.1.1, 3.2.3: gcc4 won't even compile it!!
+* 3.4.4 cannot be compiled by icc (bug in icc).
+* 4.0.4 and 4.1.2 invoke a subtle difference in how icc does things.
+   They produce error while "loading shared libraries: libimf.so".
+    I've tracked this back, and believe that they are because
+    the Intel C++ compiler wants to
+    e.g., _intel_fast_memcpy and _intel_fast_memset,
+    that aren't expanded to __builtin_memcpy and __builtin_memset.
+    Unfortunately, it looks like the gcc4 build files essentially assume
+    that any compiler will work "exactly like gcc", and no one tested this.
+    More info here:
+   http://www.jsw4.net/info/listserv_archives/mysql/04-wk25/msg00062.html
+   http://software.intel.com/en-us/forums/intel-c-compiler/topic/52776
+    This is probably solveable long-term, but it requires some serious tric=
+kery.
+
+The basic problem is that while in THEORY the gcc compiler can be
+compiled by other compilers, people haven't tested/maintained that for
+years.  After all, once gcc became self-hosting, why bother?
+So its code & build instructions make lots of unwarranted assumptions about
+semantics that aren't true.
+
+Version 3.0.4 of gcc seems to be the best "non-ancient" gcc version that
+at least avoids some of the worst problems.  I can compile it with both
+gcc and icc, but they produce different results.
+
+These differences will be good grist for the paper, once I determine
+their causes and resolve them.  In particular:
+* There are few symbols that get an extra prefix of: ../../gcc-3.0.4/libibe=
+rty/
+  (stripping the executables gets rid of these, but still...)
+* Some "Red Hat" become "GNU".
+* The gcc's whose ancestor is icc have 4 fewer "nop" operations at
+   a key point than the gcc's whose ancestor is gcc4.
+   This "shouldn't" happen, but does.  This one is of particular concern,
+   because this is in the code itself.
+
+
+--- David A. Wheeler=20

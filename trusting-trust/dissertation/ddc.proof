@@ -1,0 +1,40 @@
+============================== prooftrans ============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 2627 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Mon Oct 29 11:04:49 2007
+The command was "prover9 -t 60 -f ddc.in".
+============================== end of head ===========================
+
+set(prolog_style_variables).
+============================== end of input ==========================
+
+============================== PROOF =================================
+
+% -------- Comments from original proof --------
+% Proof 1 at 0.00 (+ 0.00) seconds: source_corresponds_to_executable.
+% Length of proof is 19.
+% Level of proof is 6.
+% Maximum clause weight is 19.
+% Given clauses 11.
+
+1 accurately_translates(A,B,C,D,E,F) -> exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+2 (all A accurately_translates(cT,lsP,sP,A,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+3 accurately_translates(A,lsP,sP,B,C,D) -> accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA) # label(non_clause).  [assumption].
+4 stage2 = cA -> exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable) # label(non_clause) # label(goal).  [goal].
+5 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(1)].
+6 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(2)].
+7 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).  [clausify(3)].
+8 stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).  [assumption].
+9 compile(sP,cT,e1effects,e1,e2) = stage1.  [copy(8),flip(a)].
+10 stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).  [assumption].
+11 compile(sA,stage1,e2effects,e2,eArun) = stage2.  [copy(10),flip(a)].
+12 cA = stage2 # label(source_corresponds_to_executable).  [deny(4)].
+13 -exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable) # answer(source_corresponds_to_executable).  [deny(4)].
+14 -exactly_correspond(stage2,sA,lsA,eArun).  [para(12(a,1),13(a,1))].
+15 accurately_translates(compile(sP,cT,A,e1,e2),lsA,sA,B,e2,eArun).  [resolve(7,a,6,a)].
+16 accurately_translates(stage1,lsA,sA,A,e2,eArun).  [para(9(a,1),15(a,1))].
+17 exactly_correspond(compile(sA,stage1,A,e2,eArun),sA,lsA,eArun).  [resolve(5,a,16,a)].
+18 exactly_correspond(stage2,sA,lsA,eArun).  [para(11(a,1),17(a,1))].
+19 $F # answer(source_corresponds_to_executable).  [resolve(18,a,14,a)].
+
+============================== end of proof ==========================

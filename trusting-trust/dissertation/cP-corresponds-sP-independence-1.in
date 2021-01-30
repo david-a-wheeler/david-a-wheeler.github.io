@@ -1,0 +1,20 @@
+% Diverse Double-Compiling (DDC), represented using prover9
+% by David A. Wheeler.
+
+set(prolog_style_variables).
+
+formulas(assumptions).
+ - ( cP = compile(sP, cGP, ePeffects, eP, eA))  # label(definition_cP).
+
+ all EnvEffects accurately_translates(cGP, lsP, sP, EnvEffects, eP, eA)
+   # label(cGP_compiles_sP).
+
+ accurately_translates(Compiler, Lang, Source, EnvEffects,
+                       ExecEnv, TargetEnv) ->
+   exactly_correspond(compile(Source, Compiler, EnvEffects,
+                              ExecEnv, TargetEnv),
+                      Source, Lang, TargetEnv)
+   # label(define_exactly_correspond).
+
+end_of_list.
+

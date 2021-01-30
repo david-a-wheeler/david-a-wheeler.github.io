@@ -1,0 +1,46 @@
+
+# Here are additions to the top-level Makefile by David A. Wheeler
+# Unfortunately, "make bootstrap" doesn't permit enough control over
+# the build process.  So we'll add new targets to allow finer control, e.g.,
+# stage1_build, stage2_build, stage3_build.  See the bootstrap rules above.
+
+# E.G., "make all-bootstrap", "make stage1_build", "make runtime-libraries"
+# re-build libiberty, "make stage2_build", "make stage3_build"
+
+.PHONY: stage1_build stage2_build stage3_build stage4_build
+stage1_build stage2_build stage3_build stage4_build:
+	@r=`pwd`; export r; \
+	s=`cd $(srcdir); pwd`; export s; \
+	$(SET_LIB_PATH) \
+	echo "Directly build the compiler for $@"; \
+	cd gcc && $(MAKE) $(GCC_FLAGS_TO_PASS) $@
+
+.PHONY: compare
+compare:
+	@r=`pwd`; export r; \
+	s=`cd $(srcdir); pwd`; export s; \
+	case "$@" in \
+	  *bootstrap4-lean ) \
+			msg="Comparing stage3 and stage4 of the compiler"; \
+	  		compare=compare3-lean ;; \
+	  *bootstrap4 ) msg="Comparing stage3 and stage4 of the compiler"; \
+	  		compare=compare3 ;; \
+	  *-lean )	msg="Comparing stage2 and stage3 of the compiler"; \
+	  		compare=compare-lean ;; \
+	  * )		msg="Comparing stage2 and stage3 of the compiler"; \
+	  		compare=compare ;; \
+	esac; \
+	$(SET_LIB_PATH) \
+	echo "$$msg"; \
+	cd gcc && $(MAKE) $(GCC_FLAGS_TO_PASS) $$compare
+
+.PHONY: runtime-libraries
+runtime-libraries:
+	@r=`pwd`; export r; \
+	s=`cd $(srcdir); pwd` ; export s; \
+	$(SET_LIB_PATH) \
+	echo "Building runtime libraries"; \
+	$(MAKE) $(BASE_FLAGS_TO_PASS) $(RECURSE_FLAGS) all
+
+# new end of Makefile.in
+

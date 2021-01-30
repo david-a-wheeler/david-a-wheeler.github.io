@@ -1,0 +1,210 @@
+% Proof of simpler form of "Diverse Double-Compiling" (DDC) using PVS.
+% by David A. Wheeler, 2007-08-30, 4:00pm.
+
+% This version of the proof simplifies some issues.  It completely ignores the
+% various environments, it presumes all compilers are deterministic
+% (not all need to be), it presumes that the compiler is self-regenerating
+% (not necessary, but handling the alternative is more complex),
+% and so on.  It also states in words what it means when
+% executables "correspond" to source; perhaps that needs to be stated
+% more formally.  But this simpler version of the proof is easier to
+% understand, and reviewing it will make it easier to understand a more
+% complicated proof.
+
+ddc0: THEORY
+ BEGIN
+
+  data: TYPE+
+  % This is any data, executable or not, inc. compilers and source code.
+  % We _could_ create subtypes for source code and object code, e.g.:
+  %   source_code : TYPE+ FROM data
+  %   obj_code : TYPE+ FROM data
+  % but these additions would muddy the specification and proof, not
+  % clarify it, so we won't bother.  E.G., running an arbitrary
+  % program produces some data, but running a compiler produces the subtype
+  % object code (not merely any data)... and that would have to be noted.
+
+  source : VAR data
+  executable, compiler, compiler1, compiler2 : VAR data
+  input : VAR data
+  % We declare these variables' types here so we don't have to keep
+  % redeclaring their types below.
+
+  run(executable, input) : data       % returns output
+  % Strictly speaking, the output of run is ALL output (files,
+  % standard out, etc.). Of course the only output that matters is the
+  % subset of the output data that is actually USED by a later step.
+
+  compile(source, compiler) : data =  % returns object
+     run(compiler, source) % Will discuss environment later.
+
+  functionally_equal(compiler1, compiler2, source, input) : bool =
+          (run(compile(source,compiler1),input) =
+           run(compile(source,compiler2),input) )
+  % Two compilers are functionally equal for given source and input if they
+  % both compile that source, run those executables with the same input, and
+  % then produce the same output.  E.G., two different C compilers can take
+  %    #include <stdio.h>
+  %    main() { printf("Hello world, I got character %c\n", getc()); }
+  % and generate different executable files, but if both are run and given
+  % the same input, they should produce the same output.
+
+  A  : data % This is the Compiler we want to test.
+  % Note: compiler A needs to be able to reproduce itself, e.g.:
+  %   A = compile(sA, A)
+  % We don't need to make this an axiom in the proof, because:
+  % 1. If A corresponds to sA, then the CorrectA definition below
+  %    already covers this case.  See A_reproduces_if_correct, below.
+  % 2. If A does not correspond to sA (e.g., it has an unviewable
+  %    Trojan horse), then it either WILL or WILL NOT reproduce itself.
+  %    If it WILL NOT reproduce itself, then clearly A doesn't correspond
+  %    to sA... but we can check that anyway by checking if A is
+  %    the CorrectA.  The problem is that even if A _does_ reproduce itself,
+  %    we've proved nothing - it's possible create an A that reproduces
+  %    itself but still doesn't correspond to sA.
+
+
+  sA : data % Source code, putatively of A (but might not be).
+
+  ACorrectA : data % An executable could exist that exactly implements sA.
+  % This is a "big trick" of the proof - we assert that an executable
+  % COULD exist that exactly implements sA.  That is, ACorrectA
+  % functionally corresponds to sA.  This assertion that ACorrectA can exist
+  % covers a multitude of assumptions that are easily met in practice, but
+  % are nevertheless important to make the proof valid.
+  % In particular, this statements asserts that the language that sA
+  % is written in CAN be implemented, and that the environment is
+  % sufficiently capable to run it.  Thus sA can't include calls to
+  % impossible functions like:
+  %   return_last_digit_of_pi()
+  % ACorrectA may or may not be the same as A; if A is malicious, it won't be.
+  % ACorrectA may or may not exist in real life; we are merely asserting
+  % that it COULD exist, for purposes of the proof.
+
+  CorrectA : data = compile(sA, ACorrectA)
+  % An executable created by compiling sA using ACorrectA.
+  % Again, this might not exist in real life, but we are asserting that
+  % it COULD exist in real life.
+  % Since this compiler is compiled by some ACorrectA (which corresponds
+  % to sA), which then compiles sA, CorrectA also corresponds to sA.
+  % This declaration is interesting, because it reveals that CorrectA
+  % on a given environment is unique!  This is all because
+  % sA describes a deterministic compiler, and it is compiling
+  % itself.  There are many possible implementations of ACorrectA, but any
+  % one of them is deterministic (that is, given the same inputs they produce
+  % the same outputs) because sA describes a deterministic program.
+  % A deterministic program, given the same input, produces the same output,
+  % so when any ACorrectA is given the same input, it produces the same output.
+  % So while there are many possible implementations
+  % of ACorrectA, there is only one CorrectA for a given sA and environment.
+  % Also, since sA describes a deterministic compiler,
+  % CorrectA _should_ be the same as A, but it might not be.
+
+  CorrectA_self_compiles: AXIOM
+    compile(sA, CorrectA) = CorrectA
+  % CorrectA will compile to itself.  Note, however, that even if A can
+  % compile to itself, it might not be the correct A.
+  % This implies that ACorrectA produces deterministic results when given sA,
+  % and thus that sA defines a deterministic compiler.
+  % NOTE: I forgot to state this in my original manual proof.
+
+  T : data  % Trusted compiler
+  trusted_compiler_functionally_equal: AXIOM
+      functionally_equal(T, CorrectA, sA, sA)
+  % T and CorrectA are functionally equal for the purposes of sA.
+  % Thus, T has to implement sA's language.  E.g., you can't use a Java
+  % compiler (directly) as trusted compiler T if sA was written in C++.
+  % T doesn't need to implement the WHOLE language sA was written in as
+  % defined by some language standard; T only needs to implement
+  % the parts of the language sA uses, and with the functionality that
+  % sA expects.
+  %
+  % If the source code sA _depends_ on a language property, then that property
+  % is a REQUIREMENT of the language for the purposes of DDC, even if the
+  % "official" spec of that language doesn't include that requirement.
+  % For example:
+  % 1. If the official language spec permits certain operations to done
+  %    in an arbitrary order (such as right-to-left and left-to-right
+  %    evaluation of function parameters), but the source of sA requires a
+  %    particular order of evaluation, then T must implement the same order.
+  % 2. When sA requires support for certain minimal lengths  (e.g., depth of
+  %    parentheses, length of identifiers that are considered unique, etc.),
+  %    then both T and CorrectA must support them.
+
+  % Now define main DDC process, which has two stages:
+
+  stage1 : data = compile(sA, T)
+  stage2 : data = compile(sA, stage1)
+
+  % NOTE: Existence of data implies termination of the process that created
+  % that data.  Thus, all of the statements declaring that some data exists
+  % (e.g., A, stage1, stage2, CorrectA) imply an assumption that their
+  % creation processes terminated.  This doesn't limit the proof's utility;
+  % a compilation process that never finished would not be considered
+  % useful, and it would certainly be noticed.
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%% PROOFS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  A_reproduces_if_correct:  COROLLARY
+    ((A = CorrectA) => (A = compile(sA, A)))
+  % (lemma "CorrectA_self_compiles")
+  % (grind)
+  % If A is CorrectA, then A can reproduce itself (because CorrectA can).
+  % That's interesting to know, and proving this helps us gain confidence
+  % that we've correctly specified the situation.
+  % This means that we have a test we can use before using the DDC process,
+  % which I term the "self-regeneration" test: If we can't get compiler A to
+  % regenerate, then we have a flawed assumption and there's no need to use
+  % the DDC process (we KNOW something is wrong with our assumptions).
+  % But if we only knew that A could regenerate itself,
+  % without the information from the DDC process, we couldn't
+  % show that the converse (that A corresponds to sA).
+  % I.E., without the additional information from DDC, we couldn't show:
+  %    (A = compile(sA, A)) => (A = CorrectA)
+  % The next proofs lead up to showing that the DDC process (described by
+  % stage1 and stage2) add the information that prove that A is CorrectA.
+
+  T_CorrectA_same_results: LEMMA
+    run(compile(sA, T), sA) = run(compile(sA,CorrectA), sA)
+  % (lemma "functionally_equal")
+  % (lemma "trusted_compiler_functionally_equal")
+  % (grind)
+
+  % Claim 1:
+  stage1_eq_CorrectA: CLAIM
+    run(stage1, sA) = run(CorrectA, sA)
+  % (lemma "trusted_compiler_functionally_equal")
+  % (expand "functionally_equal")
+  % (expand "stage1")
+  % (rewrite "CorrectA_self_compiles")
+
+  % Claim 2, which is that "anything malicious in A can't affect the
+  % DDC process", is vacuously true. A is never run, and we presume that
+  % the DDC tools correctly process A as data, so any malicious code in A
+  % can't affect the DDC process.  Note the latter point: If the "compare for
+  % equality" tool fails on A (e.g., has a buffer overflow), or if the
+  % tool to retrieve A fails to get the A that's actually executed
+  % (but gets some other object instead), the DDC process will produce
+  % false answers.  If this is a concern, strengthen the tools, or
+  % expand the definition of "A" to include all the components of concern
+  % (as discussed in more detail in the paper).
+
+  % Claim 3:
+  stage2_is_CorrectA: CLAIM
+    stage2 = CorrectA
+  % (REWRITE "stage2")
+  % (REWRITE "compile")
+  % (REWRITE "stage1")
+  % (REWRITE "T_CorrectA_same_results")
+  % (REWRITE "CorrectA_self_compiles")
+  % (LEMMA "CorrectA_self_compiles")
+  % (GRIND)
+
+ % Final theorem.  If the output of stage2 equals A (the compiler under test),
+ % the A doesn't contain a Trojan horse (given the assumptions above).
+ A_corresponds_with_sA: THEOREM
+   ((stage2 = A) => (A = CorrectA))
+ % (grind :theories "ddc0" :exclude "A_reproduces_if_correct")
+
+END ddc0
+

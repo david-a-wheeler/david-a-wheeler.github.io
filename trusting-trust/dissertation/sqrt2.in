@@ -1,0 +1,39 @@
+% This is a proof that sqrt(2) is irrational, for prover9.
+% This file is a translation into prover9 by David A. Wheeler
+% of the Otter proof from Larry Wos, by Michael Beeson and William McCune,
+% that was published in "The Seventeen Provers of the World"
+% compiled by Freek Wiedijk. (http://www.cs.ru.nl/~freek/comparison/).
+% This version's notation is much easier to read, because it uses capabilities
+% such as infix operators, implies (->), and iff (<->).
+% Usage:
+% prover9 -f sqrt2.in > sqrt2.out
+
+% This proof presumes numbers only range over positive integers (1,2,...).
+% It's a proof by contradiction; the assumptions are entered, and prover9
+% shows that there is a contradiction.
+
+formulas(assumptions).
+1*x = x.                            % identity
+x*1 = x.
+x*(y*z) = (x*y)*z.                  % associativity
+x*y = y*x.                          % commutativity
+(x*y = x*z ) -> y = z.              % cancellation (0 is not allowed, so x!=0).
+
+% Now let's define divides(x,y): x divides y.  divides(2,6) is true b/c 2*3=6.
+% The original Otter proof used the clausal form:
+%  -divides(x,y) | (x*f(x,y)) = y.
+%  x*z != y | divides(x,y).
+% but I find this clausal form rather confusing. I think expressing it
+% using traditional first-order logic is MUCH clearer as an input, and
+% prover9 will immediately convert it into the clausal form:
+
+divides(x,y) <-> (exists z x*z = y).
+
+divides(2,x*y) ->
+  (divides(2,x) | divides(2,y)).    % If 2 divides x*y, it divides x or y.
+a*a = (2*(b*b)).                    % a/b = sqrt(2), so a^2 = 2 * b^2.
+(x != 1) ->  -(divides(x,a) &
+               divides(x,b)).       % a/b is in lowest terms
+2 != 1.                             % Original author almost forgot this.
+end_of_list.
+

@@ -1,0 +1,54 @@
+#!/bin/sh
+
+# cmpar
+# compare 2 '.a' files, report if equal.
+
+if [ $# != 2 ]
+then
+  echo "Must provide two parameters"
+  exit 1
+fi
+
+if [ ! -r "$1" ]
+then
+  echo "Cannot read $1"
+fi
+
+if [ ! -r "$2" ]
+then
+  echo "Cannot read $2"
+fi
+
+temporary=/tmp/$$/
+
+rm -fr $temporary
+mkdir $temporary
+mkdir $temporary/1
+mkdir $temporary/2
+
+cp -p $1 $temporary/1.a
+cp -p $2 $temporary/2.a
+
+cd $temporary
+ar t 1.a > 1.a.list
+ar t 2.a > 2.a.list
+
+if cmp -s 1.a.list 2.a.list
+then
+  echo "Contain same object names!"
+else
+  echo "Contain different objects:"
+  diff -u 1.a.list 2.a.list
+fi
+
+cd 1
+ar x ../1.a
+md5sum * > ../1.md5sum
+cd ../2
+ar x ../2.a
+md5sum * > ../2.md5sum
+cd ..
+echo "List of differing md5sum values:"
+diff -u 1.md5sum 2.md5sum
+
+

@@ -1,0 +1,68 @@
+% DDC, represented using prover9.
+% David A. Wheeler
+
+% Usage:
+% prover9 -f ddc0.in > ddc0.out
+
+% Default naming conventions require hard-to-read names; use this instead:
+set(prolog_style_variables).
+
+% This attempts to find a simpler-to-understand proof:
+set(restrict_denials).
+
+% Can add these to try to find a simpler proof:
+% assign(max_proofs, 5).
+% set(reuse_denials).
+
+formulas(assumptions).
+ data(sA).   % sA is a kind of data.
+ data(cA).   % cA is, too.
+
+ % run(executable, input) returns data as output
+
+ % Was: compile(Source, Compiler) = run(Compiler, Source).
+ % "extract()" represents "extract only compilation-relevant data", i.e.,
+ % throw away error reports.
+ compile(Source, Compiler) = extract(run(Compiler, Source)).
+
+ functionally_equal(Compiler1, Compiler2, Source, Input) <->
+          (run(compile(Source,Compiler1),Input) =
+           run(compile(Source,Compiler2),Input) ).
+
+ correspond(correctA, sA).  % compiler CorrectA corresponds with sA.
+
+ (correspond(Compiler1, Source) & correspond(Compiler2, Source)) <->
+     (all OtherSource all Input
+       functionally_equal(Compiler1, Compiler, OtherSource, Input)).
+
+ correctA = compile(sA, aCorrectA).
+
+ compile(sA, correctA) = correctA.
+
+ % cT doesn't need to correlate with sA in all ways; it just needs to be
+ % functionally equivalent to correctA when compiling sA.
+ functionally_equal(cT, correctA, sA, sA).
+
+ run(compile(sA,cT),sA) = run(compile(sA,correctA), sA).
+
+ stage1 = compile(sA, cT).
+ stage2 = compile(sA, stage1).
+
+end_of_list.
+
+formulas(goals).
+%  A_reproduces_if_correct:  COROLLARY
+% (cA = correctA) -> (cA = compile(sA, A)).
+
+% Claim 1:
+% run(stage1, sA) = run(correctA, sA).
+
+% Claim 3:
+% stage2 = correctA.
+
+% Final:
+
+(stage2 = cA) -> (cA = correctA).
+
+end_of_list.
+

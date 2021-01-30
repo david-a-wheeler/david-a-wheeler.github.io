@@ -1,0 +1,226 @@
+% Diverse Double-Compiling (DDC), represented using prover9
+% by David A. Wheeler.
+
+% Usage:
+% prover9 -f repeats.in > repeats.out
+
+% Prover9 implements first-order logic, so the formal assumptions and goals
+% are written using very straightforward first-order logic.
+% See its documentation for more about its format.
+
+% Prover9's default naming conventions require hard-to-read names. We'll use
+% Prolog conventions instead (e.g., variables begin with an uppercase letter,
+% while constants begin with a lowercase letter):
+set(prolog_style_variables).
+
+% Attempt to find a simpler-to-understand proof, at the cost of needing to
+% work harder to find it:
+set(restrict_denials).
+
+formulas(assumptions).
+
+ %!exactly_correspond(Executable, Source, Lang, RunOn) --> bool.
+ %    True iff Executable exactly implements source code Source when
+ %    interpreted as language Lang when run on environment RunOn.
+
+ exactly_correspond(cP, sP, lsP, eA) # label(cP_corresponds_to_sP).
+ % Executable cP exactly corresponds to source sP.
+
+ % It turns out that stage1 exactly corresponds to sP, but instead of
+ % assuming that, we'll prove that claim using more specific (and more
+ % easily believed) assumptions.  They will eventually show that:
+ %   exactly_correspond(stage1, sP, lsP, e2).
+
+ %! deterministic(Source, Language) -> bool.
+ %    True iff the given source, compiled by a compiler for Language, will
+ %    be deterministic.  This means that Source avoids using any potentially
+ %    non-deterministic capabilities in the Language, such as a random
+ %    number generator, presuming that memory addresses that it can read
+ %    will be the same on all executions, etc.
+ %
+ % A compiler might not be deterministic, e.g., when there's are optimization
+ % alternatives, it could "flip a coin" by calling on a random number
+ % generator in the environment, and produce different results each time.
+ % It could depend on the memory locations used for memory allocation,
+ % process time allocation to different threads, etc.
+ % Most compilers are deterministic, because it is much more difficult to test
+ % non-deterministic compilers.
+ %
+ % Note that gcc's C++ compiler includes the ability to control the random
+ % number seed used during a compilation, so the ability to enforce determinism
+ % is not a pipe dream.
+
+ ( deterministic(Source, Language) & portable(Source, Language) &
+   exactly_correspond(Executable1, Source, Language, Environment1) &
+   exactly_correspond(Executable2, Source, Language, Environment2)) ->
+     ( converttext(run(Executable1, Input, EnvEffects1, Environment1),
+                   Environment1, Target) =
+       converttext(run(Executable2, Input, EnvEffects2, Environment2),
+                   Environment2, Target))
+   # label(define_determinism).
+ % If the source code uses only the deterministic capabilities of a language,
+ % and two executables exactly correspond to that same source code (they
+ % may execute on different environments), then those executables - when
+ % given the same input - will produce the same output.
+ %
+ % So, two C compilers might be given: ... printf("%d\n", 2+2); ...
+ % the outputs of those compilers is likely to be completely different, but
+ % RUNNING them must produce the same result (4), once their text output
+ % (if any) is converted into the same environmental format.
+ % Obviously, this depends on them implementing the same language
+ % (for the purposes of the given Source).
+
+ % Note the unusual function converttext(Data, Environment1, Environment2),
+ % which converts any text it receives from
+ % Environment1's standard text format to Environment2's standard text format.
+ % If all of the world were Unix-based machines processing ASCII, this
+ % wouldn't be needed.  But unfortunately, many programs read/write text,
+ % and there is some variation in how text is represented.  In particular,
+ % line-endings vary; some use LF (Unix,Linux,current Mac), some use CRLF
+ % (Windows, CP/M), and some even use CR (old Mac).  The character
+ % encoding can be different too (e.g., ASCII, UTF-8, UTF-16 of various kinds,
+ % or even EBCDIC).
+
+
+ deterministic(sP, lsP) # label(sP_deterministic).
+ % We will presume that source sP is deterministic. I.E., it avoids
+ % all non-deterministic capabilities of language lsP, or uses them only in
+ % ways that will not affect the output of the program. It can use
+ % threads, but if it does it will use locks etc. to ensure that race
+ % conditions will be avoided so that the output will be the same
+ % on each run given the same input.  In some cases, setting the random
+ % number seed and algorithm for "randomness" may be necessary to ensure
+ % determinism.
+ %
+ % Strictly speaking, this is an overly strong requirement; we only really
+ % REQUIRE that sP be deterministic when it's compiling sA, and only in
+ % certain environments.   But expressing that nuance makes the proof more
+ % complex, and doesn't really add anything.  Generally, compiler developers
+ % want their compilers to be deterministic, period, and not only
+ % when compiling specific programs or only when running on specific
+ % environments.  So while this is a stronger requirement than we really need
+ % for the proof, it's a realistic assumption that many real compilers meet.
+
+ % Note that we do NOT require that cT or cGP be deterministic.
+ % They _could_ be deterministic, and often will be, but we don't require it.
+
+ portable(sP, lsP) # label(sP_portable).
+ % Similarly, sP must stick to the portable portion of lsP.
+
+ %!run(Executable, Input, EnvEffects, Environment) --> data
+ % represents running Executable in Environment, giving it Input + the various
+ % environmental effects EnvEffects.  The latter models whatever the language
+ % allows or requires the environment to vary that COULD have an effect
+ % on the result, e.g., random number generator,
+ % stack location, heap allocation location, thread scheduling
+ % (for a multi-threaded program this could critically change things!).
+ % It returns whatever outputs are produced by running it, including
+ % standard out, standard error, and any files (file names/locations/contents)
+ % generated or modified by its execution.  Since different runs could have
+ % different environment effects as input (e.g., the random number generator
+ % from the environment might produce something different),
+ % running the same executable with the same Input _could_ produce
+ % different results.
+
+ %!compile(Source, Compiler, EnvEffects, RunOn, Target) --> data.
+ % represents compiling Source with the Compiler, running it in environment
+ % RunOn but targeting the result for environment Target. The
+ % "extract()" term represents "extract only executable produced",
+ % i.e., we throw away error reports made during the compilation process
+ % that are technically outputs but will not be used later.
+ % In most cases, the "extract" operation considers
+ % only the files generated and does NOT include outputs to standard out,
+ % standard error, and/or log files.
+ % retarget() represents modifications to the source to change the target
+ % (if necessary).
+
+
+ compile(Source, Compiler, EnvEffects, RunOn, Target) =
+     extract(converttext(run(Compiler, retarget(Source, Target),
+             EnvEffects, RunOn), RunOn, Target)) # label(define_compile).
+ % This is a general definition of a compilation of a compiler.
+ % To perform a compilation, you retarget the given source code
+ % to generate code for some lateger target to produce your final source code.
+ % Then run the Compiler on that Source code on some environment RunOn;
+ % if it's a nondeterministic compiler, then the environmental EnvEffects
+ % may have an effect on the results.  The output will probably have
+ % 'binary' and 'text' results; convert the text to the format of Target.
+ % The portions of the compilation results that can be run later are
+ % then extracted (throwing away warnings, etc. from the Compiler).
+ %
+ % Note: In practice, you only need to perform the 'converttext' work on
+ % text that will be extracted; if it will be thrown away, then there's
+ % no need to actually perform the conversion.  But this is merely
+ % an optimization; expressing this mathematically obscures the main issue.
+
+ % These implement the graph showing the DDC process.  We set up DDC so that:
+ % stage1 = compilation of source sP using cT, running on environment e1.
+ % stage2 = compilation of source sA using stage1, running on environment e2.
+ % Both cA and stage2 are supposed to run on environment eArun.
+
+ stage1 = compile(sP, cT, e1effects, e1, e2) # label(definition_stage1).
+ stage2 = compile(sA, stage1, e2effects, e2, eArun)
+   # label(definition_stage2).
+
+ % Here, we describe how we EXECTED cP and cA to have been created.
+ % It's quite possible that these assumptions are not true, but in that case,
+ % if the different have an executable effect the DDC process will catch it.
+
+ % cP = compile(sP, cT, ePeffects, eP, eA)  # label(definition_cP).
+
+ cA = compile(sA, cP, eAeffects, eA, eArun) # label(definition_cA).
+
+
+ %!accurately_translates(Compiler, Lang, Source, EnvEffects, RunOn, Target)
+ %!              --> bool.
+ %   True iff Compiler (an executable) correctly implements language Lang
+ %   when compiling Source (e.g., exactly that, nothing more or less),
+ %   if run on environment RunOn and targeting environment Target.
+ %!exactly_correspond(Executable, Source, Lang, RunOn) --> bool.
+ %    True iff Executable exactly implements source code Source when
+ %    interpreted as language Lang when run on environment RunOn.
+
+
+ accurately_translates(Compiler, Lang, Source, EnvEffects,
+                       ExecEnv, TargetEnv) ->
+   exactly_correspond(compile(Source, Compiler, EnvEffects,
+                              ExecEnv, TargetEnv),
+                      Source, Lang, TargetEnv)
+   # label(define_exactly_correspond).
+ % Define what it means when source and executable "exactly correspond".
+ % If some Source (written in language Lang) is compiled by a compiler that
+ % accurately translates it, then the resulting executable exactly corresponds
+ % to the original Source.
+
+ all EnvEffects accurately_translates(cT, lsP, sP, EnvEffects, e1, e2)
+   # label(cT_compiles_sP).
+ % Trusted compiler cT is a compiler for language lsP, and it will
+ % accurately translate sP.  This is only guaranteed if cT is run
+ % in environment e1.  cT targets (generates code for) environment e2.
+
+ % See previous proof for subtleties about language, etc.
+
+end_of_list.
+
+formulas(goals).
+
+ cA = stage2 # label(always_equal).
+ % If the above assumptions are true, then cA and stage2 will be equal.
+ % If they aren't, then one of the assumptions is wrong.
+
+ % Note that if someone has corrupted cA or cP (including indirectly, by
+ % causing the grandfather cGP to be corrupted in a way that affects cA),
+ % these assumptions will no longer hold.
+ % If the compiler executable cP is corrupted, then it will fail the assumption
+ % cP_exactly_corresponds.  If the compiler executable cA is corrupted
+ % (e.g., it was replaced by some corrupt executable), then
+ % it will fail the assumption definition_cA.
+ % If these assumption failures produce a different cA, then cA and stage2
+ % will no longer be the same... but that means that DDC will detect it!
+
+ % Note that this proof permits sP!=sA and cP!=cA... but it's quite possible
+ % that sP==sA and cP==cA.  In which case, sP==sA would have to be deterministic.
+
+end_of_list.
+
+

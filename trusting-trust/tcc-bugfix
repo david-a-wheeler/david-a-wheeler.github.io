@@ -1,0 +1,45 @@
+#!/bin/sh
+###################################################
+# A subtle bug in tcc causes casts from 8-bit signed to 32-bit unsigned
+# to go wrong
+# 
+# Modify i386-asm.c to insert an extra temporary
+# variable, so that we never hit the problem 8-bit signed cast problem.
+
+# Modify static void parse_operand(TCCState *s1, Operand *op)
+perl -p -i -e 's/int reg, indir;/int reg, indir; int8_t tmp8;/;' i386-asm.c
+
+perl -p -i -e 's/if \(op->e\.v == \(int8_t\)op->e\.v\)/if (tmp8 = op->e.v, op->e.v == tmp8)/;' i386-asm.c
+
+# static inline void asm_modrm(int reg, Operand *op)
+# Version .20:
+perl -p -i -e 's/int mod, reg1, reg2;/int mod, reg1, reg2; int8_t tmp8;/;' i386-asm.c
+# Versions .21 and .22:
+perl -p -i -e 's/int mod, reg1, reg2, sib_reg1;/int mod, reg1, reg2, sib_reg1; int8_t tmp8;/;' i386-asm.c
+perl -p -i -e 's/} else if \(op->e\.v == \(int8_t\)op->e\.v && !op->e.sym\) {/} else if (tmp8 = op->e.v, op->e.v == tmp8 && !op->e.sym) {/;' i386-asm.c
+
+# static void asm_opcode(TCCState *s1, int opcode)
+perl -p -i -e 's/int i, modrm_index, reg, v, op1, is_short_jmp;/int i, modrm_index, reg, v, op1, is_short_jmp; int8_t tmp8;/;' i386-asm.c
+
+perl -p -i -e 's/if \(jmp_disp == \(int8_t\)jmp_disp\) {/if (tmp8=jmp_disp, jmp_disp == tmp8) {/;' i386-asm.c
+
+
+###################################################
+# Patch for "0.0" disagreement.
+# The tcc.c line:
+#    if (f2 == 0.0) {
+# caused problems in making everything the same, because the "0.0"
+# caused VERY slightly different data to be placed in the data section.
+
+# The solution for now is to replace 0.0 with (f1-f1), which should
+# have the same result.
+
+perl -p -i -e 's/ 0\.0\)/ (f1-f1) )/;' tcc.c
+
+
+###################################################
+# When bootstrapping 0.9.20 with gcc 3.4.3, run this patch because
+# gcc's checking is more stringent now.
+
+perl -p -i -e 's/__attribute__\(\(regparm\(.\)\)\)//g;' *.[ch]
+

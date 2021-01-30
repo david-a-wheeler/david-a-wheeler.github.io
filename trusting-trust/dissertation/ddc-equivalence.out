@@ -1,0 +1,282 @@
+============================== Prover9 ===============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 18647 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Thu Jun 25 19:52:17 2009
+The command was "prover9 -t 60 -f ddc-equivalence.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file ddc-equivalence.in
+
+set(prolog_style_variables).
+set(restrict_denials).
+
+formulas(assumptions).
+equivalent(Executable1,Executable2,RunOn) <-> run(Executable1,Input,EnvEffects,RunOn) = run(Executable2,Input,EnvEffects,RunOn) # label(define_equivalent).
+compile(Source,Compiler,EnvEffects,RunOn,Target) = extract(converttext(run(Compiler,retarget(Source,Target),EnvEffects,RunOn),RunOn,Target)) # label(define_compile).
+accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond).
+(all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP).
+accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA).
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
+sP != cP.
+sP != e1effects.
+sP != e1.
+sP != cT.
+sP != e2effects.
+sP != e2.
+sP != cA.
+sA != cP.
+sA != e1effects.
+sA != e1.
+sA != cP.
+sA != e2effects.
+sA != e2.
+sA != cT.
+cP != e1effects.
+cP != e1.
+cP != e2effects.
+cP != e2.
+sP != e1effects.
+cP != e2effects.
+end_of_list.
+
+formulas(goals).
+equivalent(stage2,cA,eArun) -> exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable).
+end_of_list.
+
+============================== end of input ==========================
+
+% From the command line: assign(max_seconds, 60).
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 equivalent(Executable1,Executable2,RunOn) <-> run(Executable1,Input,EnvEffects,RunOn) = run(Executable2,Input,EnvEffects,RunOn) # label(define_equivalent) # label(non_clause).  [assumption].
+2 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+3 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+4 accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA) # label(non_clause).  [assumption].
+5 equivalent(stage2,cA,eArun) -> exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable) # label(non_clause) # label(goal).  [goal].
+
+============================== end of process non-clausal formulas ===
+
+============================== PROCESS INITIAL CLAUSES ===============
+
+% Clauses before input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+-equivalent(A,B,C) | run(B,D,E,C) = run(A,D,E,C) # label(define_equivalent).  [clausify(1)].
+equivalent(A,B,C) | run(B,D,E,C) != run(A,D,E,C) # label(define_equivalent).  [clausify(1)].
+compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+-accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(2)].
+accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(3)].
+-accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).  [clausify(4)].
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).  [assumption].
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).  [assumption].
+sP != cP.  [assumption].
+sP != e1effects.  [assumption].
+sP != e1.  [assumption].
+sP != cT.  [assumption].
+sP != e2effects.  [assumption].
+sP != e2.  [assumption].
+sP != cA.  [assumption].
+sA != cP.  [assumption].
+sA != e1effects.  [assumption].
+sA != e1.  [assumption].
+sA != cP.  [assumption].
+sA != e2effects.  [assumption].
+sA != e2.  [assumption].
+sA != cT.  [assumption].
+cP != e1effects.  [assumption].
+cP != e1.  [assumption].
+cP != e2effects.  [assumption].
+cP != e2.  [assumption].
+sP != e1effects.  [assumption].
+cP != e2effects.  [assumption].
+equivalent(stage2,cA,eArun) # label(source_corresponds_to_executable).  [deny(5)].
+-exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable).  [deny(5)].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== PREDICATE ELIMINATION =================
+
+Eliminating equivalent/3
+6 equivalent(A,B,C) | run(B,D,E,C) != run(A,D,E,C) # label(define_equivalent).  [clausify(1)].
+7 -equivalent(A,B,C) | run(B,D,E,C) = run(A,D,E,C) # label(define_equivalent).  [clausify(1)].
+Derived: run(A,B,C,D) != run(E,B,C,D) | run(A,F,V6,D) = run(E,F,V6,D).  [resolve(6,a,7,a)].
+8 equivalent(stage2,cA,eArun) # label(source_corresponds_to_executable).  [deny(5)].
+Derived: run(cA,A,B,eArun) = run(stage2,A,B,eArun).  [resolve(8,a,7,a)].
+
+============================== end predicate elimination =============
+
+Auto_denials:
+  % copying label source_corresponds_to_executable to answer in negative clause
+  % assign(max_proofs, 21).  % (Horn set with more than one neg. clause)
+
+WARNING, because some of the denials share constants,
+some of the denials or their descendents may be subsumed,
+preventing the target number of proofs from being found.
+The shared constants are:  sA, cA, e2, e2effects, cT, e1, e1effects, cP, sP.
+
+Term ordering decisions:
+Predicate symbol precedence:  predicate_order([ =, exactly_correspond, accurately_translates ]).
+Function symbol precedence:  function_order([ eArun, sP, e2, cT, e1, lsP, sA, stage1, stage2, cA, e1effects, e2effects, lsA, cP, retarget, extract, converttext, run, compile ]).
+After inverse_order:  (no changes).
+Unfolding symbols: compile/5.
+
+Auto_inference settings:
+  % set(paramodulation).  % (positive equality literals)
+    % set(paramodulation) -> set(back_demod).
+  % set(hyper_resolution).  % (nonunit Horn with equality)
+    % set(hyper_resolution) -> set(pos_hyper_resolution).
+  % set(neg_ur_resolution).  % (nonunit Horn with equality)
+  % assign(para_lit_limit, 2).  % (nonunit Horn with equality)
+
+Auto_process settings:  (no changes).
+
+restricted denial: (wt=3): 20 cP != sP.  [copy(19),flip(a)].
+
+restricted denial: (wt=3): 22 e1effects != sP.  [copy(21),flip(a)].
+
+restricted denial: (wt=3): 24 e1 != sP.  [copy(23),flip(a)].
+
+restricted denial: (wt=3): 26 cT != sP.  [copy(25),flip(a)].
+
+restricted denial: (wt=3): 28 e2effects != sP.  [copy(27),flip(a)].
+
+restricted denial: (wt=3): 30 e2 != sP.  [copy(29),flip(a)].
+
+restricted denial: (wt=3): 32 cA != sP.  [copy(31),flip(a)].
+
+restricted denial: (wt=3): 34 cP != sA.  [copy(33),flip(a)].
+
+restricted denial: (wt=3): 36 e1effects != sA.  [copy(35),flip(a)].
+
+restricted denial: (wt=3): 37 sA != e1.  [assumption].
+
+restricted denial: (wt=3): 40 e2effects != sA.  [copy(39),flip(a)].
+
+restricted denial: (wt=3): 41 sA != e2.  [assumption].
+
+restricted denial: (wt=3): 42 sA != cT.  [assumption].
+
+restricted denial: (wt=3): 43 cP != e1effects.  [assumption].
+
+restricted denial: (wt=3): 44 cP != e1.  [assumption].
+
+restricted denial: (wt=3): 45 cP != e2effects.  [assumption].
+
+restricted denial: (wt=3): 46 cP != e2.  [assumption].
+
+restricted denial: (wt=5): 48 -exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable) # answer(source_corresponds_to_executable).  [deny(5)].
+
+============================== end of process initial clauses ========
+
+============================== CLAUSES FOR SEARCH ====================
+
+% Clauses after input processing:
+
+formulas(usable).
+20 cP != sP.  [copy(19),flip(a)].
+22 e1effects != sP.  [copy(21),flip(a)].
+24 e1 != sP.  [copy(23),flip(a)].
+26 cT != sP.  [copy(25),flip(a)].
+28 e2effects != sP.  [copy(27),flip(a)].
+30 e2 != sP.  [copy(29),flip(a)].
+32 cA != sP.  [copy(31),flip(a)].
+34 cP != sA.  [copy(33),flip(a)].
+36 e1effects != sA.  [copy(35),flip(a)].
+37 sA != e1.  [assumption].
+40 e2effects != sA.  [copy(39),flip(a)].
+41 sA != e2.  [assumption].
+42 sA != cT.  [assumption].
+43 cP != e1effects.  [assumption].
+44 cP != e1.  [assumption].
+45 cP != e2effects.  [assumption].
+46 cP != e2.  [assumption].
+48 -exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable) # answer(source_corresponds_to_executable).  [deny(5)].
+end_of_list.
+
+formulas(sos).
+9 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+11 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(extract(converttext(run(A,retarget(C,F),D,E),E,F)),C,B,F).  [copy(10),rewrite([9(2)])].
+12 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(3)].
+14 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(extract(converttext(run(A,retarget(sP,D),B,C),C,D)),lsA,sA,E,D,eArun).  [copy(13),rewrite([9(5)])].
+16 extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)) = stage1.  [copy(15),rewrite([9(7)]),flip(a)].
+18 extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)) = stage2.  [copy(17),rewrite([9(7)]),flip(a)].
+49 run(A,B,C,D) != run(E,B,C,D) | run(A,F,V6,D) = run(E,F,V6,D).  [resolve(6,a,7,a)].
+50 run(cA,A,B,eArun) = run(stage2,A,B,eArun).  [resolve(8,a,7,a)].
+end_of_list.
+
+formulas(demodulators).
+9 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+16 extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)) = stage1.  [copy(15),rewrite([9(7)]),flip(a)].
+18 extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)) = stage2.  [copy(17),rewrite([9(7)]),flip(a)].
+50 run(cA,A,B,eArun) = run(stage2,A,B,eArun).  [resolve(8,a,7,a)].
+end_of_list.
+
+============================== end of clauses for search =============
+
+============================== SEARCH ================================
+
+% Starting search at 0.00 seconds.
+
+given #1 (I,wt=18): 9 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+
+given #2 (I,wt=22): 11 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(extract(converttext(run(A,retarget(C,F),D,E),E,F)),C,B,F).  [copy(10),rewrite([9(2)])].
+
+given #3 (I,wt=7): 12 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(3)].
+
+given #4 (I,wt=24): 14 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(extract(converttext(run(A,retarget(sP,D),B,C),C,D)),lsA,sA,E,D,eArun).  [copy(13),rewrite([9(5)])].
+
+given #5 (I,wt=13): 16 extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)) = stage1.  [copy(15),rewrite([9(7)]),flip(a)].
+
+given #6 (I,wt=13): 18 extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)) = stage2.  [copy(17),rewrite([9(7)]),flip(a)].
+
+given #7 (I,wt=22): 49 run(A,B,C,D) != run(E,B,C,D) | run(A,F,V6,D) = run(E,F,V6,D).  [resolve(6,a,7,a)].
+
+given #8 (I,wt=11): 50 run(cA,A,B,eArun) = run(stage2,A,B,eArun).  [resolve(8,a,7,a)].
+
+given #9 (A,wt=15): 51 exactly_correspond(extract(converttext(run(cT,retarget(sP,e2),A,e1),e1,e2)),sP,lsP,e2).  [hyper(11,a,12,a)].
+
+given #10 (T,wt=5): 53 exactly_correspond(stage1,sP,lsP,e2).  [para(16(a,1),51(a,1))].
+
+given #11 (T,wt=17): 52 accurately_translates(extract(converttext(run(cT,retarget(sP,e2),A,e1),e1,e2)),lsA,sA,B,e2,eArun).  [hyper(14,a,12,a)].
+
+given #12 (T,wt=7): 55 accurately_translates(stage1,lsA,sA,A,e2,eArun).  [para(16(a,1),52(a,1))].
+
+given #13 (T,wt=15): 56 exactly_correspond(extract(converttext(run(stage1,retarget(sA,eArun),A,e2),e2,eArun)),sA,lsA,eArun).  [hyper(11,a,55,a)].
+
+given #14 (A,wt=25): 54 exactly_correspond(extract(converttext(run(extract(converttext(run(cT,retarget(sP,e2),A,e1),e1,e2)),retarget(sA,eArun),B,e2),e2,eArun)),sA,lsA,eArun).  [hyper(11,a,52,a)].
+
+given #15 (T,wt=5): 57 exactly_correspond(stage2,sA,lsA,eArun).  [para(18(a,1),56(a,1))].
+
+============================== STATISTICS ============================
+
+Given=15. Generated=49. Kept=33. proofs=0.
+Usable=33. Sos=0. Demods=4. Limbo=0, Disabled=32. Hints=0.
+Weight_deleted=0. Literals_deleted=0.
+Forward_subsumed=16. Back_subsumed=0.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=4 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+Demod_attempts=471. Demod_rewrites=14.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=2. Nonunit_bsub_feature_tests=3.
+Megabytes=0.08.
+User_CPU=0.00, System_CPU=0.00, Wall_clock=0.
+
+============================== end of statistics =====================
+
+============================== end of search =========================
+
+SEARCH FAILED
+
+Exiting with failure.
+
+Process 18647 exit (sos_empty) Thu Jun 25 19:52:17 2009

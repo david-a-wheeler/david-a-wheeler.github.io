@@ -1,0 +1,223 @@
+Implement alloca for x86 (grischka case_8).
+This implements alloca() on x86, at least for non-Windows.
+Unlike the grischka version, this patch handles both the bounded and
+non-bounded cases (when bounded, the alloca'd memory is covered), and
+when asked to allocate with 0 size, it returns 0 without any allocation.
+It allocates at least 4 bytes of extra padding after the memory
+it allocates, so that common off-by-one programming errors
+are less like to crash the program mysteriously or be a vulnerability.
+
+diff -ur --unidirectional-new-file tinycc-rl-1.0.0/alloca.S tinycc-alloca/alloca.S
+--- tinycc-rl-1.0.0/alloca.S	1969-12-31 19:00:00.000000000 -0500
++++ tinycc-alloca/alloca.S	2007-05-09 00:14:00.000000000 -0400
+@@ -0,0 +1,35 @@
++/* Implementation of alloca() for tinycc (tcc).
++ * Based on grischka case_8, modified by David A. Wheeler 2007-05-09.
++ * Note that alloca() plays games with the stack, so it doesn't have the
++ * normal function prologue and epilogue.  It allocates some extra padding
++ * after the memory it allocates to support bound checking and
++ * to make some programming errors less likely to crash the whole program.
++ * This function uses the cdecl calling convention to reduce the risk of
++ * error. */
++
++.globl _alloca_tcc
++_alloca_tcc:
++    pop    %edx        /* yank return address from stack */
++    pop    %ecx        /* Get parameter (which is size). */
++
++    /* See if we got 0, and if so, handle specially. */
++    or     $0,%ecx
++    jz     alloc_zero
++
++    /* Allocate memory on the stack */
++    mov    %ecx,%eax   /* Compute size to allocate... */
++    add    $7,%eax     /* At LEAST one unused 4-byte word afterwards */
++    and    $-4,%eax    /* Align mod 4 */
++    sub    %eax,%esp   /* Allocate!  MODIFIES STACK POINTER HERE */
++
++    mov    %esp,%eax   /* Return beginning of allocated area to caller */
++    push   %edx        /* Re-allocate param space for the caller to remove */
++    push   %edx        /* Restore return address to return to. */
++    ret
++
++alloc_zero:
++    mov    %ecx,%eax   /* Return NULL */
++    push   %eax        /* Re-allocate param space for the caller to remove */
++    push   %edx        /* Restore return address to return to. */
++    ret
++
+diff -ur --unidirectional-new-file tinycc-rl-1.0.0/bound_alloca.S tinycc-alloca/bound_alloca.S
+--- tinycc-rl-1.0.0/bound_alloca.S	1969-12-31 19:00:00.000000000 -0500
++++ tinycc-alloca/bound_alloca.S	2007-05-09 00:15:21.000000000 -0400
+@@ -0,0 +1,40 @@
++/* From grischka, modified by David A. Wheeler.  See alloca.S. */
++
++.globl __bound__alloca_tcc
++__bound__alloca_tcc:
++    pop    %edx        /* yank return address from stack */
++    pop    %ecx        /* Get parameter (which is size). */
++
++    /* See if we got 0, and if so, handle specially. */
++    or     $0,%ecx
++    jz     bound_alloc_zero
++
++    /* Allocate memory on the stack */
++    mov    %ecx,%eax   /* Compute size to allocate... */
++    add    $7,%eax     /* At LEAST one unused 4-byte word afterwards */
++    and    $-4,%eax    /* Align mod 4 */
++    sub    %eax,%esp   /* Allocate!  MODIFIES STACK POINTER HERE */
++
++/* Call __bound_new_region(void *p, unsigned long size)
++ * if doing bound checks, where *p is %esp, and size is size (NOT size+1).
++ * For maximum efficiency could merge this with the code afterwards, but
++ * it's easier to see what it does this way. */
++    mov    %esp,%eax
++    push   %edx
++    push   %ecx
++    push   %eax
++    call   __bound_new_region
++    add    $8, %esp
++    pop    %edx
++
++    mov    %esp,%eax   /* Return beginning of allocated area to caller */
++    push   %edx        /* Re-allocate param space for the caller to remove */
++    push   %edx        /* Restore return address to return to. */
++    ret
++
++bound_alloc_zero:
++    mov    %ecx,%eax   /* Return NULL */
++    push   %eax        /* Re-allocate param space for the caller to remove */
++    push   %edx        /* Restore return address to return to. */
++    ret
++
+diff -ur --unidirectional-new-file tinycc-rl-1.0.0/include/alloca.h tinycc-alloca/include/alloca.h
+--- tinycc-rl-1.0.0/include/alloca.h	1969-12-31 19:00:00.000000000 -0500
++++ tinycc-alloca/include/alloca.h	2007-05-09 00:09:35.000000000 -0400
+@@ -0,0 +1,16 @@
++
++#ifndef _ALLOCA_H
++#define _ALLOCA_H
++
++#ifdef __TINYC__
++#define alloca(x) _alloca_tcc(x)
++
++extern void * _alloca_tcc(unsigned x);
++extern void * __bound__alloca_tcc(unsigned x);
++
++#else
++extern void * alloca(unsigned x);
++#endif
++
++#endif
++
+diff -ur --unidirectional-new-file tinycc-rl-1.0.0/Makefile tinycc-alloca/Makefile
+--- tinycc-rl-1.0.0/Makefile	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-alloca/Makefile	2007-05-09 00:18:42.000000000 -0400
+@@ -46,7 +46,7 @@
+ endif
+ 
+ # run local version of tcc with local libraries and includes
+-TCC=./tcc -B. -I.
++TCC=./tcc -B. -I./include -I.
+ 
+ all: $(PROGS) libtcc1.a $(BCHECK_O) libtcc.a libtcc_test$(EXESUF) \
+      tcc-doc.html tcc.1
+@@ -173,6 +173,9 @@
+ LIBTCC1_CC=./tcc.exe -Bwin32
+ else
+ LIBTCC1_OBJS=libtcc1.o
++ifeq ($(ARCH),i386)
++LIBTCC1_OBJS+=alloca.o bound_alloca.o
++endif
+ LIBTCC1_CC=$(CC)
+ endif
+ 
+diff -ur --unidirectional-new-file tinycc-rl-1.0.0/tcc.c tinycc-alloca/tcc.c
+--- tinycc-rl-1.0.0/tcc.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-alloca/tcc.c	2007-05-08 23:04:41.000000000 -0400
+@@ -450,6 +450,7 @@
+             case TOK_memset:
+             case TOK_strlen:
+             case TOK_strcpy:
++            case TOK_alloca:
+                 strcpy(buf, "__bound_");
+                 strcat(buf, name);
+                 name = buf;
+diff -ur --unidirectional-new-file tinycc-rl-1.0.0/tcctok.h tinycc-alloca/tcctok.h
+--- tinycc-rl-1.0.0/tcctok.h	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-alloca/tcctok.h	2007-05-08 23:15:33.000000000 -0400
+@@ -130,7 +130,7 @@
+      DEF(TOK_memcpy, "memcpy")
+      DEF(TOK_memset, "memset")
+ #endif
+-     DEF(TOK_alloca, "alloca")
++     DEF(TOK_alloca, "_alloca_tcc")
+      DEF(TOK___divdi3, "__divdi3")
+      DEF(TOK___moddi3, "__moddi3")
+      DEF(TOK___udivdi3, "__udivdi3")
+diff -ur --unidirectional-new-file tinycc-rl-1.0.0/tests/tcctest.c tinycc-alloca/tests/tcctest.c
+--- tinycc-rl-1.0.0/tests/tcctest.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-alloca/tests/tcctest.c	2007-05-09 00:12:10.000000000 -0400
+@@ -2,6 +2,8 @@
+  * TCC auto test program
+  */
+ #include "config.h"
++#include <alloca.h>
++
+ 
+ #if GCC_MAJOR >= 3
+ 
+@@ -74,6 +76,7 @@
+ void whitespace_test(void);
+ void relocation_test(void);
+ void old_style_function(void);
++void alloca_test(void);
+ void sizeof_test(void);
+ void typeof_test(void);
+ void local_label_test(void);
+@@ -526,6 +529,7 @@
+     whitespace_test();
+     relocation_test();
+     old_style_function();
++    alloca_test();
+     sizeof_test();
+     typeof_test();
+     statement_expr_test();
+@@ -1772,6 +1776,37 @@
+     decl_func2(NULL);
+ }
+ 
++
++void alloca_test1()
++{
++ char *p = alloca(1);
++ *p = 0;
++}
++
++void alloca_test2()
++{
++ char *p = alloca(2000);
++ p += 2000;
++ p--;
++ *p = 0;
++}
++
++void alloca_test()
++{
++  char *p = alloca(16);
++  strcpy(p,"123456789012345");
++  printf("p is %s\n", p);
++
++  char *demo = "This is a test.  This is only a test.\n";
++
++  /* Test alloca embedded in a larger expression */
++  printf("Test: %s\n", strcpy(alloca(strlen(demo)+1),demo) );
++
++  alloca_test2();
++  alloca_test1();
++}
++
++
+ void sizeof_test(void)
+ {
+     int a;

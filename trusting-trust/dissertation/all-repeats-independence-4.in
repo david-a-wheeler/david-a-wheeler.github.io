@@ -1,0 +1,46 @@
+% Diverse Double-Compiling (DDC), represented using prover9
+% by David A. Wheeler.
+
+set(prolog_style_variables).
+
+formulas(assumptions).
+
+ exactly_correspond(cP, sP, lsP, eA) # label(cP_corresponds_to_sP).
+
+ ( portable_and_deterministic(Source, Language, Input) &
+   exactly_correspond(Executable1, Source, Language, Environment1) &
+   exactly_correspond(Executable2, Source, Language, Environment2)) ->
+     ( converttext(run(Executable1, Input, EnvEffects1, Environment1),
+                   Environment1, Target) =
+       converttext(run(Executable2, Input, EnvEffects2, Environment2),
+                   Environment2, Target))
+   # label(define_portable_and_deterministic).
+
+
+ portable_and_deterministic(sP, lsP, retarget(sA, eArun))
+    # label(sP_portable_and_deterministic).
+
+ -( compile(Source, Compiler, EnvEffects, RunOn, Target) =
+     extract(converttext(run(Compiler, retarget(Source, Target),
+             EnvEffects, RunOn), RunOn, Target))) # label(define_compile).
+
+ stage1 = compile(sP, cT, e1effects, e1, e2) # label(definition_stage1).
+
+ stage2 = compile(sA, stage1, e2effects, e2, eArun)
+   # label(definition_stage2).
+
+ cA = compile(sA, cP, eAeffects, eA, eArun) # label(definition_cA).
+
+
+ accurately_translates(Compiler, Lang, Source, EnvEffects,
+                       ExecEnv, TargetEnv) ->
+   exactly_correspond(compile(Source, Compiler, EnvEffects,
+                              ExecEnv, TargetEnv),
+                      Source, Lang, TargetEnv)
+   # label(define_exactly_correspond).
+
+ all EnvEffects accurately_translates(cT, lsP, sP, EnvEffects, e1, e2)
+   # label(cT_compiles_sP).
+
+end_of_list.
+

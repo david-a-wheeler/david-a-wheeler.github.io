@@ -1,0 +1,104 @@
+============================== Mace4 =================================
+Mace4 (32) version Aug-2007, Aug 2007.
+Process 3730 was started by dwheeler on eve,
+Sat Aug 16 17:12:01 2008
+The command was "mace4 -c -t 60 -f regenerates.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file regenerates.in
+
+set(prolog_style_variables).
+set(restrict_denials).
+WARNING, flag not recognized: set(restrict_denials).
+
+formulas(assumptions).
+accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond).
+(all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP).
+(all EnvEffects accurately_translates(cA,lsA,sA,EnvEffects,e2,eArun)) # label(cP_compiles_sA).
+accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA).
+accurately_translates(GoodCompilerLangP,lsA,sA,EnvEffectsMakeA,ExecEnv,TargetEnv) -> accurately_translates(compile(sA,GoodCompilerLangA,EnvEffectsMakeA,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sA_compiles_sA).
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).
+deterministic(Source,Language) & portable(Source,Language) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_determinism).
+deterministic(sP,lsP) # label(sP_deterministic).
+portable(sP,lsP) # label(sP_portable).
+deterministic(sA,lsA) # label(sA_deterministic).
+portable(sA,lsA) # label(sA_portable).
+compile(Source,Compiler,EnvEffects,RunOn,Target) = extract(converttext(run(Compiler,retarget(Source,Target),EnvEffects,RunOn),RunOn,Target)) # label(define_compile).
+cP = compile(sP,cT,ePeffects,eP,eA) # label(definition_cP).
+cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).
+cAprime = compile(sA,cA,eAeffectsprime,eArun,eArun) # label(definition_cAprime).
+eArun = eA # label(equal_environments).
+(all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP).
+end_of_list.
+
+formulas(goals).
+cA = cAprime # label(regenerates).
+end_of_list.
+
+% From the command line: assign(max_seconds, 60).
+
+============================== end of input ==========================
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+2 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+3 (all EnvEffects accurately_translates(cA,lsA,sA,EnvEffects,e2,eArun)) # label(cP_compiles_sA) # label(non_clause).  [assumption].
+4 accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA) # label(non_clause).  [assumption].
+5 accurately_translates(GoodCompilerLangP,lsA,sA,EnvEffectsMakeA,ExecEnv,TargetEnv) -> accurately_translates(compile(sA,GoodCompilerLangA,EnvEffectsMakeA,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sA_compiles_sA) # label(non_clause).  [assumption].
+6 deterministic(Source,Language) & portable(Source,Language) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_determinism) # label(non_clause).  [assumption].
+7 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+8 cA = cAprime # label(regenerates) # label(non_clause) # label(goal).  [goal].
+
+============================== end of process non-clausal formulas ===
+
+============================== CLAUSES FOR SEARCH ====================
+
+formulas(mace4_clauses).
+-accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).
+accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).
+accurately_translates(cA,lsA,sA,A,e2,eArun) # label(cP_compiles_sA).
+-accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).
+-accurately_translates(A,lsA,sA,B,C,D) | accurately_translates(compile(sA,E,B,C,D),lsA,sA,F,D,eArun) # label(sA_compiles_sA).
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).
+-deterministic(A,B) | -portable(A,B) | -exactly_correspond(C,A,B,D) | -exactly_correspond(E,A,B,F) | converttext(run(E,V6,V7,F),F,V8) = converttext(run(C,V6,V9,D),D,V8) # label(define_determinism).
+deterministic(sP,lsP) # label(sP_deterministic).
+portable(sP,lsP) # label(sP_portable).
+deterministic(sA,lsA) # label(sA_deterministic).
+portable(sA,lsA) # label(sA_portable).
+compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).
+cP = compile(sP,cT,ePeffects,eP,eA) # label(definition_cP).
+cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).
+cAprime = compile(sA,cA,eAeffectsprime,eArun,eArun) # label(definition_cAprime).
+eArun = eA # label(equal_environments).
+accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).
+cAprime != cA # label(regenerates).
+end_of_list.
+
+============================== end of clauses for search =============
+
+% The maximum domain element in the input is 0.
+
+============================== DOMAIN SIZE 2 =========================
+
+============================== STATISTICS ============================
+
+For domain size 2.
+
+Current CPU time: 0.00 seconds (total CPU time: 60.02 seconds).
+Ground clauses: seen=1232, kept=1232.
+Selections=324783, assignments=649550, propagations=1295078, current_models=0.
+Rewrite_terms=89682267, rewrite_bools=17581640, indexes=1880024.
+Rules_from_neg_clauses=30255, cross_offs=30255.
+
+============================== end of statistics =====================
+
+User_CPU=60.02, System_CPU=1.30, Wall_clock=67.
+
+Exiting with failure.
+
+Process 3730 exit (max_sec_no) Sat Aug 16 17:13:08 2008
+The process finished Sat Aug 16 17:13:08 2008

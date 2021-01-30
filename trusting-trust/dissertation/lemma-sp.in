@@ -1,0 +1,118 @@
+% Diverse Double-Compiling (DDC), represented using prover9
+% by David A. Wheeler.
+
+% Prove Lemma "stage1_corresponds_sP", i.e., that stage1 corresponds with sP.
+
+% WARNING: THIS IS OBSOLETE
+
+% Usage:
+% prover9 -f lemma-sp.in > lemma-sp.out
+
+% Prover9 implements first-order logic, so the formal assumptions and goals
+% are written using very straightforward first-order logic.
+% See its documentation for more about its format.
+
+% Prover9's default naming conventions require hard-to-read names. We'll use
+% Prolog conventions instead (e.g., variables begin with an uppercase letter,
+% while constants begin with a lowercase letter):
+set(prolog_style_variables).
+
+% Attempt to find a simpler-to-understand proof, at the cost of needing to
+% work harder to find it:
+set(restrict_denials).
+
+formulas(assumptions).
+
+ %!exactly_correspond(Executable, Source, Lang, RunOn) --> bool.
+ %    True iff Executable exactly implements source code Source when
+ %    interpreted as language Lang when run on environment RunOn.
+
+ %!run(Executable, Input, EnvEffects, Environment) --> data
+ % represents running Executable in Environment, giving it Input + the various
+ % environmental effects EnvEffects.  The latter models whatever the language
+ % allows or requires the environment to vary that COULD have an effect
+ % on the result, e.g., random number generator,
+ % stack location, heap allocation location, thread scheduling
+ % (for a multi-threaded program this could critically change things!).
+ % It returns whatever outputs are produced by running it, including
+ % standard out, standard error, and any files (file names/locations/contents)
+ % generated or modified by its execution.  Since different runs could have
+ % different environment effects as input (e.g., the random number generator
+ % from the environment might produce something different),
+ % running the same executable with the same Input _could_ produce
+ % different results.
+
+ %!compile(Source, Compiler, EnvEffects, RunOn, Target) =
+ %!    extract(run(Compiler, retarget(Source, Target),
+ %!            EnvEffects, RunOn)).
+ % compile(Source, Compiler) --> data
+ % represents compiling Source with the Compiler, running it in environment
+ % RunOn but targeting the result for environment Target. The
+ % "extract()" term represents "extract only executable produced",
+ % i.e., we throw away error reports made during the compilation process
+ % that are technically outputs but will not be used later.
+ % In most cases, the "extract" operation considers
+ % only the files generated and does NOT include outputs to standard out,
+ % standard error, and/or log files.
+ % retarget() represents modifications to the source to change the target
+ % (if necessary).
+
+
+ compile(Source, Compiler, EnvEffects, RunOn, Target) =
+     extract(run(Compiler, retarget(Source, Target),
+             EnvEffects, RunOn)) # label(define_compile).
+ % This is a general definition of a compilation of a compiler.
+ % To perform a compilation, you retarget the given source code
+ % to generate code for some lateger target to produce your final source code.
+ % Then run the Compiler on that Source code on some environment RunOn;
+ % if it's a nondeterministic compiler, then the environmental EnvEffects
+ % may have an effect on the results.  The portions of the compilation results
+ % that can be run later are then extracted (throwing away warnings, etc.
+ % from the Compiler).
+
+ % This implements part of the graph showing the DDC process.
+ % For this lemma, we don't need to define stage2, so we won't.
+
+ stage1 = compile(sP, cT, e1effects, e1, e2) # label(definition_stage1).
+ % stage1 = compilation of source sP using cT, running on environment e1.
+
+
+ %!accurately_translates(Compiler, Lang, Source, EnvEffects, RunOn, Target)
+ %!              --> bool.
+ %   True iff Compiler (an executable) correctly implements language Lang
+ %   when compiling Source (e.g., exactly that, nothing more or less),
+ %   if run on environment RunOn and targeting environment Target.
+ %!exactly_correspond(Executable, Source, Lang, RunOn) --> bool.
+ %    True iff Executable exactly implements source code Source when
+ %    interpreted as language Lang when run on environment RunOn.
+
+ accurately_translates(Compiler, Lang, Source, EnvEffects,
+                       ExecEnv, TargetEnv) ->
+   exactly_correspond(compile(Source, Compiler, EnvEffects,
+                              ExecEnv, TargetEnv),
+                      Source, Lang, TargetEnv)
+   # label(define_exactly_correspond).
+ % Define what it means when source and executable "exactly correspond".
+ % If some Source (written in language Lang) is compiled by a compiler that
+ % accurately translates it, then the resulting executable exactly corresponds
+ % to the original Source.
+
+ all EnvEffects accurately_translates(cT, lsP, sP, EnvEffects, e1, e2)
+   # label(cT_compiles_sP).
+ % Trusted compiler cT is a compiler for language lsP, and it will
+ % accurately translate sP.  This is only guaranteed if cT is run
+ % in environment e1.  cT targets (generates code for) environment e2.
+
+ % See previous proof for subtleties about language, etc.
+
+end_of_list.
+
+formulas(goals).
+
+ exactly_correspond(stage1, sP, lsP, e2)
+   # label(stage1_corresponds_sP) # label(lemma).
+ % If the above assumptions are true, then stage1 really corresponds with sP.
+
+end_of_list.
+
+

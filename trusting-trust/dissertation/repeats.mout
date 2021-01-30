@@ -1,0 +1,257 @@
+============================== Mace4 =================================
+Mace4 (32) version Aug-2007, Aug 2007.
+Process 15916 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Wed Oct 17 14:56:27 2007
+The command was "mace4 -c -t 60 -f repeats.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file repeats.in
+
+set(prolog_style_variables).
+
+formulas(assumptions).
+accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond).
+(all EnvEffects accurately_translates(cTGP,lsP,sP,EnvEffects,e1,e2)) # label(cTGP_compiles_sP).
+accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA).
+stage1 = compile(sP,cTGP,stage1effects,e1,e2) # label(definition_stage1).
+stage2 = compile(sA,stage1,stage2effects,e2,eArun) # label(definition_stage2).
+(all EnvEffects1 all EnvEffects2 (deterministic_compiler(Compiler,Source,RunOn,Target) -> compile(Source,Compiler,EnvEffects1,RunOn,Target) = compile(Source,Compiler,EnvEffects2,RunOn,Target))).
+deterministic_compiler(cP,sA,e2,eA).
+functionally_equal_extractions(Compiler1,Compiler2,Source,Input,Env1,Env2) -> extract(run(compile(Source,Compiler1,EnvEffects1,RunOn1,Target),Input,EnvEffects1,Env1)) = extract(run(compile(Source,Compiler2,EnvEffects2,RunOn2,Target),Input,EnvEffects2,Env2)) # label(define_func_equal).
+functionally_equal_extractions(cTGP,cGP,sP,sA,eP,e1).
+compile(sA,cP,EnvEffects1,e2,eArun) = compile(sA,cP,EnvEffects2,e2,eArun) # label(env_effects_irrelevant).
+compile(sA,cP,EnvEffects1,eA,eArun) = compile(sA,cP,EnvEffects2,eA,eArun) # label(portable_cP).
+compile(sA,cP,EnvEffects1,AnyEnv,eArun) = compile(sA,cP,EnvEffects2,AnotherEnv,eArun) # label(Anything_equal_temp).
+cP = compile(sP,cTGP,effectPgen,eP,eA) # label(definition_cP).
+cA = compile(sA,cP,effectAgen,eA,eArun) # label(definition_cA).
+end_of_list.
+
+formulas(goals).
+cA = stage2 # label(always_equal).
+end_of_list.
+
+% From the command line: assign(max_seconds, 60).
+
+============================== end of input ==========================
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+2 (all EnvEffects accurately_translates(cTGP,lsP,sP,EnvEffects,e1,e2)) # label(cTGP_compiles_sP) # label(non_clause).  [assumption].
+3 accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA) # label(non_clause).  [assumption].
+4 (all EnvEffects1 all EnvEffects2 (deterministic_compiler(Compiler,Source,RunOn,Target) -> compile(Source,Compiler,EnvEffects1,RunOn,Target) = compile(Source,Compiler,EnvEffects2,RunOn,Target))) # label(non_clause).  [assumption].
+5 functionally_equal_extractions(Compiler1,Compiler2,Source,Input,Env1,Env2) -> extract(run(compile(Source,Compiler1,EnvEffects1,RunOn1,Target),Input,EnvEffects1,Env1)) = extract(run(compile(Source,Compiler2,EnvEffects2,RunOn2,Target),Input,EnvEffects2,Env2)) # label(define_func_equal) # label(non_clause).  [assumption].
+6 cA = stage2 # label(always_equal) # label(non_clause) # label(goal).  [goal].
+
+============================== end of process non-clausal formulas ===
+
+============================== CLAUSES FOR SEARCH ====================
+
+formulas(mace4_clauses).
+-accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).
+accurately_translates(cTGP,lsP,sP,A,e1,e2) # label(cTGP_compiles_sP).
+-accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).
+stage1 = compile(sP,cTGP,stage1effects,e1,e2) # label(definition_stage1).
+stage2 = compile(sA,stage1,stage2effects,e2,eArun) # label(definition_stage2).
+-deterministic_compiler(A,B,C,D) | compile(B,A,E,C,D) = compile(B,A,F,C,D).
+deterministic_compiler(cP,sA,e2,eA).
+-functionally_equal_extractions(A,B,C,D,E,F) | extract(run(compile(C,B,V6,V7,V8),D,V6,F)) = extract(run(compile(C,A,V9,V10,V8),D,V9,E)) # label(define_func_equal).
+functionally_equal_extractions(cTGP,cGP,sP,sA,eP,e1).
+compile(sA,cP,A,e2,eArun) = compile(sA,cP,B,e2,eArun) # label(env_effects_irrelevant).
+compile(sA,cP,A,eA,eArun) = compile(sA,cP,B,eA,eArun) # label(portable_cP).
+compile(sA,cP,A,B,eArun) = compile(sA,cP,C,D,eArun) # label(Anything_equal_temp).
+cP = compile(sP,cTGP,effectPgen,eP,eA) # label(definition_cP).
+cA = compile(sA,cP,effectAgen,eA,eArun) # label(definition_cA).
+cA != stage2 # label(always_equal).
+end_of_list.
+
+============================== end of clauses for search =============
+
+% The maximum domain element in the input is 0.
+
+============================== DOMAIN SIZE 2 =========================
+
+============================== MODEL =================================
+
+interpretation( 2, [number=1, seconds=0], [
+
+        function(cA, [ 0 ]),
+
+        function(cGP, [ 0 ]),
+
+        function(cP, [ 0 ]),
+
+        function(cTGP, [ 0 ]),
+
+        function(e1, [ 0 ]),
+
+        function(e2, [ 0 ]),
+
+        function(eA, [ 0 ]),
+
+        function(eArun, [ 0 ]),
+
+        function(eP, [ 0 ]),
+
+        function(effectAgen, [ 0 ]),
+
+        function(effectPgen, [ 0 ]),
+
+        function(lsA, [ 0 ]),
+
+        function(lsP, [ 0 ]),
+
+        function(sA, [ 0 ]),
+
+        function(sP, [ 1 ]),
+
+        function(stage1, [ 1 ]),
+
+        function(stage1effects, [ 1 ]),
+
+        function(stage2, [ 1 ]),
+
+        function(stage2effects, [ 0 ]),
+
+        function(extract(_), [ 0, 0 ]),
+
+        function(run(_,_,_,_), [
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0 ]),
+
+        function(compile(_,_,_,_,_), [
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0 ]),
+
+        relation(deterministic_compiler(_,_,_,_), [
+			   1, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0 ]),
+
+        relation(exactly_correspond(_,_,_,_), [
+			   1, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0 ]),
+
+        relation(accurately_translates(_,_,_,_,_,_), [
+			   1, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0 ]),
+
+        relation(functionally_equal_extractions(_,_,_,_,_,_), [
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   1, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0,
+			   0, 0 ])
+]).
+
+============================== end of model ==========================
+
+============================== STATISTICS ============================
+
+For domain size 2.
+
+Current CPU time: 0.00 seconds (total CPU time: 0.01 seconds).
+Ground clauses: seen=2241, kept=2241.
+Selections=159, assignments=162, propagations=78, current_models=1.
+Rewrite_terms=13046, rewrite_bools=2390, indexes=1117.
+Rules_from_neg_clauses=5, cross_offs=5.
+
+============================== end of statistics =====================
+
+User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+
+Exiting with 1 model.
+
+Process 15916 exit (max_models) Wed Oct 17 14:56:27 2007
+The process finished Wed Oct 17 14:56:27 2007

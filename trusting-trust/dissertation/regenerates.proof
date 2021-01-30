@@ -1,0 +1,86 @@
+============================== prooftrans ============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 332 was started by dwheeler on eve,
+Sun Aug 17 12:23:16 2008
+The command was "prover9 -t 60 -f regenerates.in".
+============================== end of head ===========================
+
+set(prolog_style_variables).
+============================== end of input ==========================
+
+============================== PROOF =================================
+
+% -------- Comments from original proof --------
+% Proof 1 at 0.09 (+ 0.01) seconds: regenerates.
+% Length of proof is 49.
+% Level of proof is 12.
+% Maximum clause weight is 57.
+% Given clauses 43.
+
+1 accurately_translates(A,B,C,D,E,F) -> exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+2 (all A accurately_translates(cGP,lsP,sP,A,e1,e2)) # label(cGP_compiles_sP) # label(non_clause).  [assumption].
+3 accurately_translates(A,lsP,sP,B,C,D) -> accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA) # label(non_clause).  [assumption].
+4 accurately_translates(A,lsA,sA,B,C,D) -> accurately_translates(compile(sA,A,B,C,D),lsA,sA,E,D,eArun) # label(sA_compiles_sA) # label(non_clause).  [assumption].
+5 deterministic(A,B) & portable(A,B) & exactly_correspond(C,A,B,D) & exactly_correspond(E,A,B,F) -> converttext(run(C,V6,V7,D),D,V8) = converttext(run(E,V6,V9,F),F,V8) # label(define_determinism) # label(non_clause).  [assumption].
+6 cAprime = cAprime2 # label(regenerates) # label(non_clause) # label(goal).  [goal].
+7 deterministic(sP,lsP) # label(sP_deterministic).  [assumption].
+8 -deterministic(A,B) | -portable(A,B) | -exactly_correspond(C,A,B,D) | -exactly_correspond(E,A,B,F) | converttext(run(E,V6,V7,F),F,V8) = converttext(run(C,V6,V9,D),D,V8) # label(define_determinism).  [clausify(5)].
+9 deterministic(sA,lsA) # label(sA_deterministic).  [assumption].
+10 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(1)].
+11 accurately_translates(cGP,lsP,sP,A,e1,e2) # label(cGP_compiles_sP).  [clausify(2)].
+12 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).  [clausify(3)].
+13 -accurately_translates(A,lsA,sA,B,C,D) | accurately_translates(compile(sA,A,B,C,D),lsA,sA,E,D,eArun) # label(sA_compiles_sA).  [clausify(4)].
+14 portable(sP,lsP) # label(sP_portable).  [assumption].
+15 portable(sA,lsA) # label(sA_portable).  [assumption].
+16 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+17 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+18 cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).  [assumption].
+19 cA = extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)).  [para(16(a,1),18(a,2))].
+20 extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) = cA.  [copy(19),flip(a)].
+21 cAprime = compile(sA,cA,eAeffectsprime,eArun,eArun) # label(definition_cAprime).  [assumption].
+22 cAprime = extract(converttext(run(cA,retarget(sA,eArun),eAeffectsprime,eArun),eArun,eArun)).  [para(16(a,1),21(a,2))].
+23 extract(converttext(run(cA,retarget(sA,eArun),eAeffectsprime,eArun),eArun,eArun)) = cAprime.  [copy(22),flip(a)].
+24 cAprime2 = compile(sA,cAprime,eAeffectsprime2,eArun,eArun) # label(definition_cAprime).  [assumption].
+25 cAprime2 = extract(converttext(run(cAprime,retarget(sA,eArun),eAeffectsprime2,eArun),eArun,eArun)).  [para(16(a,1),24(a,2))].
+26 extract(converttext(run(cAprime,retarget(sA,eArun),eAeffectsprime2,eArun),eArun,eArun)) = cAprime2.  [copy(25),flip(a)].
+27 cAprime2 != cAprime # label(regenerates) # answer(regenerates).  [deny(6)].
+28 -portable(sP,lsP) | -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(7,a,8,a)].
+29 -portable(sA,lsA) | -exactly_correspond(A,sA,lsA,B) | -exactly_correspond(C,sA,lsA,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(9,a,8,a)].
+30 -accurately_translates(A,lsA,sA,B,C,D) | accurately_translates(extract(converttext(run(A,retarget(sA,D),B,C),C,D)),lsA,sA,E,D,eArun).  [para(16(a,1),13(b,1))].
+31 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(extract(converttext(run(A,retarget(sP,D),B,C),C,D)),lsA,sA,E,D,eArun).  [para(16(a,1),12(b,1))].
+32 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(extract(converttext(run(A,retarget(C,F),D,E),E,F)),C,B,F).  [para(16(a,1),10(b,1))].
+33 -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(28,a,14,a)].
+34 -exactly_correspond(A,sP,lsP,B) | converttext(run(A,C,D,B),B,E) = converttext(run(cP,C,F,eA),eA,E).  [resolve(33,a,17,a)].
+35 converttext(run(cP,A,B,eA),eA,C) = converttext(run(cP,A,D,eA),eA,C).  [resolve(34,a,17,a)].
+36 accurately_translates(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),lsA,sA,B,e2,eArun).  [resolve(31,a,11,a)].
+37 exactly_correspond(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),sP,lsP,e2).  [resolve(32,a,11,a)].
+38 extract(converttext(run(cP,retarget(sA,eArun),A,eA),eA,eArun)) = cA.  [para(35(a,1),20(a,1,1))].
+39 -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(28,a,14,a)].
+40 -exactly_correspond(A,sP,lsP,B) | converttext(run(A,C,D,B),B,E) = converttext(run(cP,C,F,eA),eA,E).  [resolve(39,a,17,a)].
+41 converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),B,C,e2),e2,D) = converttext(run(cP,B,E,eA),eA,D).  [resolve(40,a,37,a)].
+42 exactly_correspond(extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),retarget(sA,eArun),B,e2),e2,eArun)),sA,lsA,eArun).  [resolve(32,a,36,a)].
+43 accurately_translates(extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),retarget(sA,eArun),B,e2),e2,eArun)),lsA,sA,C,eArun,eArun).  [resolve(30,a,36,a)].
+44 -exactly_correspond(A,sA,lsA,B) | -exactly_correspond(C,sA,lsA,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(29,a,15,a)].
+45 -exactly_correspond(A,sA,lsA,B) | converttext(run(A,C,D,B),B,E) = converttext(run(extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),F,e1),e1,e2)),retarget(sA,eArun),V6,e2),e2,eArun)),C,V7,eArun),eArun,E).  [resolve(44,a,42,a)].
+46 converttext(run(extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),retarget(sA,eArun),B,e2),e2,eArun)),C,D,eArun),eArun,E) = converttext(run(extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),F,e1),e1,e2)),retarget(sA,eArun),V6,e2),e2,eArun)),C,V7,eArun),eArun,E).  [resolve(45,a,42,a)].
+47 extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),retarget(sA,eArun),B,e2),e2,eArun)) = cA.  [para(41(a,2),38(a,1,1))].
+48 exactly_correspond(extract(converttext(run(cP,retarget(sA,eArun),A,eA),eA,eArun)),sA,lsA,eArun).  [para(41(a,1),42(a,1,1))].
+49 exactly_correspond(cA,sA,lsA,eArun).  [para(38(a,1),48(a,1))].
+50 converttext(run(cA,C,D,eArun),eArun,E) = converttext(run(extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),F,e1),e1,e2)),retarget(sA,eArun),V6,e2),e2,eArun)),C,V7,eArun),eArun,E).  [para(47(a,1),46(a,1,1,1))].
+51 converttext(run(cA,A,B,eArun),eArun,C) = converttext(run(cA,A,D,eArun),eArun,C).  [para(47(a,1),50(a,2,1,1))].
+52 accurately_translates(cA,lsA,sA,A,eArun,eArun).  [para(47(a,1),43(a,1))].
+53 exactly_correspond(extract(converttext(run(cA,retarget(sA,eArun),A,eArun),eArun,eArun)),sA,lsA,eArun).  [resolve(32,a,52,a)].
+54 exactly_correspond(cAprime,sA,lsA,eArun).  [para(23(a,1),53(a,1))].
+55 -exactly_correspond(A,sA,lsA,B) | -exactly_correspond(C,sA,lsA,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(29,a,15,a)].
+56 -exactly_correspond(A,sA,lsA,B) | converttext(run(A,C,D,B),B,E) = converttext(run(cAprime,C,F,eArun),eArun,E).  [resolve(55,a,54,a)].
+57 converttext(run(cAprime,A,B,eArun),eArun,C) = converttext(run(cAprime,A,D,eArun),eArun,C).  [resolve(56,a,54,a)].
+58 -exactly_correspond(A,sA,lsA,B) | -exactly_correspond(C,sA,lsA,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(29,a,15,a)].
+59 -exactly_correspond(A,sA,lsA,B) | converttext(run(A,C,D,B),B,E) = converttext(run(cA,C,F,eArun),eArun,E).  [resolve(58,a,49,a)].
+60 converttext(run(cAprime,A,B,eArun),eArun,C) = converttext(run(cA,A,D,eArun),eArun,C).  [resolve(59,a,54,a)].
+61 extract(converttext(run(cA,retarget(sA,eArun),A,eArun),eArun,eArun)) = cAprime.  [para(51(a,1),23(a,1,1))].
+62 extract(converttext(run(cAprime,retarget(sA,eArun),A,eArun),eArun,eArun)) = cAprime2.  [para(57(a,1),26(a,1,1))].
+63 extract(converttext(run(cAprime,retarget(sA,eArun),A,eArun),eArun,eArun)) = cAprime.  [para(60(a,2),61(a,1,1))].
+64 cAprime2 = cAprime.  [para(62(a,1),63(a,1))].
+65 $F # answer(regenerates).  [resolve(64,a,27,a)].
+
+============================== end of proof ==========================

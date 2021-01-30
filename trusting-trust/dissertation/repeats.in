@@ -1,0 +1,137 @@
+% Diverse Double-Compiling (DDC), represented using prover9
+% by David A. Wheeler.
+
+% WARNING: THIS IS OBSOLETE
+
+% Prove "always_equal", namely, that under a very common and expected scenario,
+% compiler-under-test cA and the DDC output stage2 _will_ be bit-for-bit
+% identical.  This means that we can execute DDC, confident that if we do
+% NOT get bit-for-bit identical results, something has gone wrong - namely, an
+% assumption of this proof was untrue.  Those assumptions include
+% the claim that cA was actually compiled from sA, and that cP corresponds
+% to its source; if cA is corrupted somehow, then one of those assumptions
+% will no longer be true.  We can't prove that "different means malicious
+% compiler" just from a difference, for example, perhaps we didn't execute
+% the DDC process correctly.  But this material conclusively proves that if
+% the two executables are different, at least one of the assumptions is wrong.
+%
+% This proof depends on lemma "stage1_cP_eq_results", which in turn depends
+% on lemma "stage1_corresponds_sP".
+
+
+% Usage:
+% prover9 -f repeats.in > repeats.out
+
+% Prover9 implements first-order logic, so the formal assumptions and goals
+% are written using very straightforward first-order logic.
+% See its documentation for more about its format.
+
+% Prover9's default naming conventions require hard-to-read names. We'll use
+% Prolog conventions instead (e.g., variables begin with an uppercase letter,
+% while constants begin with a lowercase letter):
+set(prolog_style_variables).
+
+% Attempt to find a simpler-to-understand proof, at the cost of needing to
+% work harder to find it:
+set(restrict_denials).
+
+formulas(assumptions).
+
+ %!run(Executable, Input, EnvEffects, Environment) --> data
+ % represents running Executable in Environment, giving it Input + the various
+ % environmental effects EnvEffects.  The latter models whatever the language
+ % allows or requires the environment to vary that COULD have an effect
+ % on the result, e.g., random number generator,
+ % stack location, heap allocation location, thread scheduling
+ % (for a multi-threaded program this could critically change things!).
+ % It returns whatever outputs are produced by running it, including
+ % standard out, standard error, and any files (file names/locations/contents)
+ % generated or modified by its execution.  Since different runs could have
+ % different environment effects as input (e.g., the random number generator
+ % from the environment might produce something different),
+ % running the same executable with the same Input _could_ produce
+ % different results.
+
+ %!compile(Source, Compiler, EnvEffects, RunOn, Target) --> data.
+ % represents compiling Source with the Compiler, running it in environment
+ % RunOn but targeting the result for environment Target. The
+ % "extract()" term represents "extract only executable produced",
+ % i.e., we throw away error reports made during the compilation process
+ % that are technically outputs but will not be used later.
+ % In most cases, the "extract" operation considers
+ % only the files generated and does NOT include outputs to standard out,
+ % standard error, and/or log files.
+ % retarget() represents modifications to the source to change the target
+ % (if necessary).
+
+
+ compile(Source, Compiler, EnvEffects, RunOn, Target) =
+     extract(converttext(run(Compiler, retarget(Source, Target),
+             EnvEffects, RunOn), RunOn, Target)) # label(define_compile).
+ % This is a general definition of a compilation of a compiler.
+ % To perform a compilation, you retarget the given source code
+ % to generate code for some lateger target to produce your final source code.
+ % Then run the Compiler on that Source code on some environment RunOn;
+ % if it's a nondeterministic compiler, then the environmental EnvEffects
+ % may have an effect on the results.  The output will probably have
+ % 'binary' and 'text' results; convert the text to the format of Target.
+ % The portions of the compilation results that can be run later are
+ % then extracted (throwing away warnings, etc. from the Compiler).
+ %
+ % Note: In practice, you only need to perform the 'converttext' work on
+ % text that will be extracted; if it will be thrown away, then there's
+ % no need to actually perform the conversion.  But this is merely
+ % an optimization; expressing this mathematically obscures the main issue.
+
+
+ converttext(run(stage1, Input, EnvEffects1, e2), e2, Environment) =
+ converttext(run(cP, Input, EnvEffects2, eA), eA, Environment)
+   # label(stage1_cP_eq_results) # label(previous_lemma).
+ % We proved this earlier, in a previous lemma.
+
+ % These implement the graph showing the DDC process.  We set up DDC so that:
+ % stage1 = compilation of source sP using cT, running on environment e1.
+ % stage2 = compilation of source sA using stage1, running on environment e2.
+ % Both cA and stage2 are supposed to run on environment eArun.
+
+ % We don't need to define stage1 here; it is used to prove the
+ % stage1 lemma, though, so it's still an assumption (though indirect):
+ % stage1 = compile(sP, cT, e1effects, e1, e2) # label(definition_stage1).
+
+ stage2 = compile(sA, stage1, e2effects, e2, eArun)
+   # label(definition_stage2).
+
+ % Here, we describe how we EXPECTED cP and cA to have been created.
+ % It's quite possible that these assumptions are not true, but in that case,
+ % if the difference has an executable effect then cA and stage2 will no
+ % longer be true... and thus the DDC process will catch it.
+
+ % cP = compile(sP, cT, ePeffects, eP, eA)  # label(definition_cP).
+ cA = compile(sA, cP, eAeffects, eA, eArun) # label(definition_cA).
+
+
+end_of_list.
+
+formulas(goals).
+
+ cA = stage2 # label(always_equal).
+ % If the above assumptions are true, then cA and stage2 will be equal.
+ % If they aren't, then one of the assumptions is wrong.
+
+ % Note that if someone has corrupted cA or cP (including indirectly, by
+ % causing the grandfather cGP to be corrupted in a way that affects cA),
+ % these assumptions will no longer hold.
+ % If the compiler executable cP is corrupted, then it will fail the assumption
+ % cP_exactly_corresponds.  If the compiler executable cA is corrupted
+ % (e.g., it was replaced by some corrupt executable), then
+ % it will fail the assumption definition_cA.
+ % If these assumption failures produce a different cA, then cA and stage2
+ % will no longer be the same... but that means that DDC will detect it!
+
+ % Note that this proof permits sP!=sA and cP!=cA... but it's quite possible
+ % that sP==sA and cP==cA.  In which case, sP==sA would have
+ % to be deterministic.
+
+end_of_list.
+
+

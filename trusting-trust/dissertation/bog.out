@@ -1,0 +1,133 @@
+============================== Prover9 ===============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 3713 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Wed Feb 20 18:55:00 2008
+The command was "prover9 -t 60 -f bog.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file bog.in
+
+set(prolog_style_variables).
+
+formulas(assumptions).
+bog(X) -> semisolid(X).
+bog(X) -> bodyofwater(X).
+-semisolid(X) | -bodyofwater(X).
+(exists X bog(X)).
+end_of_list.
+
+============================== end of input ==========================
+
+% From the command line: assign(max_seconds, 60).
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 bog(X) -> semisolid(X) # label(non_clause).  [assumption].
+2 bog(X) -> bodyofwater(X) # label(non_clause).  [assumption].
+3 (exists X bog(X)) # label(non_clause).  [assumption].
+
+============================== end of process non-clausal formulas ===
+
+============================== PROCESS INITIAL CLAUSES ===============
+
+% Clauses before input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+-bog(A) | semisolid(A).  [clausify(1)].
+-bog(A) | bodyofwater(A).  [clausify(2)].
+-semisolid(A) | -bodyofwater(A).  [assumption].
+bog(c1).  [clausify(3)].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== PREDICATE ELIMINATION =================
+
+Eliminating bog/1
+4 bog(c1).  [clausify(3)].
+5 -bog(A) | semisolid(A).  [clausify(1)].
+6 -bog(A) | bodyofwater(A).  [clausify(2)].
+Derived: semisolid(c1).  [resolve(4,a,5,a)].
+Derived: bodyofwater(c1).  [resolve(4,a,6,a)].
+
+Eliminating semisolid/1
+7 semisolid(c1).  [resolve(4,a,5,a)].
+8 -semisolid(A) | -bodyofwater(A).  [assumption].
+Derived: -bodyofwater(c1).  [resolve(7,a,8,a)].
+
+Eliminating bodyofwater/1
+9 -bodyofwater(c1).  [resolve(7,a,8,a)].
+10 bodyofwater(c1).  [resolve(4,a,6,a)].
+Derived: $F.  [resolve(9,a,10,a)].
+
+============================== end predicate elimination =============
+
+Auto_denials:  (no changes).
+
+Term ordering decisions:
+Predicate symbol precedence:  predicate_order([ ]).
+Function symbol precedence:  function_order([ ]).
+After inverse_order:  (no changes).
+Unfolding symbols: (none).
+
+Auto_inference settings:
+  % set(neg_binary_resolution).  % (HNE depth_diff=0)
+  % clear(ordered_res).  % (HNE depth_diff=0)
+  % set(ur_resolution).  % (HNE depth_diff=0)
+    % set(ur_resolution) -> set(pos_ur_resolution).
+    % set(ur_resolution) -> set(neg_ur_resolution).
+
+Auto_process settings:  (no changes).
+
+============================== PROOF =================================
+
+% Proof 1 at 0.00 (+ 0.00) seconds.
+% Length of proof is 11.
+% Level of proof is 4.
+% Maximum clause weight is 0.
+% Given clauses 0.
+
+1 bog(X) -> semisolid(X) # label(non_clause).  [assumption].
+2 bog(X) -> bodyofwater(X) # label(non_clause).  [assumption].
+3 (exists X bog(X)) # label(non_clause).  [assumption].
+4 bog(c1).  [clausify(3)].
+5 -bog(A) | semisolid(A).  [clausify(1)].
+6 -bog(A) | bodyofwater(A).  [clausify(2)].
+7 semisolid(c1).  [resolve(4,a,5,a)].
+8 -semisolid(A) | -bodyofwater(A).  [assumption].
+9 -bodyofwater(c1).  [resolve(7,a,8,a)].
+10 bodyofwater(c1).  [resolve(4,a,6,a)].
+11 $F.  [resolve(9,a,10,a)].
+
+============================== end of proof ==========================
+
+============================== STATISTICS ============================
+
+Given=0. Generated=1. Kept=0. proofs=1.
+Usable=0. Sos=0. Demods=0. Limbo=0, Disabled=8. Hints=0.
+Weight_deleted=0. Literals_deleted=0.
+Forward_subsumed=0. Back_subsumed=0.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+Demod_attempts=0. Demod_rewrites=0.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=0. Nonunit_bsub_feature_tests=0.
+Megabytes=0.01.
+User_CPU=0.00, System_CPU=0.00, Wall_clock=0.
+
+============================== end of statistics =====================
+
+============================== end of search =========================
+
+THEOREM PROVED
+
+Exiting with 1 proof.
+
+Process 3713 exit (max_proofs) Wed Feb 20 18:55:00 2008

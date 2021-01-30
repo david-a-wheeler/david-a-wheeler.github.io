@@ -1,0 +1,327 @@
+============================== Prover9 ===============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 332 was started by dwheeler on eve,
+Sun Aug 17 12:23:16 2008
+The command was "prover9 -t 60 -f regenerates.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file regenerates.in
+
+set(prolog_style_variables).
+set(restrict_denials).
+
+formulas(assumptions).
+accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond).
+(all EnvEffects accurately_translates(cGP,lsP,sP,EnvEffects,e1,e2)) # label(cGP_compiles_sP).
+(all EnvEffects accurately_translates(cA,lsA,sA,EnvEffects,e2,eArun)) # label(cP_compiles_sA).
+accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA).
+accurately_translates(GoodCompilerLangA,lsA,sA,EnvEffectsMakeA,ExecEnv,TargetEnv) -> accurately_translates(compile(sA,GoodCompilerLangA,EnvEffectsMakeA,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sA_compiles_sA).
+deterministic(Source,Language) & portable(Source,Language) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_determinism).
+deterministic(sP,lsP) # label(sP_deterministic).
+portable(sP,lsP) # label(sP_portable).
+deterministic(sA,lsA) # label(sA_deterministic).
+portable(sA,lsA) # label(sA_portable).
+compile(Source,Compiler,EnvEffects,RunOn,Target) = extract(converttext(run(Compiler,retarget(Source,Target),EnvEffects,RunOn),RunOn,Target)) # label(define_compile).
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).
+cP = compile(sP,cGP,ePeffects,eP,eA) # label(revised_definition_cP).
+cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).
+cAprime = compile(sA,cA,eAeffectsprime,eArun,eArun) # label(definition_cAprime).
+cAprime2 = compile(sA,cAprime,eAeffectsprime2,eArun,eArun) # label(definition_cAprime).
+end_of_list.
+
+formulas(goals).
+cAprime = cAprime2 # label(regenerates).
+end_of_list.
+
+============================== end of input ==========================
+
+% From the command line: assign(max_seconds, 60).
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+2 (all EnvEffects accurately_translates(cGP,lsP,sP,EnvEffects,e1,e2)) # label(cGP_compiles_sP) # label(non_clause).  [assumption].
+3 (all EnvEffects accurately_translates(cA,lsA,sA,EnvEffects,e2,eArun)) # label(cP_compiles_sA) # label(non_clause).  [assumption].
+4 accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA) # label(non_clause).  [assumption].
+5 accurately_translates(GoodCompilerLangA,lsA,sA,EnvEffectsMakeA,ExecEnv,TargetEnv) -> accurately_translates(compile(sA,GoodCompilerLangA,EnvEffectsMakeA,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sA_compiles_sA) # label(non_clause).  [assumption].
+6 deterministic(Source,Language) & portable(Source,Language) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_determinism) # label(non_clause).  [assumption].
+7 cAprime = cAprime2 # label(regenerates) # label(non_clause) # label(goal).  [goal].
+
+============================== end of process non-clausal formulas ===
+
+============================== PROCESS INITIAL CLAUSES ===============
+
+% Clauses before input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+-accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(1)].
+accurately_translates(cGP,lsP,sP,A,e1,e2) # label(cGP_compiles_sP).  [clausify(2)].
+accurately_translates(cA,lsA,sA,A,e2,eArun) # label(cP_compiles_sA).  [clausify(3)].
+-accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).  [clausify(4)].
+-accurately_translates(A,lsA,sA,B,C,D) | accurately_translates(compile(sA,A,B,C,D),lsA,sA,E,D,eArun) # label(sA_compiles_sA).  [clausify(5)].
+-deterministic(A,B) | -portable(A,B) | -exactly_correspond(C,A,B,D) | -exactly_correspond(E,A,B,F) | converttext(run(E,V6,V7,F),F,V8) = converttext(run(C,V6,V9,D),D,V8) # label(define_determinism).  [clausify(6)].
+deterministic(sP,lsP) # label(sP_deterministic).  [assumption].
+portable(sP,lsP) # label(sP_portable).  [assumption].
+deterministic(sA,lsA) # label(sA_deterministic).  [assumption].
+portable(sA,lsA) # label(sA_portable).  [assumption].
+compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+cP = compile(sP,cGP,ePeffects,eP,eA) # label(revised_definition_cP).  [assumption].
+cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).  [assumption].
+cAprime = compile(sA,cA,eAeffectsprime,eArun,eArun) # label(definition_cAprime).  [assumption].
+cAprime2 = compile(sA,cAprime,eAeffectsprime2,eArun,eArun) # label(definition_cAprime).  [assumption].
+cAprime2 != cAprime # label(regenerates).  [deny(7)].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== PREDICATE ELIMINATION =================
+
+Eliminating deterministic/2
+8 deterministic(sP,lsP) # label(sP_deterministic).  [assumption].
+9 -deterministic(A,B) | -portable(A,B) | -exactly_correspond(C,A,B,D) | -exactly_correspond(E,A,B,F) | converttext(run(E,V6,V7,F),F,V8) = converttext(run(C,V6,V9,D),D,V8) # label(define_determinism).  [clausify(6)].
+Derived: -portable(sP,lsP) | -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(8,a,9,a)].
+10 deterministic(sA,lsA) # label(sA_deterministic).  [assumption].
+Derived: -portable(sA,lsA) | -exactly_correspond(A,sA,lsA,B) | -exactly_correspond(C,sA,lsA,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(10,a,9,a)].
+
+============================== end predicate elimination =============
+
+Auto_denials:
+  % copying label regenerates to answer in negative clause
+
+Term ordering decisions:
+Predicate symbol precedence:  predicate_order([ =, portable, exactly_correspond, accurately_translates ]).
+Function symbol precedence:  function_order([ sA, sP, eArun, lsA, lsP, cA, cP, eA, cAprime, cGP, e2, cAprime2, e1, eAeffects, eAeffectsprime, eAeffectsprime2, eP, ePeffects, retarget, extract, converttext, run, compile ]).
+After inverse_order:  (no changes).
+Unfolding symbols: compile/5.
+
+Auto_inference settings:
+  % set(paramodulation).  % (positive equality literals)
+    % set(paramodulation) -> set(back_demod).
+  % set(hyper_resolution).  % (nonunit Horn with equality)
+    % set(hyper_resolution) -> set(pos_hyper_resolution).
+  % set(neg_ur_resolution).  % (nonunit Horn with equality)
+  % assign(para_lit_limit, 4).  % (nonunit Horn with equality)
+
+Auto_process settings:  (no changes).
+
+restricted denial: (wt=3): 28 cAprime2 != cAprime # label(regenerates) # answer(regenerates).  [deny(7)].
+
+============================== end of process initial clauses ========
+
+============================== CLAUSES FOR SEARCH ====================
+
+% Clauses after input processing:
+
+formulas(usable).
+28 cAprime2 != cAprime # label(regenerates) # answer(regenerates).  [deny(7)].
+end_of_list.
+
+formulas(sos).
+12 accurately_translates(cGP,lsP,sP,A,e1,e2) # label(cGP_compiles_sP).  [clausify(2)].
+13 accurately_translates(cA,lsA,sA,A,e2,eArun) # label(cP_compiles_sA).  [clausify(3)].
+16 portable(sP,lsP) # label(sP_portable).  [assumption].
+17 portable(sA,lsA) # label(sA_portable).  [assumption].
+18 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+19 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+21 extract(converttext(run(cGP,retarget(sP,eA),ePeffects,eP),eP,eA)) = cP.  [copy(20),rewrite([18(7)]),flip(a)].
+23 extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) = cA.  [copy(22),rewrite([18(7)]),flip(a)].
+25 extract(converttext(run(cA,retarget(sA,eArun),eAeffectsprime,eArun),eArun,eArun)) = cAprime.  [copy(24),rewrite([18(7)]),flip(a)].
+27 extract(converttext(run(cAprime,retarget(sA,eArun),eAeffectsprime2,eArun),eArun,eArun)) = cAprime2.  [copy(26),rewrite([18(7)]),flip(a)].
+29 -portable(sP,lsP) | -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(8,a,9,a)].
+30 -portable(sA,lsA) | -exactly_correspond(A,sA,lsA,B) | -exactly_correspond(C,sA,lsA,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(10,a,9,a)].
+31 -accurately_translates(A,lsA,sA,B,C,D) | accurately_translates(extract(converttext(run(A,retarget(sA,D),B,C),C,D)),lsA,sA,E,D,eArun).  [back_rewrite(15),rewrite([18(5)])].
+32 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(extract(converttext(run(A,retarget(sP,D),B,C),C,D)),lsA,sA,E,D,eArun).  [back_rewrite(14),rewrite([18(5)])].
+33 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(extract(converttext(run(A,retarget(C,F),D,E),E,F)),C,B,F).  [back_rewrite(11),rewrite([18(2)])].
+end_of_list.
+
+formulas(demodulators).
+18 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+21 extract(converttext(run(cGP,retarget(sP,eA),ePeffects,eP),eP,eA)) = cP.  [copy(20),rewrite([18(7)]),flip(a)].
+23 extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) = cA.  [copy(22),rewrite([18(7)]),flip(a)].
+25 extract(converttext(run(cA,retarget(sA,eArun),eAeffectsprime,eArun),eArun,eArun)) = cAprime.  [copy(24),rewrite([18(7)]),flip(a)].
+27 extract(converttext(run(cAprime,retarget(sA,eArun),eAeffectsprime2,eArun),eArun,eArun)) = cAprime2.  [copy(26),rewrite([18(7)]),flip(a)].
+end_of_list.
+
+============================== end of clauses for search =============
+
+============================== SEARCH ================================
+
+% Starting search at 0.02 seconds.
+
+given #1 (I,wt=7): 12 accurately_translates(cGP,lsP,sP,A,e1,e2) # label(cGP_compiles_sP).  [clausify(2)].
+
+given #2 (I,wt=7): 13 accurately_translates(cA,lsA,sA,A,e2,eArun) # label(cP_compiles_sA).  [clausify(3)].
+
+given #3 (I,wt=3): 16 portable(sP,lsP) # label(sP_portable).  [assumption].
+
+given #4 (I,wt=3): 17 portable(sA,lsA) # label(sA_portable).  [assumption].
+
+given #5 (I,wt=18): 18 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+
+given #6 (I,wt=5): 19 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+
+given #7 (I,wt=13): 21 extract(converttext(run(cGP,retarget(sP,eA),ePeffects,eP),eP,eA)) = cP.  [copy(20),rewrite([18(7)]),flip(a)].
+
+given #8 (I,wt=13): 23 extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) = cA.  [copy(22),rewrite([18(7)]),flip(a)].
+
+given #9 (I,wt=13): 25 extract(converttext(run(cA,retarget(sA,eArun),eAeffectsprime,eArun),eArun,eArun)) = cAprime.  [copy(24),rewrite([18(7)]),flip(a)].
+
+given #10 (I,wt=13): 27 extract(converttext(run(cAprime,retarget(sA,eArun),eAeffectsprime2,eArun),eArun,eArun)) = cAprime2.  [copy(26),rewrite([18(7)]),flip(a)].
+
+given #11 (I,wt=30): 29 -portable(sP,lsP) | -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(8,a,9,a)].
+
+given #12 (I,wt=30): 30 -portable(sA,lsA) | -exactly_correspond(A,sA,lsA,B) | -exactly_correspond(C,sA,lsA,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(10,a,9,a)].
+
+given #13 (I,wt=24): 31 -accurately_translates(A,lsA,sA,B,C,D) | accurately_translates(extract(converttext(run(A,retarget(sA,D),B,C),C,D)),lsA,sA,E,D,eArun).  [back_rewrite(15),rewrite([18(5)])].
+
+given #14 (I,wt=24): 32 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(extract(converttext(run(A,retarget(sP,D),B,C),C,D)),lsA,sA,E,D,eArun).  [back_rewrite(14),rewrite([18(5)])].
+
+given #15 (I,wt=22): 33 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(extract(converttext(run(A,retarget(C,F),D,E),E,F)),C,B,F).  [back_rewrite(11),rewrite([18(2)])].
+
+given #16 (A,wt=17): 34 converttext(run(cP,A,B,eA),eA,C) = converttext(run(cP,A,D,eA),eA,C).  [hyper(29,a,16,a,b,19,a,c,19,a)].
+
+given #17 (T,wt=13): 40 extract(converttext(run(cP,retarget(sA,eArun),A,eA),eA,eArun)) = cA.  [para(34(a,1),23(a,1,1))].
+
+given #18 (T,wt=15): 37 exactly_correspond(extract(converttext(run(cA,retarget(sA,eArun),A,e2),e2,eArun)),sA,lsA,eArun).  [hyper(33,a,13,a)].
+
+given #19 (T,wt=15): 38 exactly_correspond(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),sP,lsP,e2).  [hyper(33,a,12,a)].
+
+given #20 (T,wt=17): 35 accurately_translates(extract(converttext(run(cA,retarget(sA,eArun),A,e2),e2,eArun)),lsA,sA,B,eArun,eArun).  [hyper(31,a,13,a)].
+
+given #21 (A,wt=17): 36 accurately_translates(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),lsA,sA,B,e2,eArun).  [hyper(32,a,12,a)].
+
+given #22 (T,wt=23): 39 extract(converttext(run(cP,retarget(A,B),C,eA),eA,B)) = extract(converttext(run(cP,retarget(A,B),D,eA),eA,B)).  [para(34(a,1),18(a,2,1)),rewrite([18(3)])].
+
+given #23 (T,wt=25): 44 exactly_correspond(extract(converttext(run(extract(converttext(run(cA,retarget(sA,eArun),A,e2),e2,eArun)),retarget(sA,eArun),B,eArun),eArun,eArun)),sA,lsA,eArun).  [hyper(33,a,35,a)].
+
+given #24 (T,wt=25): 46 exactly_correspond(extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),retarget(sA,eArun),B,e2),e2,eArun)),sA,lsA,eArun).  [hyper(33,a,36,a)].
+
+given #25 (T,wt=27): 43 converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),B,C,e2),e2,D) = converttext(run(cP,B,E,eA),eA,D).  [hyper(29,a,16,a,b,19,a,c,38,a)].
+
+given #26 (A,wt=37): 41 converttext(run(extract(converttext(run(cA,retarget(sA,eArun),A,e2),e2,eArun)),B,C,eArun),eArun,D) = converttext(run(extract(converttext(run(cA,retarget(sA,eArun),E,e2),e2,eArun)),B,F,eArun),eArun,D).  [hyper(30,a,17,a,b,37,a,c,37,a)].
+
+given #27 (T,wt=5): 55 exactly_correspond(cA,sA,lsA,eArun).  [para(43(a,1),46(a,1,1)),rewrite([40(10)])].
+
+given #28 (T,wt=7): 59 accurately_translates(cA,lsA,sA,A,eArun,eArun).  [back_rewrite(47),rewrite([54(19)])].
+
+given #29 (T,wt=15): 61 exactly_correspond(extract(converttext(run(cA,retarget(sA,eArun),A,eArun),eArun,eArun)),sA,lsA,eArun).  [hyper(33,a,59,a)].
+
+given #30 (T,wt=5): 67 exactly_correspond(cAprime,sA,lsA,eArun).  [para(25(a,1),61(a,1))].
+
+given #31 (A,wt=37): 42 converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),B,C,e2),e2,D) = converttext(run(extract(converttext(run(cGP,retarget(sP,e2),E,e1),e1,e2)),B,F,e2),e2,D).  [hyper(29,a,16,a,b,38,a,c,38,a)].
+
+given #32 (T,wt=17): 58 converttext(run(cA,A,B,eArun),eArun,C) = converttext(run(cA,A,D,eArun),eArun,C).  [back_rewrite(50),rewrite([54(19),54(24)])].
+
+given #33 (T,wt=7): 76 accurately_translates(cAprime,lsA,sA,A,eArun,eArun).  [back_rewrite(62),rewrite([75(10)])].
+
+given #34 (T,wt=13): 75 extract(converttext(run(cA,retarget(sA,eArun),A,eArun),eArun,eArun)) = cAprime.  [para(58(a,1),25(a,1,1))].
+
+given #35 (T,wt=15): 77 exactly_correspond(extract(converttext(run(cAprime,retarget(sA,eArun),A,eArun),eArun,eArun)),sA,lsA,eArun).  [hyper(33,a,76,a)].
+
+given #36 (A,wt=27): 45 accurately_translates(extract(converttext(run(extract(converttext(run(cA,retarget(sA,eArun),A,e2),e2,eArun)),retarget(sA,eArun),B,eArun),eArun,eArun)),lsA,sA,C,eArun,eArun).  [hyper(31,a,35,a)].
+
+given #37 (T,wt=5): 84 exactly_correspond(cAprime2,sA,lsA,eArun).  [para(27(a,1),77(a,1))].
+
+given #38 (T,wt=17): 68 converttext(run(cAprime,A,B,eArun),eArun,C) = converttext(run(cAprime,A,D,eArun),eArun,C).  [hyper(30,a,17,a,b,67,a,c,67,a)].
+
+given #39 (T,wt=7): 95 accurately_translates(cAprime2,lsA,sA,A,eArun,eArun).  [back_rewrite(78),rewrite([94(10)])].
+
+given #40 (T,wt=13): 94 extract(converttext(run(cAprime,retarget(sA,eArun),A,eArun),eArun,eArun)) = cAprime2.  [para(68(a,1),27(a,1,1))].
+
+given #41 (A,wt=57): 48 converttext(run(extract(converttext(run(extract(converttext(run(cA,retarget(sA,eArun),A,e2),e2,eArun)),retarget(sA,eArun),B,eArun),eArun,eArun)),C,D,eArun),eArun,E) = converttext(run(extract(converttext(run(extract(converttext(run(cA,retarget(sA,eArun),F,e2),e2,eArun)),retarget(sA,eArun),V6,eArun),eArun,eArun)),C,V7,eArun),eArun,E).  [hyper(30,a,17,a,b,44,a,c,44,a)].
+
+given #42 (T,wt=15): 96 exactly_correspond(extract(converttext(run(cAprime2,retarget(sA,eArun),A,eArun),eArun,eArun)),sA,lsA,eArun).  [hyper(33,a,95,a)].
+
+given #43 (T,wt=17): 70 converttext(run(cAprime,A,B,eArun),eArun,C) = converttext(run(cA,A,D,eArun),eArun,C).  [hyper(30,a,17,a,b,55,a,c,67,a)].
+
+============================== PROOF =================================
+
+% Proof 1 at 0.09 (+ 0.01) seconds: regenerates.
+% Length of proof is 49.
+% Level of proof is 12.
+% Maximum clause weight is 57.
+% Given clauses 43.
+
+1 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+2 (all EnvEffects accurately_translates(cGP,lsP,sP,EnvEffects,e1,e2)) # label(cGP_compiles_sP) # label(non_clause).  [assumption].
+4 accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA) # label(non_clause).  [assumption].
+5 accurately_translates(GoodCompilerLangA,lsA,sA,EnvEffectsMakeA,ExecEnv,TargetEnv) -> accurately_translates(compile(sA,GoodCompilerLangA,EnvEffectsMakeA,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sA_compiles_sA) # label(non_clause).  [assumption].
+6 deterministic(Source,Language) & portable(Source,Language) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_determinism) # label(non_clause).  [assumption].
+7 cAprime = cAprime2 # label(regenerates) # label(non_clause) # label(goal).  [goal].
+8 deterministic(sP,lsP) # label(sP_deterministic).  [assumption].
+9 -deterministic(A,B) | -portable(A,B) | -exactly_correspond(C,A,B,D) | -exactly_correspond(E,A,B,F) | converttext(run(E,V6,V7,F),F,V8) = converttext(run(C,V6,V9,D),D,V8) # label(define_determinism).  [clausify(6)].
+10 deterministic(sA,lsA) # label(sA_deterministic).  [assumption].
+11 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(1)].
+12 accurately_translates(cGP,lsP,sP,A,e1,e2) # label(cGP_compiles_sP).  [clausify(2)].
+14 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).  [clausify(4)].
+15 -accurately_translates(A,lsA,sA,B,C,D) | accurately_translates(compile(sA,A,B,C,D),lsA,sA,E,D,eArun) # label(sA_compiles_sA).  [clausify(5)].
+16 portable(sP,lsP) # label(sP_portable).  [assumption].
+17 portable(sA,lsA) # label(sA_portable).  [assumption].
+18 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+19 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+22 cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).  [assumption].
+23 extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) = cA.  [copy(22),rewrite([18(7)]),flip(a)].
+24 cAprime = compile(sA,cA,eAeffectsprime,eArun,eArun) # label(definition_cAprime).  [assumption].
+25 extract(converttext(run(cA,retarget(sA,eArun),eAeffectsprime,eArun),eArun,eArun)) = cAprime.  [copy(24),rewrite([18(7)]),flip(a)].
+26 cAprime2 = compile(sA,cAprime,eAeffectsprime2,eArun,eArun) # label(definition_cAprime).  [assumption].
+27 extract(converttext(run(cAprime,retarget(sA,eArun),eAeffectsprime2,eArun),eArun,eArun)) = cAprime2.  [copy(26),rewrite([18(7)]),flip(a)].
+28 cAprime2 != cAprime # label(regenerates) # answer(regenerates).  [deny(7)].
+29 -portable(sP,lsP) | -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(8,a,9,a)].
+30 -portable(sA,lsA) | -exactly_correspond(A,sA,lsA,B) | -exactly_correspond(C,sA,lsA,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(10,a,9,a)].
+31 -accurately_translates(A,lsA,sA,B,C,D) | accurately_translates(extract(converttext(run(A,retarget(sA,D),B,C),C,D)),lsA,sA,E,D,eArun).  [back_rewrite(15),rewrite([18(5)])].
+32 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(extract(converttext(run(A,retarget(sP,D),B,C),C,D)),lsA,sA,E,D,eArun).  [back_rewrite(14),rewrite([18(5)])].
+33 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(extract(converttext(run(A,retarget(C,F),D,E),E,F)),C,B,F).  [back_rewrite(11),rewrite([18(2)])].
+34 converttext(run(cP,A,B,eA),eA,C) = converttext(run(cP,A,D,eA),eA,C).  [hyper(29,a,16,a,b,19,a,c,19,a)].
+36 accurately_translates(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),lsA,sA,B,e2,eArun).  [hyper(32,a,12,a)].
+38 exactly_correspond(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),sP,lsP,e2).  [hyper(33,a,12,a)].
+40 extract(converttext(run(cP,retarget(sA,eArun),A,eA),eA,eArun)) = cA.  [para(34(a,1),23(a,1,1))].
+43 converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),B,C,e2),e2,D) = converttext(run(cP,B,E,eA),eA,D).  [hyper(29,a,16,a,b,19,a,c,38,a)].
+46 exactly_correspond(extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),retarget(sA,eArun),B,e2),e2,eArun)),sA,lsA,eArun).  [hyper(33,a,36,a)].
+47 accurately_translates(extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),retarget(sA,eArun),B,e2),e2,eArun)),lsA,sA,C,eArun,eArun).  [hyper(31,a,36,a)].
+50 converttext(run(extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),retarget(sA,eArun),B,e2),e2,eArun)),C,D,eArun),eArun,E) = converttext(run(extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),F,e1),e1,e2)),retarget(sA,eArun),V6,e2),e2,eArun)),C,V7,eArun),eArun,E).  [hyper(30,a,17,a,b,46,a,c,46,a)].
+54 extract(converttext(run(extract(converttext(run(cGP,retarget(sP,e2),A,e1),e1,e2)),retarget(sA,eArun),B,e2),e2,eArun)) = cA.  [para(43(a,2),40(a,1,1))].
+55 exactly_correspond(cA,sA,lsA,eArun).  [para(43(a,1),46(a,1,1)),rewrite([40(10)])].
+58 converttext(run(cA,A,B,eArun),eArun,C) = converttext(run(cA,A,D,eArun),eArun,C).  [back_rewrite(50),rewrite([54(19),54(24)])].
+59 accurately_translates(cA,lsA,sA,A,eArun,eArun).  [back_rewrite(47),rewrite([54(19)])].
+61 exactly_correspond(extract(converttext(run(cA,retarget(sA,eArun),A,eArun),eArun,eArun)),sA,lsA,eArun).  [hyper(33,a,59,a)].
+67 exactly_correspond(cAprime,sA,lsA,eArun).  [para(25(a,1),61(a,1))].
+68 converttext(run(cAprime,A,B,eArun),eArun,C) = converttext(run(cAprime,A,D,eArun),eArun,C).  [hyper(30,a,17,a,b,67,a,c,67,a)].
+70 converttext(run(cAprime,A,B,eArun),eArun,C) = converttext(run(cA,A,D,eArun),eArun,C).  [hyper(30,a,17,a,b,55,a,c,67,a)].
+75 extract(converttext(run(cA,retarget(sA,eArun),A,eArun),eArun,eArun)) = cAprime.  [para(58(a,1),25(a,1,1))].
+94 extract(converttext(run(cAprime,retarget(sA,eArun),A,eArun),eArun,eArun)) = cAprime2.  [para(68(a,1),27(a,1,1))].
+106 cAprime2 = cAprime.  [para(70(a,2),75(a,1,1)),rewrite([94(10)])].
+107 $F # answer(regenerates).  [resolve(106,a,28,a)].
+
+============================== end of proof ==========================
+
+============================== STATISTICS ============================
+
+Given=43. Generated=208. Kept=92. proofs=1.
+Usable=38. Sos=26. Demods=6. Limbo=1, Disabled=45. Hints=0.
+Weight_deleted=0. Literals_deleted=0.
+Forward_subsumed=116. Back_subsumed=3.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=9 (0 lex), Back_demodulated=23. Back_unit_deleted=0.
+Demod_attempts=4367. Demod_rewrites=64.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=0. Nonunit_bsub_feature_tests=8.
+Megabytes=0.20.
+User_CPU=0.09, System_CPU=0.01, Wall_clock=1.
+
+============================== end of statistics =====================
+
+============================== end of search =========================
+
+THEOREM PROVED
+
+Exiting with 1 proof.
+
+Process 332 exit (max_proofs) Sun Aug 17 12:23:17 2008

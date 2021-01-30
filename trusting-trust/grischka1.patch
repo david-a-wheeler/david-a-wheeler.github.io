@@ -1,0 +1,82 @@
+Pass structures through ?:, test for fp too (grischka-2005-09-25 case_1)
+This patch was originally posted in grischka's 2005-09-25 email as
+required fix case_1 to compile gcc 2.95.  This adds tests to ensure
+that both structures and function pointers can pass through the conditional
+operator ?:. The tests were tweaked by David A. Wheeler to merge the test cases
+into the standard tcc test suite.  This patch also modifies tcc so that
+structures can be passed through conditional operators.
+Note that this patch does NOT modify tcc to permit function pointers to pass
+through ?:, because although such a patch WAS in grischka's patch, an
+equivalent change was already in tcc by the time this version of the patch
+was created.
+
+diff -ur tinycc-rl-1.0.0-orig/tcc.c tinycc-rl-1.0.0-grischka1/tcc.c
+--- tinycc-rl-1.0.0-orig/tcc.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-rl-1.0.0-grischka1/tcc.c	2007-05-03 13:15:48.000000000 -0400
+@@ -7026,6 +7026,8 @@
+                 
+             /* now we convert second operand */
+             gen_cast(&type);
++            if (VT_STRUCT == (vtop->type.t & VT_BTYPE))
++                gaddrof();
+             rc = RC_INT;
+             if (is_float(type.t)) {
+                 rc = RC_FLOAT;
+@@ -7043,6 +7045,8 @@
+             /* put again first value and cast it */
+             *vtop = sv;
+             gen_cast(&type);
++            if (VT_STRUCT == (vtop->type.t & VT_BTYPE))
++                gaddrof();
+             r1 = gv(rc);
+             move_reg(r2, r1);
+             vtop->r = r2;
+diff -ur tinycc-rl-1.0.0-orig/tests/tcctest.c tinycc-rl-1.0.0-grischka1/tests/tcctest.c
+--- tinycc-rl-1.0.0-orig/tests/tcctest.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-rl-1.0.0-grischka1/tests/tcctest.c	2007-05-03 13:18:43.000000000 -0400
+@@ -284,6 +284,16 @@
+ 
+ }
+ 
++int some_fn(int x)
++{
++    return x;
++}
++
++int other_fn(int x)
++{
++    return x*2;
++}
++
+ int op(a,b)
+ {
+     return a / b;
+@@ -904,6 +914,28 @@
+         }
+     }
+ 
++    /* Test passing structs & function pointers though conditional
++     * operator ? :.  This is bug grischka-20050929 case_1 */
++    {
++        struct test1 { int a, b, c; };
++        struct test1 t0 = {10,20,30};
++        struct test1 t1 = {11,21,31};
++        struct test1 tx = {0,0,0};
++        int (*pfn)(int);
++        int f = 0;
++
++        tx = f==0 ? t0 : t1;
++        printf("case_1.1: 10,20,30 -> %d,%d,%d\n", tx.a, tx.b, tx.c);
++
++        /* This tests to see that function pointers correctly pass through
++           the conditional operator ?:.  This tests for
++           grischka-20050929 case_1.2.  Note that this was already FIXED
++           in rl-1.0.0, but we want to TEST for it too. */
++        pfn = f ? some_fn : other_fn;
++        printf("case_1.2: other -> %s\n", 1==pfn(1)?"some":"other");
++    }
++
++
+     /* test ? : GCC extension */
+     {
+         static int v1 = 34 ? : -1; /* constant case */

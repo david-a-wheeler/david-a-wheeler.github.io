@@ -1,0 +1,40 @@
+% Diverse Double-Compiling (DDC), represented using prover9
+% by David A. Wheeler.
+
+% Usage:
+% prover9 -f cP-corresponds-sP.in > cP-corresponds-sP.out
+
+% Prolog conventions instead (e.g., variables begin with an uppercase letter,
+% while constants begin with a lowercase letter):
+set(prolog_style_variables).
+
+% Attempt to find a simpler-to-understand proof, at the cost of needing to
+% work harder to find it:
+set(restrict_denials).
+
+formulas(assumptions).
+
+ % We will presume that there was a grandparent for this.
+
+ cP = compile(sP, cGP, ePeffects, eP, eA)  # label(definition_cP).
+
+ all EnvEffects accurately_translates(cGP, lsP, sP, EnvEffects, eP, eA)
+   # label(cGP_compiles_sP).
+
+ accurately_translates(Compiler, Lang, Source, EnvEffects,
+                       ExecEnv, TargetEnv) ->
+   exactly_correspond(compile(Source, Compiler, EnvEffects,
+                              ExecEnv, TargetEnv),
+                      Source, Lang, TargetEnv)
+   # label(define_exactly_correspond).
+
+ % Note: don't include the definition of compile(...) = extract(...);
+ % prover9 will use it, even though it's not necessary, producing an
+ % unnecessarily complicated proof.
+
+end_of_list.
+
+formulas(goals).
+ exactly_correspond(cP, sP, lsP, eA) # label(cP_corresponds_to_sP).
+ % Executable cP exactly corresponds to source sP.
+end_of_list.

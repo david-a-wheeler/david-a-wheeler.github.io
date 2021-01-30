@@ -1,0 +1,53 @@
+============================== prooftrans ============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 2747 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Mon Oct 29 11:17:57 2007
+The command was "prover9 -t 60 -f all-repeats.in".
+============================== end of head ===========================
+
+set(prolog_style_variables).
+============================== end of input ==========================
+
+============================== PROOF =================================
+
+% -------- Comments from original proof --------
+% Proof 1 at 0.00 (+ 0.00) seconds: always_equal.
+% Length of proof is 26.
+% Level of proof is 7.
+% Maximum clause weight is 30.
+% Given clauses 12.
+
+1 deterministic(A,B) & portable(A,B) & exactly_correspond(C,A,B,D) & exactly_correspond(E,A,B,F) -> converttext(run(C,V6,V7,D),D,V8) = converttext(run(E,V6,V9,F),F,V8) # label(define_determinism) # label(non_clause).  [assumption].
+2 accurately_translates(A,B,C,D,E,F) -> exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+3 (all A accurately_translates(cT,lsP,sP,A,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+4 cA = stage2 # label(always_equal) # label(non_clause) # label(goal).  [goal].
+5 deterministic(sP,lsP) # label(sP_deterministic).  [assumption].
+6 -deterministic(A,B) | -portable(A,B) | -exactly_correspond(C,A,B,D) | -exactly_correspond(E,A,B,F) | converttext(run(E,V6,V7,F),F,V8) = converttext(run(C,V6,V9,D),D,V8) # label(define_determinism).  [clausify(1)].
+7 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(3)].
+8 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(2)].
+9 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+10 portable(sP,lsP) # label(sP_portable).  [assumption].
+11 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+12 stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).  [assumption].
+13 stage1 = extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)).  [para(11(a,1),12(a,2))].
+14 extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)) = stage1.  [copy(13),flip(a)].
+15 stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).  [assumption].
+16 stage2 = extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)).  [para(11(a,1),15(a,2))].
+17 cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).  [assumption].
+18 cA = extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)).  [para(11(a,1),17(a,2))].
+19 cA != stage2 # label(always_equal) # answer(always_equal).  [deny(4)].
+20 extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) != stage2.  [para(18(a,1),19(a,1))].
+21 extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) != extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)).  [para(16(a,1),20(a,2))].
+22 extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)) != extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)).  [copy(21),flip(a)].
+23 -portable(sP,lsP) | -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(5,a,6,a)].
+24 exactly_correspond(compile(sP,cT,A,e1,e2),sP,lsP,e2).  [resolve(7,a,8,a)].
+25 exactly_correspond(extract(converttext(run(cT,retarget(sP,e2),A,e1),e1,e2)),sP,lsP,e2).  [para(11(a,1),24(a,1))].
+26 exactly_correspond(stage1,sP,lsP,e2).  [para(14(a,1),25(a,1))].
+27 -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,E,F,D),D,V6) = converttext(run(A,E,V7,B),B,V6).  [resolve(23,a,10,a)].
+28 -exactly_correspond(A,sP,lsP,B) | converttext(run(A,C,D,B),B,E) = converttext(run(cP,C,F,eA),eA,E).  [resolve(27,a,9,a)].
+29 converttext(run(stage1,A,B,e2),e2,C) = converttext(run(cP,A,D,eA),eA,C).  [resolve(28,a,26,a)].
+30 compile(A,stage1,B,e2,C) = extract(converttext(run(cP,retarget(A,C),D,eA),eA,C)).  [para(29(a,1),11(a,2,1))].
+31 extract(converttext(run(stage1,retarget(A,B),C,e2),e2,B)) = extract(converttext(run(cP,retarget(A,B),D,eA),eA,B)).  [para(11(a,1),30(a,1))].
+32 $F # answer(always_equal).  [resolve(31,a,22,a)].
+
+============================== end of proof ==========================

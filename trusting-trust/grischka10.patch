@@ -1,0 +1,108 @@
+Fix signedness of LL shift operators in libtcc1.c (grischka-2005-09-25 case_10)
+This patch fixes a subtle bug in some long long shift operators in libtcc1.c,
+caused because the long long shift operators implemented in libtcc1.c
+didn't cast all their intermediate values to (unsigned) when they should have.
+This bug caused casting double to unsigned long long (ull) to fail in
+certain cases, since its implementation used a shift.
+
+This patch modifies portions of libtcc1.c that are only used when libtcc1.c
+is compiled with __TINYC__ defined.  As a result, many tcc deployments
+don't actually use the code fixed here because of the way they're installed.
+But when it matters, it matters.
+
+This patch was originally posted in grischka's 2005-09-25 email as
+required fix case_10 to compile gcc 2.95, which modified libtcc1.c's __shldi3
+as follows:
+-        u.s.high = ((unsigned)u.s.high << b) | (u.s.low >> (32 - b));
++        u.s.high = ((unsigned)u.s.high << b) | ((unsigned)u.s.low >> (32 - b));
+
+David A. Wheeler examined the patch, and noticed that the same error
+happened in the other long long shift operators, so he made the same
+fix to the rest of the long long shift operators where appropriate.
+Notice that in a few cases the arithmetic shift operator does NOT have the
+(unsigned) added, because arithmetic right shift is NOT the same as
+logical right shift for signed values and it MUST use SIGNED values in
+certain cases.
+
+This bug can only be triggered on certain compilation conditions
+that are NOT true for the normal tcc test harness.  In particular, you have
+to be using a version of libtcc1.c that was compiled with __TINYC__ defined.
+On a typical installation this is NOT true. So to force the USE of the
+library code modified here, after you've done ./configure && make
+on tcc, do this when in the tcc build directory:
+  ./tcc -c -B. -I. -D__TINYC__ -o x.o libtcc1.c 
+  mv x.o libtcc1.o
+  make libtcc1.a
+  rm tcc
+  make tcc
+  make test
+
+Thankfully, it's REALLY easy to see by visual inspection that this is
+what should have been there in the first place. The values
+u.s.low and u.s.high are of type "int", which is obviously signed.
+The low-level implementation of logical shift operators
+should NEVER be shifting signed values, because they only work
+as intended with unsigned values. So clearly all of their values should
+be cast to unsigned before shifting.  In the arithmetic shift case,
+the (unsigned) modification is needed to make sure
+that the high bit of the LOWER part of a long long is ignored
+(otherwise, it'd be treated as the high bit of the WHOLE word).
+Which is all this patch does.  Note that casts like (unsigned) have
+a higher precedence than shift, so there's no need to
+add parenthesis like this: ((unsigned) u.s.low).
+So this patch doesn't add unnecessary parentheses, which would just
+make it harder to read.
+
+
+
+diff -ru tinycc-rl-1.0.0-orig/libtcc1.c tinycc-rl-1.0.0-grischka10/libtcc1.c
+--- tinycc-rl-1.0.0-orig/libtcc1.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-rl-1.0.0-grischka10/libtcc1.c	2007-05-03 16:06:37.000000000 -0400
+@@ -428,7 +428,7 @@
+         u.s.low = u.s.high >> (b - 32);
+         u.s.high = u.s.high >> 31;
+     } else if (b != 0) {
+-        u.s.low = ((unsigned)u.s.low >> b) | (u.s.high << (32 - b));
++        u.s.low = ((unsigned)u.s.low >> b) | ((unsigned)u.s.high << (32 - b));
+         u.s.high = u.s.high >> b;
+     }
+     return u.ll;
+@@ -447,7 +447,7 @@
+         u.s.low = (unsigned)u.s.high >> (b - 32);
+         u.s.high = 0;
+     } else if (b != 0) {
+-        u.s.low = ((unsigned)u.s.low >> b) | (u.s.high << (32 - b));
++        u.s.low = ((unsigned)u.s.low >> b) | ((unsigned)u.s.high << (32 - b));
+         u.s.high = (unsigned)u.s.high >> b;
+     }
+     return u.ll;
+@@ -466,7 +466,7 @@
+         u.s.high = (unsigned)u.s.low << (b - 32);
+         u.s.low = 0;
+     } else if (b != 0) {
+-        u.s.high = ((unsigned)u.s.high << b) | (u.s.low >> (32 - b));
++        u.s.high = ((unsigned)u.s.high << b) | ((unsigned)u.s.low >> (32 - b));
+         u.s.low = (unsigned)u.s.low << b;
+     }
+     return u.ll;
+diff -ru tinycc-rl-1.0.0-orig/tests/tcctest.c tinycc-rl-1.0.0-grischka10/tests/tcctest.c
+--- tinycc-rl-1.0.0-orig/tests/tcctest.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-rl-1.0.0-grischka10/tests/tcctest.c	2007-05-01 14:36:01.000000000 -0400
+@@ -1651,6 +1651,16 @@
+     printf("ull=%llx\n",ull);
+     printf("ull!=0  ", (ull != 0) ? "true" : "false");
+     printf("ull     ", ull ? "true" : "false");
++
++    /* check double -> ull cast */
++    {
++        double d = 2.4e18;
++        unsigned long long ull = d;
++        unsigned long long r = 100000000000LL;
++        printf("\ndouble->ull (grischka case 10): %.0f -> %ld\n",
++            d/r, (long)(ull/r));
++    }
++
+ }
+ 
+ void vprintf1(const char *fmt, ...)
+

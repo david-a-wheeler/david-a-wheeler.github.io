@@ -1,0 +1,61 @@
+% Diverse Double-Compiling (DDC), represented using prover9
+% by David A. Wheeler.
+
+set(prolog_style_variables).
+
+formulas(assumptions).
+
+ exactly_correspond(cP, sP, lsP, eA) # label(cP_corresponds_to_sP).
+
+ portable_and_deterministic(sP, lsP, retarget(sA, eArun))
+    # label(sP_portable_and_deterministic).
+
+ compile(Source, Compiler, EnvEffects, RunOn, Target) =
+     extract(converttext(run(Compiler, retarget(Source, Target),
+             EnvEffects, RunOn), RunOn, Target)) # label(define_compile).
+
+ stage1 = compile(sP, cT, e1effects, e1, e2) # label(definition_stage1).
+
+ stage2 = compile(sA, stage1, e2effects, e2, eArun)
+   # label(definition_stage2).
+
+ cA = compile(sA, cP, eAeffects, eA, eArun) # label(definition_cA).
+
+
+ accurately_translates(Compiler, Lang, Source, EnvEffects,
+                       ExecEnv, TargetEnv) ->
+   exactly_correspond(compile(Source, Compiler, EnvEffects,
+                              ExecEnv, TargetEnv),
+                      Source, Lang, TargetEnv)
+   # label(define_exactly_correspond).
+
+ all EnvEffects accurately_translates(cT, lsP, sP, EnvEffects, e1, e2)
+   # label(cT_compiles_sP).
+
+end_of_list.
+
+
+
+formulas(goals).
+
+ cA = stage2 # label(always_equal).
+ % If the above assumptions are true, then cA and stage2 will be equal.
+ % If they aren't, then one of the assumptions is wrong.
+
+ % Note that if someone has corrupted cA or cP,
+ % these assumptions will no longer hold.
+ % If the compiler executable cP is corrupted (e.g., perhaps there's a
+ % grandparent compiler that is maliciously corrupted),
+ % then it will fail the assumption cP_corresponds_to_sP.
+ % If the compiler executable cA is corrupted
+ % (e.g., it was replaced by some corrupt executable), then
+ % it will fail the assumption definition_cA.
+ % If these assumption failures produce a different cA, then cA and stage2
+ % will no longer be the same... but that means that DDC will detect it!
+
+ % Note that this proof permits sP!=sA and cP!=cA... but it's quite possible
+ % that sP==sA and cP==cA.  In which case, sP==sA would have
+ % to be deterministic and portable when compiling the retargeted sA.
+
+end_of_list.
+

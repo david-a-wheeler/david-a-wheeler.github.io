@@ -1,0 +1,47 @@
+% Demo how to declare in prover9 that the terms in a list are distinct.
+% David A. Wheeler
+% Released to the public domain.
+% Usage:
+%   prover9 -f *.in > *.out
+
+% Use prolog naming format (initial uppercase is variable):
+set(prolog_style_variables).
+
+formulas(assumptions).
+
+% Define distinct(List): Each item in List is not equal to all the others.
+distinct([First, Second : Rest]) ->
+ ( (First != Second) &
+   distinct([First : Rest]) &
+   distinct([Second : Rest])).
+
+% Simple demonstration of how to use distinct().  This declares that each
+% term a..g is not equal to all the other terms:
+distinct([a,b,c,d,e,f,g]).
+
+end_of_list.
+
+% Simple demonstration, to show that it works:
+formulas(goals).
+ b != f.
+end_of_list.
+
+
+% Note: distinct() works because eventually each recursion will reach a
+% "bottom" that asserts distinct([one_item]).  Since the precondition requires
+% at least 2 list elements, a one-element list terminates each recursion.
+% The definition of distinct() is only useful when passed a list with
+% at least 2 elements (since otherwise being 'distinct' is meaningless).
+% Systems with more Prolog-like syntaxes would use "|" instead of ":".
+
+% If Prolog naming format is NOT used, distinct() could be defined as:
+% distinct([x,y:z]) -> ( (x != y) & distinct([x:z]) & distinct([y:z])).
+
+% Later versions of mace4 have an undocumented list(distinct), e.g.:
+% list(distinct).      % Objects in each list are distinct.
+%  [a,b,c,d,e,f,g].
+% end_of_list.
+% This does NOT work with prover9.
+% This implementation of distinct(List) is also a useful way to show
+% how to implement some other (more complicated) constructs in prover9.
+

@@ -1,0 +1,321 @@
+Here are my responses to the reviewer comments on
+"Countering Trusting Trust through Diverse Double-Compiling".
+
+=Subject: ACSAC 2005 - Your paper #47 has been accepted!
+=From: program_chair@acsac.org
+=Date: 13 Aug 2005 01:00:40 -0000
+=To: dwheeler@ida.org
+=
+=Dear David A. Wheeler.
+=
+=Congratulations!
+=
+=On behalf of the Program Committee of the 2005 Annual Computer
+=Security Applications Conference (ACSAC), I am pleased to inform
+=you that your paper no. 47, titled
+=
+=  Countering Trusting Trust through Diverse Double-Compiling
+=
+=has been accepted for publication in the conference proceedings and
+=presentation at the conference.
+=
+=At the end of this email you will find a set of comments from the
+=anonymous paper reviewers. Please address the comments to the greatest
+=degree possible before submitting the final copy for publication.
+=We will forward your contact information to the IEEE editor who will
+=send you the IEEE author kit and submission deadlines.
+=
+=We are also organizing a "Works in Progress" session and a "Technology
+=Blitz" session this year. You may want to consider reading those
+=calls for participation at
+=
+=  http://www.acsac.org/sub/papers/wip.html
+=  http://www.acsac.org/sub/tb.html
+=
+=We all look forward to meeting you in December in Tucson, AZ!
+=
+=Congratulations,
+=-Christoph, Charlie, and Pierangela
+=------------------------------
+=2005 ACSAC program chairs
+=program_chair@acsac.org
+=
+=
+=
+=***************************************************************
+=
+=A mostly clear presentation of an important concept. I felt the explanation of
+=the method was a little hard to understand. I suggest re-working the notation
+=and the figure representing the process.
+
+I've changed the figure on the process; I think it's clearer.  Now the
+boxes are uniquely processes, and all inputs (including the compilers)
+are always shown as external inputs, instead of being "hidden" inside
+the boxes.  Hopefully that helps.
+
+I had first tried using T-diagrams ([Bratman 1961], [Earley & Sturgis 1970])
+but I think that they aren't as clear for describing this problem.
+In particular, they do not describe real-life multicomponent
+compilers very well when dealing with this specific problem.
+(T-diagrams handle multiple compilations well, but not so well when
+the compilers get "split apart" e.g., because their libraries get compiled.)
+Appel uses T-diagrams with internal structure in
+"Axiomatic bootstrapping: a guide for compiler hackers",
+ACM Transactions on Programming Langauges and systems,
+Vol. 16, #6, pp. 1699-1719, November 1994, but that doesn't
+seem to help either.
+
+I've changed the notation again, hopefully this helps.
+Now I've defined a function "c" ("compile") that takes as inputs the
+compiler and the source code to use; it's syntactic sugar, but
+hopefully it helps.
+Earlier I used an alternative notation using subscripts. I showed them to
+a number of people, and there seemed to be unanimity that
+the functional notation I submitted was easier to understand than
+a subscripting notation.   The notation I submitted in the draft is
+a functional notation, where the outputs of functions are themselves
+functions (easy to understand for those familiar with functional languages,
+for example).  The idea of generating a compiler, which is
+then used to compile something else, may be hard to get across
+no matter what notation and text is used.
+
+
+=Your writing style is excellent--
+Thanks!
+
+=though I have a couple of suggestions in this
+=area. (1) In a technical paper, I would avoid contractions.
+
+Done.  Frankly, I don't agree with this; contractions have
+been around a long time, and are universally understood by English speakers.
+But it's not important enough to battle over, so I've done it.
+
+
+= (2) I would avoid
+=the word "evil", replacing it with "malicious" or "compromised" (which you also
+=use).
+
+Done.
+
+= (3) In the abstract and elsewhere you are misusing the word
+="purported"--just leave it out.
+
+I'm not sure what you mean by misusing; "purported" according to my
+dictionary means widely accepted, but with little evidence... just
+what I mean. But I've removed it, since I think by context it's
+clear enough.
+
+= (4) Use "different from", not "different than".
+
+Done.
+
+=***************************************************************
+=
+=This is an interesting paper that reports a prototype for solving a
+=significant and difficult problem. A solution to the Trojan horse
+=compiler problem was published in a peer-reviewed paper in 1988:
+=
+=J. McDermott, A technique for removing an important class of Trojan
+=horses from higher-order languages. In Proc. 11th National Computer
+=Security Conference, pages 114-117. Baltimore, MD, October 1988.
+=
+=The submitted paper does not reference this earlier solution, at a
+=minimum it should. This paper would be better if it discussed the
+=differences between diverse double-compiling and the already published
+=solution.
+
+Done.  McDermott references an earlier letter, which I've also added
+as a reference.
+
+The big difference is the lack of the comparison for equality.
+Without this step, you have to insert yourself (or have someone else
+get inserted) into compilation process, and can't have a
+third-party vetting that compiler XYZ is free from this attack.
+In contrast, with diverse double-compiling, you can have multiple
+organizations vetting the SAME binary, and they don't need to be
+inside the compiler binary delivery process at all.
+Also, there's no demonstration.  I've added this discussion to the paper.
+
+
+=The paper contains a first-person singular reference: "a technique I
+=call "diverse double-compiling."." The first-person singular should be
+=removed; it should not be used in peer-reviewed scientific research
+=publications.
+
+All first-person singulars removed.
+
+=The references are not in ACM format. The date of last retrieval
+=should be given for each web reference that does not have a
+=corresponding hard copy publication, e.g. [Buck2004] in the submitted
+=version's notation.
+
+Will do.  Due to lack of space, I'll put a single date-of-reference at
+the bottom instead of repeating it in each place.
+
+=***************************************************************
+=
+=I found this paper highly interesting and very well-written.
+
+Thanks!
+
+=
+=***************************************************************
+=
+=Paper suggests an interesting, practical, yet unprovable test to determine if a
+=compiler contains malicious code in its binary form.  The paper's fundamental
+=insight that a different (diverse) compiler is free of the malicious code and
+=therefore a good testbed to verify another compiler's trustworthiness is
+=flawed, since only a rigorous analysis of the other compiler can unequivocally
+=prove or refute this assumption.
+
+For extremely high assurance, formal analysis and diverse
+double-compiling work together.
+
+I _did_ note that you _could_ perform a rigorous analyis of the other
+compiler, and that doing so would strengthen the assurance argument
+(with the caveats of whatever assumptions were made in the proof).
+I have modified the text to make that even more obvious.
+
+My point isn't that you can't do proofs; proofs would really help.
+It's just that there are _alternatives_ to proofs, and for most people
+that will be enough.  Even in that case, though, you're using a diverse
+(not the same) compiler... the one that you proved correct.
+
+Note that analysis of trusted compiler isn't enough to counter
+all such attacks. You also have to do
+a complete analysis of the trusted compiler's environment (OS, libraries,
+etc.) or an attack could come through them.  See the paper's discussion
+on this.
+
+
+=Interesting read on the topic, but only a technique for the least critical of
+=users.
+
+I disagree.  If the compilers are diverse, it is EXTREMELY difficult
+for an attacker to get through this test; the attacker has to be able
+to subvert the trusted compiler as well as the compiler under test.
+This is highly improbable.
+
+=  Technique is also limited to compiler source, not a general solution.
+
+That's fine.  Once the compiler and its environment are tested, you
+can test all other binaries just by recompiling to see if their results
+are identical.  The problem is bootstrapping your tests, which is
+what this paper addresses.
+
+=Figure 1 did not work for me.  I understood the concept from the paper,
+=but not from the figure.  More work is needed.
+
+Figure reworked; hope this is better.
+
+=In addition, paper has minor editing errors, here are some that I noted:
+=
+=language - "This paper begins with a background..." -- drop "a"
+
+Fixed.
+
+=
+=what's the point of include the SHA-1 hash values in the paper text?
+
+For reproduceability; a note about that has been added to the paper.
+
+=***************************************************************
+=
+=The paper describes a technique ("diverse double compiling") for dealing with
+=the threat of Trojan horses in compilers, as described in Ken Thompson's famous
+=paper. The basic idea is to use a trusted compiler to compile the source code
+=from which the potentially malicious binary compiler was derived, and then
+=compare the output of the trusted compiler with the potentially malicious
+=version and see if they match bit for bit. The argument is that if they match,
+=then the original version is OK.  The paper is of interest because it actually
+=attempts to carry out this experiment using two different C compilers. The
+=author includes considerable background discussion, but the references are
+=either relatively old or to recent unrefereed work in web publications, so a
+=good deal of current programming language security work is ignored.
+
+I reference old work or web publications, because they're the only
+references related to the problem.  People have generally given up on
+this problem as a hopeless case, and the only places where diverse
+double-compiling has been discussed are obscure web locations.
+It's very difficult to be sure you found everything (in
+fact, it's unlikely).  Given this comment,
+I've hunted through current peer-reviewed programming language security work.
+There's a big lack of anything relevant in the current work.
+
+In particular, I looked at:
+* ACM Letters on Programming Languages and Systems - nothing relevant.
+* ACM transactions on programming languages and systems (TOPLAS).
+  I searched EVERY issue, from
+  Vol 1#1 (Oct 1979) - Vol 27 issue 4 (July 2005).
+
+  A few papers LOOKED possibly relevant, but weren't:
+
+  "Toward a complete transformational toolkit for compilers"
+  Bergstra et al, Volume 19, issue 5, September 1997, pp. 639-684,
+  at first looked relevant, but it really isn't. Their toolkit is
+  just as subvertable.  PIM can be viewed as representing a family
+  of intermediate representations (IRs).
+
+  "An evaluation of an automatically generated compiler", Sloane,
+  Vol. 17, issue 5 (September 1995), just moves the problem to
+  a possibly subverted compiler generator.
+
+  "Axiomatic bootstrapping: a guide for compiler hackers"
+  Appel, Vol. 16, #6, Nov. 1994, pp. 1699-1718.
+  This is a very interesting paper, but for an unrelated problem.
+  It _is_ about bootstrapping, but it doesn't try to address this
+  problem at all.
+
+  "Automatic isolation of compiler errors"
+  by Whalley, Vol 16 #5.
+  This is an interesting paper for tracking defects once you've found
+  them... but you have to find them first.  So it's not really relevant.
+
+  "Toward compiler implementation Correctness Proofs"
+  by Chirica et al., Volume 8, #2 185-214, 1986.
+  Another tool to subvert.  I'll reference some other works involving
+  compiler proofs, though.
+
+* Journal of Computer Security, 2002-2005.
+
+I've also used Google and so on.
+
+Vaguely relevant is proof-carrying code, but not really. Compilers used
+in industry don't do that, and this approach doesn't require it.
+
+Languages to avoid vulnerabilities, or detect vulnerabilities, aren't
+relevant.. their compiler binaries could still be subverted.
+
+Typical disassembly/decompiler work isn't relevant.
+Generally, the disassembler could be subverted to hide it
+(don't laugh; Thompson's demo did just that,
+and it was quite effective... people DID disassemble the code, and never
+saw the attack for just that reason).
+
+I went to citeseer and looked at everything citing Thompson's
+"Trusting Trust" paper.    Several of the papers there dealt with
+proving compilers correct, down to their implementations.
+I'm not sure that this is as directly relevant... of course you can
+in theory prove the implementation correct, in which case you're done
+(and I already noted that earlier), but the task of proving correct
+the binaries of real-life compilers actually used by industry is
+rather difficult.  I'd be delighted to see it, but I'm not very hopeful.
+Still, I wanted to _try_ to respond to this comment, so I added
+references to "Verification of Compilers" by Goos & Zimmermann (1999),
+Dold et al.'s "A Mechanically Verified Compiling Specification..." (2002),
+and two papers by Goerigk.
+
+
+
+= So is a
+=somewhat obscure, but directly relevant work by John McDermott published in the
+=National Computer Security Conference in 1988; see:
+=http://chacs.nrl.navy.mil/publications/CHACS/Before1990/1988mcdermott-NCSC88Preprint.pdf
+
+That's very relevant.  Reference added.
+
+=Nevertheless, I think the work holds some interest for the ACSAC audience and
+=could be an interesting presentation.
+
+Great!
+

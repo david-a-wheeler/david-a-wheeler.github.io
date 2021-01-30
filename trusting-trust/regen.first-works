@@ -1,0 +1,184 @@
+#!/bin/sh
+# Regenerate compiler.
+
+echo "Regenerating compiler on:"
+date
+echo
+echo "Using this 'regen' script:"
+cat regen
+
+# Be sure there's no compiler cache.
+# Install package "kernel-headers", make sure it matches kernel.
+export PATH="$PATH:/opt/intel/Compiler/11.0/074/bin/ia32/"
+# for icc.  Shouldn't be needed!
+export LD_LIBRARY_PATH="/opt/intel/Compiler/11.0/074/lib/ia32/"
+
+# Do this:
+#  echo /opt/intel/Compiler/11.0/074/lib/ia32/ > /etc/ld.so.conf.d/icc.conf 
+#  /sbin/ldconfig
+
+# Install tcc; install "alloca86.o" to /usr/local/lib
+
+# export TARGET=i686-unknown-linux-gnu
+# DEST is master result directory, to contain the source and object dirs
+# NOTE: The full directory name used for (re)compilation is stored inside
+# executables, so for executables to compare as equal, the DEST
+# must the same directory name during all (re)compilations.
+export DEST="$HOME/thesis/work"
+export PATH="$DEST:$PATH"
+
+
+# Specify version of gcc to recompile with
+# export VERSION=....
+# Many versions cause problems of one kind or another.
+#
+# A complication with the Intel C++ compiler is that it wants to
+# insert some routines, e.g., _intel_fast_memcpy and _intel_fast_memset,
+# that are not expanded to __builtin_memcpy and __builtin_memset.
+# There are solutions, e.g., adding -lirc, but adding the right order
+# is tricky. More info here:
+# http://www.jsw4.net/info/listserv_archives/mysql/04-wk25/msg00062.html
+# http://software.intel.com/en-us/forums/intel-c-compiler/topic/52776
+# It also needs access to 'libimf' library.
+#   build/genattrtab: error while loading shared libraries:
+#   libimf.so: cannot open shared object file: No such file or directory
+# The option -static-intel slips in the Intel libraries statically.
+# 
+#
+# 2.95.3: gcc 2.95.3's stage2 != stage3, even when compiled by gcc (4.3).
+# 3.4.4:  gcc 3.4.4 regenerates via gcc, but icc can't compile it.
+#
+# 3.0.4: gcc4 and icc can compile, but produce different results, even though
+#        stage2 & stage3 are equal in each case.
+#
+# 3.1.1: icc compiles it, but gcc4 won't recompile it!
+#                     Must remake target `read-rtl.o'.
+#   gcc -c -DIN_GCC    -g  -W -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -Wtraditional -pedantic -Wno-long-long  -DHAVE_CONFIG_H -DGENERATOR_FILE    -I. -I. -I../../gcc-3.1.1/gcc -I../../gcc-3.1.1/gcc/. -I../../gcc-3.1.1/gcc/config -I../../gcc-3.1.1/gcc/../include ../../gcc-3.1.1/gcc/read-rtl.c -o read-rtl.o
+#   Putting child 0x095bce10 (read-rtl.o) PID 24638 on the chain.
+#   Live child 0x095bce10 (read-rtl.o) PID 24638 
+#   In file included from ../../gcc-3.1.1/gcc/read-rtl.c:24:
+#   ../../gcc-3.1.1/gcc/rtl.h:125: warning: type of bit-field ‘code’ is a GCC extension
+#   ../../gcc-3.1.1/gcc/rtl.h:128: warning: type of bit-field ‘mode’ is a GCC extension
+#   ../../gcc-3.1.1/gcc/read-rtl.c: In function ‘fatal_with_file_and_line’:
+#   ../../gcc-3.1.1/gcc/read-rtl.c:62: warning: traditional C rejects ISO C style function definitions
+#   ../../gcc-3.1.1/gcc/read-rtl.c: In function ‘read_rtx’:
+#   ../../gcc-3.1.1/gcc/read-rtl.c:662: error: lvalue required as increment operand
+#   Reaping losing child 0x095bce10 PID 24638 
+#   make[2]: *** [read-rtl.o] Error 1
+#
+# 3.2.3: gcc4 won't compile (!).
+# 4.0.4: icc won't compile it, gives error:
+#   build/genattrtab: error while loading shared libraries: libimf.so:
+#   cannot open shared object file: No such file or directory
+# 4.1.2: icc won't compile, gives error:
+#   build/genattrtab: error while loading shared libraries:
+#   libimf.so: cannot open shared object file: No such file or directory
+# NOTE: libimf.so errors from icc shouldn't happen. See:
+#    http://lists.debian.org/debian-user/2005/07/msg04180.html
+#    http://lists.debian.org/debian-user/2005/07/msg04204.html
+# The 'icc' command should set LD_LIBRARY_PATH includes /opt.../lib .
+
+export VERSION=3.0.4
+
+# export CC="icc"
+
+# export CC="$HOME/thesis/tcc-trusted/tcc -D HAVE_SYS_ERRLIST -D HAVE_ALLOCA_H -B$HOME/thesis/tcc-trusted -I$HOME/thesis/tcc-trusted"
+# export CC="tcc -D HAVE_ALLOCA_H -D PACKAGE=\"gcc\""
+# For info on alloca for tcc 0.9.24, see:
+# http://www.mail-archive.com/tinycc-devel@nongnu.org/msg01827.html
+# For lcc: ftp://ftp.cs.princeton.edu/pub/packages/lcc/
+# export CC="tcc -D HAVE_ALLOCA_H -D _ALLOCA_H -D PACKAGE=\"gcc\""
+
+# export CC="icc -static-intel"
+# export CC="icc -static"
+
+
+# export LDFLAGS="-lirc -lsvml"
+# export LDFLAGS_FOR_TARGET="-lirc -lsvml"
+# export LDFLAGS_FOR_BUILD="-lirc -lsvml"
+# export LD="-lirc -lsvml"
+# export LD_FOR_TARGET="icc"
+# export LD_FOR_BUILD="icc"
+
+rm -fr "$DEST"
+mkdir "$DEST"
+cd "$DEST"
+
+# tar xf ~/downloads/binutils-2.15.tar.bz2
+# tar xf ~/downloads/gcc-$VERSION.tar.gz
+untarred=0
+TARFILE_PREFIX="$HOME/downloads/gcc-$VERSION"
+for file in "${TARFILE_PREFIX}.tar.gz" \
+            "${TARFILE_PREFIX}.tar.bz2" \
+            "${TARFILE_PREFIX}.tar"
+do
+  echo "Trying $file"
+  if [ -r "$file" ]
+  then
+    echo "GO!"
+    tar xf "$file"
+    untarred=1
+    break
+  fi
+done
+
+if [ $untarred -eq 0 ]
+then
+  echo "Failed to untar $TARFILE_PREFIX"
+  exit 1
+fi
+
+mkdir gcc-recompile
+cd    gcc-recompile
+# Don't use --target; self-compiling, so don't need it.
+# No -Dinhibit_link
+# ../gcc-2.95.3/configure --target=$TARGET --prefix=$DEST --with-headers=$DEST/include --enable-languages="c"
+# By default, will install to prefix of /usr/local/
+
+../gcc-$VERSION/configure --enable-languages="c"
+
+# make
+# export MAKE="make -d"
+# make -d bootstrap
+
+# Can't do just this, because we need more control to rebuild libiberty:
+# make bootstrap
+
+make bootstrap
+
+
+echo "UNSTAGING!"
+cd gcc
+make unstage3
+make unstage2
+cd ..
+
+echo "Regenerating libiberty.a using the newly-created gcc:"
+mv libiberty libiberty.first
+cp -pr libiberty.first libiberty
+cd libiberty
+rm *.o *.a
+sed --in-place -e 's/^CC = .*/CC = ..\/gcc\/xgcc -B..\/gcc\/ -isystem ..\/gcc\/include\//' -e 's/CFLAGS = .*/CFLAGS = -g -O2/' Makefile 
+make
+cd ..
+
+cd gcc
+echo "RESTAGING stage2"
+make stage2_build
+echo "RESTAGING stage3"
+make stage3_build
+
+# make restage3
+
+
+# NOT NECESSARY:
+# binutils-2.15.tar.bz2
+# gcc-2.95.3.tar.gz
+# gdb-6.5.tar.bz2
+# glibc-2.2.5.tar.gz
+# glibc-linuxthreads-2.2.5.tar.gz
+# linux-2.4.26.tar.bz2
+
+############# END ################
+
+

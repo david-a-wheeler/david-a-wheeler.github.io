@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# binary "diff"er that produces human-readable output.
+# Give it $1 and $2 to diff.
+# Uses "diff", so positions are 1 off (diff starts counting from 1)
+
+if [ $# != 2 ]
+then
+  echo "Must provide two parameters"
+  exit 1
+fi
+
+if [ ! -r "$1" ]
+then
+  echo "Cannot read $1"
+fi
+
+if [ ! -r "$2" ]
+then
+  echo "Cannot read $2"
+fi
+
+bin2text < "$1" > "$1.bin2text"
+bin2text < "$2" > "$2.bin2text"
+diff -u --speed-large-files "$1.bin2text" "$2.bin2text"
+

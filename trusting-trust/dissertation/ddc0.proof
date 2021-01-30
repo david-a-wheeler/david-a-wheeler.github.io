@@ -1,0 +1,51 @@
+============================== prooftrans ============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 22116 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Tue Sep 11 16:30:32 2007
+The command was "prover9 -t 60 -f ddc0.in".
+============================== end of head ===========================
+
+set(prolog_style_variables).
+============================== end of input ==========================
+
+============================== PROOF =================================
+
+% -------- Comments from original proof --------
+% Proof 1 at 0.00 (+ 0.00) seconds.
+% Length of proof is 18.
+% Level of proof is 5.
+% Maximum clause weight is 13.
+% Given clauses 0.
+
+1 stage2 = cA -> cA = correctA # label(non_clause) # label(goal).  [].
+2 compile(A,B) = extract(run(B,A)).  [].
+3 correctA = compile(sA,aCorrectA).  [].
+4 correctA = extract(run(aCorrectA,sA)).  [2,3].
+5 compile(sA,correctA) = correctA.  [].
+6 compile(sA,extract(run(aCorrectA,sA))) = correctA.  [4,5].
+7 extract(run(extract(run(aCorrectA,sA)),sA)) = correctA.  [2,6].
+8 extract(run(extract(run(aCorrectA,sA)),sA)) = extract(run(aCorrectA,sA)).  [4,7].
+9 run(compile(sA,cT),sA) = run(compile(sA,correctA),sA).  [].
+10 run(extract(run(cT,sA)),sA) = run(compile(sA,correctA),sA).  [2,9].
+11 run(extract(run(cT,sA)),sA) = run(compile(sA,extract(run(aCorrectA,sA))),sA).  [4,10].
+12 run(extract(run(cT,sA)),sA) = run(extract(run(extract(run(aCorrectA,sA)),sA)),sA).  [2,11].
+13 run(extract(run(cT,sA)),sA) = run(extract(run(aCorrectA,sA)),sA).  [8,12].
+14 run(extract(run(aCorrectA,sA)),sA) = run(extract(run(cT,sA)),sA).  [13].
+15 stage1 = compile(sA,cT).  [].
+16 stage1 = extract(run(cT,sA)).  [2,15].
+17 extract(run(cT,sA)) = stage1.  [16].
+18 stage2 = compile(sA,stage1).  [].
+19 stage2 = extract(run(stage1,sA)).  [2,18].
+20 extract(run(stage1,sA)) = stage2.  [19].
+21 stage2 = cA.  [1].
+22 cA = stage2.  [21].
+23 correctA != cA.  [1].
+24 extract(run(aCorrectA,sA)) != cA.  [4,23].
+25 extract(run(aCorrectA,sA)) != stage2.  [22,24].
+26 extract(run(extract(run(cT,sA)),sA)) = extract(run(aCorrectA,sA)).  [14,8].
+27 extract(run(stage1,sA)) = extract(run(aCorrectA,sA)).  [17,26].
+28 stage2 = extract(run(aCorrectA,sA)).  [20,27].
+29 extract(run(aCorrectA,sA)) = stage2.  [28].
+30 $F.  [29,25].
+
+============================== end of proof ==========================

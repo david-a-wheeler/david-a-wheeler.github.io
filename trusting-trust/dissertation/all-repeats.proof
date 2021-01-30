@@ -1,0 +1,51 @@
+============================== prooftrans ============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 16542 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Wed Nov 18 09:29:56 2009
+The command was "prover9 -t 60 -f all-repeats.in".
+============================== end of head ===========================
+
+set(prolog_style_variables).
+============================== end of input ==========================
+
+============================== PROOF =================================
+
+% -------- Comments from original proof --------
+% Proof 1 at 0.01 (+ 0.00) seconds: always_equal.
+% Length of proof is 25.
+% Level of proof is 7.
+% Maximum clause weight is 31.
+% Given clauses 11.
+
+1 portable_and_deterministic(A,B,C) & exactly_correspond(D,A,B,E) & exactly_correspond(F,A,B,V6) -> converttext(run(D,C,V7,E),E,V8) = converttext(run(F,C,V9,V6),V6,V8) # label(define_portable_and_deterministic) # label(non_clause).  [assumption].
+2 accurately_translates(A,B,C,D,E,F) -> exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+3 (all A accurately_translates(cT,lsP,sP,A,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+4 cA = stage2 # label(always_equal) # label(non_clause) # label(goal).  [goal].
+5 portable_and_deterministic(sP,lsP,retarget(sA,eArun)) # label(sP_portable_and_deterministic).  [assumption].
+6 -portable_and_deterministic(A,B,C) | -exactly_correspond(D,A,B,E) | -exactly_correspond(F,A,B,V6) | converttext(run(F,C,V7,V6),V6,V8) = converttext(run(D,C,V9,E),E,V8) # label(define_portable_and_deterministic).  [clausify(1)].
+7 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(3)].
+8 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(2)].
+9 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+10 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+11 stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).  [assumption].
+12 stage1 = extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)).  [para(10(a,1),11(a,2))].
+13 extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)) = stage1.  [copy(12),flip(a)].
+14 stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).  [assumption].
+15 stage2 = extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)).  [para(10(a,1),14(a,2))].
+16 cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).  [assumption].
+17 cA = extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)).  [para(10(a,1),16(a,2))].
+18 cA != stage2 # label(always_equal) # answer(always_equal).  [deny(4)].
+19 extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) != stage2.  [para(17(a,1),18(a,1))].
+20 extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) != extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)).  [para(15(a,1),19(a,2))].
+21 extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)) != extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)).  [copy(20),flip(a)].
+22 -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,retarget(sA,eArun),E,D),D,F) = converttext(run(A,retarget(sA,eArun),V6,B),B,F).  [resolve(5,a,6,a)].
+23 exactly_correspond(compile(sP,cT,A,e1,e2),sP,lsP,e2).  [resolve(7,a,8,a)].
+24 exactly_correspond(extract(converttext(run(cT,retarget(sP,e2),A,e1),e1,e2)),sP,lsP,e2).  [para(10(a,1),23(a,1))].
+25 exactly_correspond(stage1,sP,lsP,e2).  [para(13(a,1),24(a,1))].
+26 -exactly_correspond(A,sP,lsP,B) | converttext(run(A,retarget(sA,eArun),C,B),B,D) = converttext(run(cP,retarget(sA,eArun),E,eA),eA,D).  [resolve(22,a,9,a)].
+27 converttext(run(stage1,retarget(sA,eArun),A,e2),e2,B) = converttext(run(cP,retarget(sA,eArun),C,eA),eA,B).  [resolve(26,a,25,a)].
+28 compile(sA,stage1,A,e2,eArun) = extract(converttext(run(cP,retarget(sA,eArun),B,eA),eA,eArun)).  [para(27(a,1),10(a,2,1))].
+29 extract(converttext(run(stage1,retarget(sA,eArun),A,e2),e2,eArun)) = extract(converttext(run(cP,retarget(sA,eArun),B,eA),eA,eArun)).  [para(10(a,1),28(a,1))].
+30 $F # answer(always_equal).  [resolve(29,a,21,a)].
+
+============================== end of proof ==========================

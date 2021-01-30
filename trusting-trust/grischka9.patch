@@ -1,0 +1,67 @@
+Fix indirections with function pointers (***fn)() (grischka-2005-09-29 case_9)
+This fixes handling of indirections with function pointers.
+This patch was originally posted in grischka's 2005-09-25 email as
+required fix case_9 to compile gcc 2.95.  David A. Wheeler modified the
+test case to fit into tcc's test framework.  Wheeler removed printing the
+specific addresses of the functions, whch was in the original test case,
+because that breaks the test harness.  After all, addresses assigned to
+functions will vary between compilers, versions of compilers,
+and in some configurations each run. Instead, the test case
+simply shows if the function pointer has the same address as the address of
+the function it's supposed to be pointing to, which is all that is required.
+
+
+diff -ur tinycc-rl-1.0.0-orig/tcc.c tinycc-rl-1.0.0-grischka9/tcc.c
+--- tinycc-rl-1.0.0-orig/tcc.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-rl-1.0.0-grischka9/tcc.c	2007-05-03 17:13:17.000000000 -0400
+@@ -6267,13 +6267,17 @@
+ /* indirection with full error checking and bound check */
+ static void indir(void)
+ {
+-    if ((vtop->type.t & VT_BTYPE) != VT_PTR)
++    if ((vtop->type.t & VT_BTYPE) != VT_PTR) {
++        if ((vtop->type.t & VT_BTYPE) == VT_FUNC)
++            return;
+         expect("pointer");
++    }
+     if ((vtop->r & VT_LVAL) && !nocode_wanted)
+         gv(RC_INT);
+     vtop->type = *pointed_type(&vtop->type);
+-    /* an array is never an lvalue */
+-    if (!(vtop->type.t & VT_ARRAY)) {
++    /* Arrays and functions are never lvalues */
++    if (!(vtop->type.t & VT_ARRAY)
++        && (vtop->type.t & VT_BTYPE) != VT_FUNC) {
+         vtop->r |= lvalue_type(vtop->type.t);
+         /* if bound checking, the referenced pointer must be checked */
+         if (do_bounds_check) 
+diff -ur tinycc-rl-1.0.0-orig/tests/tcctest.c tinycc-rl-1.0.0-grischka9/tests/tcctest.c
+--- tinycc-rl-1.0.0-orig/tests/tcctest.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-rl-1.0.0-grischka9/tests/tcctest.c	2007-05-03 17:14:18.000000000 -0400
+@@ -1450,6 +1450,11 @@
+         return fib(n-1) + fib(n-2);
+ }
+ 
++int reply_self(int x)
++{
++    return x;
++}
++
+ void funcptr_test()
+ {
+     void (*func)(int);
+@@ -1473,6 +1478,14 @@
+     printf("sizeof2 = %d\n", sizeof funcptr_test);
+     printf("sizeof3 = %d\n", sizeof(&funcptr_test));
+     printf("sizeof4 = %d\n", sizeof &funcptr_test);
++
++    /* Test function pointer indirection */
++    {
++        int (*pfn)(int) = reply_self;
++        printf("case_9: 1 (7,8) -> %d (%d,%d)\n",
++            (int) (reply_self == *pfn), pfn(7), (******pfn)(8));
++    }
++
+ }
+ 
+ void lloptest(long long a, long long b)

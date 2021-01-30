@@ -1,0 +1,69 @@
+============================== Mace4 =================================
+Mace4 (64) version 2009-11A, November 2009.
+Process 13715 was started by dwheeler on dwheeler3-pc,
+Tue Dec 23 14:06:09 2014
+The command was "mace4 -n 6 -N 10 -b 3000 -c -f all-repeats-independence-2.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file all-repeats-independence-2.in
+
+set(prolog_style_variables).
+predicate_order([accurately_translates,portable_and_deterministic,exactly_correspond]).
+function_order([retarget,extract,compile,run,converttext]).
+assign(selection_measure,1).
+
+formulas(assumptions).
+-(portable_and_deterministic(Source,Language,Input) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target)) # label(define_portable_and_deterministic).
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).
+portable_and_deterministic(sP,lsP,retarget(sA,eArun)) # label(sP_portable_and_deterministic).
+compile(Source,Compiler,EnvEffects,RunOn,Target) = extract(converttext(run(Compiler,retarget(Source,Target),EnvEffects,RunOn),RunOn,Target)) # label(define_compile).
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
+cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).
+accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond).
+(all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP).
+end_of_list.
+    % assign(domain_size, 6) -> assign(start_size, 6).
+    % assign(domain_size, 6) -> assign(end_size, 6).
+
+% From the command line: assign(domain_size, 6).
+
+% From the command line: assign(end_size, 10).
+
+% From the command line: assign(max_megs, 3000).
+
+============================== end of input ==========================
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 -(portable_and_deterministic(Source,Language,Input) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target)) # label(define_portable_and_deterministic) # label(non_clause).  [assumption].
+2 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+3 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+
+============================== end of process non-clausal formulas ===
+
+============================== CLAUSES FOR SEARCH ====================
+
+formulas(mace4_clauses).
+portable_and_deterministic(A,B,C) # label(define_portable_and_deterministic).
+exactly_correspond(A,B,C,D) # label(define_portable_and_deterministic).
+exactly_correspond(A,B,C,D) # label(define_portable_and_deterministic).
+converttext(run(A,B,C,D),D,E) != converttext(run(F,B,V6,V7),V7,E) # label(define_portable_and_deterministic).
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).
+portable_and_deterministic(sP,lsP,retarget(sA,eArun)) # label(sP_portable_and_deterministic).
+compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
+cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).
+-accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).
+accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).
+end_of_list.
+
+============================== end of clauses for search =============
+
+% There are no natural numbers in the input.
+
+============================== DOMAIN SIZE 6 =========================

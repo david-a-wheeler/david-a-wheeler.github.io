@@ -1,0 +1,55 @@
+NOTES on recompiling gcc:
+
+Set up system:
+rpm -e ccache
+ Disabled caching of compiled results
+
+ran system-config-selinux
+ Switched to permissive mode, so any failure to set file values
+ wouldn't interfere.
+
+Using tcc to recompile gcc
+Decided to use the "main line" of tcc, version 0.9.24:
+ http://bellard.org/tcc/
+This is led by grischka, who worked to get gcc compiling with tcc.
+
+In the ACSAC paper, tcc had 2 defects that harmed recompilation of tcc:
+1. Typecasting bug
+   David Heine has posted a patch, which was later included in
+   Landley's fork (along with a test case).
+  Unclear if this is in tcc 0.9.24, but it may be, e.g.:
+   474: Cast ptrs to ints of different sizes correctly (Joshua Phillips)
+
+2. Failure to zero some bits of long double values
+   This was fixed by a patch from Felix Nawothnig:
+    420: Zero pad x87 tenbyte long doubles (Felix Nawothnig)
+   Main branch  0.9.24 and Landley's fork both include this.
+
+(Rob Landley has abandoned his fork.)
+
+Recompiled tcc 0.9.24; unlike older versions of tcc, this one
+recompiles itself with the same values, so the bugs I had problems with
+are now gone.
+
+grischka noted some timings of recompiling gcc by several C compilers,
+and developed patches for tcc so it could recompile gcc.
+http://lists.gnu.org/archive/html/tinycc-devel/2005-09/msg00054.html
+Compiled gcc 2.95.3-7 with
+tcc
+MSC: Microsoft C compiler
+bcc55: Borland C compiler, version 5.5
+  [Windows]
+  http://www.codegear.com/downloads/free/cppbuilder
+
+Other possible C compilers:
+Intel C++ compiler
+  http://en.wikipedia.org/wiki/Intel_C%2B%2B_Compiler
+  (icc or icl)
+
+
+
+
+
+"bsdiff" is a binary diff program, but it doesn't produce READABLE diff output.
+
+

@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE proofs SYSTEM "proof3.dtd">
+
+<?xml-stylesheet type="text/xsl" href="proof3.xsl"?>
+
+<proofs number_of_proofs="1">
+
+<source>ddc.out</source>
+
+<heading><![CDATA[
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 2627 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Mon Oct 29 11:04:49 2007
+The command was "prover9 -t 60 -f ddc.in".
+]]></heading>
+
+<proof number="1" length="19" max_count="20">
+
+<comments><![CDATA[
+% Proof 1 at 0.00 (+ 0.00) seconds: source_corresponds_to_executable.
+% Length of proof is 19.
+% Level of proof is 6.
+% Maximum clause weight is 19.
+% Given clauses 11.
+]]></comments>
+
+  <clause id="1" type="assumption">
+    <literal><![CDATA[
+      accurately_translates(A,B,C,D,E,F) -> exactly_correspond(compile(C,A,D,E,F),C,B,F)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(define_exactly_correspond)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(non_clause)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="2" type="assumption">
+    <literal><![CDATA[
+      (all A accurately_translates(cT,lsP,sP,A,e1,e2))
+    ]]></literal>
+    <attribute><![CDATA[
+      label(cT_compiles_sP)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(non_clause)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="3" type="assumption">
+    <literal><![CDATA[
+      accurately_translates(A,lsP,sP,B,C,D) -> accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(sP_compiles_sA)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(non_clause)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="4" type="goal">
+    <literal><![CDATA[
+      stage2 = cA -> exactly_correspond(cA,sA,lsA,eArun)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(source_corresponds_to_executable)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(non_clause)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(goal)
+    ]]></attribute>
+    <justification jstring="[goal].">
+      <j1 rule="goal"/>
+    </justification>
+  </clause>
+
+  <clause id="5" type="clausify">
+    <literal><![CDATA[
+      -accurately_translates(A,B,C,D,E,F)
+    ]]></literal>
+    <literal><![CDATA[
+      exactly_correspond(compile(C,A,D,E,F),C,B,F)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(define_exactly_correspond)
+    ]]></attribute>
+    <justification jstring="[clausify(1)].">
+      <j1 rule="clausify" parents="1"/>
+    </justification>
+  </clause>
+
+  <clause id="6" type="clausify">
+    <literal><![CDATA[
+      accurately_translates(cT,lsP,sP,A,e1,e2)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(cT_compiles_sP)
+    ]]></attribute>
+    <justification jstring="[clausify(2)].">
+      <j1 rule="clausify" parents="2"/>
+    </justification>
+  </clause>
+
+  <clause id="7" type="clausify">
+    <literal><![CDATA[
+      -accurately_translates(A,lsP,sP,B,C,D)
+    ]]></literal>
+    <literal><![CDATA[
+      accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(sP_compiles_sA)
+    ]]></attribute>
+    <justification jstring="[clausify(3)].">
+      <j1 rule="clausify" parents="3"/>
+    </justification>
+  </clause>
+
+  <clause id="8" type="assumption">
+    <literal><![CDATA[
+      stage1 = compile(sP,cT,e1effects,e1,e2)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(definition_stage1)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="9">
+    <literal><![CDATA[
+      compile(sP,cT,e1effects,e1,e2) = stage1
+    ]]></literal>
+    <justification jstring="[copy(8),flip(a)].">
+      <j1 rule="copy" parents="8"/>
+      <j2 rule="flip"/>
+    </justification>
+  </clause>
+
+  <clause id="10" type="assumption">
+    <literal><![CDATA[
+      stage2 = compile(sA,stage1,e2effects,e2,eArun)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(definition_stage2)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="11">
+    <literal><![CDATA[
+      compile(sA,stage1,e2effects,e2,eArun) = stage2
+    ]]></literal>
+    <justification jstring="[copy(10),flip(a)].">
+      <j1 rule="copy" parents="10"/>
+      <j2 rule="flip"/>
+    </justification>
+  </clause>
+
+  <clause id="12" type="deny">
+    <literal><![CDATA[
+      cA = stage2
+    ]]></literal>
+    <attribute><![CDATA[
+      label(source_corresponds_to_executable)
+    ]]></attribute>
+    <justification jstring="[deny(4)].">
+      <j1 rule="deny" parents="4"/>
+    </justification>
+  </clause>
+
+  <clause id="13" type="deny">
+    <literal><![CDATA[
+      -exactly_correspond(cA,sA,lsA,eArun)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(source_corresponds_to_executable)
+    ]]></attribute>
+    <attribute><![CDATA[
+      answer(source_corresponds_to_executable)
+    ]]></attribute>
+    <justification jstring="[deny(4)].">
+      <j1 rule="deny" parents="4"/>
+    </justification>
+  </clause>
+
+  <clause id="14">
+    <literal><![CDATA[
+      -exactly_correspond(stage2,sA,lsA,eArun)
+    ]]></literal>
+    <justification jstring="[para(12(a,1),13(a,1))].">
+      <j1 rule="para" parents="12 13"/>
+    </justification>
+  </clause>
+
+  <clause id="15">
+    <literal><![CDATA[
+      accurately_translates(compile(sP,cT,A,e1,e2),lsA,sA,B,e2,eArun)
+    ]]></literal>
+    <justification jstring="[resolve(7,a,6,a)].">
+      <j1 rule="resolve" parents="7 6"/>
+    </justification>
+  </clause>
+
+  <clause id="16">
+    <literal><![CDATA[
+      accurately_translates(stage1,lsA,sA,A,e2,eArun)
+    ]]></literal>
+    <justification jstring="[para(9(a,1),15(a,1))].">
+      <j1 rule="para" parents="9 15"/>
+    </justification>
+  </clause>
+
+  <clause id="17">
+    <literal><![CDATA[
+      exactly_correspond(compile(sA,stage1,A,e2,eArun),sA,lsA,eArun)
+    ]]></literal>
+    <justification jstring="[resolve(5,a,16,a)].">
+      <j1 rule="resolve" parents="5 16"/>
+    </justification>
+  </clause>
+
+  <clause id="18">
+    <literal><![CDATA[
+      exactly_correspond(stage2,sA,lsA,eArun)
+    ]]></literal>
+    <justification jstring="[para(11(a,1),17(a,1))].">
+      <j1 rule="para" parents="11 17"/>
+    </justification>
+  </clause>
+
+  <clause id="19">
+    <literal><![CDATA[
+      $F
+    ]]></literal>
+    <attribute><![CDATA[
+      answer(source_corresponds_to_executable)
+    ]]></attribute>
+    <justification jstring="[resolve(18,a,14,a)].">
+      <j1 rule="resolve" parents="18 14"/>
+    </justification>
+  </clause>
+
+</proof>
+
+</proofs>

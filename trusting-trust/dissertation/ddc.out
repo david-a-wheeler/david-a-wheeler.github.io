@@ -1,0 +1,193 @@
+============================== Prover9 ===============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 2627 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Mon Oct 29 11:04:49 2007
+The command was "prover9 -t 60 -f ddc.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file ddc.in
+
+set(prolog_style_variables).
+set(restrict_denials).
+
+formulas(assumptions).
+accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond).
+(all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP).
+accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA).
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
+end_of_list.
+
+formulas(goals).
+stage2 = cA -> exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable).
+end_of_list.
+
+============================== end of input ==========================
+
+% From the command line: assign(max_seconds, 60).
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+2 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+3 accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA) # label(non_clause).  [assumption].
+4 stage2 = cA -> exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable) # label(non_clause) # label(goal).  [goal].
+
+============================== end of process non-clausal formulas ===
+
+============================== PROCESS INITIAL CLAUSES ===============
+
+% Clauses before input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+-accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(1)].
+accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(2)].
+-accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).  [clausify(3)].
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).  [assumption].
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).  [assumption].
+cA = stage2 # label(source_corresponds_to_executable).  [deny(4)].
+-exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable).  [deny(4)].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== PREDICATE ELIMINATION =================
+
+No predicates eliminated.
+
+============================== end predicate elimination =============
+
+Auto_denials:
+  % copying label source_corresponds_to_executable to answer in negative clause
+
+Term ordering decisions:
+Predicate symbol precedence:  predicate_order([ =, exactly_correspond, accurately_translates ]).
+Function symbol precedence:  function_order([ sP, e2, cT, e1, eArun, lsP, sA, stage1, stage2, cA, e1effects, e2effects, lsA, compile ]).
+After inverse_order:  (no changes).
+Unfolding symbols: (none).
+
+Auto_inference settings:
+  % set(paramodulation).  % (positive equality literals)
+    % set(paramodulation) -> set(back_demod).
+  % set(hyper_resolution).  % (nonunit Horn with equality)
+    % set(hyper_resolution) -> set(pos_hyper_resolution).
+  % set(neg_ur_resolution).  % (nonunit Horn with equality)
+  % assign(para_lit_limit, 2).  % (nonunit Horn with equality)
+
+Auto_process settings:  (no changes).
+
+restricted denial: (wt=5): 14 -exactly_correspond(stage2,sA,lsA,eArun) # answer(source_corresponds_to_executable).  [copy(13),rewrite([12(1)])].
+
+============================== end of process initial clauses ========
+
+============================== CLAUSES FOR SEARCH ====================
+
+% Clauses after input processing:
+
+formulas(usable).
+14 -exactly_correspond(stage2,sA,lsA,eArun) # answer(source_corresponds_to_executable).  [copy(13),rewrite([12(1)])].
+end_of_list.
+
+formulas(sos).
+5 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(1)].
+6 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(2)].
+7 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).  [clausify(3)].
+9 compile(sP,cT,e1effects,e1,e2) = stage1.  [copy(8),flip(a)].
+11 compile(sA,stage1,e2effects,e2,eArun) = stage2.  [copy(10),flip(a)].
+12 cA = stage2 # label(source_corresponds_to_executable).  [deny(4)].
+end_of_list.
+
+formulas(demodulators).
+9 compile(sP,cT,e1effects,e1,e2) = stage1.  [copy(8),flip(a)].
+11 compile(sA,stage1,e2effects,e2,eArun) = stage2.  [copy(10),flip(a)].
+12 cA = stage2 # label(source_corresponds_to_executable).  [deny(4)].
+end_of_list.
+
+============================== end of clauses for search =============
+
+============================== SEARCH ================================
+
+% Starting search at 0.00 seconds.
+
+given #1 (I,wt=17): 5 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(1)].
+
+given #2 (I,wt=7): 6 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(2)].
+
+given #3 (I,wt=19): 7 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).  [clausify(3)].
+
+given #4 (I,wt=8): 9 compile(sP,cT,e1effects,e1,e2) = stage1.  [copy(8),flip(a)].
+
+given #5 (I,wt=8): 11 compile(sA,stage1,e2effects,e2,eArun) = stage2.  [copy(10),flip(a)].
+
+given #6 (I,wt=3): 12 cA = stage2 # label(source_corresponds_to_executable).  [deny(4)].
+
+given #7 (A,wt=10): 15 exactly_correspond(compile(sP,cT,A,e1,e2),sP,lsP,e2).  [hyper(5,a,6,a)].
+
+given #8 (T,wt=5): 17 exactly_correspond(stage1,sP,lsP,e2).  [para(9(a,1),15(a,1))].
+
+given #9 (T,wt=12): 16 accurately_translates(compile(sP,cT,A,e1,e2),lsA,sA,B,e2,eArun).  [hyper(7,a,6,a)].
+
+given #10 (T,wt=7): 19 accurately_translates(stage1,lsA,sA,A,e2,eArun).  [para(9(a,1),16(a,1))].
+
+given #11 (T,wt=10): 20 exactly_correspond(compile(sA,stage1,A,e2,eArun),sA,lsA,eArun).  [hyper(5,a,19,a)].
+
+============================== PROOF =================================
+
+% Proof 1 at 0.00 (+ 0.00) seconds: source_corresponds_to_executable.
+% Length of proof is 19.
+% Level of proof is 6.
+% Maximum clause weight is 19.
+% Given clauses 11.
+
+1 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+2 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+3 accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA) # label(non_clause).  [assumption].
+4 stage2 = cA -> exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable) # label(non_clause) # label(goal).  [goal].
+5 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(1)].
+6 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(2)].
+7 -accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).  [clausify(3)].
+8 stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).  [assumption].
+9 compile(sP,cT,e1effects,e1,e2) = stage1.  [copy(8),flip(a)].
+10 stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).  [assumption].
+11 compile(sA,stage1,e2effects,e2,eArun) = stage2.  [copy(10),flip(a)].
+12 cA = stage2 # label(source_corresponds_to_executable).  [deny(4)].
+13 -exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable) # answer(source_corresponds_to_executable).  [deny(4)].
+14 -exactly_correspond(stage2,sA,lsA,eArun) # answer(source_corresponds_to_executable).  [copy(13),rewrite([12(1)])].
+16 accurately_translates(compile(sP,cT,A,e1,e2),lsA,sA,B,e2,eArun).  [hyper(7,a,6,a)].
+19 accurately_translates(stage1,lsA,sA,A,e2,eArun).  [para(9(a,1),16(a,1))].
+20 exactly_correspond(compile(sA,stage1,A,e2,eArun),sA,lsA,eArun).  [hyper(5,a,19,a)].
+21 exactly_correspond(stage2,sA,lsA,eArun).  [para(11(a,1),20(a,1))].
+22 $F # answer(source_corresponds_to_executable).  [resolve(21,a,14,a)].
+
+============================== end of proof ==========================
+
+============================== STATISTICS ============================
+
+Given=11. Generated=17. Kept=14. proofs=1.
+Usable=12. Sos=1. Demods=3. Limbo=0, Disabled=7. Hints=0.
+Weight_deleted=0. Literals_deleted=0.
+Forward_subsumed=3. Back_subsumed=0.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=3 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+Demod_attempts=99. Demod_rewrites=1.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=0. Nonunit_bsub_feature_tests=2.
+Megabytes=0.04.
+User_CPU=0.00, System_CPU=0.00, Wall_clock=0.
+
+============================== end of statistics =====================
+
+============================== end of search =========================
+
+THEOREM PROVED
+
+Exiting with 1 proof.
+
+Process 2627 exit (max_proofs) Mon Oct 29 11:04:49 2007

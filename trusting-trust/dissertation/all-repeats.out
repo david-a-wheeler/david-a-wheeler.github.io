@@ -1,0 +1,216 @@
+============================== Prover9 ===============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 16542 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Wed Nov 18 09:29:56 2009
+The command was "prover9 -t 60 -f all-repeats.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file all-repeats.in
+
+set(prolog_style_variables).
+set(restrict_denials).
+
+formulas(assumptions).
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).
+portable_and_deterministic(Source,Language,Input) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_portable_and_deterministic).
+portable_and_deterministic(sP,lsP,retarget(sA,eArun)) # label(sP_portable_and_deterministic).
+compile(Source,Compiler,EnvEffects,RunOn,Target) = extract(converttext(run(Compiler,retarget(Source,Target),EnvEffects,RunOn),RunOn,Target)) # label(define_compile).
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
+cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).
+accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond).
+(all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP).
+end_of_list.
+
+formulas(goals).
+cA = stage2 # label(always_equal).
+end_of_list.
+
+============================== end of input ==========================
+
+% From the command line: assign(max_seconds, 60).
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 portable_and_deterministic(Source,Language,Input) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_portable_and_deterministic) # label(non_clause).  [assumption].
+2 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+3 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+4 cA = stage2 # label(always_equal) # label(non_clause) # label(goal).  [goal].
+
+============================== end of process non-clausal formulas ===
+
+============================== PROCESS INITIAL CLAUSES ===============
+
+% Clauses before input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+-portable_and_deterministic(A,B,C) | -exactly_correspond(D,A,B,E) | -exactly_correspond(F,A,B,V6) | converttext(run(F,C,V7,V6),V6,V8) = converttext(run(D,C,V9,E),E,V8) # label(define_portable_and_deterministic).  [clausify(1)].
+portable_and_deterministic(sP,lsP,retarget(sA,eArun)) # label(sP_portable_and_deterministic).  [assumption].
+compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).  [assumption].
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).  [assumption].
+cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).  [assumption].
+-accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(2)].
+accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(3)].
+cA != stage2 # label(always_equal).  [deny(4)].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== PREDICATE ELIMINATION =================
+
+Eliminating portable_and_deterministic/3
+5 portable_and_deterministic(sP,lsP,retarget(sA,eArun)) # label(sP_portable_and_deterministic).  [assumption].
+6 -portable_and_deterministic(A,B,C) | -exactly_correspond(D,A,B,E) | -exactly_correspond(F,A,B,V6) | converttext(run(F,C,V7,V6),V6,V8) = converttext(run(D,C,V9,E),E,V8) # label(define_portable_and_deterministic).  [clausify(1)].
+Derived: -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,retarget(sA,eArun),E,D),D,F) = converttext(run(A,retarget(sA,eArun),V6,B),B,F).  [resolve(5,a,6,a)].
+
+Eliminating accurately_translates/6
+7 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(3)].
+8 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(2)].
+Derived: exactly_correspond(compile(sP,cT,A,e1,e2),sP,lsP,e2).  [resolve(7,a,8,a)].
+
+============================== end predicate elimination =============
+
+Auto_denials:
+  % copying label always_equal to answer in negative clause
+
+Term ordering decisions:
+Predicate symbol precedence:  predicate_order([ =, exactly_correspond ]).
+Function symbol precedence:  function_order([ sP, e2, eArun, lsP, sA, cP, cT, e1, eA, stage1, cA, e1effects, e2effects, eAeffects, stage2, retarget, extract, converttext, run, compile ]).
+After inverse_order:  (no changes).
+Unfolding symbols: compile/5 cA/0 stage2/0.
+
+Auto_inference settings:
+  % set(paramodulation).  % (positive equality literals)
+    % set(paramodulation) -> set(back_demod).
+  % set(hyper_resolution).  % (nonunit Horn with equality)
+    % set(hyper_resolution) -> set(pos_hyper_resolution).
+  % set(neg_ur_resolution).  % (nonunit Horn with equality)
+  % assign(para_lit_limit, 3).  % (nonunit Horn with equality)
+
+Auto_process settings:  (no changes).
+
+restricted denial: (wt=23): 18 extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)) != extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) # answer(always_equal).  [copy(17),rewrite([16(1),14(12)]),flip(a)].
+
+============================== end of process initial clauses ========
+
+============================== CLAUSES FOR SEARCH ====================
+
+% Clauses after input processing:
+
+formulas(usable).
+18 extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)) != extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) # answer(always_equal).  [copy(17),rewrite([16(1),14(12)]),flip(a)].
+end_of_list.
+
+formulas(sos).
+9 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+10 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+12 extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)) = stage1.  [copy(11),rewrite([10(7)]),flip(a)].
+14 stage2 = extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)).  [copy(13),rewrite([10(7)])].
+16 cA = extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)).  [copy(15),rewrite([10(7)])].
+19 -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,retarget(sA,eArun),E,D),D,F) = converttext(run(A,retarget(sA,eArun),V6,B),B,F).  [resolve(5,a,6,a)].
+21 exactly_correspond(extract(converttext(run(cT,retarget(sP,e2),A,e1),e1,e2)),sP,lsP,e2).  [copy(20),rewrite([10(5)])].
+end_of_list.
+
+formulas(demodulators).
+10 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+12 extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)) = stage1.  [copy(11),rewrite([10(7)]),flip(a)].
+14 stage2 = extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)).  [copy(13),rewrite([10(7)])].
+16 cA = extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)).  [copy(15),rewrite([10(7)])].
+end_of_list.
+
+============================== end of clauses for search =============
+
+============================== SEARCH ================================
+
+% Starting search at 0.00 seconds.
+
+given #1 (I,wt=5): 9 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+
+given #2 (I,wt=18): 10 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+
+given #3 (I,wt=13): 12 extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)) = stage1.  [copy(11),rewrite([10(7)]),flip(a)].
+
+given #4 (I,wt=13): 14 stage2 = extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)).  [copy(13),rewrite([10(7)])].
+
+given #5 (I,wt=13): 16 cA = extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)).  [copy(15),rewrite([10(7)])].
+
+given #6 (I,wt=31): 19 -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,retarget(sA,eArun),E,D),D,F) = converttext(run(A,retarget(sA,eArun),V6,B),B,F).  [resolve(5,a,6,a)].
+
+given #7 (I,wt=15): 21 exactly_correspond(extract(converttext(run(cT,retarget(sP,e2),A,e1),e1,e2)),sP,lsP,e2).  [copy(20),rewrite([10(5)])].
+
+given #8 (A,wt=21): 22 converttext(run(cP,retarget(sA,eArun),A,eA),eA,B) = converttext(run(cP,retarget(sA,eArun),C,eA),eA,B).  [hyper(19,a,9,a,b,9,a)].
+
+given #9 (T,wt=5): 25 exactly_correspond(stage1,sP,lsP,e2).  [para(12(a,1),21(a,1))].
+
+given #10 (T,wt=21): 27 converttext(run(stage1,retarget(sA,eArun),A,e2),e2,B) = converttext(run(stage1,retarget(sA,eArun),C,e2),e2,B).  [hyper(19,a,25,a,b,25,a)].
+
+given #11 (T,wt=21): 29 converttext(run(stage1,retarget(sA,eArun),A,e2),e2,B) = converttext(run(cP,retarget(sA,eArun),C,eA),eA,B).  [hyper(19,a,9,a,b,25,a)].
+
+============================== PROOF =================================
+
+% Proof 1 at 0.01 (+ 0.00) seconds: always_equal.
+% Length of proof is 25.
+% Level of proof is 7.
+% Maximum clause weight is 31.
+% Given clauses 11.
+
+1 portable_and_deterministic(Source,Language,Input) & exactly_correspond(Executable1,Source,Language,Environment1) & exactly_correspond(Executable2,Source,Language,Environment2) -> converttext(run(Executable1,Input,EnvEffects1,Environment1),Environment1,Target) = converttext(run(Executable2,Input,EnvEffects2,Environment2),Environment2,Target) # label(define_portable_and_deterministic) # label(non_clause).  [assumption].
+2 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+3 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+4 cA = stage2 # label(always_equal) # label(non_clause) # label(goal).  [goal].
+5 portable_and_deterministic(sP,lsP,retarget(sA,eArun)) # label(sP_portable_and_deterministic).  [assumption].
+6 -portable_and_deterministic(A,B,C) | -exactly_correspond(D,A,B,E) | -exactly_correspond(F,A,B,V6) | converttext(run(F,C,V7,V6),V6,V8) = converttext(run(D,C,V9,E),E,V8) # label(define_portable_and_deterministic).  [clausify(1)].
+7 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).  [clausify(3)].
+8 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).  [clausify(2)].
+9 exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).  [assumption].
+10 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).  [assumption].
+11 stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).  [assumption].
+12 extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)) = stage1.  [copy(11),rewrite([10(7)]),flip(a)].
+13 stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).  [assumption].
+14 stage2 = extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)).  [copy(13),rewrite([10(7)])].
+15 cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).  [assumption].
+16 cA = extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)).  [copy(15),rewrite([10(7)])].
+17 cA != stage2 # label(always_equal) # answer(always_equal).  [deny(4)].
+18 extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)) != extract(converttext(run(cP,retarget(sA,eArun),eAeffects,eA),eA,eArun)) # answer(always_equal).  [copy(17),rewrite([16(1),14(12)]),flip(a)].
+19 -exactly_correspond(A,sP,lsP,B) | -exactly_correspond(C,sP,lsP,D) | converttext(run(C,retarget(sA,eArun),E,D),D,F) = converttext(run(A,retarget(sA,eArun),V6,B),B,F).  [resolve(5,a,6,a)].
+20 exactly_correspond(compile(sP,cT,A,e1,e2),sP,lsP,e2).  [resolve(7,a,8,a)].
+21 exactly_correspond(extract(converttext(run(cT,retarget(sP,e2),A,e1),e1,e2)),sP,lsP,e2).  [copy(20),rewrite([10(5)])].
+25 exactly_correspond(stage1,sP,lsP,e2).  [para(12(a,1),21(a,1))].
+29 converttext(run(stage1,retarget(sA,eArun),A,e2),e2,B) = converttext(run(cP,retarget(sA,eArun),C,eA),eA,B).  [hyper(19,a,9,a,b,25,a)].
+31 extract(converttext(run(stage1,retarget(sA,eArun),A,e2),e2,eArun)) = extract(converttext(run(cP,retarget(sA,eArun),B,eA),eA,eArun)).  [para(29(a,1),10(a,2,1)),rewrite([10(5)])].
+32 $F # answer(always_equal).  [resolve(31,a,18,a)].
+
+============================== end of proof ==========================
+
+============================== STATISTICS ============================
+
+Given=11. Generated=36. Kept=18. proofs=1.
+Usable=12. Sos=5. Demods=4. Limbo=0, Disabled=12. Hints=0.
+Weight_deleted=0. Literals_deleted=0.
+Forward_subsumed=18. Back_subsumed=0.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=4 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+Demod_attempts=727. Demod_rewrites=13.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=0. Nonunit_bsub_feature_tests=1.
+Megabytes=0.07.
+User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+
+============================== end of statistics =====================
+
+============================== end of search =========================
+
+THEOREM PROVED
+
+Exiting with 1 proof.
+
+Process 16542 exit (max_proofs) Wed Nov 18 09:29:56 2009

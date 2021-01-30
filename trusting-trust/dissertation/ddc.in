@@ -1,0 +1,184 @@
+% Diverse Double-Compiling (DDC), represented using prover9
+% by David A. Wheeler.
+
+% Usage:
+% prover9 -f ddc.in > ddc.out
+
+% Prove "source_corresponds_to_executable", the heart of the DDC process.
+% If the executables stage2 and compiler-under-test cA are exactly
+% (bit-for-bit) equal, then executable cA must exactly correspond to
+% source code sA.
+
+
+% Prover9 implements first-order logic, so the formal assumptions and goals
+% are written using very straightforward first-order logic.
+% See its documentation for more about its format.
+
+% Prover9's default naming conventions require hard-to-read names. We'll use
+% Prolog conventions instead (e.g., variables begin with an uppercase letter,
+% while constants begin with a lowercase letter):
+set(prolog_style_variables).
+
+% Attempt to find a simpler-to-understand proof, at the cost of needing to
+% work harder to find it:
+set(restrict_denials).
+
+formulas(assumptions).
+ % Below is a formal description of the assumptions.  It looks
+ % complicated because there are a lot of details, e.g., exactly which
+ % environments programs are executing on or targeting, and we are trying
+ % show the absolute MINIMUM conditions necessary.  For example, instead of
+ % requiring that various compilers be bug-free, we require that they be able
+ % to correctly compile one particular program.
+
+ % Adding unnecessary information for the proof tends to make prover9's
+ % results unnecessarily complex.  So anything not strictly necessary is
+ % not fed to Prover9 here.  However, some formal definitions are
+ % helpful for discussion, so they are included here, commented as "%!".
+
+ %!compile(Source, Compiler, EnvEffects, RunOn, Target)   --> data.
+ % represents compiling Source with the Compiler, running it in environment
+ % RunOn but targeting the result for environment Target.
+ % When Compiler runs, it uses Source and EnvEffects as input; EnvEffects
+ % models the inputs from the environment, which may vary between executions
+ % while still conforming to the language definition
+ % (e.g., random number generators, heap allocation address values, etc.).
+ %
+ % In older versions of this proof, I had the simpler term:
+ %!compile(Source, Compiler) --> data
+ % but of course this version could not represent the differing environments
+ % involved (which required adding RunOn and Target), nor could it represent
+ % the possibility that some programs are nondeterministic
+ % (which required the addition of EnvEffects).
+
+ %!accurately_translates(Compiler, Lang, Source, EnvEffects, RunOn, Target)
+ %!              --> bool.
+ %   True iff Compiler (an executable) correctly implements language Lang
+ %   when compiling Source (e.g., exactly that, nothing more or less),
+ %   if run on environment RunOn and targeting environment Target.
+ %!exactly_correspond(Executable, Source, Lang, RunOn) --> bool.
+ %    True iff Executable exactly implements source code Source when
+ %    interpreted as language Lang when run on environment RunOn.
+
+ accurately_translates(Compiler, Lang, Source, EnvEffects,
+                       ExecEnv, TargetEnv) ->
+   exactly_correspond(compile(Source, Compiler, EnvEffects,
+                              ExecEnv, TargetEnv),
+                      Source, Lang, TargetEnv)
+   # label(define_exactly_correspond).
+ % Define what it means when source and executable "exactly correspond".
+ % If some Source (written in language Lang) is compiled by a compiler that
+ % accurately translates it, then the resulting executable exactly corresponds
+ % to the original Source.
+
+ all EnvEffects accurately_translates(cT, lsP, sP, EnvEffects, e1, e2)
+   # label(cT_compiles_sP).
+ % Trusted compiler cT is a compiler for language lsP, and it will
+ % accurately translate sP.  This is only guaranteed if cT is run
+ % in environment e1.  cT targets (generates code for) environment e2.
+ % In short, cT has to accurately implement the language
+ % that sP is written in; otherwise, cT can't be used to compile sP!
+ % For example, you can't use a Java compiler (directly) as trusted compiler
+ % cT if sP was written in C++.
+ % Notice that we do NOT need to assume that cT is a perfect, bug-free,
+ % nonmalicious compiler - a good thing, since bug-free compilers are rare,
+ % and ensuring absolute nonmaliciousness is difficult.
+ % cT may be full of bugs, and/or full of triggers and payloads for inserting
+ % malicious code into other programs (including itself).
+ % We merely require that cT perform an accurate translation when it
+ % compiles one program: sP.
+
+ accurately_translates(GoodCompilerLangP, lsP, sP, EnvEffectsMakeP,
+                       ExecEnv, TargetEnv) ->
+    accurately_translates(compile(sP, GoodCompilerLangP, EnvEffectsMakeP,
+                                  ExecEnv, TargetEnv),
+                          lsA, sA, EnvEffectsP, TargetEnv, eArun)
+   # label(sP_compiles_sA).
+ % Source sP (written in language lsP) must define a compiler
+ % that, if accurately compiled, would be suitable for compiling sA.
+ % Formally, if we have some GoodCompilerLangP for language lsP (that
+ % correctly implements the source sP), then the executable that results
+ % from compiling sP with it will (in turn) correctly compile sA.
+
+ % Note a subtlety about the languages that may not be obvious here:
+ % sP doesn't need to implement the WHOLE language sA
+ % was written in (as defined by some language standard).
+ % sP only needs to implement the parts of the language sA uses,
+ % and only with the functionality that sA requires.
+ % If the source code sA _depends_ on a language property, then that property
+ % is a REQUIREMENT of the language for the purposes of DDC, even if the
+ % "official" spec of that language doesn't include that requirement.
+ % For example:
+ % 1. If the official language spec permits certain operations to done
+ %    in an arbitrary order (such as right-to-left and left-to-right
+ %    evaluation of function parameters), but the source of sA requires a
+ %    particular order of evaluation, then sP must implement that order.
+ %    It is certainly BETTER if sA only requires what an official language spec
+ %    guarantees, because it is then easier to ensure that sP meets that spec
+ %    (and there are probably more candidates for sP too). But it's quite
+ %    common for compiler sources to make assumptions that are not guaranteed by
+ %    official specifications, and DDC can still be used in such cases.
+ % 2. When sA requires support for certain minimal lengths  (e.g., depth of
+ %    parentheses, length of identifiers that are considered unique, etc.),
+ %    then sP must support them.
+ % The same is true of the relationship between cT and sP, that is,
+ % cT _must_ implement the language as sP expects... but it need not do more.
+
+ stage1 = compile(sP, cT, e1effects, e1, e2)
+   # label(definition_stage1).
+ stage2 = compile(sA, stage1, e2effects, e2, eArun)
+   # label(definition_stage2).
+ % These implement the graph showing the DDC process.  We set up DDC so that:
+ % stage1 = compilation of source sP using cT, running on environment e1.
+ % stage2 = compilation of source sA using stage1, running on environment e2.
+ % Stage2 is compiled to run on environment eArun.
+
+ % Note: The assertions about stage1 and stage2 quietly eliminate
+ % many provability issues.  The existence of stage1 and stage implies
+ % termination of their compilation processes (otherwise you wouldn't HAVE
+ % stage1 and stage2).  This doesn't limit the proof's utility;
+ % a compilation process that never finished would not be considered
+ % useful, and it would certainly be noticed.
+ %
+ % Termination in turn implies that sA and sP are computable and
+ % implementable (and thus, the subset of their languages lsA and lsP that
+ % they use are computable and implementable). Thus sA doesn't include
+ % calls to impossible functions like "return_last_digit_of_pi()".
+ % Technically, the languages lsP and lsA do not need to be Turing complete
+ % (only the properties required in the proof are strictly required),
+ % but in practice they would be.
+ %
+ % Oddly enough, it's theoretically possible that one or more
+ % of the compilers could be a one-byte value, a one-bit value, or even null,
+ % if the underlying environment implemented those values according to
+ % the proof assumptions. E.g., the underlying machine might have a single
+ % instruction that meant "compile", or it might theoretically
+ % implement a compilation function if it received a null for its execution.
+ % Since there's no need to PREVENT this possibility, the proof permits it.
+ % But this is completely theoretical;
+ % real systems are very unlikely to work that way.
+end_of_list.
+
+formulas(goals).
+
+ (stage2 = cA) ->
+   exactly_correspond(cA, sA, lsA, eArun)
+   # label(source_corresponds_to_executable).
+ % If stage2 and compiler cA are equal, then executable cA must
+ % exactly correspond to source code sA.
+
+ % Prover9, like most first-order logic provers based on resolution,
+ % develops a proof by contradiction.  That is, it takes the goal (above),
+ % negates it, and shows that there is a contradition when the negated goal
+ % is combined with the various assumptions.
+
+ % TODO: Extract comments from hand proof, inc. compiler subdivisions.
+ % Discuss "simplification" to sP==sA and cP==cA (original case); note that
+ %  this would mean that A would have to be deterministic too.
+ % Maybe: Use "corrupted" terminology for source and executables, show that
+ %  if sources uncorrupted, then stage2 is uncorrupted, so if A==stage2,
+ %  then A is uncorrupted.  Perhaps discuss triggers and payloads in model?
+ %  ("It can have triggers, just not the same ones")
+
+end_of_list.
+

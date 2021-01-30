@@ -1,0 +1,55 @@
+
+Hi, I'm the author of the "Countering Trusting Trust..." paper, and I'm delighted to see so many people discussing it!!  Some of the questions or comments are answered by the paper or my website, so let me point you to some of the answers.
+
+
+gnu said: "I made the experience that compiling the same source with the same compiler two times produces two diffrent binarys. That should make this test nearly impossible."
+
+This is nondeterminism, which can be easily handled or not depending on WHY the nondeterminism happens.  Timestamps are usually handled easily.  If the variation depends on a random number generator, you need control of the random number generator's seed, but that's not weird -- gcc ALREADY has an option to control the random number seed, for example.    Some compilers, like gcc, include the check for determinism as one of their tests for validity.  In gcc it's "make bootstrap", and Fedora Core's rpmbuild routinely does a "make bootstrap" as part of the compiler build -- so having a deterministic compiler is NOT an unusual circumstance. See the start of section 7 of the paper - many people believe uncontrolled nondeterminism is a bug ANYWAY, because it makes testing nearly impossible.
+
+
+Clive Robinson observed:  "The exception to this is unless some one writing part of the tool chain has deliberatly decided to put some kind of watermark in the system which can identify the machine etc... a shareware asembler did indead watermark the binary output..." and later on noted some differences based on environments in some cases.
+
+Yes, clearly if the toolchain is INTENTIONALLY inserting variations then they won't have the same result.  But the process will detect that, in most cases in stage 0.... and you can see exactly what varies.  You might want to know that!
+
+
+An Anon asked, "Is there any evidence that such an attack has ever been realized?"
+
+Well, Thompson implemented it in 1984 and sent his malicious compiler to a sister Bell Labs unit.  His malicious compiler subverted the compiler, login program, and disassembler.  The victim even looked at disassemblies and never saw the attack!  Now it's true that Thompson wasn't malicious, but there's every reason to believe that someone has tried it or will try it someday.  There are more people who like to attack computers (and have the technical skill to pull this off), the money value of attacking computers is much greater, and compilers are larger (making this easier to hide).  Section 3.1 discusses attacker motivations -- with this attack, you could 0wn every computer in the world: the entire banking system, infrastructures, whatever you want.  And until now, it was undetectable. Think that might be worth something?  I don't think people appreciate just how POWERFUL this attack is... you can subvert whole classes of systems, undetectably, and they stay subverted.
+
+
+
+Smoke said: "finding the "bad ones" by comparing it against the "other/good ones" is what I do each week in the supermarket to get the good fruits."
+
+But how would you do that with a compiler?  Let's say that you have a gcc binary and a Microsoft C compiler binary.  Which one has malicious code in it - do either of them?  How do you prove it?  In theory, you could read every object code byte - but they'd release a new version before you were done.  Trying to directly compare two different binaries created by two different compilers has been tried, but it's a hairy-hard research project with no REAL solution.  This process finds the malicious code without requiring that.
+
+
+Jonathan said:  "In order for the countermeasure to work, the infected compiler must be infected in such a way that it can detect the compilation of _any_ other compiler. IMO, this assumption is far too strong. Isn't it far more reasonable to make the assumption that the "trusting trust" malware can only detect the compilation of a compiler significantly similar to itself?"
+
+Er, that's backwards, if I understand you correctly.  The countermeasure will succeed UNLESS the trusted compiler is infected the same way.  The compiler under test doesn't NEED to be infected in a way that it can detect the compilation of any other compiler, though it certainly could be, and it's not even hard to do.  And as far as being "significantly similar", there's absolutely no reason that has to be true.  If you stood to make a billion dollars by controlling the worldwide banking system, you could probably find time to insert attacks against 5 compilers instead of just one.  The hardest part of the attack is getting started... once you've figured out how to attack one compiler, it's all to easy to add more attacks :-(.
+
+
+NS said: "in order for the "trusting trust" attack to work, the rigged compiler must be able to, perhaps just minimally, understand the semantics of the program under compilation.... such a compiler cannot possibly understand the semantics of all possible future programming languages, so it cannot intelligently detect and subvert programs that implement interpreted languages that have yet to be invented. So if you implement a Java Virtual Machine, a P-code interpreter, or some other processor emulation, *and then* execute a compiler written in that interpreted language, I don't see how the "trusting trust" attack could be successful. I thought the idea must have been obvious to computer scientists -- so much so that nobody bothered to write it up."
+
+That's been written up; I cited the papers in the 1980s that suggest that very thing.  It's not that the malicious code "understands", they just need to match a pattern.  The idea is sound, but doesn't help as much you might think.  So you execute a compiler in the interpreted language... every time? Not likely.  When you're all done, you'll compile it... and then I subvert THAT.  The problem is that you have no DETECTION technique, so you have no way to know when you need to try to counter it.  See section 2.2.  The idea of using interpreters is good though.. and in fact I suggest doing that very thing as part of the process.
+
+
+Andy said: "So, we've verified the compiler. Now we need to verify the linker and the loader, to make sure they're not adding their own little bits. And the filesystem drivers, too."
+
+Right.  And you do that by... compiling.  That's all.  Sure, it's millions of lines of code, but you don't need to UNDERSTAND it, you just need to compile it twice and see if you get the original answer.  It might take overnight or longer to do the recompile twice, but so what, it's just compute time & compute time is cheap.  And when there's a new binary release, you can do the double-recompile again.  Once you have a working setup, it should be fairly straightforward.  As long as it's software (any level), AND you have the source code, you're fine.
+
+
+Several folks thought I meant that two different compilers would produce the same binaries.  Not so, that practically never happens.  It's a common misperception, which I try to counter in both my paper and my website.
+
+
+Aze said: "KT himself said "No amount of source-level verification or scrutiny will protect you from using untrusted code."... Now it's possible to say that we [Free-Libre software developers] have a higher level of trust. The source code really can tell you what the system does... Note that this benefit only really applies to 100% clean, no proprietry software, systems."
+
+You've got it: this is the only known test for the Trusting Trust attack, and it is only beneficial to people who have the source code.  With only a binary, you can't use this test.
+
+
+Aze said, "It also only applies as long as you fully audit the hardware..."
+
+True, malicious hardware can subvert you even if the software is fine.  See my website at http://www.dwheeler.com/trusting-trust -- I believe you could even apply DDC to hardware.  Countering hardware is still hard, but I think countering the software problem is still an improvmenet.
+
+One impossible problem at a time, okay :-)?
+
+

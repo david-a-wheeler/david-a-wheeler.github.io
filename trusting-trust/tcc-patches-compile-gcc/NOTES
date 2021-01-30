@@ -1,0 +1,85 @@
+[Tinycc-devel] GCC by TCC (some fixes)
+From: 	grischka
+Subject: 	[Tinycc-devel] GCC by TCC (some fixes)
+Date: 	Thu, 29 Sep 2005 22:06:15 +0200
+
+Hi,
+
+This patch fixes some issues discovered on the way of compiling
+gcc with tcc. (gcc 2.95.3-7, that is).
+
+Some statistics for compiling cc1.exe using -O1 (or similar) on a
+P2-266. Time(2) is the time when using the result to compile
+itself, the ouputs from that are identical.
+
+Compiler      time        ~mem-use    size of cc1.exe     time(2)
+--------------------------------------------------------------------
+GCC 2.95.3    560 sec     22 MB       1,484 KB            558 sec
+GCC 3.4.2     744 sec     52 MB       1,677 KB            518 sec
+TCC            73 sec     13 MB       2,635 KB           1145 sec
+MSC           325 sec     35 MB       1,150 KB            545 sec
+BCC55         119 sec     24 MB       1,564 KB            555 sec
+
+
+Required fixes:
+---------------
+
+The gcc sources were unchanged except at one point where tcc did
+not accept a typedef symbol as variable name (known issue).
+
+These are the addressed bugs in tcc with tests in cases.c:
+
+1) passing function pointers and structures through ?:
+2) saving registers through jumps with ||, &&, !
+3) keep rvalue of bitfield assignment: bit1 = bit2 = 1;
+4) stringyfy behaviour (problem not solved, just to make it work)
+5) keep 'static' property for local function pointers
+6) cast short/bool -> float
+7) incompatible pointer assigment degraded to warning.
+8) alloca implementation
+9) indirections with function pointers (***fn)();
+10) cast double -> ull (bug in libtcc1.c:__shldi3)
+
+
+The patch also includes the following:
+
+- tcc.c: slight cleanup with backslash conversion
+- tccelf.c: an issue with loop vars mentioned earlier by someone else.
+- tccpe.c: windows resources support (pe_load_resource_file)
+- tccpe.c: a major fix with relocation for dlls
+- _mingw.h: additions to support current mingw headers
+
+The patch is against current CVS (0.9.24 pre). I included tccpe.c 
+as is, since applying as a patch appeared to mess up most of the 
+source formatting.
+
+--- grischka
+
+
+
+
+
+
+
+
+From: 	Dave Dodge
+Subject: 	Re: [Tinycc-devel] GCC by TCC (some fixes)
+Date: 	Thu, 29 Sep 2005 18:17:36 -0400
+User-agent: 	Mutt/1.4.2i
+
+On Thu, Sep 29, 2005 at 10:06:15PM +0200, grischka wrote:
+> The gcc sources were unchanged except at one point where tcc did
+> not accept a typedef symbol as variable name (known issue).
+
+This patch might be useful (I haven't compared it against current CVS,
+though):
+
+  http://lists.gnu.org/archive/html/tinycc-devel/2005-01/msg00010.html
+
+                                                  -Dave Dodge
+
+
+
+
+
+

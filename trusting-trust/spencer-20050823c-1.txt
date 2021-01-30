@@ -1,0 +1,52 @@
+Date: Mon, 23 Nov 1998 15:31:05 -0500 (EST)
+From: Henry Spencer <henry@spsystems.net>
+Subject: Re: LWN - The Trojan Horse (Bruce Perens)
+Message-ID: <Pine.BSI.3.91.981123145426.15203C-100000@spsystems.net>
+
+On Mon, 23 Nov 1998, Gary Grossman wrote:
+
+>> 2. In this case, checksums on object code would not have helped, as 
+>>   a. Ken was the originator of the TH-bearing object code in question, 
+>>      and could have checksummed it for distirubution...
+
+
+For binaries in general, one can avoid this sort of thing either by always
+building from sources, or by having multiple binary-distribution sites
+which do the compile, compute the checksum, and compare checksums with
+each other.  Much of the problem lies in trusting a single supplier of
+binaries. 
+
+The *compiler*, however, is a special case, and a particularly difficult
+one:  short of hand-verifying the binary -- which has been done, for small
+and particularly critical aerospace applications, but is impractical in
+general -- it's hard to tell whether compilation has been honest.  Trying
+to maintain rigorous control over the compilers at trusted-compilation
+sites is helpful, but it's easy to slip up (note the occasional instance
+of viruses distributed with commercial binary-only software).  It would
+be better to have a way of *detecting* self-replicating Trojan Horses in
+compilers.
+
+One cannot just compile the compiler using a different compiler and then
+compare to the self-compiled code, because two different compilers -- even
+two versions of the same compiler -- typically compile different code for
+a given input.  However, one can apply a further level of indirection.
+
+Compile the compiler using both itself and a different compiler, yielding
+two binaries.  These are supposedly the same machinery -- they came from
+the same blueprints -- although they can't be directly compared because
+the two different manufacturers have painted them different colors.  Now,
+use both those binaries to compile the compiler source again, giving two
+outputs.  Since the binaries are the same machinery, the outputs should be
+identical.  Any difference indicates either a major bug somewhere, or an
+infection in one of the original compilers.
+
+This process does require a second compiler with different origins,
+preferably as different as possible.  Note, though, that the second
+compiler need not generate *good* code; it won't be used for building
+production binaries.  It could even be an interpreter, if it's not
+impossibly slow.
+
+                                                          Henry Spencer
+                                                       henry@spsystems.net
+                                                     (henry@zoo.toronto.edu)
+

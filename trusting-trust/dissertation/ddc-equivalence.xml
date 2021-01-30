@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE proofs SYSTEM "proof3.dtd">
+
+<?xml-stylesheet type="text/xsl" href="proof3.xsl"?>
+
+<proofs number_of_proofs="1">
+
+<source>ddc-equivalence.out</source>
+
+<heading><![CDATA[
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 18588 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Thu Jun 25 19:43:01 2009
+The command was "prover9 -t 60 -f ddc-equivalence.in".
+]]></heading>
+
+<proof number="1" length="24" max_count="24">
+
+<comments><![CDATA[
+% Proof 1 at 0.00 (+ 0.00) seconds: source_corresponds_to_executable.
+% Length of proof is 22.
+% Level of proof is 7.
+% Maximum clause weight is 24.
+% Given clauses 13.
+]]></comments>
+
+  <clause id="1" type="assumption">
+    <literal><![CDATA[
+      accurately_translates(A,B,C,D,E,F) -> exactly_correspond(compile(C,A,D,E,F),C,B,F)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(define_exactly_correspond)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(non_clause)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="2" type="assumption">
+    <literal><![CDATA[
+      (all A accurately_translates(cT,lsP,sP,A,e1,e2))
+    ]]></literal>
+    <attribute><![CDATA[
+      label(cT_compiles_sP)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(non_clause)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="3" type="assumption">
+    <literal><![CDATA[
+      accurately_translates(A,lsP,sP,B,C,D) -> accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(sP_compiles_sA)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(non_clause)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="4" type="goal">
+    <literal><![CDATA[
+      cA = stage2 -> exactly_correspond(cA,sA,lsA,eArun)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(source_corresponds_to_executable)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(non_clause)
+    ]]></attribute>
+    <attribute><![CDATA[
+      label(goal)
+    ]]></attribute>
+    <justification jstring="[goal].">
+      <j1 rule="goal"/>
+    </justification>
+  </clause>
+
+  <clause id="5" type="assumption">
+    <literal><![CDATA[
+      compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E))
+    ]]></literal>
+    <attribute><![CDATA[
+      label(define_compile)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="6" type="clausify">
+    <literal><![CDATA[
+      -accurately_translates(A,B,C,D,E,F)
+    ]]></literal>
+    <literal><![CDATA[
+      exactly_correspond(compile(C,A,D,E,F),C,B,F)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(define_exactly_correspond)
+    ]]></attribute>
+    <justification jstring="[clausify(1)].">
+      <j1 rule="clausify" parents="1"/>
+    </justification>
+  </clause>
+
+  <clause id="7">
+    <literal><![CDATA[
+      -accurately_translates(A,B,C,D,E,F)
+    ]]></literal>
+    <literal><![CDATA[
+      exactly_correspond(extract(converttext(run(A,retarget(C,F),D,E),E,F)),C,B,F)
+    ]]></literal>
+    <justification jstring="[para(5(a,1),6(b,1))].">
+      <j1 rule="para" parents="5 6"/>
+    </justification>
+  </clause>
+
+  <clause id="8" type="clausify">
+    <literal><![CDATA[
+      accurately_translates(cT,lsP,sP,A,e1,e2)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(cT_compiles_sP)
+    ]]></attribute>
+    <justification jstring="[clausify(2)].">
+      <j1 rule="clausify" parents="2"/>
+    </justification>
+  </clause>
+
+  <clause id="9" type="clausify">
+    <literal><![CDATA[
+      -accurately_translates(A,lsP,sP,B,C,D)
+    ]]></literal>
+    <literal><![CDATA[
+      accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(sP_compiles_sA)
+    ]]></attribute>
+    <justification jstring="[clausify(3)].">
+      <j1 rule="clausify" parents="3"/>
+    </justification>
+  </clause>
+
+  <clause id="10">
+    <literal><![CDATA[
+      -accurately_translates(A,lsP,sP,B,C,D)
+    ]]></literal>
+    <literal><![CDATA[
+      accurately_translates(extract(converttext(run(A,retarget(sP,D),B,C),C,D)),lsA,sA,E,D,eArun)
+    ]]></literal>
+    <justification jstring="[para(5(a,1),9(b,1))].">
+      <j1 rule="para" parents="5 9"/>
+    </justification>
+  </clause>
+
+  <clause id="11" type="assumption">
+    <literal><![CDATA[
+      stage1 = compile(sP,cT,e1effects,e1,e2)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(definition_stage1)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="12">
+    <literal><![CDATA[
+      stage1 = extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2))
+    ]]></literal>
+    <justification jstring="[para(5(a,1),11(a,2))].">
+      <j1 rule="para" parents="5 11"/>
+    </justification>
+  </clause>
+
+  <clause id="13">
+    <literal><![CDATA[
+      extract(converttext(run(cT,retarget(sP,e2),e1effects,e1),e1,e2)) = stage1
+    ]]></literal>
+    <justification jstring="[copy(12),flip(a)].">
+      <j1 rule="copy" parents="12"/>
+      <j2 rule="flip"/>
+    </justification>
+  </clause>
+
+  <clause id="14" type="assumption">
+    <literal><![CDATA[
+      stage2 = compile(sA,stage1,e2effects,e2,eArun)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(definition_stage2)
+    ]]></attribute>
+    <justification jstring="[assumption].">
+      <j1 rule="assumption"/>
+    </justification>
+  </clause>
+
+  <clause id="15">
+    <literal><![CDATA[
+      stage2 = extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun))
+    ]]></literal>
+    <justification jstring="[para(5(a,1),14(a,2))].">
+      <j1 rule="para" parents="5 14"/>
+    </justification>
+  </clause>
+
+  <clause id="16">
+    <literal><![CDATA[
+      extract(converttext(run(stage1,retarget(sA,eArun),e2effects,e2),e2,eArun)) = stage2
+    ]]></literal>
+    <justification jstring="[copy(15),flip(a)].">
+      <j1 rule="copy" parents="15"/>
+      <j2 rule="flip"/>
+    </justification>
+  </clause>
+
+  <clause id="17" type="deny">
+    <literal><![CDATA[
+      cA = stage2
+    ]]></literal>
+    <attribute><![CDATA[
+      label(source_corresponds_to_executable)
+    ]]></attribute>
+    <justification jstring="[deny(4)].">
+      <j1 rule="deny" parents="4"/>
+    </justification>
+  </clause>
+
+  <clause id="18" type="deny">
+    <literal><![CDATA[
+      -exactly_correspond(cA,sA,lsA,eArun)
+    ]]></literal>
+    <attribute><![CDATA[
+      label(source_corresponds_to_executable)
+    ]]></attribute>
+    <attribute><![CDATA[
+      answer(source_corresponds_to_executable)
+    ]]></attribute>
+    <justification jstring="[deny(4)].">
+      <j1 rule="deny" parents="4"/>
+    </justification>
+  </clause>
+
+  <clause id="19">
+    <literal><![CDATA[
+      -exactly_correspond(stage2,sA,lsA,eArun)
+    ]]></literal>
+    <justification jstring="[para(17(a,1),18(a,1))].">
+      <j1 rule="para" parents="17 18"/>
+    </justification>
+  </clause>
+
+  <clause id="20">
+    <literal><![CDATA[
+      accurately_translates(extract(converttext(run(cT,retarget(sP,e2),A,e1),e1,e2)),lsA,sA,B,e2,eArun)
+    ]]></literal>
+    <justification jstring="[resolve(10,a,8,a)].">
+      <j1 rule="resolve" parents="10 8"/>
+    </justification>
+  </clause>
+
+  <clause id="21">
+    <literal><![CDATA[
+      accurately_translates(stage1,lsA,sA,A,e2,eArun)
+    ]]></literal>
+    <justification jstring="[para(13(a,1),20(a,1))].">
+      <j1 rule="para" parents="13 20"/>
+    </justification>
+  </clause>
+
+  <clause id="22">
+    <literal><![CDATA[
+      exactly_correspond(extract(converttext(run(stage1,retarget(sA,eArun),A,e2),e2,eArun)),sA,lsA,eArun)
+    ]]></literal>
+    <justification jstring="[resolve(7,a,21,a)].">
+      <j1 rule="resolve" parents="7 21"/>
+    </justification>
+  </clause>
+
+  <clause id="23">
+    <literal><![CDATA[
+      exactly_correspond(stage2,sA,lsA,eArun)
+    ]]></literal>
+    <justification jstring="[para(16(a,1),22(a,1))].">
+      <j1 rule="para" parents="16 22"/>
+    </justification>
+  </clause>
+
+  <clause id="24">
+    <literal><![CDATA[
+      $F
+    ]]></literal>
+    <attribute><![CDATA[
+      answer(source_corresponds_to_executable)
+    ]]></attribute>
+    <justification jstring="[resolve(23,a,19,a)].">
+      <j1 rule="resolve" parents="23 19"/>
+    </justification>
+  </clause>
+
+</proof>
+
+</proofs>

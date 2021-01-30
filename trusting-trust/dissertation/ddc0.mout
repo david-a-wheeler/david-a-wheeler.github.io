@@ -1,0 +1,150 @@
+============================== Mace4 =================================
+Mace4 (32) version Aug-2007, Aug 2007.
+Process 27963 was started by dwheeler on eve,
+Sun Sep 30 14:46:47 2007
+The command was "mace4 -c -t 60 -f ddc0.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file ddc0.in
+
+set(prolog_style_variables).
+set(restrict_denials).
+WARNING, flag not recognized: set(restrict_denials).
+
+formulas(assumptions).
+data(sA).
+data(cA).
+compile(Source,Compiler) = extract(run(Compiler,Source)).
+functionally_equal(Compiler1,Compiler2,Source,Input) <-> run(compile(Source,Compiler1),Input) = run(compile(Source,Compiler2),Input).
+correspond(correctA,sA).
+correspond(Compiler1,Source) & correspond(Compiler2,Source) <-> (all OtherSource all Input functionally_equal(Compiler1,Compiler,OtherSource,Input)).
+correctA = compile(sA,aCorrectA).
+compile(sA,correctA) = correctA.
+functionally_equal(cT,correctA,sA,sA).
+run(compile(sA,cT),sA) = run(compile(sA,correctA),sA).
+stage1 = compile(sA,cT).
+stage2 = compile(sA,stage1).
+end_of_list.
+
+formulas(goals).
+stage2 = cA -> cA = correctA.
+end_of_list.
+
+% From the command line: assign(max_seconds, 60).
+
+============================== end of input ==========================
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 functionally_equal(Compiler1,Compiler2,Source,Input) <-> run(compile(Source,Compiler1),Input) = run(compile(Source,Compiler2),Input) # label(non_clause).  [assumption].
+2 correspond(Compiler1,Source) & correspond(Compiler2,Source) <-> (all OtherSource all Input functionally_equal(Compiler1,Compiler,OtherSource,Input)) # label(non_clause).  [assumption].
+3 stage2 = cA -> cA = correctA # label(non_clause) # label(goal).  [goal].
+
+============================== end of process non-clausal formulas ===
+
+============================== CLAUSES FOR SEARCH ====================
+
+formulas(mace4_clauses).
+data(sA).
+data(cA).
+compile(A,B) = extract(run(B,A)).
+-functionally_equal(A,B,C,D) | run(compile(C,B),D) = run(compile(C,A),D).
+functionally_equal(A,B,C,D) | run(compile(C,B),D) != run(compile(C,A),D).
+correspond(correctA,sA).
+-correspond(A,B) | -correspond(C,B) | functionally_equal(A,D,E,F).
+correspond(A,B) | -functionally_equal(A,C,f1(B,D,A,C),f2(B,D,A,C)).
+correspond(A,B) | -functionally_equal(C,D,f1(B,A,C,D),f2(B,A,C,D)).
+correctA = compile(sA,aCorrectA).
+compile(sA,correctA) = correctA.
+functionally_equal(cT,correctA,sA,sA).
+run(compile(sA,cT),sA) = run(compile(sA,correctA),sA).
+stage1 = compile(sA,cT).
+stage2 = compile(sA,stage1).
+stage2 = cA.
+correctA != cA.
+end_of_list.
+
+============================== end of clauses for search =============
+
+% The maximum domain element in the input is 0.
+
+============================== DOMAIN SIZE 2 =========================
+
+============================== STATISTICS ============================
+
+For domain size 2.
+
+Current CPU time: 0.00 seconds (total CPU time: 0.01 seconds).
+Ground clauses: seen=143, kept=143.
+Selections=19, assignments=38, propagations=244, current_models=0.
+Rewrite_terms=778, rewrite_bools=1364, indexes=468.
+Rules_from_neg_clauses=20, cross_offs=20.
+
+============================== end of statistics =====================
+
+============================== DOMAIN SIZE 3 =========================
+
+============================== STATISTICS ============================
+
+For domain size 3.
+
+Current CPU time: 0.00 seconds (total CPU time: 0.06 seconds).
+Ground clauses: seen=1073, kept=1073.
+Selections=224, assignments=669, propagations=3688, current_models=0.
+Rewrite_terms=14324, rewrite_bools=38466, indexes=7199.
+Rules_from_neg_clauses=42, cross_offs=329.
+
+============================== end of statistics =====================
+
+============================== DOMAIN SIZE 4 =========================
+
+============================== STATISTICS ============================
+
+For domain size 4.
+
+Current CPU time: 0.00 seconds (total CPU time: 0.56 seconds).
+Ground clauses: seen=5147, kept=5147.
+Selections=1250, assignments=4962, propagations=23006, current_models=0.
+Rewrite_terms=122008, rewrite_bools=263329, indexes=31257.
+Rules_from_neg_clauses=48, cross_offs=2689.
+
+============================== end of statistics =====================
+
+============================== DOMAIN SIZE 5 =========================
+
+============================== STATISTICS ============================
+
+For domain size 5.
+
+Current CPU time: 0.00 seconds (total CPU time: 2.89 seconds).
+Ground clauses: seen=18161, kept=18161.
+Selections=3442, assignments=16918, propagations=74663, current_models=0.
+Rewrite_terms=512618, rewrite_bools=930755, indexes=83438.
+Rules_from_neg_clauses=0, cross_offs=8971.
+
+============================== end of statistics =====================
+
+============================== DOMAIN SIZE 6 =========================
+
+mace4_sig_handler: condition 2
+============================== STATISTICS ============================
+
+For domain size 6.
+
+Current CPU time: 0.00 seconds (total CPU time: 5.13 seconds).
+Ground clauses: seen=51887, kept=51887.
+Selections=1575, assignments=8732, propagations=39615, current_models=0.
+Rewrite_terms=294637, rewrite_bools=779182, indexes=54267.
+Rules_from_neg_clauses=0, cross_offs=4460.
+
+============================== end of statistics =====================
+
+User_CPU=5.13, System_CPU=0.09, Wall_clock=5.
+
+Exiting with failure.
+
+Process 27963 exit (mace_sigint) Sun Sep 30 14:46:52 2007
+The process finished Sun Sep 30 14:46:52 2007

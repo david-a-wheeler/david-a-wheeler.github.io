@@ -1,0 +1,39 @@
+
+  (defstep lazy-grind  (&optional (if-match t) (defs !) rewrites
+                                  theories exclude (updates? t))
+     (then
+       (grind$ :if-match nil :defs defs :rewrites rewrites 
+               :theories theories :exclude exclude :updates? updates?)
+       (reduce$ :if-match if-match :updates? updates?))
+    "Equiv. to (grind) with the instantiations postponed until after simplifica
+ tion."
+    "By skolemization, if-lifting, simplification and instantiation")
+  
+  (defstep stew (&optional lazy-match (if-match t) (defs !) rewrites theories
+                 exclude (updates? t) &rest lemmas)
+     (then
+       (if lemmas 
+         (let ((lemmata (if (listp lemmas) lemmas (list lemmas)))
+  	     (x `(then ,@(loop for lemma in lemmata append `((skosimp*)(use ,le
+ mma))))))
+            x)
+         (skip))
+       (if lazy-match 
+         (then (grind$ :if-match nil :defs defs :rewrites rewrites
+                       :theories theories :exclude exclude :updates? updates?) 
+               (reduce$ :if-match if-match :updates? updates?))
+         (grind$ :if-match if-match :defs defs :rewrites rewrites
+                       :theories theories :exclude exclude :updates? updates?))
+ )
+  "Does a combination of (lemma) and (grind)."
+    "~%Grinding away with the supplied lemmas,")
+
+
+  (defstep mystew (&optional (lazy-match t) (if-match t) (defs !) rewrites theories
+                 exclude (updates? t) &rest lemmas)
+    (then (stew$ :lazy-match lazy-match :if-match if-match
+          :defs defs :rewrites rewrites :theories theories
+          :exclude exclude :updates? updates? lemmas))
+    "Like stew, but lazy-match defaults to true.  Adds lemmas, does grind with if-match nil, then a final grind."
+    "~%Grinding away with the supplied lemmas.")
+

@@ -1,0 +1,60 @@
+Permit certain pointer assignments (grischka-2005-09-25 case_7)
+This patch was originally posted in grischka's 2005-09-25 email as
+"required fix" case_7 to compile gcc 2.95. It was tweaked by
+David A. Wheeler to merge the test case into the standard tcc test suite.
+
+The C99 spec involving this is complicated; see section 6.5.16
+(assignment), section 6.2.7 (compatible type and composite type),
+and section 6.7.2 (type specifiers). In C99, when they're in separate
+translation units, the tag names (if given) must match.
+
+In practice, given:
+    struct _s1 { int a, b, c; } *p1 = NULL;
+gcc will accept the following assignment without even a warning:
+    struct _s2 { int a, b, c; } *p2 = p1;
+(Notice that the struct tags are different, but no warning is given.)
+This kind of assignment is likely in C programs using OO techniques,
+so forbidding them (as tcc currently does) is undesirable.
+Note that this patch gives warnings in cases where gcc would not even
+give a warning.  The warning is plausible (and highly recommended
+in some situations), so it's retained.
+
+
+diff -ur tinycc-rl-1.0.0/tcc.c tinycc-grischka7/tcc.c
+--- tinycc-rl-1.0.0/tcc.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-grischka7/tcc.c	2007-05-03 09:26:49.000000000 -0400
+@@ -5406,7 +5406,7 @@
+             tmp_type1.t &= ~(VT_UNSIGNED | VT_CONSTANT | VT_VOLATILE);
+             tmp_type2.t &= ~(VT_UNSIGNED | VT_CONSTANT | VT_VOLATILE);
+             if (!is_compatible_types(&tmp_type1, &tmp_type2))
+-                goto error;
++                warning("assignment from incompatible pointer type");
+         }
+         /* check const and volatile */
+         if ((!(type1->t & VT_CONSTANT) && (type2->t & VT_CONSTANT)) ||
+diff -ur tinycc-rl-1.0.0/tests/tcctest.c tinycc-grischka7/tests/tcctest.c
+--- tinycc-rl-1.0.0/tests/tcctest.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-grischka7/tests/tcctest.c	2007-05-03 08:22:53.000000000 -0400
+@@ -1034,6 +1034,14 @@
+     return s1;
+ }
+ 
++void struct_assign_test3(void)
++{
++    // incompatible assigment
++    struct _s1 { int a, b, c; } *p1 = NULL;
++    struct _s2 { int a, b, c; } *p2 = p1; //warning
++    printf("struct assign, 0 -> %x\n", p2);
++}
++
+ void struct_assign_test(void)
+ {
+     struct structa1 lsta1, lsta2;
+@@ -1055,6 +1063,7 @@
+     printf("before call: %d %d\n", lsta2.f1, lsta2.f2);
+     lsta2 = struct_assign_test2(lsta2, 4);
+     printf("after call: %d %d\n", lsta2.f1, lsta2.f2);
++    struct_assign_test3();
+ }
+ 
+ /* casts to short/char */

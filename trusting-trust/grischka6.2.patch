@@ -1,0 +1,124 @@
+Fix nonconstant double->bool conversion (grischka-2005-09-25 bugfix 6.2).
+This patch was originally posted in grischka's 2005-09-25 email as a
+"required fix" 6 (subfix 6.2) to compile gcc. It was tweaked by
+David A. Wheeler to remove a code duplication, make the indenting
+correct, and merge the test case into the standard tcc test suite.
+
+diff -ur tinycc-rl-1.0.0-orig/tcc.c tinycc-rl-1.0.0-grishka6.2/tcc.c
+--- tinycc-rl-1.0.0-orig/tcc.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-rl-1.0.0-grishka6.2/tcc.c	2007-05-01 16:03:24.000000000 -0400
+@@ -5053,46 +5053,47 @@
+             }
+         } else if (sf) {
+             /* convert fp to int */
+-            /* we handle char/short/etc... with generic code */
+-            if (dbt != (VT_INT | VT_UNSIGNED) &&
+-                dbt != (VT_LLONG | VT_UNSIGNED) &&
+-                dbt != VT_BOOL &&
+-                dbt != VT_LLONG)
+-                dbt = VT_INT;
+-            if (c) {
+-                switch(dbt) {
+-                case VT_LLONG | VT_UNSIGNED:
+-                case VT_LLONG:
+-                    /* XXX: add const cases for long long */
+-                    goto do_ftoi;
+-                case VT_INT | VT_UNSIGNED:
+-                    switch(sbt) {
+-                    case VT_FLOAT: vtop->c.ui = (unsigned int)vtop->c.d; break;
+-                    case VT_DOUBLE: vtop->c.ui = (unsigned int)vtop->c.d; break;
+-                    case VT_LDOUBLE: vtop->c.ui = (unsigned int)vtop->c.d; break;
+-                    }
+-                    break;
+-                case VT_BOOL:
+-                    vpushi(0);
+-                    gen_op(TOK_NE);
+-                    break;
+-                default:
+-                    /* int case */
+-                    switch(sbt) {
+-                    case VT_FLOAT: vtop->c.i = (int)vtop->c.d; break;
+-                    case VT_DOUBLE: vtop->c.i = (int)vtop->c.d; break;
+-                    case VT_LDOUBLE: vtop->c.i = (int)vtop->c.d; break;
++            if (dbt == VT_BOOL) {
++                 vpushi(0);
++                 gen_op(TOK_NE);
++            } else {
++                /* we handle char/short/etc... with generic code */
++                if (dbt != (VT_INT | VT_UNSIGNED) &&
++                    dbt != (VT_LLONG | VT_UNSIGNED) &&
++                    dbt != VT_BOOL &&
++                    dbt != VT_LLONG)
++                    dbt = VT_INT;
++                if (c) {
++                    switch(dbt) {
++                    case VT_LLONG | VT_UNSIGNED:
++                    case VT_LLONG:
++                        /* XXX: add const cases for long long */
++                        goto do_ftoi;
++                    case VT_INT | VT_UNSIGNED:
++                        switch(sbt) {
++                        case VT_FLOAT: vtop->c.ui = (unsigned int)vtop->c.d; break;
++                        case VT_DOUBLE: vtop->c.ui = (unsigned int)vtop->c.d; break;
++                        case VT_LDOUBLE: vtop->c.ui = (unsigned int)vtop->c.d; break;
++                        }
++                        break;
++                    default:
++                        /* int case */
++                        switch(sbt) {
++                        case VT_FLOAT: vtop->c.i = (int)vtop->c.d; break;
++                        case VT_DOUBLE: vtop->c.i = (int)vtop->c.d; break;
++                        case VT_LDOUBLE: vtop->c.i = (int)vtop->c.d; break;
++                        }
++                        break;
+                     }
+-                    break;
++                } else {
++                do_ftoi:
++                    gen_cvt_ftoi1(dbt);
++                }
++                if (dbt == VT_INT && (type->t & (VT_BTYPE | VT_UNSIGNED)) != dbt) {
++                    /* additional cast for char/short... */
++                    vtop->type.t = dbt;
++                    gen_cast(type);
+                 }
+-            } else {
+-            do_ftoi:
+-                gen_cvt_ftoi1(dbt);
+-            }
+-            if (dbt == VT_INT && (type->t & (VT_BTYPE | VT_UNSIGNED)) != dbt) {
+-                /* additional cast for char/short/bool... */
+-                vtop->type.t = dbt;
+-                gen_cast(type);
+             }
+         } else if ((dbt & VT_BTYPE) == VT_LLONG) {
+             if ((sbt & VT_BTYPE) != VT_LLONG) {
+diff -ur tinycc-rl-1.0.0-orig/tests/tcctest.c tinycc-rl-1.0.0-grishka6.2/tests/tcctest.c
+--- tinycc-rl-1.0.0-orig/tests/tcctest.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-rl-1.0.0-grishka6.2/tests/tcctest.c	2007-05-01 15:21:26.000000000 -0400
+@@ -919,6 +919,7 @@
+         if (toupper1 (i) != TOUPPER (i))
+             printf("error %d\n", i);
+     }
++
+ }
+ 
+ /* GCC accepts that */
+@@ -1074,6 +1075,7 @@
+     char tab[10];
+     unsigned b,d;
+     short s;
++    double g = 0.1;
+ 
+     printf("cast_test:\n");
+     a = 0xfffff;
+@@ -1118,6 +1120,8 @@
+ 
+     /* Cast float to bool */
+     printf("%d\n", (_Bool) 0.1);
++    /* Cast non-constant double 0.1 to bool, should be 1, grischka case 6.2 */
++    printf("1 -> %d\n", (_Bool) g);
+ 
+     /* Cast with sign extension */
+     a = (short)0xf000;
+

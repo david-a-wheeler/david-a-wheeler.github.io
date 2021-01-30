@@ -1,0 +1,138 @@
+============================== Mace4 =================================
+Mace4 (32) version Aug-2007, Aug 2007.
+Process 18642 was started by dwheeler on dwheeler2-pc.itsd.ida.org,
+Thu Jun 25 19:52:12 2009
+The command was "mace4 -c -t 60 -f ddc-equivalence.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file ddc-equivalence.in
+
+set(prolog_style_variables).
+set(restrict_denials).
+WARNING, flag not recognized: set(restrict_denials).
+
+formulas(assumptions).
+equivalent(Executable1,Executable2,RunOn) <-> run(Executable1,Input,EnvEffects,RunOn) = run(Executable2,Input,EnvEffects,RunOn) # label(define_equivalent).
+compile(Source,Compiler,EnvEffects,RunOn,Target) = extract(converttext(run(Compiler,retarget(Source,Target),EnvEffects,RunOn),RunOn,Target)) # label(define_compile).
+accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond).
+(all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP).
+accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA).
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
+sP != cP.
+sP != e1effects.
+sP != e1.
+sP != cT.
+sP != e2effects.
+sP != e2.
+sP != cA.
+sA != cP.
+sA != e1effects.
+sA != e1.
+sA != cP.
+sA != e2effects.
+sA != e2.
+sA != cT.
+cP != e1effects.
+cP != e1.
+cP != e2effects.
+cP != e2.
+sP != e1effects.
+cP != e2effects.
+end_of_list.
+
+formulas(goals).
+equivalent(stage2,cA,eArun) -> exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable).
+end_of_list.
+
+% From the command line: assign(max_seconds, 60).
+
+============================== end of input ==========================
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 equivalent(Executable1,Executable2,RunOn) <-> run(Executable1,Input,EnvEffects,RunOn) = run(Executable2,Input,EnvEffects,RunOn) # label(define_equivalent) # label(non_clause).  [assumption].
+2 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
+3 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
+4 accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA) # label(non_clause).  [assumption].
+5 equivalent(stage2,cA,eArun) -> exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable) # label(non_clause) # label(goal).  [goal].
+
+============================== end of process non-clausal formulas ===
+
+============================== CLAUSES FOR SEARCH ====================
+
+formulas(mace4_clauses).
+-equivalent(A,B,C) | run(B,D,E,C) = run(A,D,E,C) # label(define_equivalent).
+equivalent(A,B,C) | run(B,D,E,C) != run(A,D,E,C) # label(define_equivalent).
+compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).
+-accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).
+accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).
+-accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).
+stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
+sP != cP.
+sP != e1effects.
+sP != e1.
+sP != cT.
+sP != e2effects.
+sP != e2.
+sP != cA.
+sA != cP.
+sA != e1effects.
+sA != e1.
+sA != cP.
+sA != e2effects.
+sA != e2.
+sA != cT.
+cP != e1effects.
+cP != e1.
+cP != e2effects.
+cP != e2.
+sP != e1effects.
+cP != e2effects.
+equivalent(stage2,cA,eArun) # label(source_corresponds_to_executable).
+-exactly_correspond(cA,sA,lsA,eArun) # label(source_corresponds_to_executable).
+end_of_list.
+
+============================== end of clauses for search =============
+
+% The maximum domain element in the input is 0.
+
+============================== DOMAIN SIZE 2 =========================
+
+============================== STATISTICS ============================
+
+For domain size 2.
+
+Current CPU time: 0.00 seconds (total CPU time: 0.00 seconds).
+Ground clauses: seen=218, kept=218.
+Selections=1, assignments=2, propagations=14, current_models=0.
+Rewrite_terms=158, rewrite_bools=2, indexes=64.
+Rules_from_neg_clauses=14, cross_offs=14.
+
+============================== end of statistics =====================
+
+============================== DOMAIN SIZE 3 =========================
+
+mace4_sig_handler: condition 2
+============================== STATISTICS ============================
+
+For domain size 3.
+
+Current CPU time: 0.00 seconds (total CPU time: 2.20 seconds).
+Ground clauses: seen=1728, kept=1728.
+Selections=40166, assignments=120347, propagations=896077, current_models=0.
+Rewrite_terms=4874858, rewrite_bools=2032233, indexes=1109594.
+Rules_from_neg_clauses=6, cross_offs=467.
+
+============================== end of statistics =====================
+
+User_CPU=2.20, System_CPU=0.03, Wall_clock=3.
+
+Exiting with failure.
+
+Process 18642 exit (mace_sigint) Thu Jun 25 19:52:15 2009
+The process finished Thu Jun 25 19:52:15 2009

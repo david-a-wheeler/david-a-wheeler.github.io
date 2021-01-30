@@ -1,0 +1,273 @@
+Eliminate a large number of bogus warnings during compilation.
+Eliminate many bogus warnings produced during compilation of tcc by gcc,
+primarily by adding casts but in some cases by changing type
+declarations (esp. for hashes).  Many bogus warnings make it difficult
+to see the warnings that ARE important.
+
+diff -ur tinycc-rl-1.0.0/config.mak tinycc-warning/config.mak
+--- tinycc-rl-1.0.0/config.mak	2007-05-09 11:59:02.000000000 -0400
++++ tinycc-warning/config.mak	2007-05-09 14:58:59.000000000 -0400
+@@ -18,4 +18,4 @@
+ EXESUF=
+ ARCH=i386
+ VERSION=0.9.23
+-SRC_PATH=/home/dwheeler/temp/tinycc-rl-1.0.0
++SRC_PATH=/home/dwheeler/temp/tinycc-warning
+diff -ur tinycc-rl-1.0.0/tccasm.c tinycc-warning/tccasm.c
+--- tinycc-rl-1.0.0/tccasm.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-warning/tccasm.c	2007-05-09 16:37:40.000000000 -0400
+@@ -715,8 +715,8 @@
+     bf = tcc_malloc(sizeof(BufferedFile));
+     memset(bf, 0, sizeof(BufferedFile));
+     bf->fd = -1;
+-    bf->buf_ptr = str;
+-    bf->buf_end = str + len;
++    bf->buf_ptr = (uint8_t *) str;
++    bf->buf_end = (uint8_t *) str + len;
+     str[len] = CH_EOB;
+     /* same name as current file so that errors are correctly
+        reported */
+diff -ur tinycc-rl-1.0.0/tcc.c tinycc-warning/tcc.c
+--- tinycc-rl-1.0.0/tcc.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-warning/tcc.c	2007-05-09 16:01:02.000000000 -0400
+@@ -1884,7 +1884,7 @@
+ 
+     h = TOK_HASH_INIT;
+     h = TOK_HASH_FUNC(h, type);
+-    s = filename;
++    s = (unsigned char *) filename;
+     while (*s) {
+         h = TOK_HASH_FUNC(h, *s);
+         s++;
+@@ -2825,7 +2825,7 @@
+                     goto token_found;
+                 pts = &(ts->hash_next);
+             }
+-            ts = tok_alloc_new(pts, p1, len);
++            ts = tok_alloc_new(pts, (char *) p1, len);
+         token_found: ;
+         } else {
+             /* slower case */
+@@ -8641,8 +8641,8 @@
+         return -1;
+     memcpy(buf, str, len);
+     buf[len] = CH_EOB;
+-    bf->buf_ptr = buf;
+-    bf->buf_end = buf + len;
++    bf->buf_ptr = (uint8_t *) buf;
++    bf->buf_end = (uint8_t *) buf + len;
+     pstrcpy(bf->filename, sizeof(bf->filename), "<string>");
+     bf->line_num = 1;
+     file = bf;
+@@ -8661,17 +8661,17 @@
+ {
+     BufferedFile bf1, *bf = &bf1;
+ 
+-    pstrcpy(bf->buffer, IO_BUF_SIZE, sym);
+-    pstrcat(bf->buffer, IO_BUF_SIZE, " ");
++    pstrcpy((char *) bf->buffer, IO_BUF_SIZE, sym);
++    pstrcat((char *) bf->buffer, IO_BUF_SIZE, " ");
+     /* default value */
+     if (!value) 
+         value = "1";
+-    pstrcat(bf->buffer, IO_BUF_SIZE, value);
++    pstrcat((char *)bf->buffer, IO_BUF_SIZE, value);
+     
+     /* init file structure */
+     bf->fd = -1;
+     bf->buf_ptr = bf->buffer;
+-    bf->buf_end = bf->buffer + strlen(bf->buffer);
++    bf->buf_end = bf->buffer + strlen((char *) bf->buffer);
+     *bf->buf_end = CH_EOB;
+     bf->filename[0] = '\0';
+     bf->line_num = 1;
+diff -ur tinycc-rl-1.0.0/tccelf.c tinycc-warning/tccelf.c
+--- tinycc-rl-1.0.0/tccelf.c	2007-04-18 14:52:22.000000000 -0400
++++ tinycc-warning/tccelf.c	2007-05-09 16:44:08.000000000 -0400
+@@ -50,10 +50,11 @@
+ static void rebuild_hash(Section *s, unsigned int nb_buckets)
+ {
+     Elf32_Sym *sym;
+-    int *ptr, *hash, nb_syms, sym_index, h;
++    int *ptr, *hash, nb_syms, sym_index;
++    unsigned long h;
+     char *strtab;
+ 
+-    strtab = s->link->data;
++    strtab = (char*) s->link->data;
+     nb_syms = s->data_offset / sizeof(Elf32_Sym);
+ 
+     s->hash->data_offset = 0;
+@@ -68,7 +69,7 @@
+     sym = (Elf32_Sym *)s->data + 1;
+     for(sym_index = 1; sym_index < nb_syms; sym_index++) {
+         if (ELF32_ST_BIND(sym->st_info) != STB_LOCAL) {
+-            h = elf_hash(strtab + sym->st_name) % nb_buckets;
++            h = elf_hash((unsigned char *) strtab + sym->st_name) % nb_buckets;
+             *ptr = hash[h];
+             hash[h] = sym_index;
+         } else {
+@@ -85,7 +86,8 @@
+                        int info, int other, int shndx, const char *name)
+ {
+     int name_offset, sym_index;
+-    int nbuckets, h;
++    int nbuckets;
++    unsigned long h;
+     Elf32_Sym *sym;
+     Section *hs;
+     
+@@ -111,7 +113,7 @@
+         if (ELF32_ST_BIND(info) != STB_LOCAL) {
+             /* add another hashing entry */
+             nbuckets = base[0];
+-            h = elf_hash(name) % nbuckets;
++            h = elf_hash( (unsigned char *) name) % nbuckets;
+             *ptr = base[2 + h];
+             base[2 + h] = sym_index;
+             base[1]++;
+@@ -134,18 +136,19 @@
+ {
+     Elf32_Sym *sym;
+     Section *hs;
+-    int nbuckets, sym_index, h;
++    int nbuckets, sym_index;
++    unsigned long h;
+     const char *name1;
+     
+     hs = s->hash;
+     if (!hs)
+         return 0;
+     nbuckets = ((int *)hs->data)[0];
+-    h = elf_hash(name) % nbuckets;
++    h = elf_hash( (unsigned char *) name) % nbuckets;
+     sym_index = ((int *)hs->data)[2 + h];
+     while (sym_index != 0) {
+         sym = &((Elf32_Sym *)s->data)[sym_index];
+-        name1 = s->link->data + sym->st_name;
++        name1 = (char *) s->link->data + sym->st_name;
+         if (!strcmp(name, name1))
+             return sym_index;
+         sym_index = ((int *)hs->data)[2 + nbuckets + sym_index];
+@@ -401,9 +404,9 @@
+         sym++) {
+         sh_num = sym->st_shndx;
+         if (sh_num == SHN_UNDEF) {
+-            name = strtab_section->data + sym->st_name;
++            name = (char *) strtab_section->data + sym->st_name;
+             if (do_resolve) {
+-                name = symtab_section->link->data + sym->st_name;
++                name = (char *) symtab_section->link->data + sym->st_name;
+                 addr = (unsigned long)resolve_sym(s1, name, ELF32_ST_TYPE(sym->st_info));
+                 if (addr) {
+                     sym->st_value = addr;
+@@ -725,7 +728,7 @@
+ 
+     if (s1->dynsym) {
+         sym = &((Elf32_Sym *)symtab_section->data)[sym_index];
+-        name = symtab_section->link->data + sym->st_name;
++        name = (char *) symtab_section->link->data + sym->st_name;
+         offset = sym->st_value;
+ #ifdef TCC_TARGET_I386
+         if (reloc_type == R_386_JMP_SLOT) {
+@@ -1191,7 +1194,7 @@
+                     sym < sym_end;
+                     sym++) {
+                     if (sym->st_shndx == SHN_UNDEF) {
+-                        name = symtab_section->link->data + sym->st_name;
++                        name = (char*)symtab_section->link->data + sym->st_name;
+                         sym_index = find_elf_sym(s1->dynsymtab_section, name);
+                         if (sym_index) {
+                             esym = &((Elf32_Sym *)s1->dynsymtab_section->data)[sym_index];
+@@ -1227,7 +1230,7 @@
+                                ELF32_ST_BIND(sym->st_info) != STB_LOCAL) {
+                         /* if -rdynamic option, then export all non
+                            local symbols */
+-                        name = symtab_section->link->data + sym->st_name;
++                        name = (char*)symtab_section->link->data + sym->st_name;
+                         put_elf_sym(s1->dynsym, sym->st_value, sym->st_size, 
+                                     sym->st_info, 0, 
+                                     sym->st_shndx, name);
+@@ -1245,7 +1248,7 @@
+                     esym < sym_end;
+                     esym++) {
+                     if (esym->st_shndx == SHN_UNDEF) {
+-                        name = s1->dynsymtab_section->link->data + esym->st_name;
++                        name = (char *) s1->dynsymtab_section->link->data + esym->st_name;
+                         sym_index = find_elf_sym(symtab_section, name);
+                         if (sym_index) {
+                             /* XXX: avoid adding a symbol if already
+@@ -1272,7 +1275,7 @@
+                     sym < sym_end;
+                     sym++) {
+                     if (ELF32_ST_BIND(sym->st_info) != STB_LOCAL) {
+-                        name = symtab_section->link->data + sym->st_name;
++                        name = (char *) symtab_section->link->data + sym->st_name;
+                         index = put_elf_sym(s1->dynsym, sym->st_value, sym->st_size, 
+                                             sym->st_info, 0, 
+                                             sym->st_shndx, name);
+@@ -1837,7 +1840,7 @@
+         if (i == ehdr.e_shstrndx)
+             continue;
+         sh = &shdr[i];
+-        sh_name = strsec + sh->sh_name;
++        sh_name = (char *) strsec + sh->sh_name;
+         /* ignore sections types we do not handle */
+         if (sh->sh_type != SHT_PROGBITS &&
+             sh->sh_type != SHT_REL && 
+@@ -1930,7 +1933,7 @@
+                    already defined symbol. It is very important to get
+                    correct relocations */
+                 if (ELF32_ST_BIND(sym->st_info) != STB_LOCAL) {
+-                    name = strtab + sym->st_name;
++                    name = (char *) strtab + sym->st_name;
+                     sym_index = find_elf_sym(symtab_section, name);
+                     if (sym_index)
+                         old_to_new_syms[i] = sym_index;
+@@ -1946,7 +1949,7 @@
+             sym->st_value += sm->offset;
+         }
+         /* add symbol */
+-        name = strtab + sym->st_name;
++        name = (char *) strtab + sym->st_name;
+         sym_index = add_elf_sym(symtab_section, sym->st_value, sym->st_size, 
+                                 sym->st_info, sym->st_other, 
+                                 sym->st_shndx, name);
+@@ -2036,7 +2039,7 @@
+         goto fail;
+     nsyms = get_be32(data);
+     ar_index = data + 4;
+-    ar_names = ar_index + nsyms * 4;
++    ar_names = (char *) ar_index + nsyms * 4;
+ 
+     do {
+ 	bound = 0;
+@@ -2175,7 +2178,7 @@
+         
+     for(i = 0, dt = dynamic; i < nb_dts; i++, dt++) {
+         if (dt->d_tag == DT_SONAME) {
+-            soname = dynstr + dt->d_un.d_val;
++            soname = (char *) dynstr + dt->d_un.d_val;
+         }
+     }
+ 
+@@ -2204,7 +2207,7 @@
+         sym_bind = ELF32_ST_BIND(sym->st_info);
+         if (sym_bind == STB_LOCAL)
+             continue;
+-        name = dynstr + sym->st_name;
++        name = (char *) dynstr + sym->st_name;
+         add_elf_sym(s1->dynsymtab_section, sym->st_value, sym->st_size,
+                     sym->st_info, sym->st_other, sym->st_shndx, name);
+     }
+@@ -2213,7 +2216,7 @@
+     for(i = 0, dt = dynamic; i < nb_dts; i++, dt++) {
+         switch(dt->d_tag) {
+         case DT_NEEDED:
+-            name = dynstr + dt->d_un.d_val;
++            name = (char *) dynstr + dt->d_un.d_val;
+             for(j = 0; j < s1->nb_loaded_dlls; j++) {
+                 dllref = s1->loaded_dlls[j];
+                 if (!strcmp(name, dllref->name))
+
+
