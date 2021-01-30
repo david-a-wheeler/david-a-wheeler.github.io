@@ -1,0 +1,356 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Input Validation Tools including Regular Expressions</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Validate All Input"
+HREF="input.html"><LINK
+REL="PREVIOUS"
+TITLE="Basics of input validation"
+HREF="validation-basics.html"><LINK
+REL="NEXT"
+TITLE="Command line"
+HREF="command-line.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="validation-basics.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Validate All Input</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="command-line.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="VALIDATION-TOOLS-REGEX"
+>5.2. Input Validation Tools including Regular Expressions</A
+></H1
+><P
+>There are many ways to validate input.
+Number ranges can be checked using typical condtions such as less-than.
+If a string can only be one of a short list of possibilities, simply
+enumerate the possibilities and ensure that the input is one of them.
+If the input is extremely complex, tools often used to create compilers
+(such as lexers and parser generators) may be appropriate, though
+be sure that these tools are prepared to process malicious input.</P
+><P
+>In many cases regular expression libraries are especially useful for
+input validation.
+Many whitelists are easily expressed as regular expressions, making them
+a very easy tool to use.
+In addition, regular expression libraries are built-in or easily available
+in almost all language (the POSIX specification even requires one).</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="REGEX-BASICS"
+>5.2.1. Introduction to regular expressions</A
+></H2
+><P
+>The regular expression language
+is a simple language for describing text patterns.
+There are three major variants of the language in use:
+the very old POSIX <SPAN
+CLASS="QUOTE"
+>&#8220;basic regular expresion (BRE)&#8221;</SPAN
+> format,
+the POSIX <SPAN
+CLASS="QUOTE"
+>&#8220;extended regular expression (ERE)&#8221;</SPAN
+>, and the
+perl-compatible regular expression (PCRE) format.
+From here on we&#8217;ll assume you&#8217;re using the ERE or PCRE variations
+of the language.
+In the regular expression language,
+a latin letter or digit simply represents itself.
+A dot (period) matches any one character (with the possible exception of
+newline, depending on various options).</P
+><P
+>A bracketed expression matches one character, as long as that one
+character is one of the characters listed inside the brackets.
+Inside brackets the period has no special meaning (it just matches a period),
+and a <SPAN
+CLASS="QUOTE"
+>&#8220;-&#8221;</SPAN
+> inside brackets indicates a range,
+so <SPAN
+CLASS="QUOTE"
+>&#8220;[A-Za-z0-9]&#8221;</SPAN
+> matches one Latin alphanumeric character
+(presuming you&#8217;re not using EBCDIC).</P
+><P
+>You can also indicate repetition, e.g.,
+<SPAN
+CLASS="QUOTE"
+>&#8220;?&#8221;</SPAN
+> means that the previous expression is optional
+(may occur 0 or 1 times),
+<SPAN
+CLASS="QUOTE"
+>&#8220;+&#8221;</SPAN
+> means the previous expression may repeat 1 or more times, and
+a <SPAN
+CLASS="QUOTE"
+>&#8220;*&#8221;</SPAN
+> means that the previous expression may repeat 0 or more times.
+More generally, <SPAN
+CLASS="QUOTE"
+>&#8220;{N,M}&#8221;</SPAN
+> indicates that the previous expression can occur
+N through M number of repetitions.
+Parentheses can group a sequence so that it is considered a single pattern.
+A much more complete discussion of regular expressions is given in
+[Friedl 1997].</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="REGEX-FOR-VALIDATION"
+>5.2.2. Using regular expressions for input validation</A
+></H2
+><P
+>The regular expression language was originally designed for searching,
+not for describing input filters.
+To use regular expressions as whitelists, your whitelists will
+typically begin with <SPAN
+CLASS="QUOTE"
+>&#8220;^&#8221;</SPAN
+>
+(which normally means <SPAN
+CLASS="QUOTE"
+>&#8220;match the beginning of the string&#8221;</SPAN
+>)
+and end with ''$''
+(which normally means <SPAN
+CLASS="QUOTE"
+>&#8220;match the end of the string&#8221;</SPAN
+>).
+Thus, you can require that an input have a Latin letter,
+followed by one or more digits, using this expression:
+<SPAN
+CLASS="QUOTE"
+>&#8220;[A-Za-z][0-9]+&#8221;</SPAN
+>.</P
+><P
+>A word of warning: Regular expressions support the <SPAN
+CLASS="QUOTE"
+>&#8220;|&#8221;</SPAN
+> operator,
+which means <SPAN
+CLASS="QUOTE"
+>&#8220;any one of these&#8221;</SPAN
+>.
+However, the precedence of <SPAN
+CLASS="QUOTE"
+>&#8220;|&#8221;</SPAN
+> is different from what many expect,
+and unwary developers can end up having vulnerable input validation routines
+as a result.
+For example, the expression <SPAN
+CLASS="QUOTE"
+>&#8220;^x|y$&#8221;</SPAN
+> means
+<SPAN
+CLASS="QUOTE"
+>&#8220;begins with x, or ends with y&#8221;</SPAN
+>.
+In practically all cases you should surround the <SPAN
+CLASS="QUOTE"
+>&#8220;|&#8221;</SPAN
+> branches
+with parentheses when using regular expressions for input filtering, e.g.,
+<SPAN
+CLASS="QUOTE"
+>&#8220;^(x|y)$&#8221;</SPAN
+> means <SPAN
+CLASS="QUOTE"
+>&#8220;either an x or a y&#8221;</SPAN
+>.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="REGEX-REDOS"
+>5.2.3. Regular expression denial of service (reDOS) attacks</A
+></H2
+><P
+>In some cases, when using regular expressions (regexes) there is a risk
+of enabling regular expression denial of service (reDOS) attacks.
+Some regexes, on some implementations, can take
+exponential time and memory to process certain data.
+Such regexes are called "evil" regexes.
+Attackers can intentionally provide triggering data (and
+maybe regexes!) to cause this exponential growth, leading to a
+denial-of-service.
+Thus, when using regexes, developers need to avoid these regexes
+or limit these effects.
+In many cases this is not hard, once you're aware of the issue.</P
+><P
+>Fundamentally,
+many modern regex engines (including those in PCRE, perl, Java, etc.)
+use backtracking to implement regexes.
+In these implementations, if there is more than one potential solution
+for a match, if will first try one branch to try to find a match, and
+if it doesn't match, it will repeatedly
+backtrack to the last untried solution and try again
+until all options are exhausted.
+The problem is that an attacker may be able to cause many backtracks.
+In general, you want to bound the number of backtracks that occur.
+The primary risks are groups
+with repetition, pariticularly if they are
+inside more repetition or alternation with overlapping patterns.
+The regex "^([a-zA-Z]+)*$" with data "aaa1" involves a large number
+of backtracks; once the engine encounters the "1", many implementations
+will backtrack through all possible combinations of "+" and "*" before
+it can determine there is no match.</P
+><P
+>Simply avoiding the use of regexes doesn't reliably
+counter reDOS attacks, because
+naively implementing the regex processing causes exactly the same problem.
+There are, however, simple things that can be done.
+First, avoid running regexes provided by an attacker (or limit the time
+they can run).
+If you can, use a Thompson NFA-to-DFA implementation; these never
+backtrack and thus are immune to the problem (though they can't provide
+some useful functions like backreferences).
+Otherwise, review regexes to prevent backtracking if you can.
+At any point, any given character should cause only
+one branch to be taken in regex (just imagine that the regex is code).
+For every repetition, you should be able to uniquely determine
+if the code will repeat or not based on the single next input character.
+You should especially examine any repetition in a repetition - if possible,
+eliminate them (these in particular cause a combinatorial explosion).
+You can use regex fuzzers and static analysis tools to examine these.
+In addition, you can limit the input data size first before
+before using a regex; this greatly limits the effects of
+exponential growth in time.
+You can find more information in [Crosby2003] and the
+<A
+HREF="https://www.owasp.org/index.php/Regular_expression_Denial_of_Service_-_ReDoS"
+TARGET="_top"
+>OWASP's "Regular Expression Denial of Service"</A
+></P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="validation-basics.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="command-line.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Basics of input validation</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="input.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Command line</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

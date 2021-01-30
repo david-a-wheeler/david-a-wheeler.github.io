@@ -1,0 +1,323 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Random Numbers</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Special Topics"
+HREF="special.html"><LINK
+REL="PREVIOUS"
+TITLE="Authenticating on the Web"
+HREF="web-authentication.html"><LINK
+REL="NEXT"
+TITLE="Specially Protect Secrets (Passwords and Keys) in User Memory"
+HREF="protect-secrets.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="web-authentication.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 11. Special Topics</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="protect-secrets.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="RANDOM-NUMBERS"
+>11.3. Random Numbers</A
+></H1
+><P
+>In many cases secure programs must generate <SPAN
+CLASS="QUOTE"
+>&#8220;random&#8221;</SPAN
+> numbers that
+cannot be guessed by an adversary.
+Examples include session keys, public or private keys, symmetric keys,
+nonces and IVs used in many protocols, salts, and so on.
+Ideally, you should use a truly random source of data for random numbers,
+such as values based on
+radioactive decay (through precise timing of Geiger counter
+clicks), atmospheric noise, or thermal noise in electrical circuits.
+Some computers have a hardware component that functions as
+a real random value generator, and if it&#8217;s available you should use it.</P
+><P
+>However, most computers don&#8217;t have hardware that generates truly
+random values, so in most cases you need a way to generate random numbers
+that is sufficiently random that an adversary can&#8217;t predict it.
+In general, this means that you&#8217;ll need three things:
+<P
+></P
+><UL
+><LI
+><P
+>An <SPAN
+CLASS="QUOTE"
+>&#8220;unguessable&#8221;</SPAN
+> state; typically this is done by measuring
+variances in timing of low-level devices
+(keystrokes, disk drive arm jitter, etc.)
+in a way that an adversary cannot control.</P
+></LI
+><LI
+><P
+>A cryptographically strong pseudo-random number generator (PRNG), which
+uses the state to generate <SPAN
+CLASS="QUOTE"
+>&#8220;random&#8221;</SPAN
+> numbers.</P
+></LI
+><LI
+><P
+>A large number of bits (in both the seed and the resulting value used).
+There&#8217;s no point in having a strong PRNG if you only have a few possible values,
+because this makes it easy for an attacker to use brute force attacks.
+The number of bits necessary varies depending on the circumstance, however,
+since these are often used as cryptographic keys, the normal rules of
+thumb for keys apply.
+For a symmetric key (result), I&#8217;d use at least 112 bits (3DES), 128 bits is
+a little better, and 160 bits or more is even safer.</P
+></LI
+></UL
+>
+Typically the PRNG uses the state to generate some values, and then
+some of its values and other unguessable inputs are used to update the state.
+There are lots of ways to attack these systems.
+For example, if an attacker can control or view inputs to the state
+(or parts of it), the attacker may be able
+to determine your supposedly <SPAN
+CLASS="QUOTE"
+>&#8220;random&#8221;</SPAN
+> number.</P
+><P
+>A real danger with PRNGs is that most computer language libraries include
+a large set of pseudo-random number generators (PRNGs)
+which are <EM
+>inappropriate</EM
+> for security purposes.
+Let me say it again:
+<EM
+>do not use typical random number generators for security
+purposes</EM
+>.
+Typical library PRNGs
+are intended for use in simulations, games, and so on; they are
+<EM
+>not</EM
+> sufficiently random for use
+in security functions such as key generation.
+Most non-cryptographic
+library PRNGs are some variation of <SPAN
+CLASS="QUOTE"
+>&#8220;linear congruential generators&#8221;</SPAN
+>,
+where the <SPAN
+CLASS="QUOTE"
+>&#8220;next&#8221;</SPAN
+> random value is computed as "(aX+b) mod m"
+(where X is the previous value).
+Good linear congruential generators are fast and have useful statistical
+properties, making them appropriate for their intended uses.
+The problem with such PRNGs is that future values can be easily deduced
+by an attacker (though they may appear random).
+Other algorithms for generating random numbers quickly, such as
+quadratic generators and cubic generators, have also been broken
+[Schneier 1996].
+In short, you have to use cryptographically strong PRNGs to
+generate random numbers in secure applications - ordinary random number
+libraries are not sufficient.</P
+><P
+>Failing to correctly generate truly random values for keys has caused
+a number of problems, including holes in Kerberos,
+the X window system, and NFS [Venema 1996].</P
+><P
+>If possible, you should use system services
+(typically provided by the operating system) that are expressly designed
+to create cryptographically secure random values.
+For example,
+the Linux kernel (since 1.3.30) includes a random number generator, which
+is sufficient for many security purposes.
+This random number generator  gathers  environmental  noise
+from  device  drivers  and  other  sources into an entropy pool.
+When accessed as /dev/random, random bytes are only returned
+within the estimated number of bits of noise in the entropy pool
+(when the entropy pool is empty, the call blocks until additional
+environmental noise is gathered).
+When accessed as /dev/urandom, as many bytes as are requested are
+returned even when the entropy pool is exhausted.
+If you are using the random values for cryptographic purposes (e.g.,
+to generate a key) on Linux, use /dev/random.
+*BSD systems also include /dev/random.
+Solaris users with the SUNWski package also have /dev/random.
+Note that if a hardware random number generator is available and its
+driver is installed, it will be used instead.
+More information is available in the system documentation random(4).</P
+><P
+>On other systems, you&#8217;ll need to find another way to get truly random results.
+One possibility for other Unix-like systems
+is the Entropy Gathering Daemon (EGD), which monitors system
+activity and hashes it into random values; you can get it at
+<A
+HREF="http://www.lothar.com/tech/crypto"
+TARGET="_top"
+>http://www.lothar.com/tech/crypto</A
+>.
+You might consider using a
+cryptographic hash function on PRNG outputs.
+By using a hash algorithm, even if the PRNG turns out to be guessable,
+this means that the attacker must now also break the hash function.</P
+><P
+>If you have to implement a strong PRNG yourself,
+a good choice for a cryptographically strong (and patent-unencumbered)
+PRNG is the Yarrow algorithm; you can learn more about Yarrow from
+<A
+HREF="http://www.counterpane.com/yarrow.html"
+TARGET="_top"
+>http://www.counterpane.com/yarrow.html</A
+>.
+Some other PRNGs can be useful, but many widely-used ones
+have known weaknesses that may or may not matter depending on your application.
+Before implementing a PRNG yourself, consult the literature, such as
+[Kelsey 1998] and [McGraw 2000a].
+You should also examine
+<A
+HREF="http://www.ietf.org/rfc/rfc1750.txt"
+TARGET="_top"
+>IETF RFC 1750</A
+>.
+NIST has some useful information; see the
+<A
+HREF="http://csrc.nist.gov/publications/nistpubs/800-22/sp-800-22-051501.pdf"
+TARGET="_top"
+>NIST publication 800-22</A
+> and
+<A
+HREF="http://csrc.nist.gov/publications/nistpubs/800-22/errata-sheet.pdf"
+TARGET="_top"
+>NIST errata</A
+>.
+You should know about the
+<A
+HREF="http://stat.fsu.edu/~geo/diehard.html"
+TARGET="_top"
+>diehard tests</A
+> too.
+You might want to examine
+the paper titled
+"how Intel checked its PRNG", but unfortunately that paper appears to be
+unavailable now.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="web-authentication.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="protect-secrets.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Authenticating on the Web</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="special.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Specially Protect Secrets (Passwords and Keys) in User Memory</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

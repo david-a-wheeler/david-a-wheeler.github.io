@@ -1,0 +1,587 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Character Encoding</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Validate All Input"
+HREF="input.html"><LINK
+REL="PREVIOUS"
+TITLE="Human Language (Locale) Selection"
+HREF="locale.html"><LINK
+REL="NEXT"
+TITLE="Prevent Cross-site Malicious Content on Input"
+HREF="input-protection-cross-site.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="locale.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Validate All Input</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="input-protection-cross-site.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CHARACTER-ENCODING"
+>5.11. Character Encoding</A
+></H1
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CHARACTER-ENCODING-INTRO"
+>5.11.1. Introduction to Character Encoding</A
+></H2
+><P
+>For many years Americans have exchanged text using the ASCII character set;
+since essentially all U.S. systems support ASCII,
+this permits easy exchange of English text.
+Unfortunately, ASCII is completely inadequate in handling the characters
+of nearly all other languages.
+For many years different countries have adopted different techniques for
+exchanging text in different languages, making it difficult to exchange
+data in an increasingly interconnected world.</P
+><P
+>More recently, ISO has developed ISO 10646,
+the <SPAN
+CLASS="QUOTE"
+>&#8220;Universal Mulitple-Octet Coded Character Set (UCS)&#8221;</SPAN
+>.
+UCS is a coded character set which
+defines a single 31-bit value for each of all of the world&#8217;s characters.
+The first 65536 characters of the UCS (which thus fit into 16 bits)
+are termed the <SPAN
+CLASS="QUOTE"
+>&#8220;Basic Multilingual Plane&#8221;</SPAN
+> (BMP),
+and the BMP is intended to cover nearly all of today&#8217;s spoken languages.
+The Unicode forum develops the Unicode standard, which concentrates on
+the UCS and adds some additional conventions to aid interoperability.
+Historically, Unicode and ISO 10646 were developed by competing groups,
+but thankfully they realized that they needed to work together and they now
+coordinate with each other.</P
+><P
+>If you&#8217;re writing new software that handles internationalized characters,
+you should be using ISO 10646/Unicode as your basis for handling
+international characters.
+However, you may need to process older documents in various older
+(language-specific) character sets, in which case, you need to ensure that
+an untrusted user cannot control the setting of another document&#8217;s
+character set (since this would significantly affect the document&#8217;s
+interpretation).</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CHARACTER-ENCODING-UTF8"
+>5.11.2. Introduction to UTF-8</A
+></H2
+><P
+>Most software is not designed to handle 16 bit or 32 bit characters,
+yet to create a universal character set more than 8 bits was required.
+Therefore, a special format called <EM
+>UTF-8</EM
+>
+was developed to encode these
+potentially international
+characters in a format more easily handled by existing programs and libraries.
+UTF-8 is defined, among other places, in IETF RFC 3629 (updating RFC 2279),
+so it&#8217;s a
+well-defined standard that can be freely read and used.
+UTF-8 is a variable-width encoding; characters numbered 0 to 0x7f (127)
+encode to themselves as a single byte,
+while characters with larger values are encoded into 2 to 4 (originally 6)
+bytes of information (depending on their value).
+The encoding has been specially designed to have the following
+nice properties (this information is from the RFC and Linux utf-8 man page):
+
+<P
+></P
+><UL
+><LI
+><P
+>       The classical US ASCII characters (0 to 0x7f) encode as themselves,
+       so files  and strings  which  contain only 7-bit ASCII characters
+       have the same encoding under both ASCII and UTF-8.
+       This is fabulous for backward compatibility with the many existing
+       U.S. programs and data files.</P
+></LI
+><LI
+><P
+>       All UCS characters beyond 0x7f are  encoded  as  a  multibyte
+       sequence  consisting  only of bytes in the range 0x80 to 0xfd.
+       This means that no ASCII byte can appear  as  part  of  another
+       character.  Many other encodings permit characters such as an
+       embedded NIL, causing programs to fail.</P
+></LI
+><LI
+><P
+>       It&#8217;s easy to convert between UTF-8 and a 2-byte or 4-byte
+       fixed-width representations of characters (these are called
+       UCS-2 and UCS-4 respectively).</P
+></LI
+><LI
+><P
+>       The lexicographic sorting order of UCS-4 strings is preserved,
+       and the Boyer-Moore fast search algorithm can be used directly
+       with UTF-8 data.</P
+></LI
+><LI
+><P
+>       All  possible 2^31 UCS codes can be encoded using UTF-8.</P
+></LI
+><LI
+><P
+>       The  first byte of a multibyte sequence which represents
+       a single non-ASCII UCS character is always in the  range
+       0xc0  to  0xfd  and  indicates  how  long this multibyte
+       sequence is. All further bytes in a  multibyte  sequence
+       are  in  the range 0x80 to 0xbf. This allows easy resynchronization;
+       if a byte is missing, it&#8217;s easy to skip forward to the <SPAN
+CLASS="QUOTE"
+>&#8220;next&#8221;</SPAN
+>
+       character, and it&#8217;s always easy to skip forward and back to the
+       <SPAN
+CLASS="QUOTE"
+>&#8220;next&#8221;</SPAN
+> or <SPAN
+CLASS="QUOTE"
+>&#8220;preceding&#8221;</SPAN
+> character.</P
+></LI
+></UL
+></P
+><P
+>In short, the UTF-8 transformation format is becoming a dominant method
+for exchanging international text information because it can support all of the
+world&#8217;s languages, yet it is backward compatible with U.S. ASCII files
+as well as having other nice properties.
+For many purposes I recommend its use, particularly when storing data
+in a <SPAN
+CLASS="QUOTE"
+>&#8220;text&#8221;</SPAN
+> file.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="UTF8-SECURITY-ISSUES"
+>5.11.3. UTF-8 Security Issues</A
+></H2
+><P
+>The reason to mention UTF-8 is that
+some byte sequences are not legal UTF-8, and
+this might be an exploitable security hole.
+UTF-8 encoders are supposed to use the <SPAN
+CLASS="QUOTE"
+>&#8220;shortest possible&#8221;</SPAN
+>
+encoding, but naive decoders may accept encodings that are longer than
+necessary.
+Indeed, earlier standards permitted decoders to accept
+<SPAN
+CLASS="QUOTE"
+>&#8220;non-shortest form&#8221;</SPAN
+> encodings.
+The problem here is that this means that potentially dangerous
+input could be represented multiple ways, and thus might
+defeat the security routines checking for dangerous inputs.
+The RFC describes the problem this way:
+
+<A
+NAME="AEN1315"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>Implementers of UTF-8 need to consider the security aspects of how
+they handle illegal UTF-8 sequences.  It is conceivable that in some
+circumstances an attacker would be able to exploit an incautious
+UTF-8 parser by sending it an octet sequence that is not permitted by
+the UTF-8 syntax.</P
+><P
+>A particularly subtle form of this attack could be carried out
+against a parser which performs security-critical validity checks
+against the UTF-8 encoded form of its input, but interprets certain
+illegal octet sequences as characters.  For example, a parser might
+prohibit the NUL character when encoded as the single-octet sequence
+00, but allow the illegal two-octet sequence C0 80 (illegal because
+it&#8217;s longer than necessary) and interpret it
+as a NUL character (00).  Another example might be a parser which
+prohibits the octet sequence 2F 2E 2E 2F ("/../"), yet permits the
+illegal octet sequence 2F C0 AE 2E 2F.</P
+></BLOCKQUOTE
+>&#13;</P
+><P
+>A longer discussion about this is available at
+Markus Kuhn&#8217;s
+<EM
+>UTF-8 and Unicode FAQ for Unix/Linux</EM
+> at
+<A
+HREF="http://www.cl.cam.ac.uk/~mgk25/unicode.html"
+TARGET="_top"
+>http://www.cl.cam.ac.uk/~mgk25/unicode.html</A
+>.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="UTF8-LEGAL-VALUES"
+>5.11.4. UTF-8 Legal Values</A
+></H2
+><P
+>Thus, when accepting UTF-8 input, you need to check if the input is
+valid UTF-8.
+Here is a list of all legal UTF-8 sequences; any character
+sequence not matching this table is not a legal UTF-8 sequence.
+This list is from
+<A
+HREF="http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf"
+TARGET="_top"
+>The Unicode Standard Version 7.0 - Core Specification (2014)</A
+>.
+In the following table, the first column shows the various character
+values being encoded into UTF-8.
+The second column shows how those characters are encoded as binary values;
+an <SPAN
+CLASS="QUOTE"
+>&#8220;x&#8221;</SPAN
+> indicates where the data is placed (either a 0 or 1), though
+some values should not be allowed because they&#8217;re not the shortest possible
+encoding.
+The last row shows the valid values each byte can have
+(in hexadecimal).
+Thus, a program should check that every character meets one of the patterns
+in the right-hand column.
+A <SPAN
+CLASS="QUOTE"
+>&#8220;-&#8221;</SPAN
+> indicates a range of legal values (inclusive).
+Of course, just because a sequence is a legal UTF-8 sequence doesn&#8217;t
+mean that you should accept it (you still need to do all your other
+checking), but generally you should check any UTF-8 data for UTF-8 legality
+before performing other checks.
+<DIV
+CLASS="TABLE"
+><A
+NAME="AEN1327"
+></A
+><P
+><B
+>Table 5-1. Legal UTF-8 Sequences</B
+></P
+><TABLE
+BORDER="1"
+CLASS="CALSTABLE"
+><COL
+WIDTH="1*"
+TITLE="UCS"><COL
+WIDTH="1*"
+TITLE="binary-range"><COL
+WIDTH="1*"
+TITLE="hex"><THEAD
+><TR
+><TH
+>UCS Code (Hex)</TH
+><TH
+>Binary UTF-8 Format</TH
+><TH
+>Legal UTF-8 Values (Hex)</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>00-7F</TD
+><TD
+>0xxxxxxx</TD
+><TD
+>00-7F</TD
+></TR
+><TR
+><TD
+>80-7FF</TD
+><TD
+>110xxxxx 10xxxxxx</TD
+><TD
+>C2-DF 80-BF</TD
+></TR
+><TR
+><TD
+>800-FFF</TD
+><TD
+>1110xxxx 10xxxxxx 10xxxxxx</TD
+><TD
+>E0 A0-BF 80-BF</TD
+></TR
+><TR
+><TD
+>1000-CFFF</TD
+><TD
+>1110xxxx 10xxxxxx 10xxxxxx</TD
+><TD
+>E1-EC 80-BF 80-BF</TD
+></TR
+><TR
+><TD
+>D000-D7FF</TD
+><TD
+>1110xxxx 10xxxxxx 10xxxxxx</TD
+><TD
+>ED 80-9F 80-BF</TD
+></TR
+><TR
+><TD
+>E000-FFFF</TD
+><TD
+>1110xxxx 10xxxxxx 10xxxxxx</TD
+><TD
+>EE-EF 80-BF 80-BF</TD
+></TR
+><TR
+><TD
+>10000-3FFFF</TD
+><TD
+>11110xxx 10xxxxxx 10xxxxxx 10xxxxxx</TD
+><TD
+>F0 90-BF 80-BF 80-BF</TD
+></TR
+><TR
+><TD
+>40000-FFFFF</TD
+><TD
+>11110xxx 10xxxxxx 10xxxxxx 10xxxxxx</TD
+><TD
+>F1-F3 80-BF 80-BF 80-BF</TD
+></TR
+><TR
+><TD
+>100000-10FFFF</TD
+><TD
+>11110xxx 10xxxxxx 10xxxxxx 10xxxxxx</TD
+><TD
+>F4 80-8F 80-BF 80-BF</TD
+></TR
+></TBODY
+></TABLE
+></DIV
+></P
+><P
+>As I noted earlier, there are two standards for character sets,
+ISO 10646 and Unicode, who have agreed to synchronize their
+character assignments.
+The earlier definitions of UTF-8 in ISO/IEC 10646-1:2000 and the IETF RFC
+also supported
+five and six byte sequences to encode characters beyond U+10FFFF,
+but such values can&#8217;t be used to support Unicode characters.
+IETF RFC 3629 modified the UTF-8 definition, and one of the changes
+was to specifically make any encodings beyond 4 bytes illegal
+(i.e., characters must be between U+0000 and U+10FFFF inclusively).
+Thus, the five and six byte UTF-8 encodings for characters
+beyon U+10FFFF aren&#8217;t legal any more,
+and you should normally reject them (unless you have a special purpose
+for them).</P
+><P
+>This is set of valid values is tricky to determine, and in fact
+earlier versions of this document got some entries
+wrong (in some cases it permitted overlong characters).
+Language developers should include a function in their libraries
+to check for valid UTF-8 values, just because it&#8217;s so hard to get right.</P
+><P
+>I should note that in some cases, you might want to cut slack (or use
+internally) the hexadecimal sequence C0 80.  This is an overlong sequence
+that, if permitted, can represent ASCII NUL (NIL).  Since C and C++
+have trouble including a NIL character in an ordinary string,
+some people have taken
+to using this sequence when they want to represent NIL as part of the
+data stream; Java even enshrines the practice.
+Feel free to use C0 80 internally while processing data, but technically
+you really should translate this back to 00 before saving the data.
+Depending on your needs, you might decide to be <SPAN
+CLASS="QUOTE"
+>&#8220;sloppy&#8221;</SPAN
+> and accept
+C0 80 as input in a UTF-8 data stream.
+If it doesn&#8217;t harm security, it&#8217;s probably a good practice to accept this
+sequence since accepting it aids interoperability.</P
+><P
+>Handling this can be tricky.
+You might want to examine the C routines developed by Unicode to
+handle conversions, available at
+<A
+HREF="ftp://ftp.unicode.org/Public/PROGRAMS/CVTUTF/ConvertUTF.c"
+TARGET="_top"
+>ftp://ftp.unicode.org/Public/PROGRAMS/CVTUTF/ConvertUTF.c</A
+>.
+It&#8217;s unclear to me if these routines are open source software (the
+licenses don&#8217;t clearly say whether or not they can be modified), so
+beware of that.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="UTF8-RELATED-ISSUES"
+>5.11.5. UTF-8 Related Issues</A
+></H2
+><P
+>This section has discussed UTF-8, because it&#8217;s the most popular
+multibyte encoding of UCS, simplifying a lot of international text
+handling issues.
+However, it&#8217;s certainly not the only encoding; there are other encodings,
+such as UTF-16 and UTF-7, which have the same kinds of issues and
+must be validated for the same reasons.</P
+><P
+>Another issue is that some phrases can be expressed in more than one
+way in ISO 10646/Unicode.
+For example, some accented characters can be represented as a single
+character (with the accent) and also as a set of characters
+(e.g., the base character plus a separate composing accent).
+These two forms may appear identical.
+There&#8217;s also a zero-width space that could be inserted, with the
+result that apparently-similar items are considered different.
+Beware of situations where such hidden text could interfere with the program.
+This is an issue that in general is hard to solve; most programs don&#8217;t
+have such tight control over the clients that they know completely how
+a particular sequence will be displayed (since this depends on the
+client&#8217;s font, display characteristics, locale, and so on).
+One approach is to require clients to send data in a normalized form,
+and if you don&#8217;t trust the clients, force their data into that form.
+The W3C recommends
+Normalization Form C in their draft document
+<A
+HREF="http://www.w3.org/TR/charmod/#sec-ChoiceNFC"
+TARGET="_top"
+>Character Model for the World Wide Web</A
+>.
+Normalization form C is a good approach, because it&#8217;s what nearly all
+programs do anyway, and it&#8217;s slightly more efficient in space.
+See the W3C document for more information.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="locale.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="input-protection-cross-site.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Human Language (Locale) Selection</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="input.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Prevent Cross-site Malicious Content on Input</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

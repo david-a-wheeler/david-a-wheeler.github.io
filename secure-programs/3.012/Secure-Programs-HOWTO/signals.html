@@ -1,0 +1,225 @@
+<HTML
+><HEAD
+><TITLE
+>Signals</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Summary of Linux and Unix Security Features"
+HREF="features.html"><LINK
+REL="PREVIOUS"
+TITLE="Sockets and Network Connections"
+HREF="sockets.html"><LINK
+REL="NEXT"
+TITLE="Quotas and Limits"
+HREF="quotas.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="sockets.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 3. Summary of Linux and Unix Security Features</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="quotas.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="SIGNALS"
+>3.5. Signals</A
+></H1
+><P
+>Signals are a simple form of ``interruption'' in the Unix-like OS world,
+and are an ancient part of Unix.
+A process can set a ``signal'' on another process (say using
+kill(1) or kill(2)), and that other process would receive and
+handle the signal asynchronously.
+For a process to have permission to send an arbitrary
+signal to some other process,
+the sending process must either have root privileges, or
+the real or effective user ID of the sending process
+must equal the real or saved set-user-ID of the receiving process.
+However, some signals can be sent in other ways.
+In particular, SIGURG can be delivered over a network through the
+TCP/IP out-of-band (OOB) message.</P
+><P
+>Although signals are an ancient part of Unix, they've had different
+semantics in different implementations.
+Basically, they involve questions such as ``what happens when a signal
+occurs while handling another signal''?
+The older Linux libc 5 used a different set of semantics for some signal
+operations than the newer GNU libc libraries.
+Calling C library functions is often unsafe within a
+signal handler, and even some system calls aren't safe;
+you need to examine the documentation for each call you make to see
+if it promises to be safe to call inside a signal.
+For more information, see the glibc FAQ (on some systems a local
+copy is available at <TT
+CLASS="FILENAME"
+>/usr/doc/glibc-*/FAQ</TT
+>).</P
+><P
+>For new programs, just use the POSIX signal system
+(which in turn was based on BSD work); this set is widely supported
+and doesn't have some of the problems
+that some of the older signal systems did.
+The POSIX signal system is based on using the sigset_t datatype,
+which can
+be manipulated through a set of operations: sigemptyset(),
+sigfillset(), sigaddset(), sigdelset(), and sigismember().
+You can read about these in sigsetops(3).
+Then use sigaction(2), sigprocmask(2),
+sigpending(2), and sigsuspend(2) to set up an manipulate signal handling
+(see their man pages for more information).</P
+><P
+>In general, make any signal handlers very short and simple, and
+look carefully for race conditions.
+Signals, since they are by nature asynchronous,
+can easily cause race conditions.</P
+><P
+>A common convention exists for servers: if you receive SIGHUP, you should
+close any log files, reopen and reread configuration files, and then
+re-open the log files.
+This supports reconfiguration without halting the server and
+log rotation without data loss.
+If you are writing a server where this convention makes sense,
+please support it.</P
+><P
+>Michal Zalewski [2001] has written an excellent tutorial on how
+signal handlers are exploited, and has recommendations for how to
+eliminate signal race problems.
+I encourage looking at his summary for more information; here are
+my recommendations, which are similar to Michal's work:
+<P
+></P
+><UL
+><LI
+><P
+>Where possible, have your signal handlers unconditionally set a specific flag
+and do nothing else.</P
+></LI
+><LI
+><P
+>If you must have more complex signal handlers,
+use only calls specifically designated as being safe for use
+in signal handlers.
+In particular,
+don't use malloc() or free() in C (which on most systems
+aren't protected against signals), nor the many functions that depend on them
+(such as the printf() family and syslog()).
+You could try to ``wrap'' calls to insecure library calls with a check
+to a global flag (to avoid re-entry), but I wouldn't recommend it.</P
+></LI
+><LI
+><P
+>Block signal delivery during all non-atomic operations in the program, and
+block signal delivery inside signal handlers.</P
+></LI
+></UL
+></P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="sockets.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="quotas.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Sockets and Network Connections</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="features.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Quotas and Limits</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

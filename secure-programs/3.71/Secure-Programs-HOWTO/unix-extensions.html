@@ -1,0 +1,281 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Specialized Security Extensions for Unix-like Systems</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Summary of Linux and Unix Security Features"
+HREF="features.html"><LINK
+REL="PREVIOUS"
+TITLE="PAM"
+HREF="pam.html"><LINK
+REL="NEXT"
+TITLE="Security Requirements"
+HREF="requirements.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="pam.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 3. Summary of Linux and Unix Security Features</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="requirements.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="UNIX-EXTENSIONS"
+>3.10. Specialized Security Extensions for Unix-like Systems</A
+></H1
+><P
+>A vast amount of research and development has gone into
+extending Unix-like systems to support security needs of various
+communities.
+For example, several Unix-like systems have been extended to support the
+U.S. military&#8217;s desire for multilevel security.
+If you&#8217;re developing software, you should try to design your software
+so that it can work within these extensions.</P
+><P
+>FreeBSD has a new system call,
+<A
+HREF="http://docs.freebsd.org/44doc/papers/jail/jail.html"
+TARGET="_top"
+>jail(2)</A
+>.
+The jail system call supports sub-partitioning an environment
+into many virtual machines (in a sense, a <SPAN
+CLASS="QUOTE"
+>&#8220;super-chroot&#8221;</SPAN
+>);
+its most popular use has been to provide
+virtual machine services for Internet Service Provider environments. 
+Inside a jail, all processes (even those owned by root)
+have the the scope of their requests limited to the jail.
+When a FreeBSD system is booted up after a fresh install,
+no processes will be in jail.
+When a process is placed in a jail, it, and any descendants of
+that process created will be in that jail.
+Once in a jail,
+access to the file name-space is restricted in the style of chroot(2)
+(with typical chroot escape routes blocked),
+the ability to bind network resources is limited to a specific IP address,
+the ability to manipulate system resources and perform privileged operations
+is sharply curtailed, and the ability to interact with other processes
+is limited to only processes inside the same jail. 
+Note that each jail is bound to a single IP address;
+processes within the jail may not make use of any other IP
+address for outgoing or incoming connections.
+More information is available in the
+<A
+HREF="http://www.onlamp.com/pub/a/bsd/2003/09/04/jails.html"
+TARGET="_top"
+>OnLamp.com
+article on FreeBSD Jails</A
+>.</P
+><P
+>Some extensions available in Linux, such as POSIX capabilities and
+special mount-time options, have already been discussed.
+Here are a few of these efforts for Linux systems for creating
+restricted execution environments; there are many different approaches.
+Linux 2.6 adds the "Linux Security Module" (LSM) interface, which allows
+administrators to plug in modules to perform more sophisticated
+access control systems.
+The U.S. National Security Agency (NSA) has developed
+<A
+HREF="http://www.nsa.gov/selinux"
+TARGET="_top"
+>Security-Enhanced Linux (Flask)</A
+>
+(SELinux),
+which supports defining a security policy in a specialized language
+and then enforces that policy.
+Originally SELinux was developed as a separate set of patches, but it
+now works using LSM and NSA has submitted the SELinux kernel module to
+the Linux developers for inclusion in the normal kernel.
+The <A
+HREF="http://medusa.fornax.sk"
+TARGET="_top"
+>Medusa DS9</A
+>
+extends Linux by supporting, at the kernel level,
+a user-space authorization server.
+<A
+HREF="http://www.lids.org"
+TARGET="_top"
+>LIDS</A
+>
+protects files and processes, allowing administrators to
+<SPAN
+CLASS="QUOTE"
+>&#8220;lock down&#8221;</SPAN
+> their system.
+The <SPAN
+CLASS="QUOTE"
+>&#8220;Rule Set Based Access Control&#8221;</SPAN
+> system,
+<A
+HREF="http://www.rsbac.de"
+TARGET="_top"
+>RSBAC</A
+>
+is based on the Generalized Framework for Access Control (GFAC)
+by Abrams and LaPadula and provides a flexible system of access
+control based on several kernel modules.
+<A
+HREF="http://subterfugue.org"
+TARGET="_top"
+>Subterfugue</A
+>
+is a framework for <SPAN
+CLASS="QUOTE"
+>&#8220;observing and playing with the reality of software&#8221;</SPAN
+>;
+it can intercept system calls and change their parameters
+and/or change their return values to implement sandboxes, tracers,
+and so on;
+it runs under Linux 2.4 with no changes (it doesn&#8217;t require
+any kernel modifications).
+<A
+HREF="http://www.cs.berkeley.edu/~daw/janus"
+TARGET="_top"
+>Janus</A
+>
+is a security tool for sandboxing untrusted applications
+within a restricted execution environment.
+Some have even used
+<A
+HREF="http://user-mode-linux.sourceforge.net"
+TARGET="_top"
+>User-mode Linux</A
+>,
+which implements <SPAN
+CLASS="QUOTE"
+>&#8220;Linux on Linux&#8221;</SPAN
+>, as a sandbox implementation.
+Because there are so many different approaches to implementing more
+sophisticated security models, Linus Torvalds has requested that a
+generic approach be developed so different security policies can be
+inserted; for more information about this, see
+<A
+HREF="http://mail.wirex.com/mailman/listinfo/linux-security-module"
+TARGET="_top"
+>http://mail.wirex.com/mailman/listinfo/linux-security-module</A
+>.</P
+><P
+>There are many other extensions for security on various Unix-like systems,
+but these are really outside the scope of this document.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="pam.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="requirements.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>PAM</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="features.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Security Requirements</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,405 @@
+<HTML
+><HEAD
+><TITLE
+>Design Your Program for Security</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Other Languages"
+HREF="other-languages.html"><LINK
+REL="NEXT"
+TITLE="Follow Good Security Design Principles"
+HREF="follow-good-principles.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="other-languages.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="follow-good-principles.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="INTERNALS"
+></A
+>Chapter 7. Design Your Program for Security</H1
+><TABLE
+BORDER="0"
+WIDTH="100%"
+CELLSPACING="0"
+CELLPADDING="0"
+CLASS="EPIGRAPH"
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="LEFT"
+VALIGN="TOP"
+><I
+><P
+><I
+>Like a city whose walls are broken down is a man who lacks self-control.</I
+></P
+></I
+></TD
+></TR
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+><SPAN
+CLASS="ATTRIBUTION"
+>Proverbs 25:28 (NIV)</SPAN
+></I
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>7.1. <A
+HREF="follow-good-principles.html"
+>Follow Good Security Design Principles</A
+></DT
+><DT
+>7.2. <A
+HREF="secure-interface.html"
+>Secure the Interface</A
+></DT
+><DT
+>7.3. <A
+HREF="data-vs-control.html"
+>Separate Data and Control</A
+></DT
+><DT
+>7.4. <A
+HREF="minimize-privileges.html"
+>Minimize Privileges</A
+></DT
+><DD
+><DL
+><DT
+>7.4.1. <A
+HREF="minimize-privileges.html#MIMIMIZE-PRIVILEGES-GRANTED"
+>Minimize the Privileges Granted</A
+></DT
+><DT
+>7.4.2. <A
+HREF="minimize-privileges.html#MINIMIZE-TIME-PRIVILEGE-USABLE"
+>Minimize the Time the Privilege Can Be Used</A
+></DT
+><DT
+>7.4.3. <A
+HREF="minimize-privileges.html#MINIMIZE-TIME-PRIVILEGE-ACTIVE"
+>Minimize the Time the Privilege is Active</A
+></DT
+><DT
+>7.4.4. <A
+HREF="minimize-privileges.html#MINIMIZE-PRIVILEGED-MODULES"
+>Minimize the Modules Granted the Privilege</A
+></DT
+><DT
+>7.4.5. <A
+HREF="minimize-privileges.html#CONSIDER-FSUID"
+>Consider Using FSUID To Limit Privileges</A
+></DT
+><DT
+>7.4.6. <A
+HREF="minimize-privileges.html#CONSIDER-CHROOT"
+>Consider Using Chroot to Minimize Available Files</A
+></DT
+><DT
+>7.4.7. <A
+HREF="minimize-privileges.html#MINIMIZE-ACCESSIBLE-DATA"
+>Consider Minimizing the Accessible Data</A
+></DT
+><DT
+>7.4.8. <A
+HREF="minimize-privileges.html#MINIMIZE-RESOURCES"
+>Consider Minimizing the Resources Available</A
+></DT
+></DL
+></DD
+><DT
+>7.5. <A
+HREF="minimize-functionality.html"
+>Minimize the Functionality of a Component</A
+></DT
+><DT
+>7.6. <A
+HREF="avoid-setuid.html"
+>Avoid Creating Setuid/Setgid Scripts</A
+></DT
+><DT
+>7.7. <A
+HREF="safe-configure.html"
+>Configure Safely and Use Safe Defaults</A
+></DT
+><DT
+>7.8. <A
+HREF="init-safe.html"
+>Load Initialization Values Safely</A
+></DT
+><DT
+>7.9. <A
+HREF="minimize-data-access.html"
+>Minimize the Accessible Data</A
+></DT
+><DT
+>7.10. <A
+HREF="fail-safe.html"
+>Fail Safe</A
+></DT
+><DT
+>7.11. <A
+HREF="avoid-race.html"
+>Avoid Race Conditions</A
+></DT
+><DD
+><DL
+><DT
+>7.11.1. <A
+HREF="avoid-race.html#NON-ATOMIC"
+>Sequencing (Non-Atomic) Problems</A
+></DT
+><DD
+><DL
+><DT
+>7.11.1.1. <A
+HREF="avoid-race.html#ATOMIC-FILESYSTEM"
+>Atomic Actions in the Filesystem</A
+></DT
+><DT
+>7.11.1.2. <A
+HREF="avoid-race.html#TEMPORARY-FILES"
+>Temporary Files</A
+></DT
+></DL
+></DD
+><DT
+>7.11.2. <A
+HREF="avoid-race.html#LOCKING"
+>Locking</A
+></DT
+><DD
+><DL
+><DT
+>7.11.2.1. <A
+HREF="avoid-race.html#LOCKING-USING-FILES"
+>Using Files as Locks</A
+></DT
+><DT
+>7.11.2.2. <A
+HREF="avoid-race.html#OTHER-LOCKING"
+>Other Approaches to Locking</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+>7.12. <A
+HREF="trustworthy-channels.html"
+>Trust Only Trustworthy Channels</A
+></DT
+><DT
+>7.13. <A
+HREF="trusted-path.html"
+>Set up a Trusted Path</A
+></DT
+><DT
+>7.14. <A
+HREF="internal-check.html"
+>Use Internal Consistency-Checking Code</A
+></DT
+><DT
+>7.15. <A
+HREF="self-limit-resources.html"
+>Self-limit Resources</A
+></DT
+><DT
+>7.16. <A
+HREF="cross-site-malicious-content.html"
+>Prevent Cross-Site (XSS) Malicious Content</A
+></DT
+><DD
+><DL
+><DT
+>7.16.1. <A
+HREF="cross-site-malicious-content.html#EXPLAIN-CROSS-SITE"
+>Explanation of the Problem</A
+></DT
+><DT
+>7.16.2. <A
+HREF="cross-site-malicious-content.html#SOLUTIONS-CROSS-SITE"
+>Solutions to Cross-Site Malicious Content</A
+></DT
+><DD
+><DL
+><DT
+>7.16.2.1. <A
+HREF="cross-site-malicious-content.html#AEN1534"
+>Identifying Special Characters</A
+></DT
+><DT
+>7.16.2.2. <A
+HREF="cross-site-malicious-content.html#AEN1575"
+>Filtering</A
+></DT
+><DT
+>7.16.2.3. <A
+HREF="cross-site-malicious-content.html#AEN1583"
+>Encoding (Quoting)</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+>7.17. <A
+HREF="semantic-attacks.html"
+>Foil Semantic Attacks</A
+></DT
+><DT
+>7.18. <A
+HREF="careful-typing.html"
+>Be Careful with Data Types</A
+></DT
+><DT
+>7.19. <A
+HREF="complexity-attacks.html"
+>Avoid Algorithmic Complexity Attacks</A
+></DT
+></DL
+></DIV
+><P
+>Some program designs are relatively easy to secure;
+others are practically impossible.
+If you want a secure application, you'll need to
+follow good security design principles.
+In particular, you should minimize the privileges your program
+(and its parts) have, so that the inevitable mistakes are much less likely
+to become security vulnerabilities.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="other-languages.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="follow-good-principles.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Other Languages</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Follow Good Security Design Principles</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

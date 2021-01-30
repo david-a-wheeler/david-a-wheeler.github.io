@@ -1,0 +1,242 @@
+<HTML
+><HEAD
+><TITLE
+>Web-Based Application Inputs (Especially CGI Scripts)</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Validate All Input"
+HREF="input.html"><LINK
+REL="PREVIOUS"
+TITLE="File Contents"
+HREF="file-contents.html"><LINK
+REL="NEXT"
+TITLE="Other Inputs"
+HREF="other-inputs.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="file-contents.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Validate All Input</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="other-inputs.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="WEB-APPS"
+></A
+>5.6. Web-Based Application Inputs (Especially CGI Scripts)</H1
+><P
+>Web-based applications (such as CGI scripts) run on some trusted
+server and must get their
+input data somehow through the web.
+Since the input data generally come from untrusted users,
+this input data must be validated.
+Indeed, this information may have actually come from an untrusted third
+party; see
+<A
+HREF="cross-site-malicious-content.html"
+>Section 7.16</A
+> for more information.
+For example, CGI scripts
+are passed this information
+through a standard set of environment variables and through standard input.
+The rest of this text will specifically discuss CGI, because it's
+the most common technique for implementing dynamic web content, but
+the general issues are the same for most other dynamic web content techniques.</P
+><P
+>One additional complication is that many CGI inputs are provided in
+so-called ``URL-encoded'' format, that is, some values are written in the
+format %HH where HH is the hexadecimal code for that byte.
+You or your CGI library must handle these inputs correctly by
+URL-decoding the input and then checking
+if the resulting byte value is acceptable.
+You must correctly handle all values, including problematic
+values such as %00 (NIL) and %0A (newline).
+Don't decode inputs more than once, or input such as ``%2500''
+will be mishandled (the %25 would be translated to ``%'', and the resulting
+``%00'' would be erroneously translated to the NIL character).</P
+><P
+>CGI scripts are commonly attacked by including special characters in their
+inputs; see the comments above.</P
+><P
+>Another form of data available to web-based applications are ``cookies.''
+Again, users can provide arbitrary cookie values, so they cannot
+be trusted unless special precautions are taken.
+Also, cookies can be used to track users, potentially invading user privacy.
+As a result, many users disable cookies, so if possible your web application
+should be designed so that it does not require the use of cookies
+(but see my later discussion for when you <EM
+>must</EM
+> authenticate
+individual users).
+I encourage you to avoid or limit the use of persistent cookies
+(cookies that last beyond a current session), because they are easily abused.
+Indeed, U.S. agencies are currently forbidden to use persistent cookies
+except in special circumstances, because of the concern about
+invading user privacy; see the
+<A
+HREF="http://cio.gov/files/lewfinal062200.pdf"
+TARGET="_top"
+>OMB guidance
+in memorandum M-00-13 (June 22, 2000)</A
+>.
+<A
+HREF="http://www.c3i.osd.mil/org/cio/doc/cookies.html"
+TARGET="_top"
+>Specific guidance about cookies applies to the U.S. Department of Defense (DoD)</A
+>,
+which is part of the
+<A
+HREF="http://www.defenselink.mil/webmasters"
+TARGET="_top"
+>DoD guidance to
+webmasters</A
+>.
+Note that to use cookies, some browsers may insist that you
+have a privacy profile (named p3p.xml on the root directory of the server).</P
+><P
+>Some HTML forms include client-side input checking
+to prevent some illegal values; these are
+typically implemented using Javascript/ECMAscript or Java.
+This checking can be helpful for the user, since it can happen ``immediately''
+without requiring any network access.
+However, this kind of input checking is useless for security, because
+attackers can send such ``illegal'' values directly to the web server
+without going through the checks.
+It's not even hard to subvert this; you don't have to write
+a program to send arbitrary data to a web application.
+In general, servers must perform all their own input checking
+(of form data, cookies, and so on) because
+they cannot trust clients to do this securely.
+In short, clients are generally not ``trustworthy channels''.
+See <A
+HREF="trustworthy-channels.html"
+>Section 7.12</A
+>
+for more information on trustworthy channels.</P
+><P
+>A brief discussion on input validation for those using Microsoft's
+Active Server Pages (ASP) is available from
+Jerry Connolly at
+<A
+HREF="http://heap.nologin.net/aspsec.html"
+TARGET="_top"
+>http://heap.nologin.net/aspsec.html</A
+></P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="file-contents.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="other-inputs.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>File Contents</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="input.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Other Inputs</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

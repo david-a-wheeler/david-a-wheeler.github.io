@@ -1,0 +1,447 @@
+<HTML
+><HEAD
+><TITLE
+>Files</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Summary of Linux and Unix Security Features"
+HREF="features.html"><LINK
+REL="PREVIOUS"
+TITLE="Processes"
+HREF="processes.html"><LINK
+REL="NEXT"
+TITLE="System V IPC"
+HREF="sysv-ipc.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="processes.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 3. Summary of Linux and Unix Security Features</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="sysv-ipc.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="FILES"
+>3.2. Files</A
+></H1
+><P
+>On all Unix-like systems, the primary repository of information is
+the file tree, rooted at ``/''.
+The file tree is a hierarchical set of directories, each of which
+may contain filesystem objects (FSOs).</P
+><P
+>In Linux,
+filesystem objects (FSOs) may be ordinary files, directories,
+symbolic links, named pipes (also called first-in first-outs or FIFOs),
+sockets (see below),
+character special (device) files, or block special (device) files
+(in Linux, this list is given in the find(1) command).
+Other Unix-like systems have an identical or similar list of FSO types.</P
+><P
+>Filesystem objects are collected on filesystems, which can be
+mounted and unmounted on directories in the file tree.
+A filesystem type (e.g., ext2 and FAT) is a specific set of conventions
+for arranging data on the disk to optimize speed, reliability, and so on;
+many people use the term ``filesystem'' as a synonym for the filesystem type.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="FSO-ATTRIBUTES"
+>3.2.1. Filesystem Object Attributes</A
+></H2
+><P
+>Different Unix-like systems support different filesystem types.
+Filesystems may have slightly different sets of access control attributes
+and access controls can be affected by options selected at mount time.
+On Linux, the ext2 filesystems is currently the most popular filesystem,
+but Linux supports a vast number of filesystems.
+Most Unix-like systems tend to support multiple filesystems too.</P
+><P
+>Most filesystems on Unix-like systems store at least the following:
+
+<P
+></P
+><UL
+><LI
+><P
+>owning UID and GID - identifies the ``owner'' of the filesystem
+object.  Only the owner or root can change the access control attributes
+unless otherwise noted.</P
+></LI
+><LI
+><P
+>permission bits -
+read, write, execute bits for each of user (owner), group, and other.
+For ordinary files, read, write, and execute have their typical meanings.
+In directories, the ``read'' permission is necessary to display a directory's
+contents, while the ``execute'' permission is sometimes called ``search''
+permission and is necessary to actually enter the directory to use its contents.
+In a directory ``write'' permission on a directory permits
+adding, removing, and renaming files in that directory; if you only want
+to permit adding, set the sticky bit noted below.
+Note that the permission values of symbolic links are never used; it's only
+the values of their containing directories and the linked-to file that matter.</P
+></LI
+><LI
+><P
+>``sticky'' bit - when set on a directory, unlinks (removes) and
+renames of files in that directory are limited to
+the file owner, the directory owner, or root privileges.
+This is a very common Unix extension
+and is specified in the
+Open Group's Single Unix Specification version 2.
+Old versions of Unix called this the ``save program text'' bit and used this
+to indicate executable files that should stay in memory.
+Systems that did this ensured that only root could set this bit
+(otherwise users could have crashed systems by forcing ``everything''
+into memory).
+In Linux, this bit has no effect on ordinary files and ordinary users
+can modify this bit on the files they own:
+Linux's virtual memory management makes this old use irrelevant.</P
+></LI
+><LI
+><P
+>setuid, setgid - when set on an executable file,
+executing the file will set the process' effective UID or effective GID
+to the value of the file's owning UID or GID (respectively).
+All Unix-like systems support this.
+In Linux and System V systems,
+when setgid is set on a file that does not have any execute privileges,
+this indicates a file that is subject to mandatory locking
+during access (if the filesystem is mounted to support mandatory locking);
+this overload of meaning surprises many and is not universal across Unix-like
+systems.
+In fact, the Open Group's Single Unix Specification version 2 for chmod(3)
+permits systems to ignore
+requests to turn on setgid for files that aren't executable if such
+a setting has no meaning.
+In Linux and Solaris,
+when setgid is set on a directory, files created in the directory will
+have their GID automatically reset to that of the directory's GID.
+The purpose of this approach is to support ``project directories'':
+users can save files into such specially-set directories and the group
+owner automatically changes.
+However, setting the setgid bit on directories is not specified by
+standards such as the Single Unix Specification
+[Open Group 1997].</P
+></LI
+><LI
+><P
+>timestamps - access and modification times are stored for each
+filesystem object.  However, the owner is allowed to set these values
+arbitrarily (see touch(1)), so be careful about trusting this information.
+All Unix-like systems support this.</P
+></LI
+></UL
+>&#13;</P
+><P
+>The following attributes are Linux-unique extensions on the ext2
+filesystem, though many other filesystems have similar functionality:
+
+<P
+></P
+><UL
+><LI
+><P
+>immutable bit - no changes to the filesystem object are allowed;
+only root can set or clear this bit.
+This is only supported by ext2 and is not portable across all Unix
+systems (or even all Linux filesystems).</P
+></LI
+><LI
+><P
+>append-only bit - only appending to the filesystem object are allowed;
+only root can set or clear this bit.
+This is only supported by ext2 and is not portable across all Unix
+systems (or even all Linux filesystems).</P
+></LI
+></UL
+>&#13;</P
+><P
+>Other common extensions include some sort of bit indicating ``cannot
+delete this file''.</P
+><P
+>Many of these values can be influenced at mount time, so that, for example,
+certain bits can be treated as though they had a certain value (regardless
+of their values on the media).
+See mount(1) for more information about this.
+These bits are useful, but be aware that some of these are intended to
+simplify ease-of-use and aren't really sufficient to prevent certain actions.
+For example, on Linux, mounting with ``noexec'' will disable execution of
+programs on that file system; as noted in the manual, it's
+intended for mounting filesystems containing binaries for incompatible systems.
+On Linux,
+this option won't completely prevent someone from running the files;
+they can copy the files somewhere else to run them, or even use the
+command ``/lib/ld-linux.so.2'' to run the file directly.</P
+><P
+>Some filesystems don't support some of these access control values; again,
+see mount(1) for how these filesystems are handled.
+In particular, many Unix-like systems support MS-DOS disks, which by
+default support very few of these attributes (and there's not standard
+way to define these attributes).
+In that case, Unix-like systems emulate the standard attributes
+(possibly implementing them through special on-disk files), and these
+attributes are generally influenced by the mount(1) command.</P
+><P
+>It's important to note that, for adding and removing files, only the
+permission bits and owner of the file's <EM
+>directory</EM
+>
+really matter unless the Unix-like system supports
+more complex schemes (such as POSIX ACLs).
+Unless the system has other extensions, and stock Linux 2.2 doesn't,
+a file that has no permissions in its permission bits
+can still be removed if its containing directory permits it.
+Also, if an ancestor directory permits its children to be changed by some
+user or group, then any of that directory's descendants can be replaced by
+that user or group.</P
+><P
+>The draft IEEE POSIX standard on security defines a technique for
+true ACLs that support a list of users and groups with their permissions.
+Unfortunately, this is not widely supported nor supported exactly the
+same way across Unix-like systems.
+Stock Linux 2.2, for example, has neither ACLs nor POSIX capability
+values in the filesystem.</P
+><P
+>It's worth noting that in Linux, the Linux ext2
+filesystem by default reserves a small amount of space for the root user.
+This is a partial defense against denial-of-service attacks; even if a user
+fills a disk that is shared with the root user, the root user has a little
+space left over (e.g., for critical functions).
+The default is 5% of the filesystem space; see mke2fs(8),
+in particular its ``-m'' option.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="FSO-INITIAL-VALUES"
+>3.2.2. Creation Time Initial Values</A
+></H2
+><P
+>At creation time, the following rules apply.
+On most Unix systems, when a new filesystem object is created via creat(2)
+or open(2), the FSO UID is set to the process' EUID and the FSO's GID is
+set to the process' EGID.
+Linux works slightly differently due to its FSUID
+extensions; the FSO's UID is set to the process' FSUID, and the FSO GID
+is set to the process' FSGUID; if the
+containing directory's setgid bit is set or the filesystem's
+``GRPID'' flag is set, the FSO GID is actually set to the
+GID of the containing directory.
+Many systems, including Sun Solaris and Linux, also support the
+setgid directory extensions.
+As noted earlier,
+this special case supports ``project'' directories: to make a ``project''
+directory, create a special group for the project,
+create a directory for the project owned by that group, then make the
+directory setgid: files placed there
+are automatically owned by the project.
+Similarly, if a new subdirectory is created inside a directory with the
+setgid bit set (and the filesystem GRPID isn't set), the new subdirectory
+will also have its setgid bit set (so that project subdirectories will
+``do the right thing''.); in all other cases the setgid is clear for a new file.
+This is the rationale for the ``user-private group'' scheme
+(used by Red Hat Linux and some others).
+In this scheme,
+every user is a member of a ``private'' group with just themselves as members,
+so their defaults can permit the group to read and write any file
+(since they're the only member of the group).
+Thus, when the file's group membership
+is transferred this way, read and write privileges
+are transferred too.
+FSO basic access control values (read, write, execute) are computed from
+(requested values &#38; ~ umask of process).
+New files always start with a clear sticky bit and clear setuid bit.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CHANGING-ACLS"
+>3.2.3. Changing Access Control Attributes</A
+></H2
+><P
+>You can set most of these values with chmod(2), fchmod(2), or chmod(1)
+but see also chown(1), and chgrp(1).
+In Linux, some of the Linux-unique attributes are manipulated using chattr(1).</P
+><P
+>Note that in Linux, only root can change the owner of a given file.
+Some Unix-like systems allow ordinary users to transfer ownership of their
+files to another, but this causes complications and is forbidden by Linux.
+For example, if you're trying to limit disk usage,
+allowing such operations would allow users to claim that large files
+actually belonged to some other ``victim''.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="USING-ACLS"
+>3.2.4. Using Access Control Attributes</A
+></H2
+><P
+>Under Linux and most Unix-like systems, reading and writing
+attribute values are only checked when the file is opened; they
+are not re-checked on every read or write.
+Still, a large number of calls do check these attributes,
+since the filesystem is so central to Unix-like systems.
+Calls that check these attributes
+include open(2), creat(2), link(2), unlink(2), rename(2),
+mknod(2), symlink(2), and socket(2).</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="FILESYSTEM-HIERARCHY"
+>3.2.5. Filesystem Hierarchy</A
+></H2
+><P
+>Over the years conventions have been built on ``what files to place where''.
+Where possible,
+please follow conventional use when placing information in the hierarchy.
+For example, place global configuration information in /etc.
+The Filesystem Hierarchy Standard (FHS) tries to
+define these conventions in a logical manner, and is widely used by
+Linux systems.
+The FHS is an update to the previous
+Linux Filesystem Structure standard (FSSTND), incorporating lessons
+learned and approaches from Linux, BSD, and System V systems.
+See <A
+HREF="http://www.pathname.com/fhs"
+TARGET="_top"
+>http://www.pathname.com/fhs</A
+> for more information about the FHS.
+A summary of these conventions is in hier(5) for Linux
+and hier(7) for Solaris.
+Sometimes different conventions disagree; where possible, make these
+situations configurable at compile or installation time.</P
+><P
+>I should note that the FHS has been adopted by the
+<A
+HREF="http://www.linuxbase.org"
+TARGET="_top"
+>Linux Standard Base</A
+> which
+is developing and promoting a set of standards to increase
+compatibility among Linux distributions and to enable
+software applications to run on any compliant Linux system.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="processes.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="sysv-ipc.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Processes</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="features.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>System V IPC</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

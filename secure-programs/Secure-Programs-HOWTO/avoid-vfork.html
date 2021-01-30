@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Avoid Using vfork(2)</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Carefully Call Out to Other Resources"
+HREF="call-out.html"><LINK
+REL="PREVIOUS"
+TITLE="Check All System Call Returns"
+HREF="check-returns.html"><LINK
+REL="NEXT"
+TITLE="Counter Web Bugs When Retrieving Embedded Content"
+HREF="embedded-content-bugs.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="check-returns.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 8. Carefully Call Out to Other Resources</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="embedded-content-bugs.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AVOID-VFORK"
+>8.6. Avoid Using vfork(2)</A
+></H1
+><P
+>The portable way to create new processes in Unix-like systems
+is to use the fork(2) call.
+BSD introduced a variant called vfork(2) as an optimization technique.
+In vfork(2), unlike fork(2),  the child borrows the parent&#8217;s memory
+and thread of control until a call to execve(2V) or an exit occurs;
+the parent process is suspended while the child is using its resources.
+The rationale is that in old BSD systems, fork(2) would actually cause
+memory to be copied while vfork(2) would not.
+Linux never had this problem; because Linux used copy-on-write
+semantics internally, Linux only copies pages when they changed
+(actually, there are still some tables that have to be copied; in most
+circumstances their overhead is not significant).
+Nevertheless, since some programs depend on vfork(2),
+recently Linux implemented the BSD vfork(2) semantics
+(previously vfork(2) had been an alias for fork(2)).</P
+><P
+>There are a number of problems with vfork(2).
+From a portability point-of-view,
+the problem with vfork(2) is that it&#8217;s actually fairly tricky for a
+process to not interfere with its parent, especially in high-level languages.
+The <SPAN
+CLASS="QUOTE"
+>&#8220;not interfering&#8221;</SPAN
+> requirement applies to the actual machine code
+generated, and many compilers generate hidden temporaries and other
+code structures that cause unintended interference.
+The result: programs using vfork(2) can easily fail when the code changes
+or even when compiler versions change.</P
+><P
+>For secure programs it gets worse on Linux systems, because
+Linux (at least 2.2 versions through 2.2.17) is vulnerable to a
+race condition in vfork()&#8217;s implementation.
+If a privileged process uses a vfork(2)/execve(2) pair in Linux
+to execute user commands, there&#8217;s a race condition
+while the child process is already running as the user&#8217;s
+UID, but hasn`t entered execve(2) yet.
+The user may be able to send signals, including SIGSTOP, to this process.
+Due to the semantics of
+vfork(2), the privileged parent process would then be blocked as well.
+As a result, an unprivileged process could cause the privileged process
+to halt, resulting in a denial-of-service
+of the privileged process&#8217; service.
+FreeBSD and OpenBSD, at least, have code to specifically deal with this
+case, so to my knowledge they are not vulnerable to this problem.
+My thanks to Solar Designer, who noted and documented this
+problem in Linux on the <SPAN
+CLASS="QUOTE"
+>&#8220;security-audit&#8221;</SPAN
+> mailing list on October 7, 2000.</P
+><P
+>The bottom line with vfork(2) is simple:
+<EM
+>don&#8217;t</EM
+> use vfork(2) in your programs.
+This shouldn&#8217;t be difficult; the primary use of vfork(2) is to support old
+programs that needed vfork&#8217;s semantics.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="check-returns.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="embedded-content-bugs.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Check All System Call Returns</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="call-out.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Counter Web Bugs When Retrieving Embedded Content</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

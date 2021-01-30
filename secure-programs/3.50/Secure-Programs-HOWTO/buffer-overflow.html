@@ -1,0 +1,319 @@
+<HTML
+><HEAD
+><TITLE
+>Avoid Buffer Overflow</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Limit Valid Input Time and Load Level"
+HREF="limit-time.html"><LINK
+REL="NEXT"
+TITLE="Dangers in C/C++"
+HREF="dangers-c.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="limit-time.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="dangers-c.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="BUFFER-OVERFLOW"
+></A
+>Chapter 6. Avoid Buffer Overflow</H1
+><TABLE
+BORDER="0"
+WIDTH="100%"
+CELLSPACING="0"
+CELLPADDING="0"
+CLASS="EPIGRAPH"
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="LEFT"
+VALIGN="TOP"
+><I
+><P
+><I
+>An enemy will overrun the land;
+he will pull down your strongholds and
+plunder your fortresses.</I
+></P
+></I
+></TD
+></TR
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+><SPAN
+CLASS="ATTRIBUTION"
+>Amos 3:11 (NIV)</SPAN
+></I
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>6.1. <A
+HREF="dangers-c.html"
+>Dangers in C/C++</A
+></DT
+><DT
+>6.2. <A
+HREF="library-c.html"
+>Library Solutions in C/C++</A
+></DT
+><DD
+><DL
+><DT
+>6.2.1. <A
+HREF="library-c.html#BUFFER-STANDARD-SOLUTION"
+>Standard C Library Solution</A
+></DT
+><DT
+>6.2.2. <A
+HREF="library-c.html#STATIC-VS-DYNAMIC-BUFFERS"
+>Static and Dynamically Allocated Buffers</A
+></DT
+><DT
+>6.2.3. <A
+HREF="library-c.html#STRLCPY"
+>strlcpy and strlcat</A
+></DT
+><DT
+>6.2.4. <A
+HREF="library-c.html#LIBMIB"
+>libmib</A
+></DT
+><DT
+>6.2.5. <A
+HREF="library-c.html#SAFESTR"
+>Safestr library (Messier and Viega)</A
+></DT
+><DT
+>6.2.6. <A
+HREF="library-c.html#STD-STRING"
+>C++ std::string class</A
+></DT
+><DT
+>6.2.7. <A
+HREF="library-c.html#LIBSAFE"
+>Libsafe</A
+></DT
+><DT
+>6.2.8. <A
+HREF="library-c.html#OTHER-BUFFER-LIBRARIES"
+>Other Libraries</A
+></DT
+></DL
+></DD
+><DT
+>6.3. <A
+HREF="compilation-c.html"
+>Compilation Solutions in C/C++</A
+></DT
+><DT
+>6.4. <A
+HREF="other-languages.html"
+>Other Languages</A
+></DT
+></DL
+></DIV
+><P
+>An extremely common security flaw is vulnerability to a ``buffer overflow''.
+Buffer overflows are also called ``buffer overruns'', and there are
+many kinds of buffer overflow attacks (including
+``stack smashing'' and ``heap smashing'' attacks).
+Technically, a buffer overflow is a problem with the program's internal
+implementation, but it's such a common and serious problem that
+I've placed this information in its own chapter.
+To give you an idea of how important this subject is,
+at the CERT, 9 of 13 advisories in 1998 and at least half of
+the 1999 advisories involved buffer overflows.
+An informal 1999 survey on Bugtraq found that approximately 2/3 of the
+respondents felt that buffer overflows were the leading cause of
+system security vulnerability (the remaining respondents identified
+``mis-configuration'' as the leading cause) [Cowan 1999].
+This is an old, well-known problem, yet it continues to resurface
+[McGraw 2000].</P
+><P
+>A buffer overflow occurs when you write a set of values
+(usually a string of characters) into a fixed length buffer
+and write at least one value outside that buffer's boundaries
+(usually past its end).
+A buffer overflow can occur when reading input from the user into a buffer,
+but it can also occur during other kinds of processing in a program.</P
+><P
+>If a secure program permits a buffer overflow, the overflow can often be
+exploited by an adversary.
+If the buffer is a local C variable, the overflow can be used to
+force the function to run code of an attackers' choosing.
+This specific variation is often called a ``stack smashing'' attack.
+A buffer in the heap isn't much better; attackers may be able to
+use such overflows to control other variables in the program.
+More details can be found from Aleph1 [1996], Mudge [1995], LSD [2001],
+or the Nathan P. Smith's
+"Stack Smashing Security Vulnerabilities" website at
+<A
+HREF="http://destroy.net/machines/security/"
+TARGET="_top"
+>http://destroy.net/machines/security/</A
+>.
+A discussion of the problem and some ways to counter them is given
+by Crispin Cowan et al, 2000, at
+<A
+HREF="http://immunix.org/StackGuard/discex00.pdf"
+TARGET="_top"
+>http://immunix.org/StackGuard/discex00.pdf</A
+>.
+A discussion of the problem and some ways to counter them in Linux
+is given by
+Pierre-Alain Fayolle and Vincent Glaume
+at
+<A
+HREF="http://www.enseirb.fr/~glaume/indexen.html"
+TARGET="_top"
+>http://www.enseirb.fr/~glaume/indexen.html</A
+>.</P
+><P
+>Most high-level programming languages are essentially
+immune to this problem, either
+because they automatically resize arrays (e.g., Perl), or because they normally
+detect and prevent buffer overflows (e.g., Ada95).
+However, the C language provides no protection against
+such problems, and C++ can be easily used in ways to cause this problem too.
+Assembly language also provides no protection, and some languages
+that normally include such protection (e.g., Ada and Pascal) can have
+this protection disabled (for performance reasons).
+Even if most of your program is written in another language,
+many library routines are written in C or C++, as well as ``glue'' code to
+call them, so other languages often don't provide as complete a protection
+from buffer overflows as you'd like.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="limit-time.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="dangers-c.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Limit Valid Input Time and Load Level</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Dangers in C/C++</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

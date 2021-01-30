@@ -1,0 +1,1364 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Secure Programming HOWTO</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="NEXT"
+TITLE="Introduction"
+HREF="introduction.html"><META
+NAME="KEYWORD"
+CONTENT="secure programming"><META
+NAME="KEYWORD"
+CONTENT="secure programs"><META
+NAME="KEYWORD"
+CONTENT="secure applications"><META
+NAME="KEYWORD"
+CONTENT="secure"><META
+NAME="KEYWORD"
+CONTENT="programming"><META
+NAME="KEYWORD"
+CONTENT="security"><META
+NAME="KEYWORD"
+CONTENT="Linux"><META
+NAME="KEYWORD"
+CONTENT="Unix"><META
+NAME="KEYWORD"
+CONTENT="hack"><META
+NAME="KEYWORD"
+CONTENT="crack"><META
+NAME="KEYWORD"
+CONTENT="vulnerability"><META
+NAME="KEYWORD"
+CONTENT="buffer overflow"><META
+NAME="KEYWORD"
+CONTENT="design"><META
+NAME="KEYWORD"
+CONTENT="implementation"><META
+NAME="KEYWORD"
+CONTENT="web application"><META
+NAME="KEYWORD"
+CONTENT="web applications"><META
+NAME="KEYWORD"
+CONTENT="CGI"><META
+NAME="KEYWORD"
+CONTENT="setuid"><META
+NAME="KEYWORD"
+CONTENT="setgid"><META
+NAME="KEYWORD"
+CONTENT="C"><META
+NAME="KEYWORD"
+CONTENT="C++"><META
+NAME="KEYWORD"
+CONTENT="Java"><META
+NAME="KEYWORD"
+CONTENT="Perl"><META
+NAME="KEYWORD"
+CONTENT="PHP"><META
+NAME="KEYWORD"
+CONTENT="Python"><META
+NAME="KEYWORD"
+CONTENT="Tcl"><META
+NAME="KEYWORD"
+CONTENT="Ada"><META
+NAME="KEYWORD"
+CONTENT="Ada95"></HEAD
+><BODY
+CLASS="BOOK"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="BOOK"
+><A
+NAME="AEN1"
+></A
+><DIV
+CLASS="TITLEPAGE"
+><H1
+CLASS="TITLE"
+><A
+NAME="AEN2"
+>Secure Programming HOWTO</A
+></H1
+><H3
+CLASS="AUTHOR"
+><A
+NAME="AEN4"
+></A
+>David A. Wheeler</H3
+><P
+CLASS="COPYRIGHT"
+><A
+HREF="ln25.html"
+>Copyright</A
+> &copy; 1999, 2000, 2001, 2002, 2003, 2004, 2015 David A. Wheeler</P
+><P
+CLASS="PUBDATE"
+>v3.72, 2015-09-19<BR></P
+><DIV
+><DIV
+CLASS="ABSTRACT"
+><P
+></P
+><A
+NAME="AEN30"
+></A
+><P
+>This book provides a set of design and implementation
+guidelines for writing secure programs.
+Such programs include application programs used as viewers of remote data,
+web applications (including CGI scripts),
+network servers, and setuid/setgid programs.
+Specific guidelines for C, C++, Java, Perl, PHP, Python, Tcl,
+and Ada95 are included.
+It especially covers Linux and Unix based systems, but much of its
+material applies to any system.
+For a current version of the book, see
+<A
+HREF="http://www.dwheeler.com/secure-programs"
+TARGET="_top"
+>http://www.dwheeler.com/secure-programs</A
+></P
+><P
+></P
+></DIV
+></DIV
+><HR></DIV
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>1. <A
+HREF="introduction.html"
+>Introduction</A
+></DT
+><DT
+>2. <A
+HREF="background.html"
+>Background</A
+></DT
+><DD
+><DL
+><DT
+>2.1. <A
+HREF="history.html"
+>History of Unix, Linux, and Open Source / Free Software</A
+></DT
+><DD
+><DL
+><DT
+>2.1.1. <A
+HREF="history.html#UNIX-HISTORY"
+>Unix</A
+></DT
+><DT
+>2.1.2. <A
+HREF="history.html#FSF-HISTORY"
+>Free Software Foundation</A
+></DT
+><DT
+>2.1.3. <A
+HREF="history.html#LINUX-HISTORY"
+>Linux</A
+></DT
+><DT
+>2.1.4. <A
+HREF="history.html#OSS-HISTORY"
+>Open Source / Free Software</A
+></DT
+><DT
+>2.1.5. <A
+HREF="history.html#LINUX-VS-UNIX"
+>Comparing Linux and Unix</A
+></DT
+></DL
+></DD
+><DT
+>2.2. <A
+HREF="security-principles.html"
+>Security Principles</A
+></DT
+><DT
+>2.3. <A
+HREF="why-write-insecure.html"
+>Why do Programmers Write Insecure Code?</A
+></DT
+><DT
+>2.4. <A
+HREF="open-source-security.html"
+>Is Open Source Good for Security?</A
+></DT
+><DD
+><DL
+><DT
+>2.4.1. <A
+HREF="open-source-security.html#OPEN-SOURCE-SECURITY-EXPERTS"
+>View of Various Experts</A
+></DT
+><DT
+>2.4.2. <A
+HREF="open-source-security.html#OPEN-SOURCE-SECURITY-NOHALT"
+>Why Closing the Source Doesn&#8217;t Halt Attacks</A
+></DT
+><DT
+>2.4.3. <A
+HREF="open-source-security.html#OPEN-SOURCE-SECURITY-SECRETS"
+>Why Keeping Vulnerabilities Secret Doesn&#8217;t Make Them Go Away</A
+></DT
+><DT
+>2.4.4. <A
+HREF="open-source-security.html#OPEN-SOURCE-SECURITY-TROJANS"
+>How OSS/FS Counters Trojan Horses</A
+></DT
+><DT
+>2.4.5. <A
+HREF="open-source-security.html#OPEN-SOURCE-SECURITY-OTHER"
+>Other Advantages</A
+></DT
+><DT
+>2.4.6. <A
+HREF="open-source-security.html#OPEN-SOURCE-SECURITY-BOTTOM-LINE"
+>Bottom Line</A
+></DT
+></DL
+></DD
+><DT
+>2.5. <A
+HREF="types-of-programs.html"
+>Types of Secure Programs</A
+></DT
+><DT
+>2.6. <A
+HREF="paranoia.html"
+>Paranoia is a Virtue</A
+></DT
+><DT
+>2.7. <A
+HREF="why-write.html"
+>Why Did I Write This Document?</A
+></DT
+><DT
+>2.8. <A
+HREF="sources-of-guidelines.html"
+>Sources of Design and Implementation Guidelines</A
+></DT
+><DT
+>2.9. <A
+HREF="other-sources.html"
+>Other Sources of Security Information</A
+></DT
+><DT
+>2.10. <A
+HREF="conventions.html"
+>Document Conventions</A
+></DT
+></DL
+></DD
+><DT
+>3. <A
+HREF="features.html"
+>Summary of Linux and Unix Security Features</A
+></DT
+><DD
+><DL
+><DT
+>3.1. <A
+HREF="processes.html"
+>Processes</A
+></DT
+><DD
+><DL
+><DT
+>3.1.1. <A
+HREF="processes.html#PROCESS-ATTRIBUTES"
+>Process Attributes</A
+></DT
+><DT
+>3.1.2. <A
+HREF="processes.html#POSIX-CAPABILITIES"
+>POSIX Capabilities</A
+></DT
+><DT
+>3.1.3. <A
+HREF="processes.html#PROCESS-CREATION"
+>Process Creation and Manipulation</A
+></DT
+></DL
+></DD
+><DT
+>3.2. <A
+HREF="files.html"
+>Files</A
+></DT
+><DD
+><DL
+><DT
+>3.2.1. <A
+HREF="files.html#FSO-ATTRIBUTES"
+>Filesystem Object Attributes</A
+></DT
+><DT
+>3.2.2. <A
+HREF="files.html#POSIX-ACLS"
+>POSIX Access Control Lists (ACLs)</A
+></DT
+><DD
+><DL
+><DT
+>3.2.2.1. <A
+HREF="files.html#HISTORY-POSIX-ACLS"
+>History of POSIX Access Control Lists (ACLs)</A
+></DT
+><DT
+>3.2.2.2. <A
+HREF="files.html#STATE-POSIX-ACLS"
+>Data used in POSIX Access Control Lists (ACLs)</A
+></DT
+></DL
+></DD
+><DT
+>3.2.3. <A
+HREF="files.html#FSO-INITIAL-VALUES"
+>Creation Time Initial Values</A
+></DT
+><DT
+>3.2.4. <A
+HREF="files.html#CHANGING-ACLS"
+>Changing Access Control Attributes</A
+></DT
+><DT
+>3.2.5. <A
+HREF="files.html#USING-ACLS"
+>Using Access Control Attributes</A
+></DT
+><DT
+>3.2.6. <A
+HREF="files.html#FILESYSTEM-HIERARCHY"
+>Filesystem Hierarchy</A
+></DT
+></DL
+></DD
+><DT
+>3.3. <A
+HREF="sysv-ipc.html"
+>System V IPC</A
+></DT
+><DT
+>3.4. <A
+HREF="sockets.html"
+>Sockets and Network Connections</A
+></DT
+><DT
+>3.5. <A
+HREF="signals.html"
+>Signals</A
+></DT
+><DT
+>3.6. <A
+HREF="quotas.html"
+>Quotas and Limits</A
+></DT
+><DT
+>3.7. <A
+HREF="dlls.html"
+>Dynamically Linked Libraries</A
+></DT
+><DT
+>3.8. <A
+HREF="audit.html"
+>Audit</A
+></DT
+><DT
+>3.9. <A
+HREF="pam.html"
+>PAM</A
+></DT
+><DT
+>3.10. <A
+HREF="unix-extensions.html"
+>Specialized Security Extensions for Unix-like Systems</A
+></DT
+></DL
+></DD
+><DT
+>4. <A
+HREF="requirements.html"
+>Security Requirements</A
+></DT
+><DD
+><DL
+><DT
+>4.1. <A
+HREF="cc-intro.html"
+>Common Criteria Introduction</A
+></DT
+><DT
+>4.2. <A
+HREF="cc-environment.html"
+>Security Environment and Objectives</A
+></DT
+><DT
+>4.3. <A
+HREF="cc-functional-requirements.html"
+>Security Functionality Requirements</A
+></DT
+><DT
+>4.4. <A
+HREF="cc-assurance-requirements.html"
+>Security Assurance Measure Requirements</A
+></DT
+></DL
+></DD
+><DT
+>5. <A
+HREF="input.html"
+>Validate All Input</A
+></DT
+><DD
+><DL
+><DT
+>5.1. <A
+HREF="validation-basics.html"
+>Basics of input validation</A
+></DT
+><DT
+>5.2. <A
+HREF="validation-tools-regex.html"
+>Input Validation Tools including Regular Expressions</A
+></DT
+><DD
+><DL
+><DT
+>5.2.1. <A
+HREF="validation-tools-regex.html#REGEX-BASICS"
+>Introduction to regular expressions</A
+></DT
+><DT
+>5.2.2. <A
+HREF="validation-tools-regex.html#REGEX-FOR-VALIDATION"
+>Using regular expressions for input validation</A
+></DT
+><DT
+>5.2.3. <A
+HREF="validation-tools-regex.html#REGEX-REDOS"
+>Regular expression denial of service (reDOS) attacks</A
+></DT
+></DL
+></DD
+><DT
+>5.3. <A
+HREF="command-line.html"
+>Command line</A
+></DT
+><DT
+>5.4. <A
+HREF="environment-variables.html"
+>Environment Variables</A
+></DT
+><DD
+><DL
+><DT
+>5.4.1. <A
+HREF="environment-variables.html#ENV-VARS-DANGEROUS"
+>Some Environment Variables are Dangerous</A
+></DT
+><DT
+>5.4.2. <A
+HREF="environment-variables.html#ENV-STORAGE-DANGEROUS"
+>Environment Variable Storage Format is Dangerous</A
+></DT
+><DT
+>5.4.3. <A
+HREF="environment-variables.html#ENV-VAR-SOLUTION"
+>The Solution - Extract and Erase</A
+></DT
+><DT
+>5.4.4. <A
+HREF="environment-variables.html#ENV-VAR-DONTSET"
+>Don&#8217;t Let Users Set Their Own Environment Variables</A
+></DT
+></DL
+></DD
+><DT
+>5.5. <A
+HREF="file-descriptors.html"
+>File Descriptors</A
+></DT
+><DT
+>5.6. <A
+HREF="file-names.html"
+>File Names</A
+></DT
+><DT
+>5.7. <A
+HREF="file-contents.html"
+>File Contents</A
+></DT
+><DT
+>5.8. <A
+HREF="web-apps.html"
+>Web-Based Application Inputs (Especially CGI Scripts)</A
+></DT
+><DT
+>5.9. <A
+HREF="other-inputs.html"
+>Other Inputs</A
+></DT
+><DT
+>5.10. <A
+HREF="locale.html"
+>Human Language (Locale) Selection</A
+></DT
+><DD
+><DL
+><DT
+>5.10.1. <A
+HREF="locale.html#HOW-LOCALES-SELECTED"
+>How Locales are Selected</A
+></DT
+><DT
+>5.10.2. <A
+HREF="locale.html#LOCALE-SUPPORT-MECHANISMS"
+>Locale Support Mechanisms</A
+></DT
+><DT
+>5.10.3. <A
+HREF="locale.html#LOCALE-LEGAL-VALUES"
+>Legal Values</A
+></DT
+><DT
+>5.10.4. <A
+HREF="locale.html#LOCALE-BOTTOM-LINE"
+>Bottom Line</A
+></DT
+></DL
+></DD
+><DT
+>5.11. <A
+HREF="character-encoding.html"
+>Character Encoding</A
+></DT
+><DD
+><DL
+><DT
+>5.11.1. <A
+HREF="character-encoding.html#CHARACTER-ENCODING-INTRO"
+>Introduction to Character Encoding</A
+></DT
+><DT
+>5.11.2. <A
+HREF="character-encoding.html#CHARACTER-ENCODING-UTF8"
+>Introduction to UTF-8</A
+></DT
+><DT
+>5.11.3. <A
+HREF="character-encoding.html#UTF8-SECURITY-ISSUES"
+>UTF-8 Security Issues</A
+></DT
+><DT
+>5.11.4. <A
+HREF="character-encoding.html#UTF8-LEGAL-VALUES"
+>UTF-8 Legal Values</A
+></DT
+><DT
+>5.11.5. <A
+HREF="character-encoding.html#UTF8-RELATED-ISSUES"
+>UTF-8 Related Issues</A
+></DT
+></DL
+></DD
+><DT
+>5.12. <A
+HREF="input-protection-cross-site.html"
+>Prevent Cross-site Malicious Content on Input</A
+></DT
+><DT
+>5.13. <A
+HREF="filter-html.html"
+>Filter HTML/URIs That May Be Re-presented</A
+></DT
+><DD
+><DL
+><DT
+>5.13.1. <A
+HREF="filter-html.html#REMOVE-HTML-TAGS"
+>Remove or Forbid Some HTML Data</A
+></DT
+><DT
+>5.13.2. <A
+HREF="filter-html.html#ENCODING-HTML-TAGS"
+>Encoding HTML Data</A
+></DT
+><DT
+>5.13.3. <A
+HREF="filter-html.html#VALIDATING-HTML-TAGS"
+>Validating HTML Data</A
+></DT
+><DT
+>5.13.4. <A
+HREF="filter-html.html#VALIDATING-URIS"
+>Validating Hypertext Links (URIs/URLs)</A
+></DT
+><DT
+>5.13.5. <A
+HREF="filter-html.html#OTHER-HTML-TAGS"
+>Other HTML tags</A
+></DT
+><DT
+>5.13.6. <A
+HREF="filter-html.html#RELATED-ISSUES"
+>Related Issues</A
+></DT
+></DL
+></DD
+><DT
+>5.14. <A
+HREF="avoid-get-non-queries.html"
+>Forbid HTTP GET To Perform Non-Queries</A
+></DT
+><DT
+>5.15. <A
+HREF="counter-spam.html"
+>Counter SPAM</A
+></DT
+><DT
+>5.16. <A
+HREF="limit-time.html"
+>Limit Valid Input Time and Load Level</A
+></DT
+></DL
+></DD
+><DT
+>6. <A
+HREF="buffer-overflow.html"
+>Restrict Operations to Buffer Bounds (Avoid Buffer Overflow)</A
+></DT
+><DD
+><DL
+><DT
+>6.1. <A
+HREF="dangers-c.html"
+>Dangers in C/C++</A
+></DT
+><DT
+>6.2. <A
+HREF="library-c.html"
+>Library Solutions in C/C++</A
+></DT
+><DD
+><DL
+><DT
+>6.2.1. <A
+HREF="library-c.html#BUFFER-STANDARD-SOLUTION"
+>Standard C Library Solution</A
+></DT
+><DT
+>6.2.2. <A
+HREF="library-c.html#STATIC-VS-DYNAMIC-BUFFERS"
+>Static and Dynamically Allocated Buffers</A
+></DT
+><DT
+>6.2.3. <A
+HREF="library-c.html#STRLCPY"
+>strlcpy and strlcat</A
+></DT
+><DT
+>6.2.4. <A
+HREF="library-c.html#ASPRINTF"
+>asprintf and vasprintf</A
+></DT
+><DT
+>6.2.5. <A
+HREF="library-c.html#LIBMIB"
+>libmib</A
+></DT
+><DT
+>6.2.6. <A
+HREF="library-c.html#SAFESTR"
+>Safestr library (Messier and Viega)</A
+></DT
+><DT
+>6.2.7. <A
+HREF="library-c.html#STD-STRING"
+>C++ std::string class</A
+></DT
+><DT
+>6.2.8. <A
+HREF="library-c.html#LIBSAFE"
+>Libsafe</A
+></DT
+><DT
+>6.2.9. <A
+HREF="library-c.html#OTHER-BUFFER-LIBRARIES"
+>Other Libraries</A
+></DT
+></DL
+></DD
+><DT
+>6.3. <A
+HREF="compilation-c.html"
+>Compilation Solutions in C/C++</A
+></DT
+><DT
+>6.4. <A
+HREF="other-languages.html"
+>Other Languages</A
+></DT
+></DL
+></DD
+><DT
+>7. <A
+HREF="internals.html"
+>Design Your Program for Security</A
+></DT
+><DD
+><DL
+><DT
+>7.1. <A
+HREF="follow-good-principles.html"
+>Follow Good Security Design Principles</A
+></DT
+><DT
+>7.2. <A
+HREF="secure-interface.html"
+>Secure the Interface</A
+></DT
+><DT
+>7.3. <A
+HREF="data-vs-control.html"
+>Separate Data and Control</A
+></DT
+><DT
+>7.4. <A
+HREF="minimize-privileges.html"
+>Minimize Privileges</A
+></DT
+><DD
+><DL
+><DT
+>7.4.1. <A
+HREF="minimize-privileges.html#MIMIMIZE-PRIVILEGES-GRANTED"
+>Minimize the Privileges Granted</A
+></DT
+><DT
+>7.4.2. <A
+HREF="minimize-privileges.html#MINIMIZE-TIME-PRIVILEGE-USABLE"
+>Minimize the Time the Privilege Can Be Used</A
+></DT
+><DT
+>7.4.3. <A
+HREF="minimize-privileges.html#MINIMIZE-TIME-PRIVILEGE-ACTIVE"
+>Minimize the Time the Privilege is Active</A
+></DT
+><DT
+>7.4.4. <A
+HREF="minimize-privileges.html#MINIMIZE-PRIVILEGED-MODULES"
+>Minimize the Modules Granted the Privilege</A
+></DT
+><DT
+>7.4.5. <A
+HREF="minimize-privileges.html#CONSIDER-FSUID"
+>Consider Using FSUID To Limit Privileges</A
+></DT
+><DT
+>7.4.6. <A
+HREF="minimize-privileges.html#CONSIDER-CHROOT"
+>Consider Using Chroot to Minimize Available Files</A
+></DT
+><DT
+>7.4.7. <A
+HREF="minimize-privileges.html#MINIMIZE-ACCESSIBLE-DATA"
+>Consider Minimizing the Accessible Data</A
+></DT
+><DT
+>7.4.8. <A
+HREF="minimize-privileges.html#MINIMIZE-RESOURCES"
+>Consider Minimizing the Resources Available</A
+></DT
+></DL
+></DD
+><DT
+>7.5. <A
+HREF="minimize-functionality.html"
+>Minimize the Functionality of a Component</A
+></DT
+><DT
+>7.6. <A
+HREF="avoid-setuid.html"
+>Avoid Creating Setuid/Setgid Scripts</A
+></DT
+><DT
+>7.7. <A
+HREF="safe-configure.html"
+>Configure Safely and Use Safe Defaults</A
+></DT
+><DT
+>7.8. <A
+HREF="init-safe.html"
+>Load Initialization Values Safely</A
+></DT
+><DT
+>7.9. <A
+HREF="minimize-data-access.html"
+>Minimize the Accessible Data</A
+></DT
+><DT
+>7.10. <A
+HREF="fail-safe.html"
+>Fail Safe</A
+></DT
+><DT
+>7.11. <A
+HREF="avoid-race.html"
+>Avoid Race Conditions</A
+></DT
+><DD
+><DL
+><DT
+>7.11.1. <A
+HREF="avoid-race.html#NON-ATOMIC"
+>Sequencing (Non-Atomic) Problems</A
+></DT
+><DD
+><DL
+><DT
+>7.11.1.1. <A
+HREF="avoid-race.html#ATOMIC-FILESYSTEM"
+>Atomic Actions in the Filesystem</A
+></DT
+><DT
+>7.11.1.2. <A
+HREF="avoid-race.html#TEMPORARY-FILES"
+>Temporary Files</A
+></DT
+></DL
+></DD
+><DT
+>7.11.2. <A
+HREF="avoid-race.html#LOCKING"
+>Locking</A
+></DT
+><DD
+><DL
+><DT
+>7.11.2.1. <A
+HREF="avoid-race.html#LOCKING-USING-FILES"
+>Using Files as Locks</A
+></DT
+><DT
+>7.11.2.2. <A
+HREF="avoid-race.html#OTHER-LOCKING"
+>Other Approaches to Locking</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+>7.12. <A
+HREF="trustworthy-channels.html"
+>Trust Only Trustworthy Channels</A
+></DT
+><DT
+>7.13. <A
+HREF="trusted-path.html"
+>Set up a Trusted Path</A
+></DT
+><DT
+>7.14. <A
+HREF="internal-check.html"
+>Use Internal Consistency-Checking Code</A
+></DT
+><DT
+>7.15. <A
+HREF="self-limit-resources.html"
+>Self-limit Resources</A
+></DT
+><DT
+>7.16. <A
+HREF="cross-site-malicious-content.html"
+>Prevent Cross-Site (XSS) Malicious Content</A
+></DT
+><DD
+><DL
+><DT
+>7.16.1. <A
+HREF="cross-site-malicious-content.html#EXPLAIN-CROSS-SITE"
+>Explanation of the Problem</A
+></DT
+><DT
+>7.16.2. <A
+HREF="cross-site-malicious-content.html#SOLUTIONS-CROSS-SITE"
+>Solutions to Cross-Site Malicious Content</A
+></DT
+><DD
+><DL
+><DT
+>7.16.2.1. <A
+HREF="cross-site-malicious-content.html#AEN2182"
+>Identifying Special Characters</A
+></DT
+><DT
+>7.16.2.2. <A
+HREF="cross-site-malicious-content.html#AEN2223"
+>Filtering</A
+></DT
+><DT
+>7.16.2.3. <A
+HREF="cross-site-malicious-content.html#AEN2231"
+>Encoding (Quoting)</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+>7.17. <A
+HREF="semantic-attacks.html"
+>Foil Semantic Attacks</A
+></DT
+><DT
+>7.18. <A
+HREF="careful-typing.html"
+>Be Careful with Data Types</A
+></DT
+><DT
+>7.19. <A
+HREF="complexity-attacks.html"
+>Avoid Algorithmic Complexity Attacks</A
+></DT
+></DL
+></DD
+><DT
+>8. <A
+HREF="call-out.html"
+>Carefully Call Out to Other Resources</A
+></DT
+><DD
+><DL
+><DT
+>8.1. <A
+HREF="call-only-safe.html"
+>Call Only Safe Library Routines</A
+></DT
+><DT
+>8.2. <A
+HREF="limit-call-outs.html"
+>Limit Call-outs to Valid Values</A
+></DT
+><DT
+>8.3. <A
+HREF="handle-metacharacters.html"
+>Handle Metacharacters</A
+></DT
+><DD
+><DL
+><DT
+>8.3.1. <A
+HREF="handle-metacharacters.html#SQL-INJECTION"
+>SQL injection</A
+></DT
+><DT
+>8.3.2. <A
+HREF="handle-metacharacters.html#SHELL-INJECTION"
+>Shell injection</A
+></DT
+><DT
+>8.3.3. <A
+HREF="handle-metacharacters.html#FILENAMES"
+>Problematic pathnames and filenames</A
+></DT
+><DT
+>8.3.4. <A
+HREF="handle-metacharacters.html#OTHER-INJECTION"
+>Other injection issues</A
+></DT
+></DL
+></DD
+><DT
+>8.4. <A
+HREF="call-intentional-apis.html"
+>Call Only Interfaces Intended for Programmers</A
+></DT
+><DT
+>8.5. <A
+HREF="check-returns.html"
+>Check All System Call Returns</A
+></DT
+><DT
+>8.6. <A
+HREF="avoid-vfork.html"
+>Avoid Using vfork(2)</A
+></DT
+><DT
+>8.7. <A
+HREF="embedded-content-bugs.html"
+>Counter Web Bugs When Retrieving Embedded Content</A
+></DT
+><DT
+>8.8. <A
+HREF="hide-sensitive-information.html"
+>Hide Sensitive Information</A
+></DT
+></DL
+></DD
+><DT
+>9. <A
+HREF="output.html"
+>Send Information Back Judiciously</A
+></DT
+><DD
+><DL
+><DT
+>9.1. <A
+HREF="minimize-feedback.html"
+>Minimize Feedback</A
+></DT
+><DT
+>9.2. <A
+HREF="no-comments.html"
+>Don&#8217;t Include Comments</A
+></DT
+><DT
+>9.3. <A
+HREF="handle-full-output.html"
+>Handle Full/Unresponsive Output</A
+></DT
+><DT
+>9.4. <A
+HREF="control-formatting.html"
+>Control Data Formatting (Format Strings)</A
+></DT
+><DT
+>9.5. <A
+HREF="output-character-encoding.html"
+>Control Character Encoding in Output</A
+></DT
+><DT
+>9.6. <A
+HREF="prevent-include-access.html"
+>Prevent Include/Configuration File Access</A
+></DT
+></DL
+></DD
+><DT
+>10. <A
+HREF="language-specific.html"
+>Language-Specific Issues</A
+></DT
+><DD
+><DL
+><DT
+>10.1. <A
+HREF="c-cpp.html"
+>C/C++</A
+></DT
+><DT
+>10.2. <A
+HREF="perl.html"
+>Perl</A
+></DT
+><DT
+>10.3. <A
+HREF="python.html"
+>Python</A
+></DT
+><DT
+>10.4. <A
+HREF="shell.html"
+>Shell Scripting Languages (sh and csh Derivatives)</A
+></DT
+><DT
+>10.5. <A
+HREF="ada.html"
+>Ada</A
+></DT
+><DT
+>10.6. <A
+HREF="java.html"
+>Java</A
+></DT
+><DT
+>10.7. <A
+HREF="tcl.html"
+>Tcl</A
+></DT
+><DT
+>10.8. <A
+HREF="php.html"
+>PHP</A
+></DT
+></DL
+></DD
+><DT
+>11. <A
+HREF="special.html"
+>Special Topics</A
+></DT
+><DD
+><DL
+><DT
+>11.1. <A
+HREF="passwords.html"
+>Passwords</A
+></DT
+><DT
+>11.2. <A
+HREF="web-authentication.html"
+>Authenticating on the Web</A
+></DT
+><DD
+><DL
+><DT
+>11.2.1. <A
+HREF="web-authentication.html#WEB-AUTHENTICATION-LOGIN"
+>Authenticating on the Web: Logging In</A
+></DT
+><DT
+>11.2.2. <A
+HREF="web-authentication.html#WEB-AUTHENTICATION-SUBSEQUENT"
+>Authenticating on the Web: Subsequent Actions</A
+></DT
+><DT
+>11.2.3. <A
+HREF="web-authentication.html#WEB-AUTHENTICATION-LOGOUT"
+>Authenticating on the Web: Logging Out</A
+></DT
+></DL
+></DD
+><DT
+>11.3. <A
+HREF="random-numbers.html"
+>Random Numbers</A
+></DT
+><DT
+>11.4. <A
+HREF="protect-secrets.html"
+>Specially Protect Secrets (Passwords and Keys) in User Memory</A
+></DT
+><DT
+>11.5. <A
+HREF="crypto.html"
+>Cryptographic Algorithms and Protocols</A
+></DT
+><DD
+><DL
+><DT
+>11.5.1. <A
+HREF="crypto.html#CRYPTO-PROTOCOLS"
+>Cryptographic Protocols</A
+></DT
+><DT
+>11.5.2. <A
+HREF="crypto.html#SYMMETRIC-ENCRYPTION"
+>Symmetric Key Encryption Algorithms</A
+></DT
+><DT
+>11.5.3. <A
+HREF="crypto.html#PUBLIC-KEY-ENCRYPTION"
+>Public Key Algorithms</A
+></DT
+><DT
+>11.5.4. <A
+HREF="crypto.html#HASH"
+>Cryptographic Hash Algorithms</A
+></DT
+><DT
+>11.5.5. <A
+HREF="crypto.html#INTEGRITY-CHECK"
+>Integrity Checking</A
+></DT
+><DT
+>11.5.6. <A
+HREF="crypto.html#RMAC"
+>Randomized Message Authentication Mode (RMAC)</A
+></DT
+><DT
+>11.5.7. <A
+HREF="crypto.html#CRYPTO-OTHER"
+>Other Cryptographic Issues</A
+></DT
+></DL
+></DD
+><DT
+>11.6. <A
+HREF="use-pam.html"
+>Using PAM</A
+></DT
+><DT
+>11.7. <A
+HREF="tools.html"
+>Tools</A
+></DT
+><DT
+>11.8. <A
+HREF="windows-ce.html"
+>Windows CE</A
+></DT
+><DT
+>11.9. <A
+HREF="write-audit-records.html"
+>Write Audit Records</A
+></DT
+><DT
+>11.10. <A
+HREF="physical-emissions.html"
+>Physical Emissions</A
+></DT
+><DT
+>11.11. <A
+HREF="miscellaneous.html"
+>Miscellaneous</A
+></DT
+></DL
+></DD
+><DT
+>12. <A
+HREF="conclusion.html"
+>Conclusion</A
+></DT
+><DT
+>13. <A
+HREF="bibliography.html"
+>Bibliography</A
+></DT
+><DT
+>A. <A
+HREF="document-history.html"
+>History</A
+></DT
+><DT
+>B. <A
+HREF="acknowledgements.html"
+>Acknowledgements</A
+></DT
+><DT
+>C. <A
+HREF="about-license.html"
+>About the Documentation License</A
+></DT
+><DT
+>D. <A
+HREF="fdl.html"
+>GNU Free Documentation License</A
+></DT
+><DT
+>E. <A
+HREF="endorsements.html"
+>Endorsements</A
+></DT
+><DT
+>F. <A
+HREF="about-author.html"
+>About the Author</A
+></DT
+><DT
+><A
+HREF="i3922.html"
+>Index</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="LOT"
+><DL
+CLASS="LOT"
+><DT
+><B
+>List of Tables</B
+></DT
+><DT
+>3-1. <A
+HREF="files.html#AEN687"
+>POSIX ACL Entry Types</A
+></DT
+><DT
+>5-1. <A
+HREF="character-encoding.html#AEN1327"
+>Legal UTF-8 Sequences</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="LOT"
+><DL
+CLASS="LOT"
+><DT
+><B
+>List of Figures</B
+></DT
+><DT
+>1-1. <A
+HREF="introduction.html#ABSTRACT-PROGRAM"
+>Abstract View of a Program</A
+></DT
+><DT
+>6-1. <A
+HREF="buffer-overflow.html#TRAIN-OVERFLOW-BUFFER"
+>A physical buffer overflow: The Montparnasse derailment of 1895</A
+></DT
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="introduction.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Introduction</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

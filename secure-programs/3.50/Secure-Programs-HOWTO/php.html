@@ -1,0 +1,535 @@
+<HTML
+><HEAD
+><TITLE
+>PHP</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Language-Specific Issues"
+HREF="language-specific.html"><LINK
+REL="PREVIOUS"
+TITLE="Tcl"
+HREF="tcl.html"><LINK
+REL="NEXT"
+TITLE="Special Topics"
+HREF="special.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="tcl.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 10. Language-Specific Issues</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="special.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="PHP"
+></A
+>10.8. PHP</H1
+><P
+>SecureReality has put out a very interesting paper titled
+``A Study In Scarlet - Exploiting Common Vulnerabilities in PHP''
+[Clowes 2001],
+which discusses some of the problems in writing secure programs in PHP,
+particularly in versions before PHP 4.1.0.
+Clowes concludes that
+``it is very hard to write a secure PHP application (in the
+default configuration of PHP), even if you try''.</P
+><P
+>Granted, there are security issues in any language, but one
+particular issue stands out in older versions of PHP that arguably makes
+older PHP versions
+less secure than most languages: the way it loads data into its namespace.
+By default, in PHP (versions 4.1.0 and lower)
+all environment variables and values sent to PHP over the web
+are automatically loaded into the same namespace (global variables)
+that normal variables are loaded into - so attackers can set arbitrary
+variables to arbitrary values, which keep their values unless explicitly
+reset by a PHP program.
+In addition, PHP automatically creates variables with a
+default value when they're first requested, so
+it's common for PHP programs to not initialize variables.
+If you forget to set a variable, PHP can report it, but
+by default PHP won't - and note that this simply an error report, it
+won't stop an attacker who finds an unusual way to cause it.
+Thus, by default PHP allows an attacker to
+completely control the values of all variables in a program unless
+the program takes special care to override the attacker.
+Once the program takes over, it can reset these variables,
+but failing to reset
+any variable (even one not obvious) might open a vulnerability in the
+PHP program.</P
+><P
+>For example, the following PHP program (an example from Clowes)
+intends to only let those who
+know the password to get some important information, but an attacker
+can set ``auth'' in their web browser and subvert the authorization check:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> &#60;?php
+  if ($pass == "hello")
+   $auth = 1;
+  ...
+  if ($auth == 1)
+   echo "some important information";
+ ?&#62;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>I and many others have complained about this particularly
+dangerous problem; it's particularly a problem because
+PHP is widely used.
+A language that's supposed to be easy to use better make
+it easy to write secure programs in, after all.
+It's possible to disable this misfeature in PHP by turning the setting
+``register_globals'' to ``off'', but by default PHP versions up through 4.1.0
+default set this to ``on'' and PHP before 4.1.0 is harder
+to use with register_globals off.
+The PHP developers warned in their PHP 4.1.0 announcenment that
+``as of the next semi-major version of PHP, new installations of PHP will
+default to having register_globals set to off.''
+This has now happened; as of PHP version 4.2.0, External 
+variables (from the environment, the HTTP request, cookies or the web 
+server) are no longer registered in the global scope by default. The 
+preferred method of accessing these external variables is by using the new 
+Superglobal arrays, introduced in PHP 4.1.0.</P
+><P
+>PHP with ``register_globals'' set to ``on'' is a dangerous choice
+for nontrivial programs - it's just too easy to write insecure programs.
+However, once ``register_globals'' is set to ``off'', PHP is quite
+a reasonable language for development.</P
+><P
+>The secure default should include setting
+``register_globals'' to ``off'', and also including several functions to
+make it much easier for users to specify and limit the input they'll
+accept from external sources.
+Then web servers (such as Apache) could separately configure this
+secure PHP installation.
+Routines could be placed in the PHP library to make it
+easy for users to list the input variables they want to accept;
+some functions could check the patterns these variables must have
+and/or the type that the variable must be coerced to.
+In my opinion, PHP is a bad choice for secure web development
+if you set register_globals on.</P
+><P
+>As I suggested in earlier versions of this book,
+PHP has been modified to become a reasonable choice
+for secure web development.
+However, note that PHP doesn't have a particularly good
+security vulnerability track record
+(e.g., register_globals, a file upload problem, and a format
+string problem in the error reporting library);
+I believe that security issues were not considered sufficiently in
+early editions of PHP;
+I also think that the PHP developers are now emphasizing security
+and that these security issues are finally getting worked out.
+One evidence is the major change that the PHP developers have made to
+get turn off register_globals; this had a significant impact on
+PHP users, and their willingness to make this change is a good sign.
+Unfortunately, it's not yet clear how secure PHP really is;
+PHP just hasn't had much of a track record now that the developers
+of PHP are examining it seriously for security issues.
+Hopefully this will become clear quickly.</P
+><P
+>If you've decided to use PHP, here are some of my recommendations
+(many of these recommendations are based on ways to counter
+the issues that Clowes raises):
+<P
+></P
+><UL
+><LI
+><P
+>Set the PHP configuration option
+``register_globals'' off, and use PHP 4.2.0 or greater.
+PHP 4.1.0 adds several special arrays, particularly $_REQUEST,
+which makes it far simpler to develop software in PHP
+when ``register_globals'' is off.
+Setting register_globals off, which is the default in PHP 4.2.0,
+completely eliminates the most common PHP attacks.
+If you're assuming that register_globals is off, you should check for
+this first (and halt if it's not true) - that way, people who install
+your program will quickly know there's a problem.
+Note that many third-party PHP applications cannot
+work with this setting, so it can be difficult to
+keep it off for an entire website.
+It's possible to set register_globals off for only some programs.
+For example, for Apache, you could insert these lines into the file .htaccess
+in the PHP directory (or use Directory directives to control it further):
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> php_flag register_globals Off
+ php_flag track_vars On</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+However, the .htaccess file itself is ignored unless the Apache web server
+is configured to permit overrides; often the Apache global configuration
+is set so that AllowOverride is set to None.
+So, for Apache users,
+if you can convince your web hosting service to set ``AllowOverride Options''
+in their configuration file (often /etc/http/conf/http.conf) for your
+host, do that.
+Then write helper functions to simplify loading the data you need
+(and only that data).</P
+></LI
+><LI
+><P
+>If you must develop software where register_globals might be on while
+running (e.g., a widely-deployed PHP application),
+always set values not provided by the user.
+Don't depend on PHP
+default values, and don't trust any variable you haven't explicitly set.
+Note that you have to do this for <EM
+>every</EM
+> entry point
+(e.g., every PHP program or HTML file using PHP).
+The best approach is to begin each PHP program by setting all variables
+you'll be using, even if you're simply resetting them to the
+usual default values (like "" or 0).
+This includes global variables referenced in included files,
+even all libraries, transitively.
+Unfortunately, this makes this recommendation hard to do, because few
+developers truly know and understand all global variables that may be used
+by all functions they call.
+One lesser alternative is to search through HTTP_GET_VARS, HTTP_POST_VARS,
+HTTP_COOKIE_VARS, and HTTP_POST_FILES to see if the user provided the data -
+but programmers often forget to check all sources, and what happens if
+PHP adds a new data source
+(e.g., HTTP_POST_FILES wasn't in old versions of PHP).
+Of course, this simply tells you how to make the best of a bad
+situation; in case you haven't noticed yet, turn off
+register_globals!</P
+></LI
+><LI
+><P
+>Set the error reporting level to E_ALL, and resolve all errors reported
+by it during testing.
+Among other things, this will complain about un-initialized variables,
+which are a key issues in PHP.
+This is a good idea anyway whenever you start using PHP, because
+this helps debug programs, too.
+There are many ways to set the error reporting level, including in the
+``php.ini'' file (global), the ``.htttpd.conf'' file (single-host),
+the ``.htaccess'' file (multi-host), or at the top of the script
+through the error_reporting function.
+I recommend setting the error reporting level in both the php.ini file
+and also at the top of the script; that way, you're protected if
+(1) you forget to insert the command at the top of the script, or (2) move the
+program to another machine and forget to change the php.ini file.
+Thus, every PHP program should begin like this:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  &#60;?php error_reporting(E_ALL);?&#62;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+It could be argued that this error reporting should be turned on
+during development, but turned off when actually run on a real site
+(since such error message could give useful information to an attacker).
+The problem is that if they're disabled during ``actual use'' it's all
+too easy to leave them disabled during development.
+So for the moment, I suggest the simple approach of simply including it
+in every entrance.
+A much better approach is to record all errors, but direct the error reports
+so they're only included in a log file
+(instead of having them reported to the attacker).</P
+></LI
+><LI
+><P
+>Filter any user information used to create filenames carefully, in
+particular to prevent remote file access.
+PHP by default comes with ``remote files'' functionality -- that means
+that file-opening commands like fopen(), that in other languages can
+only open local files, can actually be used to invoke web or ftp
+requests from another site.</P
+></LI
+><LI
+><P
+>Do not use old-style PHP file uploads; use the HTTP_POST_FILES array
+and related functions.
+PHP supports file uploads by uploading the file to some
+temporary directory with a special filename.
+PHP originally set a collection of variables to indicate where that filename
+was, but since an attacker can control variable names and their values,
+attackers could use that ability to cause great mischief.
+Instead, always use HTTP_POST_FILES and related functions to access
+uploaded files.
+Note that even in this case, PHP's approach permits attackers to
+temporarily upload files to you with arbitrary content, which is
+risky by itself.</P
+></LI
+><LI
+><P
+>Only place protected entry points in the document tree; place all
+other code (which should be most of it) outside the document tree.
+PHP has a history of unfortunate advice on this topic.
+Originally, PHP users were supposed to use the ``.inc'' (include)
+extension for ``included'' files, but these included files often had
+passwords and other information, and Apache would just give requesters
+the contents of the ``.inc'' files when asked to do so when they
+were in the document tree.
+Then developers gave all files a ``.php'' extension - which meant that the
+contents weren't seen, but now files never meant to be entry points
+became entry points and were sometimes exploitable.
+As mentioned earlier, the usual security advice is the best:
+place only the proected entry points (files) in the document tree, and
+place other code (e.g., libraries) outside the document tree.
+There shouldn't be any ``.inc'' files in the document tree at all.</P
+></LI
+><LI
+><P
+>Avoid the session mechanism.
+The ``session'' mechanism is handy for storing persistent data, but
+its current implementation has many problems.
+First, by default sessions store information in temporary files - so
+if you're on a multi-hosted system, you open yourself up to many attacks and
+revelations.
+Even those who aren't currently multi-hosted may find themselves
+multi-hosted later!
+You can "tie" this information into a database instead of the filesystem,
+but if others on a multi-hosted database can access that database with the
+same permissions, the problem is the same.
+There are also ambiguities if you're not careful
+(``is this the session value or an attacker's value''?)
+and this is another case where an attacker can force a file or
+key to reside
+on the server with content of their choosing - a dangerous situation -
+and the attacker can even control to some extent the name of the file or key
+where this data will be placed.</P
+></LI
+><LI
+><P
+>Use directives to limit privileges
+(such as safe_mode, disable_function, and open_basedir), but do not rely
+on them.
+These directives can help limit some simple casual
+attacks, so they're worth applying.
+However, they're unlikely to be sufficient to protect against real attacks;
+they depend only on the user-space PHP program to do protection, a function
+it's not really designed to perform.
+Instead, you should employ operating system protections (e.g., running
+separate processes and users) for serious protection.</P
+></LI
+><LI
+><P
+>For all inputs, check that they match a pattern for acceptability
+(as with any language), and then use type casting to coerce non-string data
+into the type it should have.
+Develop ``helper'' functions to easily check and import a selected list
+of (expected) inputs.
+PHP is loosely typed, and this can cause trouble.
+For example, if an input datum has the value "000", it won't be equal to "0"
+nor is it empty().
+This is particularly important for associative arrays, because their
+indexes are strings; this means that $data["000"]
+is different than $data["0"].
+For example, to make sure $bar has type double (after making sure it
+only has the format legal for a double):
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  $bar = (double) $bar; </PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+></LI
+><LI
+><P
+>Be careful of any functions that
+execute PHP code as strings - make sure attackers cannot control
+the string contents.
+This includes
+eval(),
+exec(),
+include(),
+passthru(),
+popen(),
+preg_replace() when the /e modifier is used,
+require(),
+system(),
+and the backtick operator.</P
+></LI
+><LI
+><P
+>Be especially careful of risky functions.
+For example, this includes functions that open files
+(e.g., fopen(), readfile(), and file()); make sure attackers cannot
+force the program to open arbitrary files.
+Older versions of PHP (prior to 4.3.0) had a buffer overflow vulnerability
+in the wordwrap() function, so if you use old versions beware
+(or even better, upgrade, and make sure your customers upgrade by
+checking the version number in the installer).</P
+></LI
+><LI
+><P
+>Use magic_quotes_gpc() where appropriate - this eliminates many kinds of
+attacks.</P
+></LI
+><LI
+><P
+>Avoid file uploads, and consider modifying the php.ini file to
+disable them (file_uploads = Off).
+File uploads have had security holes in the past, so on older PHP's this
+is a necessity, and until more experience shows that they're safe this
+isn't a bad thing to remove.
+Remember, in general, to secure a system you should disable or remove
+anything you don't need.</P
+></LI
+></UL
+></P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="tcl.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="special.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Tcl</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="language-specific.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Special Topics</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

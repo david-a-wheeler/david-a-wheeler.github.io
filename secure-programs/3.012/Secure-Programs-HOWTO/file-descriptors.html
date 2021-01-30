@@ -1,0 +1,159 @@
+<HTML
+><HEAD
+><TITLE
+>File Descriptors</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Validate All Input"
+HREF="input.html"><LINK
+REL="PREVIOUS"
+TITLE="Environment Variables"
+HREF="environment-variables.html"><LINK
+REL="NEXT"
+TITLE="File Names"
+HREF="file-names.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="environment-variables.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Validate All Input</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="file-names.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="FILE-DESCRIPTORS"
+>5.3. File Descriptors</A
+></H1
+><P
+>A program is passed a set of ``open file descriptors'', that is,
+pre-opened files.
+A setuid/setgid program must deal with the fact that the user gets to
+select what files are open and to what (within their permission limits).
+A setuid/setgid program must not assume that opening a new file will always
+open into a fixed file descriptor id, or that the open will succeed at all.
+It must also not assume that standard input (stdin),
+standard output (stdout), and standard error (stderr)
+refer to a terminal or are even open.</P
+><P
+>The rationale behind this is easy; since an attacker can open or
+close a file descriptor before starting the program,
+the attacker could create an unexpected situation.
+If the attacker closes the standard output, when the program opens
+the next file it will be opened as though it were standard output,
+and then it will send all standard output to that file as well.
+Some C libraries will automatically open stdin, stdout, and stderr
+if they aren't already open (to /dev/null), but this isn't true on
+all Unix-like systems.
+Also, these libraries can't be completely depended on; for example,
+on some systems it's possible to create a race condition
+that causes this automatic opening to fail (and still run the program).</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="environment-variables.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="file-names.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Environment Variables</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="input.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>File Names</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

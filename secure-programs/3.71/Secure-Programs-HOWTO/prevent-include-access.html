@@ -1,0 +1,248 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Prevent Include/Configuration File Access</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Send Information Back Judiciously"
+HREF="output.html"><LINK
+REL="PREVIOUS"
+TITLE="Control Character Encoding in Output"
+HREF="output-character-encoding.html"><LINK
+REL="NEXT"
+TITLE="Language-Specific Issues"
+HREF="language-specific.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="output-character-encoding.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 9. Send Information Back Judiciously</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="language-specific.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="PREVENT-INCLUDE-ACCESS"
+>9.6. Prevent Include/Configuration File Access</A
+></H1
+><P
+>When developing web based applications,
+do not allow users to access (read) files such as the program include and
+configuration files.
+This data may provide enough information (e.g., passwords) to break into
+the system.
+Note that this guideline sometimes also applies to other kinds of applications.
+There are several actions you can take to do this, including:
+<P
+></P
+><UL
+><LI
+><P
+>Place
+the include/configuration files outside of the web documentation
+root (so that the web server will never serve the files).
+Really, this is the best approach unless there&#8217;s some reason the
+files have to be inside the document root.</P
+></LI
+><LI
+><P
+>Configure the web server so it will not serve include files as
+text.  For example, if you&#8217;re using Apache,
+you can add a handler or an action for .inc files like so:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> &#60;Files *.inc&#62;
+   Order allow,deny
+   Deny from all
+ &#60;/Files&#62;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+></LI
+><LI
+><P
+>Place the include files
+in a protected directory (using .htaccess), and designate them as files
+that won&#8217;t be served.</P
+></LI
+><LI
+><P
+>Use a filter to deny access to the files.
+For Apache, this can be done using:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> &#60;Files ~ "\.phpincludes"&#62;
+    Order allow,deny
+    Deny from all
+ &#60;/Files&#62;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+If you need full regular expressions to match filenames, in Apache you
+could use the FilesMatch directive.</P
+></LI
+><LI
+><P
+>If your include file is a valid script file,
+which your server will parse,
+make sure that it doesn&#8217;t act on user-supplied parameters and that it&#8217;s
+designed to be secure.</P
+></LI
+></UL
+></P
+><P
+>These approaches won&#8217;t protect you from users who
+have access to the directories your files are in if they are world-readable.
+You could change the permissions of the files so
+that only the uid/gid of the webserver can read these files.
+However, this approach won&#8217;t work if the user can get the web server to
+run his own scripts (the user can just write scripts to access your files).
+Fundamentally, if your site is being hosted on a server shared with
+untrusted people, it&#8217;s harder to secure the system.
+One approach is to run multiple web serving programs, each with different
+permissions; this provides more security but is painful in practice.
+Another approach is to set these files to be read only by your uid/gid,
+and have the server run scripts at <SPAN
+CLASS="QUOTE"
+>&#8220;your&#8221;</SPAN
+> permission.
+This latter approach has its own problems: it means that certain parts of
+the server must have root privileges, and that the script may
+have more permissions than necessary.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="output-character-encoding.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="language-specific.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Control Character Encoding in Output</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="output.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Language-Specific Issues</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

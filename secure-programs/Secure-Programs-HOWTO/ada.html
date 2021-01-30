@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Ada</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Language-Specific Issues"
+HREF="language-specific.html"><LINK
+REL="PREVIOUS"
+TITLE="Shell Scripting Languages (sh and csh Derivatives)"
+HREF="shell.html"><LINK
+REL="NEXT"
+TITLE="Java"
+HREF="java.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="shell.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 10. Language-Specific Issues</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="java.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="ADA"
+>10.5. Ada</A
+></H1
+><P
+>In Ada95, the Unbounded_String type is often more flexible than the
+String type because it is automatically resized as necessary.
+However, don&#8217;t store especially sensitive secret values such as passwords
+or secret keys in an Unbounded_String, since core dumps and page areas
+might still hold them later.
+Instead, use the String type for this data, lock it into memory
+while it&#8217;s used, and overwrite the data as
+soon as possible with some constant value such as (others =&#62; ' ').
+Use the Ada pragma Inspection_Point on the object holding the secret
+after erasing the memory.
+That way, you can be certain that
+the object containing the secret will really be erased
+(and that the the overwriting won&#8217;t be optimized away).</P
+><P
+>Like many other languages,
+Ada&#8217;s string types (including String and Unbounded_String)
+can hold ASCII 0.
+If that&#8217;s then passed to a C library (including a kernel), that can be
+interpreted very differently by the library than the caller intended.</P
+><P
+>It&#8217;s common for beginning Ada programmers to believe that the
+String type&#8217;s first index value is always 1, but this isn&#8217;t true if
+the string is sliced.
+Avoid this error.</P
+><P
+>It&#8217;s worth noting that SPARK is
+a <SPAN
+CLASS="QUOTE"
+>&#8220;high-integrity subset of the Ada programming language&#8221;</SPAN
+>;
+SPARK users use a tool called the <SPAN
+CLASS="QUOTE"
+>&#8220;SPARK Examiner&#8221;</SPAN
+> to check
+conformance to SPARK rules, including flow analysis, and there are
+various supports for full formal proof of the code if desired.
+<A
+HREF="http://www.sparkada.com"
+TARGET="_top"
+>See the SPARK website for more
+information</A
+>.
+To my knowledge, there are no OSS/FS SPARK tools.
+If you&#8217;re storing passwords and private keys you should still
+lock them into memory if appropriate
+and overwrite them as soon as possible.
+Note that SPARK is often used in environments where paging does not occur.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="shell.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="java.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Shell Scripting Languages (sh and csh Derivatives)</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="language-specific.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Java</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

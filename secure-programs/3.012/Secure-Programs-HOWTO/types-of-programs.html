@@ -1,0 +1,242 @@
+<HTML
+><HEAD
+><TITLE
+>Types of Secure Programs</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Background"
+HREF="background.html"><LINK
+REL="PREVIOUS"
+TITLE="Is Open Source Good for Security?"
+HREF="open-source-security.html"><LINK
+REL="NEXT"
+TITLE="Paranoia is a Virtue"
+HREF="paranoia.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="open-source-security.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 2. Background</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="paranoia.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="TYPES-OF-PROGRAMS"
+>2.5. Types of Secure Programs</A
+></H1
+><P
+>Many different types of programs may need to be secure programs
+(as the term is defined in this book).
+Some common types are:
+
+<P
+></P
+><UL
+><LI
+><P
+>Application programs used as viewers of remote data.
+Programs used as viewers (such as word processors or file format viewers)
+are often asked to view data sent remotely by an untrusted user
+(this request may be automatically invoked by a web browser).
+Clearly, the untrusted
+user's input should not be allowed to cause the application
+to run arbitrary programs.
+It's usually unwise to support initialization macros (run when the data
+is displayed); if you must, then you must create a secure sandbox
+(a complex and error-prone task that almost never succeeds, which is why
+you shouldn't support macros in the first place).
+Be careful of issues such as buffer overflow, discussed in
+<A
+HREF="buffer-overflow.html"
+>Chapter 6</A
+>, which might
+allow an untrusted user to force the viewer to run an arbitrary program.</P
+></LI
+><LI
+><P
+>Application programs used by the administrator (root).
+Such programs shouldn't trust information that can be controlled
+by non-administrators.</P
+></LI
+><LI
+><P
+>Local servers (also called daemons).</P
+></LI
+><LI
+><P
+>Network-accessible servers (sometimes called network daemons).</P
+></LI
+><LI
+><P
+>Web-based applications (including CGI scripts).
+These are a special case of network-accessible servers, but they're
+so common they deserve their own category.
+Such programs are invoked indirectly via a web server, which filters out
+some attacks but nevertheless leaves many attacks that must be withstood.</P
+></LI
+><LI
+><P
+>Applets (i.e., programs downloaded to the client for automatic execution).
+This is something Java is especially famous for, though other languages
+(such as Python) support mobile code as well.
+There are several security viewpoints here; the implementer of the
+applet infrastructure on the client side has to make sure that the
+only operations allowed are ``safe'' ones, and the writer of an applet has
+to deal with the problem of hostile hosts (in other words, you can't
+normally trust the client).
+There is some research attempting to deal with running applets on
+hostile hosts, but frankly
+I'm skeptical of the value of these approaches
+and this subject is exotic enough that I don't cover it further here.</P
+></LI
+><LI
+><P
+>setuid/setgid programs.
+These programs are invoked by a local user and, when executed, are
+immediately granted the privileges of the program's owner and/or
+owner's group.
+In many ways these are the hardest programs to secure, because so many
+of their inputs are under the control of the untrusted user and some
+of those inputs are not obvious.</P
+></LI
+></UL
+>&#13;</P
+><P
+>This book merges the issues of these different types of program into
+a single set.
+The disadvantage of this approach is that some of the issues identified
+here don't apply to all types of programs.
+In particular, setuid/setgid programs have many surprising inputs and several
+of the guidelines here only apply to them.
+However, things are not so clear-cut, because 
+a particular program may cut across these boundaries (e.g., a CGI script
+may be setuid or setgid, or be configured in a way that has the same effect),
+and some programs are divided into several executables each of which
+can be considered a different ``type'' of program.
+The advantage of considering all of these program types together is that we can
+consider all issues without trying to apply an inappropriate category
+to a program.
+As will be seen, many of the principles apply to all programs that
+need to be secured.</P
+><P
+>There is a slight bias in this book toward programs written in
+C, with some notes on other languages such as C++, Perl, PHP, Python,
+Ada95, and Java.
+This is because C is the most common language for
+implementing secure programs on Unix-like systems
+(other than CGI scripts, which tend to use languages such as
+Perl, PHP, or Python).
+Also, most other languages' implementations call the C library.
+This is not to imply that C is somehow the ``best'' language for this purpose,
+and most of the principles described here apply regardless of the
+programming language used.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="open-source-security.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="paranoia.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Is Open Source Good for Security?</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="background.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Paranoia is a Virtue</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

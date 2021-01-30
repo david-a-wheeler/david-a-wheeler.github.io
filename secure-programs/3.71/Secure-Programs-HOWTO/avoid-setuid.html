@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Avoid Creating Setuid/Setgid Scripts</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Design Your Program for Security"
+HREF="internals.html"><LINK
+REL="PREVIOUS"
+TITLE="Minimize the Functionality of a Component"
+HREF="minimize-functionality.html"><LINK
+REL="NEXT"
+TITLE="Configure Safely and Use Safe Defaults"
+HREF="safe-configure.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="minimize-functionality.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 7. Design Your Program for Security</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="safe-configure.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AVOID-SETUID"
+>7.6. Avoid Creating Setuid/Setgid Scripts</A
+></H1
+><P
+>Many Unix-like systems, in particular Linux, simply ignore the
+setuid and setgid bits on scripts to avoid the race condition
+described earlier.
+Since support for setuid scripts varies on Unix-like systems,
+they&#8217;re best avoided in new applications where possible.
+As a special case, Perl includes a special setup to support setuid Perl
+scripts, so using setuid and setgid is acceptable in Perl if you
+truly need this kind of functionality.
+If you need to support this kind of functionality in your own
+interpreter, examine how Perl does this.
+Otherwise, a simple approach is to <SPAN
+CLASS="QUOTE"
+>&#8220;wrap&#8221;</SPAN
+> the script with a small
+setuid/setgid executable that creates a safe environment
+(e.g., clears and sets environment variables) and then
+calls the script (using the script&#8217;s full path).
+Make sure that the script cannot be changed by an attacker!
+Shell scripting languages have additional problems, and really should
+not be setuid/setgid; see <A
+HREF="shell.html"
+>Section 10.4</A
+>
+for more information about this.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="minimize-functionality.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="safe-configure.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Minimize the Functionality of a Component</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="internals.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Configure Safely and Use Safe Defaults</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

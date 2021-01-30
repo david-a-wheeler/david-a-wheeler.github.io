@@ -1,0 +1,1222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Filter HTML/URIs That May Be Re-presented</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Validate All Input"
+HREF="input.html"><LINK
+REL="PREVIOUS"
+TITLE="Prevent Cross-site Malicious Content on Input"
+HREF="input-protection-cross-site.html"><LINK
+REL="NEXT"
+TITLE="Forbid HTTP GET To Perform Non-Queries"
+HREF="avoid-get-non-queries.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="input-protection-cross-site.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Validate All Input</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="avoid-get-non-queries.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="FILTER-HTML"
+>5.13. Filter HTML/URIs That May Be Re-presented</A
+></H1
+><P
+>One special case where cross-site malicious content must be
+prevented are web applications
+which are designed to accept HTML or XHTML from one user, and then send it on
+to other users
+(see <A
+HREF="cross-site-malicious-content.html"
+>Section 7.16</A
+> for
+more information on cross-site malicious content).
+The following subsections discuss filtering this specific kind of input,
+since handling it is such a common requirement.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="REMOVE-HTML-TAGS"
+>5.13.1. Remove or Forbid Some HTML Data</A
+></H2
+><P
+>It&#8217;s safest to remove all possible (X)HTML tags so they cannot affect anything,
+and this is relatively easy to do.
+As noted above, you should already be identifying the list of legal
+characters, and rejecting or removing those characters that aren&#8217;t
+in the list.
+In this filter, simply don&#8217;t include the following characters in
+the list of legal characters: <SPAN
+CLASS="QUOTE"
+>&#8220;&#60;&#8221;</SPAN
+>, <SPAN
+CLASS="QUOTE"
+>&#8220;&#62;&#8221;</SPAN
+>, and <SPAN
+CLASS="QUOTE"
+>&#8220;&#38;&#8221;</SPAN
+> (and if
+they&#8217;re used in attributes, the double-quote character <SPAN
+CLASS="QUOTE"
+>&#8220;"&#8221;</SPAN
+>).
+If browsers only operated according the HTML specifications, the <SPAN
+CLASS="QUOTE"
+>&#8220;&#62;"&#8221;</SPAN
+>
+wouldn&#8217;t need to be removed, but in practice it must be removed.
+This is because some browsers assume that the author of the page
+really meant to put in an opening "&#60;" and <SPAN
+CLASS="QUOTE"
+>&#8220;helpfully&#8221;</SPAN
+> insert one -
+attackers can exploit this behavior and use the "&#62;" to create an
+undesired "&#60;".</P
+><P
+>Usually the character set for transmitting HTML is
+ISO-8859-1 (even when sending international text),
+so the filter should also omit most control characters (linefeed and
+tab are usually okay) and characters with their high-order bit set.</P
+><P
+>One problem with this approach is that it can really surprise users,
+especially those entering international text if all international
+text is quietly removed.
+If the invalid characters are quietly removed without warning,
+that data will be irrevocably lost and cannot be reconstructed later.
+One alternative is forbidding such characters and sending error messages
+back to users who attempt to use them.
+This at least warns users, but doesn&#8217;t give them the functionality
+they were looking for.
+Other alternatives are encoding this data or validating this data,
+which are discussed next.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="ENCODING-HTML-TAGS"
+>5.13.2. Encoding HTML Data</A
+></H2
+><P
+>An alternative that is nearly as safe
+is to transform the critical characters so they won&#8217;t
+have their usual meaning in HTML.
+This can be done by translating all "&#60;" into "&#38;lt;",
+"&#62;" into "&#38;gt;", and "&#38;" into "&#38;amp;".
+Arbitrary international characters can be encoded in Latin-1
+using the format "&#38;#value;" - do not forget the ending semicolon.
+Encoding the international characters means you must know what the
+input encoding was, of course.</P
+><P
+>One possible danger here is that if these encodings are accidentally
+interpreted twice, they will become a vulnerability.
+However, this approach at least permits later users to see the
+"intent" of the input.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="VALIDATING-HTML-TAGS"
+>5.13.3. Validating HTML Data</A
+></H2
+><P
+>Some applications, to work at all, must accept HTML from third parties
+and send them on to their users.
+Beware - you are treading dangerous ground at this point; be sure
+that you really want to do this.
+Even the idea of accepting HTML from arbitrary places
+is controversial among some security practitioners, because it is extremely
+difficult to get it right.</P
+><P
+>However, if your application must accept HTML, and you believe
+that it&#8217;s worth the risk, at least identify a list
+of <SPAN
+CLASS="QUOTE"
+>&#8220;safe&#8221;</SPAN
+> HTML commands and only permit those commands.</P
+><P
+>Here is a minimal set of safe HTML tags
+that might be useful for applications (such as guestbooks)
+that support short comments:
+&#60;p&#62; (paragraph),
+&#60;b&#62; (bold),
+&#60;i&#62; (italics),
+&#60;em&#62; (emphasis),
+&#60;strong&#62; (strong emphasis),
+&#60;pre&#62; (preformatted text),
+&#60;br&#62; (forced line break - note it doesn&#8217;t require a closing tag),
+as well as all their ending tags.</P
+><P
+>Not only do you need to ensure that only a small set
+of <SPAN
+CLASS="QUOTE"
+>&#8220;safe&#8221;</SPAN
+> HTML commands are accepted, you also need to ensure
+that they are properly nested and closed
+(i.e., that the HTML commands are <SPAN
+CLASS="QUOTE"
+>&#8220;balanced&#8221;</SPAN
+>).
+In XML, this is termed <SPAN
+CLASS="QUOTE"
+>&#8220;well-formed&#8221;</SPAN
+> data.
+A few exceptions could be made if you&#8217;re accepting standard HTML
+(e.g., supporting an implied &#60;/p&#62; where not provided before a
+&#60;p&#62; would be fine), but trying to accept HTML in its full
+generality (which can infer balancing closing tags in many cases)
+is not needed for most applications.
+Indeed, if you&#8217;re trying to stick to XHTML (instead of HTML), then
+well-formedness is a requirement.
+Also, HTML tags are case-insensitive; tags can be upper case,
+lower case, or a mixture.
+However, if you intend to accept XHTML
+then you need to require all tags to be in lower case
+(XML is case-sensitive; XHTML uses XML and requires the tags to be
+in lower case).</P
+><P
+>Here are a few random tips about doing this.
+Usually you should design whatever surrounds the HTML text and the
+set of permitted tags so that the contributed text cannot be misinterpreted
+as text from the <SPAN
+CLASS="QUOTE"
+>&#8220;main&#8221;</SPAN
+> site (to prevent forgeries).
+Don&#8217;t accept any attributes unless you&#8217;ve checked the attribute type and
+its value; there are many attributes that support things such as
+Javascript that can cause trouble for your users.
+You&#8217;ll notice that in the above list I didn&#8217;t include any attributes at all,
+which is certainly the safest course.
+You should probably give a warning message if an unsafe tag is used,
+but if that&#8217;s not practical, encoding the critical characters
+(e.g., "&#60;" becomes "&#38;lt;") prevents data loss while
+simultaneously keeping the users safe.</P
+><P
+>Be careful when expanding this set, and in general be restrictive of
+what you accept.
+If your patterns are too generous, the browser may interpret the
+sequences differently than you expect, resulting in a potential
+exploit.
+For example, FozZy posted on Bugtraq (1 April 2002)
+some sequences that permitted
+exploitation in various web-based mail systems,
+which may give you an idea of the kinds of problems you need to defend
+against.
+Here&#8217;s some exploit text that, at one time, could
+subvert user accounts in Microsoft Hotmail:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>   &#60;SCRIPT&#62;
+   &#60;/COMMENT&#62;
+   &#60;!-- --&#62; --&#62;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+Here&#8217;s some similar exploit text for Yahoo! Mail:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  &#60;_a&#60;script&#62;
+  &#60;&#60;script&#62;        (Note: this was found by BugSan)</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+Here&#8217;s some exploit text for Vizzavi:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  &#60;b onmousover="..."&#62;go here&#60;/b&#62;
+  &#60;img [line_break] src="javascript:alert(document.location)"&#62;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+
+Andrew Clover posted to Bugtraq (on May 11, 2002) a list of various
+text that invokes Javascript yet manages to bypass many filters.
+Here are his examples (which he says he cut and pasted from elsewhere);
+some only apply to specific browsers
+(IE means Internet Explorer, N4 means Netscape version 4).
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  &#60;a href="javas&#38;#99;ript&#38;#35;[code]"&#62;
+  &#60;div onmouseover="[code]"&#62;
+  &#60;img src="javascript:[code]"&#62;
+  &#60;img dynsrc="javascript:[code]"&#62; [IE]
+  &#60;input type="image" dynsrc="javascript:[code]"&#62; [IE]
+  &#60;bgsound src="javascript:[code]"&#62; [IE]
+  &#38;&#60;script&#62;[code]&#60;/script&#62;
+  &#38;{[code]}; [N4]
+  &#60;img src=&#38;{[code]};&#62; [N4]
+  &#60;link rel="stylesheet" href="javascript:[code]"&#62;
+  &#60;iframe src="vbscript:[code]"&#62; [IE]
+  &#60;img src="mocha:[code]"&#62; [N4]
+  &#60;img src="livescript:[code]"&#62; [N4]
+  &#60;a href="about:&#60;s&#38;#99;ript&#62;[code]&#60;/script&#62;"&#62;
+  &#60;meta http-equiv="refresh" content="0;url=javascript:[code]"&#62;
+  &#60;body onload="[code]"&#62;
+  &#60;div style="background-image: url(javascript:[code]);"&#62;
+  &#60;div style="behaviour: url([link to code]);"&#62; [IE]
+  &#60;div style="binding: url([link to code]);"&#62; [Mozilla]
+  &#60;div style="width: expression([code]);"&#62; [IE]
+  &#60;style type="text/javascript"&#62;[code]&#60;/style&#62; [N4]
+  &#60;object classid="clsid:..." codebase="javascript:[code]"&#62; [IE]
+  &#60;style&#62;&#60;!--&#60;/style&#62;&#60;script&#62;[code]//--&#62;&#60;/script&#62;
+  &#60;!-- -- --&#62;&#60;script&#62;[code]&#60;/script&#62;&#60;!-- -- --&#62;
+  &#60;&#60;script&#62;[code]&#60;/script&#62;
+  &#60;img src="blah"onmouseover="[code]"&#62;
+  &#60;img src="blah&#62;" onmouseover="[code]"&#62;
+  &#60;xml src="javascript:[code]"&#62;
+  &#60;xml id="X"&#62;&#60;a&#62;&#60;b&#62;&#38;lt;script&#62;[code]&#38;lt;/script&#62;;&#60;/b&#62;&#60;/a&#62;&#60;/xml&#62;
+    &#60;div datafld="b" dataformatas="html" datasrc="#X"&#62;&#60;/div&#62;
+  [\xC0][\xBC]script&#62;[code][\xC0][\xBC]/script&#62; [UTF-8; IE, Opera]
+  &#60;![CDATA[&#60;!--]] &#62;&#60;script&#62;[code]//--&#62;&#60;/script&#62;&#13;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+This is not a complete list, of course, but it at least is a sample
+of the kinds of attacks that you must prevent by strictly limiting the
+tags and attributes you can allow from untrusted users.</P
+><P
+>Konstantin Riabitsev has posted
+<A
+HREF="http://www.mricon.com/html/phpfilter.html"
+TARGET="_top"
+>some PHP code to filter HTML</A
+> (GPL);
+I&#8217;ve not examined it closely, but you might want to take a look.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="VALIDATING-URIS"
+>5.13.4. Validating Hypertext Links (URIs/URLs)</A
+></H2
+><P
+>Careful readers will notice that I did not include the hypertext link tag
+&#60;a&#62; as a safe tag in HTML.
+Clearly, you could add
+&#60;a href="safe URI"&#62; (hypertext link) to the safe list
+(not permitting any other attributes unless you&#8217;ve checked their
+contents).
+If your application requires it, then do so.
+However, permitting third parties to create links
+is much less safe, because defining a <SPAN
+CLASS="QUOTE"
+>&#8220;safe URI&#8221;</SPAN
+><A
+NAME="AEN1435"
+HREF="#FTN.AEN1435"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+>
+turns out to be very difficult.
+Many browsers accept
+all sorts of URIs which may be dangerous to the user.
+This section discusses how to validate URIs from third parties for
+re-presenting to others, including URIs incorporated into HTML.</P
+><P
+>First, there&#8217;s the problem that URLs -- while not necessarily dangerous
+per se -- reference spam sites, and as a result, some organizations
+work hard to insert links to their own sites to increase their search rankings.
+You need to remove the incentive for strangers to insert worthless
+links their site.
+Thus, if you allow arbitrary users to insert information that creates
+links (like a blog or comment form),
+then you should implement the approach described by
+<A
+HREF="http://www.google.com/googleblog/2005/01/preventing-comment-spam.html"
+TARGET="_top"
+>Google&#8217;s "Preventing comment spam"</A
+>.
+Basically, add a rel="nofollow" to the hypertext link, so that it
+looks like this: &#60;a href=".." rel="nofollow"&#62;.
+That way, search engines will know that this link information was provided
+by a third party and shouldn&#8217;t be followed for search ranking purposes.</P
+><P
+>First, let&#8217;s look briefly at URI syntax (as defined by various specifications).
+URIs can be either <SPAN
+CLASS="QUOTE"
+>&#8220;absolute&#8221;</SPAN
+> or <SPAN
+CLASS="QUOTE"
+>&#8220;relative&#8221;</SPAN
+>.
+The syntax of an absolute URI looks like this:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>scheme://authority[path][?query][#fragment]</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+A URI starts with a scheme name (such as <SPAN
+CLASS="QUOTE"
+>&#8220;http&#8221;</SPAN
+>), the characters <SPAN
+CLASS="QUOTE"
+>&#8220;://&#8221;</SPAN
+>,
+the authority (such as <SPAN
+CLASS="QUOTE"
+>&#8220;www.dwheeler.com&#8221;</SPAN
+>), a path
+(which looks like a directory or file name), a question mark followed by
+a query, and a hash (<SPAN
+CLASS="QUOTE"
+>&#8220;#&#8221;</SPAN
+>) followed by a fragment identifier.
+The square brackets surround optional portions - e.g., many URIs don&#8217;t
+actually include the query or fragment.
+Some schemes may not permit some of the data (e.g., paths, queries, or
+fragments), and many schemes have additional requirements unique to them.
+Many schemes permit the <SPAN
+CLASS="QUOTE"
+>&#8220;authority&#8221;</SPAN
+> field to identify
+optional usernames, passwords, and ports, using this syntax for the
+<SPAN
+CLASS="QUOTE"
+>&#8220;authority&#8221;</SPAN
+> section:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> [username[:password]@]host[:portnumber]</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+The <SPAN
+CLASS="QUOTE"
+>&#8220;host&#8221;</SPAN
+> can either be a name (<SPAN
+CLASS="QUOTE"
+>&#8220;www.dwheeler.com&#8221;</SPAN
+>) or an IPv4
+numeric address (127.0.0.1).
+A <SPAN
+CLASS="QUOTE"
+>&#8220;relative&#8221;</SPAN
+> URI references one object relative to the <SPAN
+CLASS="QUOTE"
+>&#8220;current&#8221;</SPAN
+> one,
+and its syntax looks a lot like a filename:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>path[?query][#fragment]</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+There are a limited number of characters permitted in most of the URI,
+so to get around this problem, other 8-bit characters may be <SPAN
+CLASS="QUOTE"
+>&#8220;URL encoded&#8221;</SPAN
+>
+as %hh (where hh is the hexadecimal value of the 8-bit character).
+For more detailed information on valid URIs, see IETF RFC 2396 and its
+related specifications.</P
+><P
+>Now that we've looked at the syntax of URIs, let&#8217;s examine the risks
+of each part:
+<P
+></P
+><UL
+><LI
+><P
+>Scheme:
+Many schemes are downright dangerous.
+Permitting someone to insert a <SPAN
+CLASS="QUOTE"
+>&#8220;javascript&#8221;</SPAN
+> scheme into your material
+would allow them to trivially mount denial-of-service attacks
+(e.g., by repeatedly creating windows so the user&#8217;s machine freezes or
+becomes unusable).
+More seriously, they might be able to exploit a known vulnerability in
+the javascript implementation.
+Some schemes can be a nuisance, such as <SPAN
+CLASS="QUOTE"
+>&#8220;mailto:&#8221;</SPAN
+> when a mailing
+is not expected, and some schemes may not be sufficiently secure
+on the client machine.
+Thus, it&#8217;s necessary to limit the set of allowed schemes to
+just a few safe schemes.</P
+></LI
+><LI
+><P
+>Authority:
+Ideally, you should limit user links to <SPAN
+CLASS="QUOTE"
+>&#8220;safe&#8221;</SPAN
+> sites, but this is
+difficult to do in practice.
+However, you can certainly do something about usernames, passwords,
+and port numbers: you should forbid them.
+Systems expecting usernames (especially with passwords!) are probably
+guarding more important material;
+rarely is this needed in publicly-posted URIs, and someone could try
+to use this functionality to convince users
+to expose information they have access to and/or
+use it to modify the information.
+Such URIs permit semantic attacks; see
+<A
+HREF="semantic-attacks.html"
+>Section 7.17</A
+>
+for more information.
+Usernames without passwords are no less dangerous, since browsers typically
+cache the passwords.
+You should not usually permit specification of ports, because
+different ports expect different protocols and the resulting
+<SPAN
+CLASS="QUOTE"
+>&#8220;protocol confusion&#8221;</SPAN
+> can produce an exploit.
+For example, on some systems it&#8217;s possible to use the <SPAN
+CLASS="QUOTE"
+>&#8220;gopher&#8221;</SPAN
+> scheme
+and specify the SMTP (email) port to cause a user to send email of the
+attacker&#8217;s choosing.
+You might permit a few special cases (e.g., http ports 8008 and 8080),
+but on the whole it&#8217;s not worth it.
+The host when specified by name actually has a fairly limited character set
+(using the DNS standards).
+Technically, the standard doesn&#8217;t permit the underscore (<SPAN
+CLASS="QUOTE"
+>&#8220;_&#8221;</SPAN
+>) character,
+but Microsoft ignored this part of the standard and even requires the
+use of the underscore in some circumstances, so you probably should allow it.
+Also, there&#8217;s been a great deal of work on supporting international
+characters in DNS names, which is not further discussed here.</P
+></LI
+><LI
+><P
+>Path:
+Permitting a path is usually okay, but unfortunately some applications
+use part of the path as query data, creating an opening we&#8217;ll discuss next.
+Also, paths are allowed to contain phrases like <SPAN
+CLASS="QUOTE"
+>&#8220;..&#8221;</SPAN
+>, which can expose
+private data in a poorly-written web server;
+this is less a problem than it once was and really should be fixed
+by the web server.
+Since it&#8217;s only the phrase <SPAN
+CLASS="QUOTE"
+>&#8220;..&#8221;</SPAN
+> that&#8217;s special, it&#8217;s reasonable to
+look at paths (and possibly query data) and forbid <SPAN
+CLASS="QUOTE"
+>&#8220;../&#8221;</SPAN
+> as a content.
+However, if your validator permits URL escapes, this can be difficult;
+now you need to prevent versions where some of these characters are
+escaped, and may also have to deal with various <SPAN
+CLASS="QUOTE"
+>&#8220;illegal&#8221;</SPAN
+> character
+encodings of these characters as well.</P
+></LI
+><LI
+><P
+>Query:
+Query formats (beginning with "?") can be a security risk
+because some query formats actually cause actions to occur on the serving end.
+They shouldn&#8217;t, and your applications shouldn&#8217;t, as discussed in
+<A
+HREF="avoid-get-non-queries.html"
+>Section 5.14</A
+> for more information.
+However, we have to acknowledge the reality as a serious problem.
+In addition, many web sites are actually <SPAN
+CLASS="QUOTE"
+>&#8220;redirectors&#8221;</SPAN
+> - they take a
+parameter specifying where the user should be redirected, and send back
+a command redirecting the user to the new location.
+If an attacker references such sites and provides
+a more dangerous URI as the redirection value, and the
+browser blithely obeys the redirection, this could be a problem.
+Again, the user&#8217;s browser should be more careful, but not all user
+browsers are sufficiently cautious.
+Also, many web applications have vulnerabilities that can be
+exploited with certain query values, but in general this is hard to
+prevent.
+The official URI specifications don&#8217;t sanction the <SPAN
+CLASS="QUOTE"
+>&#8220;+&#8221;</SPAN
+> (plus) character,
+but in practice the <SPAN
+CLASS="QUOTE"
+>&#8220;+&#8221;</SPAN
+> character often represents the space character.</P
+></LI
+><LI
+><P
+>Fragment:
+Fragments basically locate a portion of a document; I&#8217;m unaware of
+an attack based on fragments as long as the syntax is legal, but the
+legality of its syntax does need checking.
+Otherwise, an attacker might be able to insert a character such as the
+double-quote (") and prematurely end the URI (foiling any checking).</P
+></LI
+><LI
+><P
+>URL escapes:
+URL escapes are useful because they can represent arbitrary 8-bit
+characters; they can also be very dangerous for the same reasons.
+In particular, URL escapes can represent control characters, which many
+poorly-written web applications are vulnerable to.
+In fact, with or without URL escapes, many web applications are vulnerable
+to certain characters (such as backslash, ampersand, etc.), but again
+this is difficult to generalize.</P
+></LI
+><LI
+><P
+>Relative URIs:
+Relative URIs should be reasonably safe (if you manage the web site well),
+although in some applications there&#8217;s no good reason to allow them either.</P
+></LI
+></UL
+>
+Of course, there is a trade-off with simplicity as well.
+Simple patterns are easier to understand, but
+they aren&#8217;t very refined (so they tend to be too permissive or
+too restrictive, even more than a refined pattern).
+Complex patterns can be more exact, but they are more likely to have
+errors, require more performance to use, and can be hard to
+implement in some circumstances.</P
+><P
+>Here&#8217;s my suggestion for a <SPAN
+CLASS="QUOTE"
+>&#8220;simple mostly safe&#8221;</SPAN
+> URI pattern which is
+very simple and can be implemented <SPAN
+CLASS="QUOTE"
+>&#8220;by hand&#8221;</SPAN
+> or through a regular
+expression; permit the following pattern:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>(http|ftp|https)://[-A-Za-z0-9._/]+</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>This pattern doesn&#8217;t permit many potentially dangerous capabilities
+such as queries, fragments, ports, or relative URIs,
+and it only permits a few schemes.
+It prevents the use of the <SPAN
+CLASS="QUOTE"
+>&#8220;%&#8221;</SPAN
+> character, which is used in URL escapes
+and can be used to specify characters that the server may not be
+prepared to handle.
+Since it doesn&#8217;t permit either <SPAN
+CLASS="QUOTE"
+>&#8220;:&#8221;</SPAN
+> or URL escapes, it doesn&#8217;t permit
+specifying port numbers, and even using it to redirect to a
+more dangerous URI would be difficult (due to the lack of the escape character).
+It also prevents the use of a number of other characters; again, many
+poorly-designed web applications can&#8217;t handle a number of
+<SPAN
+CLASS="QUOTE"
+>&#8220;unexpected&#8221;</SPAN
+> characters.</P
+><P
+>Even this <SPAN
+CLASS="QUOTE"
+>&#8220;mostly safe&#8221;</SPAN
+> URI permits
+a number of questionable URIs, such as
+subdirectories (via <SPAN
+CLASS="QUOTE"
+>&#8220;/&#8221;</SPAN
+>) and attempts to move up directories (via `..'');
+illegal queries of this kind should be caught by the server.
+It permits some illegal host identifiers (e.g., <SPAN
+CLASS="QUOTE"
+>&#8220;20.20&#8221;</SPAN
+>),
+though I know of no case where this would be a security weakness.
+Some web applications treat subdirectories as query data (or worse,
+as command data); this is hard to prevent in general since finding
+<SPAN
+CLASS="QUOTE"
+>&#8220;all poorly designed web applications&#8221;</SPAN
+> is hopeless.
+You could prevent the use of all paths, but this would make it
+impossible to reference most Internet information.
+The pattern also allows references to local server information
+(through patterns such as "http:///", "http://localhost/", and
+"http://127.0.0.1") and access to servers on an internal network;
+here you&#8217;ll have to depend on the servers correctly interpreting the
+resulting HTTP GET request as solely a request for information and not
+a request for an action,
+as recommended in <A
+HREF="avoid-get-non-queries.html"
+>Section 5.14</A
+>.
+Since query forms aren&#8217;t permitted by this pattern, in many environments
+this should be sufficient.</P
+><P
+>Unfortunately, the <SPAN
+CLASS="QUOTE"
+>&#8220;mostly safe&#8221;</SPAN
+>
+pattern also prevents a number of quite legitimate and useful URIs.
+For example,
+many web sites use the <SPAN
+CLASS="QUOTE"
+>&#8220;?&#8221;</SPAN
+> character to identify specific documents
+(e.g., articles on a news site).
+The <SPAN
+CLASS="QUOTE"
+>&#8220;#&#8221;</SPAN
+> character is useful for specifying specific sections of a document,
+and permitting relative URIs can be handy in a discussion.
+Various permitted characters and URL escapes aren&#8217;t included in the
+<SPAN
+CLASS="QUOTE"
+>&#8220;mostly safe&#8221;</SPAN
+> pattern.
+For example, without permitting URL escapes, it&#8217;s difficult to access
+many non-English pages.
+If you truly need such functionality, then you can use less safe patterns,
+realizing that you&#8217;re exposing your users to higher risk while
+giving your users greater functionality.</P
+><P
+>One pattern that permits queries, but at
+least limits the protocols and ports used is the following,
+which I&#8217;ll call the <SPAN
+CLASS="QUOTE"
+>&#8220;simple somewhat safe pattern&#8221;</SPAN
+>:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> (http|ftp|https)://[-A-Za-z0-9._]+(\/([A-Za-z0-9\-\_\.\!\~\*\'\(\)\%\?]+))*/?</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+This pattern actually isn&#8217;t very smart, since it permits illegal escapes,
+multiple queries, queries in ftp, and so on.
+It does have the advantage of being relatively simple.</P
+><P
+>Creating a <SPAN
+CLASS="QUOTE"
+>&#8220;somewhat safe&#8221;</SPAN
+> pattern that really limits URIs
+to legal values is quite difficult.
+Here&#8217;s my current attempt to do so, which I call
+the <SPAN
+CLASS="QUOTE"
+>&#8220;sophisticated somewhat safe pattern&#8221;</SPAN
+>, expressed in a form
+where whitespace is ignored and comments are introduced with "#":
+
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> (
+ (
+  # Handle http, https, and relative URIs:
+  ((https?://([A-Za-z0-9][A-Za-z0-9\-]*(\.[A-Za-z0-9][A-Za-z0-9\-]*)*\.?))|
+    ([A-Za-z0-9\-\_\.\!\~\*\'\(\)]|(%[2-9A-Fa-f][0-9a-fA-F]))+)?
+  ((/([A-Za-z0-9\-\_\.\!\~\*\'\(\)]|(%[2-9A-Fa-f][0-9a-fA-F]))+)*/?) # path
+   (\?(                                                              # query:
+       (([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+=
+        ([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+
+        (\&#38;([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+=
+         ([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+)*)
+       |
+       (([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+  # isindex
+       )
+   ))?
+   (\#([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+)? # fragment
+  )|
+ # Handle ftp:
+ (ftp://([A-Za-z0-9][A-Za-z0-9\-]*(\.[A-Za-z0-9][A-Za-z0-9\-]*)*\.?)
+  ((/([A-Za-z0-9\-\_\.\!\~\*\'\(\)]|(%[2-9A-Fa-f][0-9a-fA-F]))+)*/?) # path
+  (\#([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+)? # fragment
+  )
+ )</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>&#13;</P
+><P
+>Even the sophisticated pattern shown above doesn&#8217;t forbid all illegal URIs.
+For example, again, "20.20" isn&#8217;t a legal domain name, but it&#8217;s allowed
+by the pattern; however, to my knowledge
+this shouldn&#8217;t cause any security problems.
+The sophisticated pattern forbids URL escapes that represent
+control characters (e.g., %00 through $1F) - 
+the smallest permitted escape value is %20 (ASCII space).
+Forbidding control characters prevents some trouble, but it&#8217;s
+also limiting; change "2-9" to "0-9" everywhere if you need to support sending
+all control characters to arbitrary web applications.
+This pattern does permit all other URL escape values in paths,
+which is useful for international characters but could cause trouble
+for a few systems which can&#8217;t handle it.
+The pattern at least prevents spaces, linefeeds,
+double-quotes, and other dangerous characters
+from being in the URI, which prevents other kinds of
+attacks when incorporating the URI into a generated document.
+Note that the pattern permits <SPAN
+CLASS="QUOTE"
+>&#8220;+&#8221;</SPAN
+> in many places, since in practice
+the plus is often used to replace the space character
+in queries and fragments.</P
+><P
+>Unfortunately, as noted above,
+there are attacks which can work through any technique that permit query data,
+and there don&#8217;t seem to be really good defenses for them once you
+permit queries.
+So, you could strip out the ability to use query data from the
+pattern above, but permit the other forms, producing a
+<SPAN
+CLASS="QUOTE"
+>&#8220;sophisticated mostly safe&#8221;</SPAN
+> pattern:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> (
+ (
+  # Handle http, https, and relative URIs:
+  ((https?://([A-Za-z0-9][A-Za-z0-9\-]*(\.[A-Za-z0-9][A-Za-z0-9\-]*)*\.?))|
+    ([A-Za-z0-9\-\_\.\!\~\*\'\(\)]|(%[2-9A-Fa-f][0-9a-fA-F]))+)?
+  ((/([A-Za-z0-9\-\_\.\!\~\*\'\(\)]|(%[2-9A-Fa-f][0-9a-fA-F]))+)*/?) # path
+   (\#([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+)? # fragment
+  )|
+ # Handle ftp:
+ (ftp://([A-Za-z0-9][A-Za-z0-9\-]*(\.[A-Za-z0-9][A-Za-z0-9\-]*)*\.?)
+  ((/([A-Za-z0-9\-\_\.\!\~\*\'\(\)]|(%[2-9A-Fa-f][0-9a-fA-F]))+)*/?) # path
+  (\#([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+)? # fragment
+  )
+ )</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>As far as I can tell, as long as these patterns are only used to check
+hypertext anchors selected by the user (the "&#60;a&#62;" tag)
+this approach also prevents the insertion of <SPAN
+CLASS="QUOTE"
+>&#8220;web bugs&#8221;</SPAN
+>.
+Web bugs are simply text that allow someone other
+than the originating web server
+of the main page to track information such as who read
+the content and when they read it -
+see <A
+HREF="embedded-content-bugs.html"
+>Section 8.7</A
+> for more information.
+This isn&#8217;t true if you use the &#60;img&#62; (image) tag with the same
+checking rules - the image tag is loaded immediately, permitting
+someone to add a <SPAN
+CLASS="QUOTE"
+>&#8220;web bug&#8221;</SPAN
+>.
+Once again, this presumes that you&#8217;re not permitting any attributes;
+many attributes can be quite dangerous and pierce the security you&#8217;re
+trying to provide.</P
+><P
+>Please note that all of these patterns require the entire URI match
+the pattern.
+An unfortunate fact of these patterns is that they limit the
+allowable patterns in a way that forbids many useful ones
+(e.g., they prevent the use of new URI schemes).
+Also, none of them can prevent the very real problem that some web sites
+perform more than queries when presented with a query - and some of these
+web sites are internal to an organization.
+As a result, no URI can really be safe until there
+are no web sites that accept GET queries as an action
+(see <A
+HREF="avoid-get-non-queries.html"
+>Section 5.14</A
+>).
+For more information about legal URLs/URIs, see IETF RFC 2396;
+domain name syntax is further discussed in IETF RFC 1034.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="OTHER-HTML-TAGS"
+>5.13.5. Other HTML tags</A
+></H2
+><P
+>You might even consider supporting more HTML tags.
+Obvious next choices are the list-oriented tags, such as
+&#60;ol&#62; (ordered list),
+&#60;ul&#62; (unordered list),
+and &#60;li&#62; (list item).
+However, after a certain point you&#8217;re really permitting
+full publishing (in which case you need to trust the provider or perform more
+serious checking than will be described here).
+Even more importantly, every new functionality you add creates an
+opportunity for error (and exploit).</P
+><P
+>One example would be permitting the
+&#60;img&#62; (image) tag with the same URI pattern.
+It turns out this is substantially less safe, because this
+permits third parties to insert <SPAN
+CLASS="QUOTE"
+>&#8220;web bugs&#8221;</SPAN
+> into the document,
+identifying who read the document and when.
+See <A
+HREF="embedded-content-bugs.html"
+>Section 8.7</A
+> for more information on web bugs.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="RELATED-ISSUES"
+>5.13.6. Related Issues</A
+></H2
+><P
+>Web applications should also explicitly specify the character set
+(usually ISO-8859-1), and not permit other characters, if data from
+untrusted users is being used.
+See <A
+HREF="output-character-encoding.html"
+>Section 9.5</A
+> for more information.</P
+><P
+>Since filtering this kind of input is easy to get wrong, other
+alternatives have been discussed as well.
+One option is to ask users to use a different language, much simpler
+than HTML, that you&#8217;ve designed - and you give that language very limited
+functionality.
+Another approach is parsing the HTML into some internal <SPAN
+CLASS="QUOTE"
+>&#8220;safe&#8221;</SPAN
+> format,
+and then translating that safe format back to HTML.</P
+><P
+>Filtering can be done during input, output, or both.
+The CERT recommends filtering data during the output process,
+just before it is rendered as part of the dynamic page.
+This is because, if it is done correctly, 
+this approach ensures that all dynamic content is filtered.
+The CERT believes that filtering on the input side is less effective
+because dynamic content can be entered into a web sites database(s) via
+methods other than HTTP, and in this case,
+the web server may never see the data as part of the input process.
+Unless the filtering is implemented in all places where dynamic data
+is entered, the data elements may still be remain tainted.</P
+><P
+>However, I don&#8217;t agree with CERT on this point for all cases.
+The problem is that it&#8217;s just as easy to forget to filter all the output
+as the input, and allowing <SPAN
+CLASS="QUOTE"
+>&#8220;tainted&#8221;</SPAN
+> input into your system
+is a disaster waiting to happen anyway.
+A secure program has to filter its inputs anyway, so it&#8217;s sometimes better
+to include all of these checks as part of the input filtering
+(so that maintainers can see what the rules really are).
+And finally, in some secure programs there are many different program
+locations that may output a value, but only a very few ways and locations
+where a data can be input into it;
+in such cases filtering on input may be a better idea.</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Notes</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN1435"
+HREF="filter-html.html#AEN1435"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Technically, a hypertext link can be any
+<SPAN
+CLASS="QUOTE"
+>&#8220;uniform resource identifier&#8221;</SPAN
+> (URI).
+The term <SPAN
+CLASS="QUOTE"
+>&#8220;Uniform Resource Locator&#8221;</SPAN
+> (URL)
+refers to the subset of URIs
+that identify resources via a representation of their primary access
+mechanism (e.g., their network "location"), rather than identifying
+the resource by name or by some other attribute(s) of that resource.
+Many people use the term <SPAN
+CLASS="QUOTE"
+>&#8220;URL&#8221;</SPAN
+> as synonymous with <SPAN
+CLASS="QUOTE"
+>&#8220;URI&#8221;</SPAN
+>, since URLs
+are the most common kind of URI.
+For example, the encoding used in URIs is actually called <SPAN
+CLASS="QUOTE"
+>&#8220;URL encoding&#8221;</SPAN
+>.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="input-protection-cross-site.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="avoid-get-non-queries.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Prevent Cross-site Malicious Content on Input</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="input.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Forbid HTTP GET To Perform Non-Queries</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

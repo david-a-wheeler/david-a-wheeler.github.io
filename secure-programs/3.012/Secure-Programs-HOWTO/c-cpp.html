@@ -1,0 +1,303 @@
+<HTML
+><HEAD
+><TITLE
+>C/C++</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Language-Specific Issues"
+HREF="language-specific.html"><LINK
+REL="PREVIOUS"
+TITLE="Language-Specific Issues"
+HREF="language-specific.html"><LINK
+REL="NEXT"
+TITLE="Perl"
+HREF="perl.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="language-specific.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 10. Language-Specific Issues</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="perl.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="C-CPP"
+>10.1. C/C++</A
+></H1
+><P
+>It is possible to develop secure code using C or C++, but both
+languages include fundamental design decisions that make it
+more difficult to write secure code.
+C and C++ easily permit buffer overflows, force programmers to do their
+own memory management, and are fairly lax in their typing systems.
+For systems programs (such as an operating system kernel),
+C and C++ are fine choices.
+For applications, C and C++ are often over-used.
+Strongly consider using an even higher-level language,
+at least for the majority of the application.
+But clearly, there are many existing programs in C and C++
+which won't get completely rewritten, and many developers may choose
+to develop in C and C++.</P
+><P
+>One of the biggest security problems with C and C++ programs is
+buffer overflow; see <A
+HREF="buffer-overflow.html"
+>Chapter 6</A
+>
+for more information.
+C has the additional weakness of not supporting exceptions, which makes
+it easy to write programs that ignore critical error situations.</P
+><P
+>Another problem with C and C++ is that developers have to do their
+own memory management (e.g., using malloc(), alloc(), free(), new, and delete),
+and failing to do it correctly may result in a security flaw.
+The more serious problem is that programs may erroneously
+free memory that should not be freed (e.g., because it's already been freed).
+This can result in an immediate crash or be exploitable, allowing
+an attacker to cause arbitrary code to be executed; see
+[Anonymous Phrack 2001].
+Some systems (such as many GNU/Linux systems) don't protect
+against double-freeing at all by default, and it is not clear that those
+systems which attempt to protect themselves are truly unsubvertable.
+Although I haven't seen anything written on the subject, I suspect that
+using the incorrect call in C++ (e.g., mixing new and malloc()) could
+have similar effects.
+For example, on March 11, 2002, it was announced that the zlib
+library had this problem, affecting the many programs that use it.
+Thus, when testing programs on GNU/Linux,
+you should set the environment variable
+MALLOC_CHECK_ to 1 or 2, and you might consider executing your program
+with that environment variable set with 0, 1, 2.
+The reason for this variable is explained in GNU/Linux malloc(3) man page:
+<A
+NAME="AEN1687"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>Recent versions of Linux libc (later than 5.4.23) and
+GNU libc (2.x) include a malloc implementation which is tunable
+via environment variables.
+When MALLOC_CHECK_ is set, a special (less efficient) implementation
+is used which is designed to be tolerant against simple errors,
+such as double calls of free() with the same argument,
+or overruns of a single byte (off-by-one bugs).
+Not all such errors can be protected against, however, and memory leaks
+can result.
+If MALLOC_CHECK_ is set to 0, any detected heap corruption
+is silently ignored;
+if set to 1, a diagnostic is printed on stderr;
+if set to 2, abort() is called immediately.
+This can be useful because otherwise a crash may happen much later,
+and the true cause for the problem is then very hard to track down. </P
+></BLOCKQUOTE
+>
+There are various tools to deal with this, such as
+Electric Fence and Valgrind;
+see <A
+HREF="tools.html"
+>Section 11.7</A
+> for more information.
+If unused memory is not free'd, (e.g., using free()), that unused memory
+may accumulate - and if enough unused memory can accumulate, the
+program may stop working.
+As a result, the unused memory may be exploitable by attackers to
+create a denial of service.
+It's theoretically possible for attackers to cause memory to be
+fragmented and cause a denial of service, but usually this
+is a fairly impractical and low-risk attack.</P
+><P
+>Be as strict as you reasonably can when you declare types.
+Where you can, use ``enum'' to define enumerated values (and not
+just a ``char'' or ``int'' with special values).
+This is particularly useful for values in switch statements, where
+the compiler can be used to determine if all legal values have been covered.
+Where it's appropriate, use ``unsigned'' types if the value can't be
+negative.</P
+><P
+>One complication in C and C++ is that the character type ``char'' can be
+signed or unsigned (depending on the compiler and machine).
+When a signed char with its high bit set
+is saved in an integer, the result will be a negative number;
+in some cases this can be exploitable.
+In general, use ``unsigned char'' instead of char or signed char for
+buffers, pointers, and casts when
+dealing with character data that may have values greater than 127 (0x7f).</P
+><P
+>C and C++ are by definition rather lax in their type-checking support, but
+you can at least increase their level of checking so that some mistakes
+can be detected automatically.
+Turn on as many compiler warnings as you can and change the code to cleanly
+compile with them, and strictly use ANSI prototypes in separate header
+(.h) files to ensure that all function calls use the correct types.
+For C or C++ compilations using gcc, use at least
+the following as compilation flags (which turn on a host of warning messages)
+and try to eliminate all warnings (note that -O2 is used since some
+warnings can only be detected by the data flow analysis performed at
+higher optimization levels):
+<TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="SCREEN"
+>gcc -Wall -Wpointer-arith -Wstrict-prototypes -O2</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+You might want ``-W -pedantic'' too.</P
+><P
+>Many C/C++ compilers can detect inaccurate format strings.
+For example,
+gcc can warn about inaccurate format strings for functions you create
+if you use its __attribute__() facility (a C extension) to mark such functions,
+and you can use that facility without making your code non-portable.
+Here is an example of what you'd put in your header (.h) file:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> /* in header.h */
+ #ifndef __GNUC__
+ #  define __attribute__(x) /*nothing*/
+ #endif
+
+ extern void logprintf(const char *format, ...)
+    __attribute__((format(printf,1,2)));
+ extern void logprintva(const char *format, va_list args)
+    __attribute__((format(printf,1,0)));</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+The "format" attribute takes either "printf" or "scanf", and the numbers
+that follow are the parameter number of the format string and the first
+variadic parameter (respectively). The GNU docs talk about this well.
+Note that there are other __attribute__ facilities as well,
+such as "noreturn" and "const".</P
+><P
+>Avoid common errors made by C/C++ developers.
+For example, be careful about not using ``='' when you mean ``==''.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="language-specific.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="perl.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Language-Specific Issues</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="language-specific.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Perl</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

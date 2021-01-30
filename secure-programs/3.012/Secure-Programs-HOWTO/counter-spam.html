@@ -1,0 +1,253 @@
+<HTML
+><HEAD
+><TITLE
+>Counter SPAM</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Validate All Input"
+HREF="input.html"><LINK
+REL="PREVIOUS"
+TITLE="Forbid HTTP GET To Perform Non-Queries"
+HREF="avoid-get-non-queries.html"><LINK
+REL="NEXT"
+TITLE="Limit Valid Input Time and Load Level"
+HREF="limit-time.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="avoid-get-non-queries.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Validate All Input</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="limit-time.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="COUNTER-SPAM"
+>5.13. Counter SPAM</A
+></H1
+><P
+>Any program that can send email elsewhere, by request from the network,
+can be used to transport spam.
+Spam is the usual name for unsolicited bulk email (UBE) or
+mass unsolicited email.
+It's also sometimes called unsolicited commercial email (UCE), though
+that name is misleading - not all spam is commercial.
+For a discussion of why spam is such a serious problem and more general
+discussion about it,
+see my essay at
+<A
+HREF="http://www.dwheeler.com/essays/stopspam.html"
+TARGET="_top"
+>http://www.dwheeler.com/essays/stopspam.html</A
+>, as well as
+<A
+HREF="http://mail-abuse.org/"
+TARGET="_top"
+>http://mail-abuse.org/</A
+>,
+<A
+HREF="http://spam.abuse.net/"
+TARGET="_top"
+>http://spam.abuse.net/</A
+>,
+<A
+HREF="http://http://www.cauce.org/"
+TARGET="_top"
+>CAUCE</A
+>, and
+<A
+HREF="http://www.faqs.org/rfcs/rfc2635.html"
+TARGET="_top"
+>IETF RFC 2635</A
+>.
+Spam receivers and intermediaries bear most of the cost
+of spam, while the spammer spends very little to send it.
+Therefore many people regard spam as a theft of service, not just some
+harmless activity, and that number increases as the amount of
+spam increases.</P
+><P
+>If your program can be used to generate email sent to others
+(such as a mail transfer agent, generator of data sent by email, or
+a mailing list manager),
+be sure to write your program to prevent its unauthorized use as a
+mail relay.
+A program should usually only allow legitimate authorized users
+to send email to others (e.g., those inside that company's mail server
+or those legitimately subscribed to the service).
+More information about this is in
+<A
+HREF="http://www.faqs.org/rfcs/rfc2505.html"
+TARGET="_top"
+>IETF RFC 2505</A
+>
+Also, if you manage a mailing list, make sure that it can enforce the
+rule that only subscribers can post to the list, and create a ``log in''
+feature that will make it somewhat harder for spammers to subscribe, spam, and
+unsubscribe easily.</P
+><P
+>One way to more directly counter SPAM is to incorporate support for the
+MAPS (Mail Abuse Prevention System LLC) RBL (Realtime Blackhole List),
+which maintains in real-time
+a list of IP addresses where SPAM is known to originate.
+For more information, see
+<A
+HREF="http://mail-abuse.org/rbl/"
+TARGET="_top"
+>http://mail-abuse.org/rbl/</A
+>.
+Many current Mail Transfer Agents (MTAs) already support the RBL;
+see their websites for how to configure them.
+The usual way to use the RBL is to simply refuse to accept any requests
+from IP addresses in the blackhole list;
+this is harsh, but it solves the problem.
+Another similar service is the Open Relay Database (ORDB) at
+<A
+HREF="http://ordb.org"
+TARGET="_top"
+>http://ordb.org</A
+>, which identifies
+dynamically those sites that permit open email relays
+(open email relays are misconfigured email servers that allow spammers to
+send email through them).
+Another location for more information is
+<A
+HREF="http://www.spews.org"
+TARGET="_top"
+>SPEWS</A
+>.
+I believe there are other similar services as well.</P
+><P
+>I suggest that many systems and programs,
+by default, enable spam blocking if they
+can send email on to others whose identity is under control
+of a remote user - and that includes MTAs.
+At the least, consider this.
+There are real problems with this suggestion, of course -
+you might (rarely) inhibit communication with a legitimate user.
+On the other hand, if you don't block spam, then it's likely that everyone
+<EM
+>else</EM
+> will blackhole your system
+(and thus ignore your emails).
+It's not a simple issue, because no matter what you do, some people
+will not allow you to send them email.
+And of course, how well do you trust the organization keeping up the
+real-time blackhole list - will they add truly innocent sites to the
+blackhole list, and will they remove sites from the blackhole list
+once all is okay?
+Thus, it becomes a trade-off - is it more important to talk to spammers
+(and a few innocents as well), or is it more important to talk to
+those many other systems with spam blocks
+(losing those innocents who share equipment with spammers)?
+Obviously, this must be configurable.
+This is somewhat controversial advice, so consider your options for
+your circumstance.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="avoid-get-non-queries.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="limit-time.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Forbid HTTP GET To Perform Non-Queries</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="input.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Limit Valid Input Time and Load Level</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

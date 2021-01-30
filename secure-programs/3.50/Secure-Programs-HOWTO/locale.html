@@ -1,0 +1,380 @@
+<HTML
+><HEAD
+><TITLE
+>Human Language (Locale) Selection</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Validate All Input"
+HREF="input.html"><LINK
+REL="PREVIOUS"
+TITLE="Other Inputs"
+HREF="other-inputs.html"><LINK
+REL="NEXT"
+TITLE="Character Encoding"
+HREF="character-encoding.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="other-inputs.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Validate All Input</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="character-encoding.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="LOCALE"
+></A
+>5.8. Human Language (Locale) Selection</H1
+><P
+>As more people have computers and the Internet available to them, there
+has been increasing pressure for programs
+to support multiple human languages and cultures.
+This combination of language and other cultural factors is usually called
+a ``locale''.
+The process of modifying a program so it can support multiple locales
+is called ``internationalization'' (i18n), and the process of providing
+the information for a particular locale to a program is called
+``localization'' (l10n).</P
+><P
+>Overall, internationalization
+is a good thing, but this process provides another opportunity
+for a security exploit.
+Since a potentially untrusted user provides information on the desired
+locale, locale selection becomes another input that,
+if not properly protected, can be exploited.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="HOW-LOCALES-SELECTED"
+></A
+>5.8.1. How Locales are Selected</H2
+><P
+>In locally-run programs (including setuid/setgid programs),
+locale information is provided by an environment
+variable.
+Thus, like all other environment variables, these values
+must be extracted and checked against valid patterns before use.</P
+><P
+>For web applications, this information can be obtained from the web
+browser (via the Accept-Language request header).
+However, since not all web browsers properly pass this information
+(and not all users configure their browsers properly),
+this is used less often than you might think.
+Often, the language requested in a web browser
+is simply passed in as a form value.
+Again, these values must be checked for validity before use, as with
+any other form value.</P
+><P
+>In either case, locale information is
+really just a special case of input discussed in the previous sections.
+However, because this input is so rarely considered,
+I'm discussing it separately.
+In particular,
+when combined with format strings (discussed later), user-controlled
+strings can permit attackers to force other programs to run
+arbitrary instructions,
+corrupt data, and do other unfortunate actions.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="LOCALE-SUPPORT-MECHANISMS"
+></A
+>5.8.2. Locale Support Mechanisms</H2
+><P
+>There are two major library interfaces for supporting locale-selected
+messages on Unix-like systems,
+one called ``catgets'' and the other called ``gettext''.
+In the catgets approach, every string is assigned a unique number, which
+is used as an index into a table of messages.
+In contrast,
+in the gettext approach, a string (usually in English) is used to
+look up a table that translates the original string.
+catgets(3) is an accepted standard
+(via the X/Open Portability Guide, Volume 3 and
+Single Unix Specification),
+so it's possible your program uses it.
+The ``gettext'' interface is not an official standard,
+(though it was originally a UniForum proposal), but I believe it's the
+more widely used interface
+(it's used by Sun and essentially all GNU programs).</P
+><P
+>In theory, catgets should be slightly faster, but this is at best
+marginal on today's machines, and the bookkeeping effort to keep
+unique identifiers valid in catgets() makes the gettext() interface
+much easier to use.
+I'd suggest using gettext(), just because it's easier to use.
+However, don't take my word for it; see GNU's documentation on gettext
+(info:gettext#catgets) for a longer and more descriptive comparison.</P
+><P
+>The catgets(3) call (and its associated catopen(3) call)
+in particular is vulnerable
+to security problems, because the environment variable NLSPATH can be
+used to control the filenames used to acquire internationalized messages.
+The GNU C library ignores NLSPATH for setuid/setgid programs, which helps,
+but that doesn't protect programs running on other implementations, nor
+other programs (like CGI scripts) which don't ``appear'' to
+require such protection.</P
+><P
+>The widely-used ``gettext'' interface is at least not
+vulnerable to a malicious NLSPATH setting to my knowledge.
+However, it appears likely to me that malicious settings of
+LC_ALL or LC_MESSAGES could cause problems.
+Also, if you use gettext's bindtextdomain() routine in its file cat-compat.c,
+that does depend on NLSPATH.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="LOCALE-LEGAL-VALUES"
+></A
+>5.8.3. Legal Values</H2
+><P
+>For the moment, if you must permit untrusted users to set information on
+their desired locales, make sure the provided internationalization information
+meets a narrow filter that only permits legitimate locale names.
+For user programs (especially setuid/setgid programs), these values
+will come in via NLSPATH, LANGUAGE, LANG, the old LINGUAS, LC_ALL, and
+the other LC_* values (especially LC_MESSAGES, but also including
+LC_COLLATE, LC_CTYPE, LC_MONETARY, LC_NUMERIC, and LC_TIME).
+For web applications, this user-requested set of language information
+would be done via the Accept-Language request header or a form value
+(the application should indicate the actual language setting of the
+data being returned via the Content-Language heading).
+You can check this value as part of your environment variable filtering if
+your users can set your environment variables (i.e., setuid/setgid
+programs) or as part of your input filtering (e.g., for CGI scripts).
+The GNU C library "glibc" doesn't accept some values of LANG for
+setuid/setgid programs (in particular anything with "/"),
+but errors have been found in that filtering
+(e.g., Red Hat released an update to fix this error in glibc
+on September 1, 2000).
+This kind of filtering isn't required by any standard, so you're
+safer doing this filtering yourself.
+I have not found any guidance on filtering language settings,
+so here are my suggestions based on my own research into the issue.</P
+><P
+>First, a few words about the legal values of these settings.
+Language settings are generally set using the standard tags defined
+in IETF RFC 1766 (which uses two-letter country codes as its basic tag,
+followed by an optional subtag separated by a dash; I've found that
+environment variable settings use the underscore instead).
+However, some find this insufficiently flexible, so three-letter country
+codes may soon be used as well.
+Also, there are two major not-quite compatible extended formats, the
+X/Open Format and the CEN Format (European Community Standard);
+you'd like to permit both.
+Typical values include
+``C'' (the C locale), ``EN'' (English''),
+and ``FR_fr'' (French using the territory of France's conventions).
+Also, so many people use nonstandard names that programs have had to develop
+``alias'' systems to cope with nonstandard names
+(for GNU gettext, see /usr/share/locale/locale.alias, and for X11, see
+/usr/lib/X11/locale/locale.alias; you might need "aliases" instead of "alias");
+they should usually be permitted as well.
+Libraries like gettext() have to accept all these variants and find an
+appropriate value, where possible.
+One source of further information is FSF [1999];
+another source is the li18nux.org web site.
+A filter should not permit characters that aren't needed,
+in particular ``/'' (which might permit escaping out of the trusted
+directories) and ``..'' (which might permit going up one directory).
+Other dangerous characters in NLSPATH
+include ``%'' (which indicates substitution) and ``:''
+(which is the directory separator); the documentation I have for other
+machines suggests that some implementations may use them for other values,
+so it's safest to prohibit them.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="LOCALE-BOTTOM-LINE"
+></A
+>5.8.4. Bottom Line</H2
+><P
+>In short, I suggest
+simply erasing or re-setting the NLSPATH, unless you have a trusted user
+supplying the value.
+For the Accept-Language heading in HTTP (if you use it),
+form values specifying the locale, and the environment variables
+LANGUAGE, LANG, the old LINGUAS, LC_ALL, and the other LC_* values listed
+above,
+filter the locales from untrusted users to permit null (empty) values or
+to only permit values that match in total this regular expression
+(note that I've recently added "="):
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> [A-Za-z][A-Za-z0-9_,+@\-\.=]*</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+I haven't found any legitimate locale which doesn't match this pattern,
+but this pattern does appear to protect against locale attacks.
+Of course, there's no guarantee that there are messages available
+in the requested locale,
+but in such a case these routines will fall back to the default
+messages (usually in English), which at least is not a security problem.</P
+><P
+>If you wish to be really picky, and only patterns that match li18nux's
+locale pattern, you can use this pattern instead:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> ^[A-Za-z]+(_[A-Za-z]+)?
+ (\.[A-Z]+(\-[A-Z0-9]+)*)?
+ (\@[A-Za-z0-9]+(\=[A-Za-z0-9\-]+)
+  (,[A-Za-z0-9]+(\=[A-Za-z0-9\-]+))*)?$</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+In both cases, these patterns use POSIX's extended (``modern'')
+regular expression notation (see regex(3) and regex(7) on Unix-like systems).</P
+><P
+>Of course, languages cannot be supported without a
+standard way to represent their written symbols, which brings
+us to the issue of character encoding.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="other-inputs.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="character-encoding.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Other Inputs</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="input.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Character Encoding</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

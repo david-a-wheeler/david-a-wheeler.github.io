@@ -1,0 +1,40 @@
+
+Idea - create a Linux kernel module (or security module?)
+that forbids creating "bad" filenames
+(see the "Unix-Haters" book for examples of the problems bad
+filenames can cause.  Many are security problems, e.g.,
+initial dashes can fool programs into using options,
+initial whitespace (and sometimes embedded spaces) can break up filenames, and
+control characters in filenames can take over some terminal emulators.
+Bad UTF-8 can cause trouble too, if the filenames are interpreted as UTF-8.
+
+Why only forbid _creation_?  That way, you can read existing files.
+A stronger approach would be to prevent creation, and to rename existing
+files with bad names; make that an option.
+
+Creation operations - check system calls; (man 2 syscalls).
+
+Creation operations include creat(), mkdir(), rename(), link(), open(),
+etc.
+
+Bad filenames include:
+* Initial "-"
+* Control characters
+* Initial/trailing spaces
+* tilde (~), which often means home directory
+* $ (interferes with shell variables)
+
+Optionally bad:
+* Internal whitespace
+* Non-UTF-8
+* Single quote
+* double quote
+* ! (interferes with shell history mechanism)
+* (Look at other shell metacharacters)
+
+
+If renaming "bad" filenames, find an "okay" (but rarely used character)
+to use as the escape character, and have it escape itself too,
+so that we don't need to confirm that a translated filename is unique.
+
+

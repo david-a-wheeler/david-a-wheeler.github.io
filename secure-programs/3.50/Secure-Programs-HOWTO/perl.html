@@ -1,0 +1,236 @@
+<HTML
+><HEAD
+><TITLE
+>Perl</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Language-Specific Issues"
+HREF="language-specific.html"><LINK
+REL="PREVIOUS"
+TITLE="C/C++"
+HREF="c-cpp.html"><LINK
+REL="NEXT"
+TITLE="Python"
+HREF="python.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="c-cpp.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 10. Language-Specific Issues</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="python.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="PERL"
+></A
+>10.2. Perl</H1
+><P
+>Perl programmers should first read the man page perlsec(1), 
+which describes a number of issues involved with writing secure programs
+in Perl.
+In particular, perlsec(1) describes the ``taint'' mode, which most
+secure Perl programs should use.
+Taint mode is automatically enabled if the real and effective user or group
+IDs differ, or you can use the -T command line flag
+(use the latter if you're running on behalf of someone else, e.g.,
+a CGI script).
+Taint mode turns on various checks, such as checking
+path directories to make sure they aren't writable by others.</P
+><P
+>The most obvious affect of taint mode, however, is that
+you may not use data derived from outside your program to
+affect something else outside your program by accident.
+In taint mode,
+all externally-obtained input is marked as ``tainted'', including
+command line arguments, environment variables,
+locale information (see perllocale(1)),
+results of certain system calls (readdir, readlink,
+the gecos field of getpw* calls), and all file input.
+Tainted data may not be
+used directly or indirectly in any command that invokes a
+sub-shell, nor in any command that modifies files,
+directories, or processes.
+There is one important exception: If you
+pass a list of arguments to either system or exec, the
+elements of that list are NOT checked for taintedness, so
+be especially careful with system or exec while in taint mode.</P
+><P
+>Any data value derived from tainted data becomes tainted also.
+There is one exception to this; the way to untaint data is to
+extract a substring of the tainted data.
+Don't just use ``.*'' blindly as your substring, though, since this
+would defeat the tainting mechanism's protections.
+Instead, identify patterns that identify the ``safe'' pattern
+allowed by your program, and use them to extract ``good'' values.
+After extracting the value, you may still need to check it
+(in particular for its length).</P
+><P
+>The open, glob, and backtick functions
+call the shell to expand filename wild card characters; this
+can be used to open security holes.
+You can try to avoid these functions entirely, or use them in a
+less-privileged ``sandbox'' as described in perlsec(1).
+In particular, backticks should be rewritten using the system() call
+(or even better, changed entirely to something safer).</P
+><P
+>The perl open() function comes with, frankly, 
+``way too much magic'' for most secure programs; it interprets text
+that, if not carefully filtered, can create lots of security problems.
+Before writing code to open or lock a file, consult the perlopentut(1)
+man page.
+In most cases, sysopen() provides a safer (though more convoluted)
+approach to opening a file.
+<A
+HREF="http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2000-03/msg02596.html"
+TARGET="_top"
+>The new Perl 5.6 adds an open() call
+with 3 parameters to turn off the magic behavior
+without requiring the convolutions of sysopen()</A
+>.</P
+><P
+>Perl programs should turn on the warning flag (-w), which warns of
+potentially dangerous or obsolete statements.</P
+><P
+>You can also run Perl programs in a restricted environment.
+For more information see the ``Safe'' module in the standard Perl
+distribution.
+I'm uncertain of the amount of auditing that this has undergone,
+so beware of depending on this for security.
+You might also investigate the ``Penguin Model for
+Secure Distributed Internet Scripting'', though at the time
+of this writing the code and documentation seems to be unavailable.</P
+><P
+>Many installations include a setuid root version of perl named ``suidperl''.
+However, the perldelta man page version 5.6.1 recommends using sudo
+instead, stating the following:
+<A
+NAME="AEN1817"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>"Note that suidperl is neither built nor installed by default in
+any recent version of perl.
+Use of suidperl is highly discouraged.
+If you think you need it, try alternatives such as sudo first.
+See http://www.courtesan.com/sudo/".</P
+></BLOCKQUOTE
+></P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="c-cpp.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="python.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>C/C++</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="language-specific.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Python</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

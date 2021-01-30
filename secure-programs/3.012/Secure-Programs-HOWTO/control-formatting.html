@@ -1,0 +1,287 @@
+<HTML
+><HEAD
+><TITLE
+>Control Data Formatting (Format Strings/Formatation)</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Send Information Back Judiciously"
+HREF="output.html"><LINK
+REL="PREVIOUS"
+TITLE="Handle Full/Unresponsive Output"
+HREF="handle-full-output.html"><LINK
+REL="NEXT"
+TITLE="Control Character Encoding in Output"
+HREF="output-character-encoding.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="handle-full-output.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 9. Send Information Back Judiciously</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="output-character-encoding.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CONTROL-FORMATTING"
+>9.4. Control Data Formatting (Format Strings/Formatation)</A
+></H1
+><P
+>A number of output routines in computer languages have a
+parameter that controls the generated format.
+In C, the most obvious example is the printf() family of routines
+(including printf(), sprintf(), snprintf(), fprintf(), and so on).
+Other examples in C include syslog() (which writes system log information)
+and setproctitle() (which sets the string used to display
+process identifier information).
+Many functions with names beginning with ``err'' or ``warn'', containing
+``log'' , or ending in ``printf'' are worth considering.
+Python includes the "%" operation, which on strings controls formatting
+in a similar manner.
+Many programs and libraries define formatting functions, often by
+calling built-in routines and doing additional processing
+(e.g., glib's g_snprintf() routine).</P
+><P
+>Format languages are essentially little programming languages - so
+developers who let attackers control the format string are essentially
+running programs written by attackers!
+Surprisingly, many people seem to forget the power of these formatting
+capabilities, and use data from untrusted users as the formatting parameter.
+The guideline here is clear -
+never use unfiltered data from an untrusted user as the format parameter.
+Failing to follow this guideline usually results in a
+format string vulnerability (also called a formatation vulnerability).
+Perhaps this is best shown by example:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  /* Wrong way: */
+  printf(string_from_untrusted_user);
+  /* Right ways: */
+  printf("%s", string_from_untrusted_user); /* safe */
+  fputs(string_from_untrusted_user); /* better for simple strings */</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>If an attacker controls the formatting information,
+an attacker can cause all sorts of mischief by carefully
+selecting the format.
+The case of C's printf() is a good example -
+there are lots of ways to possibly exploit user-controlled format strings
+in printf().
+These include
+buffer overruns by creating a long formatting string (this can
+result in the attacker having complete control over the program),
+conversion specifications that use unpassed parameters
+(causing unexpected data to be inserted), and
+creating formats which produce totally unanticipated result values
+(say by prepending or appending awkward data,
+causing problems in later use).
+A particularly nasty case is printf's
+%n conversion specification, which writes the
+number of characters written so far into the pointer argument; 
+using this, an attacker can overwrite a value that was intended for printing!
+An attacker can even overwrite almost arbitrary locations, since the attacker
+can specify a ``parameter'' that wasn't actually passed.
+The %n conversion specification has been standard part of C since its
+beginning, is required by all C standards, and is used by real programs.
+In 2000, Greg KH did a quick search of source code and identified the programs
+BitchX (an irc client), Nedit (a program editor), and
+SourceNavigator (a program editor / IDE / Debugger) as using %n, and there
+are doubtless many more.
+Deprecating %n would probably be a good idea, but even without %n there
+can be significant problems.
+Many papers discuss these attacks in more detail, for example, you can see
+<A
+HREF="http://www-syntim.inria.fr/fractales/Staff/Raynal/LinuxMag/SecProg/Art4/index.html"
+TARGET="_top"
+>Avoiding security holes
+when developing an application - Part 4: format strings</A
+>.</P
+><P
+>Since in many cases the results are sent back to the user,
+this attack can also be used to expose internal information about the stack.
+This information can then be used to circumvent stack protection systems
+such as StackGuard and ProPolice; StackGuard uses constant ``canary'' values
+to detect attacks, but if the stack's contents can be displayed,
+the current value of the canary will be exposed, suddenly making the
+software vulnerable again to stack smashing attacks.</P
+><P
+>A formatting string should almost always be a constant string,
+possibly involving a function call to implement a
+lookup for internationalization (e.g., via gettext's _()).
+Note that this
+lookup must be limited to values that the program controls, i.e., the
+user must be allowed to only select from the message files controlled
+by the program.
+It's possible to filter user data before using it (e.g., by designing
+a filter listing legal characters for the format string such as [A-Za-z0-9]),
+but it's usually better to simply prevent the problem
+by using a constant format string or fputs() instead.
+Note that although I've listed this as an ``output'' problem, this can
+cause problems internally to a program before output
+(since the output routines may be saving to a file, or even just generating
+internal state such as via snprintf()).</P
+><P
+>The problem of input formatting causing security problems
+is not an idle possibility; see CERT Advisory CA-2000-13
+for an example of an exploit using this weakness.
+For more information on how these problems can be exploited, see
+Pascal Bouchareine's email article titled ``[Paper] Format bugs'',
+published in the July 18, 2000 edition of
+<A
+HREF="http://www.securityfocus.com"
+TARGET="_top"
+>Bugtraq</A
+>.
+As of December 2000,
+developmental versions of the gcc compiler support warning messages for
+insecure format string usages, in an attempt to help developers avoid
+these problems.</P
+><P
+>Of course, this all begs the question as to whether or not the
+internationalization lookup is, in fact, secure.
+If you're creating your own internationalization lookup routines,
+make sure that an untrusted user can only specify a legal locale and not
+something else like an arbitrary path.</P
+><P
+>Clearly, you want to limit the strings created through internationalization
+to ones you can trust.
+Otherwise, an attacker could use this ability to exploit the
+weaknesses in format strings, particularly in C/C++ programs.
+This has been an item of discussion in Bugtraq (e.g., see
+John Levon's Bugtraq post on July 26, 2000).
+For more information, see the discussion on
+permitting users to only select legal language values in
+<A
+HREF="locale.html#LOCALE-LEGAL-VALUES"
+>Section 5.8.3</A
+>.</P
+><P
+>Although it's really a programming bug, it's worth mentioning that
+different countries notate numbers in different ways, in particular,
+both the period (.) and comma (,) are used to separate an integer
+from its fractional part.  If you save or load data, you need to make sure
+that the active locale does not interfere with data handling.
+Otherwise, a French user may not be able to exchange data with an
+English user, because the data stored and retrieved will use
+different separators.
+I'm unaware of this being used as a security problem, but it's conceivable.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="handle-full-output.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="output-character-encoding.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Handle Full/Unresponsive Output</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="output.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Control Character Encoding in Output</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

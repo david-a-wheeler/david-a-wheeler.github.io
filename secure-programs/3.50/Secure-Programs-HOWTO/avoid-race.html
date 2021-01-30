@@ -1,0 +1,1019 @@
+<HTML
+><HEAD
+><TITLE
+>Avoid Race Conditions</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Design Your Program for Security"
+HREF="internals.html"><LINK
+REL="PREVIOUS"
+TITLE="Fail Safe"
+HREF="fail-safe.html"><LINK
+REL="NEXT"
+TITLE="Trust Only Trustworthy Channels"
+HREF="trustworthy-channels.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="fail-safe.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 7. Design Your Program for Security</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="trustworthy-channels.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AVOID-RACE"
+></A
+>7.11. Avoid Race Conditions</H1
+><P
+>A ``race condition'' can be defined as
+``Anomalous behavior due to unexpected critical dependence
+on the relative timing of events''
+[FOLDOC].
+Race conditions generally involve one or more processes
+accessing a shared resource (such a file or variable), where this
+multiple access has not been properly controlled.</P
+><P
+>In general, processes do not execute atomically;
+another process may interrupt it between essentially any two instructions.
+If a secure program's process is not prepared for these interruptions,
+another process may be able to interfere with the secure program's process.
+Any pair of operations in a secure program must still work correctly
+if arbitrary amounts of another process's code is executed between them. </P
+><P
+>Race condition problems can be notionally divided into two categories:
+<P
+></P
+><UL
+><LI
+><P
+>Interference caused by untrusted processes.
+Some security taxonomies call this problem a
+``sequence'' or ``non-atomic'' condition.
+These are conditions caused by processes running other, different programs,
+which ``slip in'' other actions between steps of the secure program.
+These other programs might be invoked by an attacker specifically
+to cause the problem.
+This book will call these sequencing problems.</P
+></LI
+><LI
+><P
+>Interference caused by trusted processes (from the secure program's
+point of view).
+Some taxonomies call these deadlock, livelock, or locking failure conditions.
+These are conditions caused by processes running the ``same'' program.
+Since these different processes may have the ``same'' privileges, if
+not properly controlled they may be able to interfere with each other in
+a way other programs can't.
+Sometimes this kind of interference can be exploited.
+This book will call these locking problems.</P
+></LI
+></UL
+></P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="NON-ATOMIC"
+></A
+>7.11.1. Sequencing (Non-Atomic) Problems</H2
+><P
+>In general,
+you must check your code for any pair of operations that might fail if
+arbitrary code is executed between them. </P
+><P
+>Note that loading and saving a shared variable are usually implemented
+as separate operations and are not atomic.
+This means that an ``increment variable'' operation is usually converted into
+loading, incrementing, and saving operation, so if the variable memory
+is shared the other process may interfere with the incrementing.</P
+><P
+>Secure programs must determine if a request should be granted, and if
+so, act on that request.
+There must be no way for an untrusted user to change anything used in
+this determination before the program acts on it.
+This kind of race condition is sometimes termed a
+``time of check - time of use'' (TOCTOU) race condition.</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="ATOMIC-FILESYSTEM"
+></A
+>7.11.1.1. Atomic Actions in the Filesystem</H3
+><P
+>The problem of failing to perform atomic actions
+repeatedly comes up in the filesystem.
+In general, the filesystem is a shared resource used by many programs,
+and some programs may interfere with its use by other programs.
+Secure programs should generally avoid using access(2) to determine
+if a request should be granted, followed later by open(2), because users
+may be able to move files around between these calls, possibly creating
+symbolic links or files of their own choosing instead.
+A secure program should instead set its effective id or filesystem id,
+then make the open call directly.
+It's possible to use access(2) securely, but only when a user cannot affect
+the file or any directory along its path from the filesystem root.</P
+><P
+>When creating a file, you should
+open it using the modes O_CREAT | O_EXCL and grant only
+very narrow permissions (only to the current user);
+you'll also need to prepare for having the open fail.
+If you need to be able to open the file (e.g,. to prevent a
+denial-of-service), you'll need to repetitively
+(1) create a ``random'' filename, (2) open the file as noted,
+and (3) stop repeating when the open succeeds.</P
+><P
+>Ordinary programs can become security weaknesses if they
+don't create files properly.
+For example, the ``joe'' text editor had a weakness called the
+``DEADJOE'' symlink vulnerability.
+When joe was exited in a nonstandard way (such as a system crash, closing an
+xterm, or a network connection going down), joe would unconditionally append
+its open buffers to the file "DEADJOE".
+This could be exploited by the
+creation of DEADJOE symlinks in directories where root would normally use joe.
+In this way, joe could be used to append garbage to
+potentially-sensitive files, resulting in a denial of service and/or
+unintentional access.</P
+><P
+>As another example, when performing a series of operations on a file's
+meta-information (such as changing its owner, stat-ing the file, or
+changing its permission bits), first open the file and then use the
+operations on open files.
+This means use the fchown( ), fstat( ), or fchmod( ) system calls,
+instead of the functions taking filenames
+such as chown(), chgrp(), and chmod().
+Doing so will prevent the file from being
+replaced while your program is running (a possible race condition).
+For example, if you close a file and then use chmod()
+to change its permissions,
+an attacker may be able to move or remove the file between those
+two steps and create a symbolic link to another file
+(say /etc/passwd).
+Other interesting files include /dev/zero, which can
+provide an infinitely-long data stream of input to a program; if an
+attacker can ``switch'' the file midstream, the results can be dangerous.</P
+><P
+>But even this gets complicated - when creating files, you must give
+them as a minimal set of rights as possible, and then change the
+rights to be more expansive if you desire.
+Generally, this means you need to use umask and/or open's parameters to
+limit initial access to just the user and user group.
+For example, if you create a file that is initially world-readable, then
+try to turn off the ``world readable'' bit, an attacker could try to
+open the file while the permission bits said this was okay.
+On most Unix-like systems, permissions are only checked on open, so
+this would result in an attacker having more privileges than intended.</P
+><P
+>In general, if multiple users can write to a directory in a Unix-like
+system, you'd better have the ``sticky'' bit set on that directory,
+and sticky directories had better be implemented.
+It's much better to completely avoid the problem, however, and create
+directories that only a trusted special process can access
+(and then implement that carefully).
+The traditional Unix temporary directories (/tmp and /var/tmp) are usually
+implemented as ``sticky'' directories, and all sorts of security problems
+can still surface, as we'll see next.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="TEMPORARY-FILES"
+></A
+>7.11.1.2. Temporary Files</H3
+><P
+>This issue of correctly performing atomic operations
+particularly comes up when creating temporary files.
+Temporary files in Unix-like systems are traditionally
+created in the /tmp or /var/tmp directories,
+which are shared by all users.
+A common trick by attackers is to create symbolic links in the
+temporary directory to some other file (e.g., /etc/passwd)
+while your secure program is running.
+The attacker's goal is to create
+a situation where the secure program determines that
+a given filename doesn't exist, the attacker then creates the symbolic
+link to another file, and then the secure program performs some operation
+(but now it actually opened an unintended file).
+Often important files can be clobbered or modified this way.
+There are many variations to this attack, such as creating normal files,
+all based on the
+idea that the attacker can create (or sometimes
+otherwise access) file system objects
+in the same directory used by the secure program for temporary files.</P
+><P
+>Michal Zalewski exposed in 2002 another serious problem with
+temporary directories involving automatic cleaning of temporary directories.
+For more information, see his
+posting to Bugtraq dated December 20, 2002, 
+(subject "[RAZOR] Problems with mkstemp()").
+Basically, Zalewski notes that
+it's a common practice to have a program automatically sweep
+temporary directories like /tmp and /var/tmp and remove "old" files
+that have not been accessed for a while (e.g., several days).
+Such programs are sometimes called "tmp cleaners" (pronounced "temp cleaners").
+Possibly the most common tmp cleaner is "tmpwatch" by
+Erik Troan and Preston Brown of Red Hat Software;
+another common one is 'stmpclean' by Stanislav Shalunov;
+many administrators roll their own as well.
+Unfortunately, the existance of tmp cleaners creates an opportunity
+for new security-critical race conditions;
+an attacker may be able to arrange things so that the tmp cleaner
+interferes with the secure program.
+For example, an attacker could create an "old" file, arrange for
+the tmp cleaner to plan to delete the file, delete the file himself,
+and run a secure program that creates the same file - now the tmp cleaner
+will delete the secure program's file!
+Or, imagine that a secure program can have long delays after using the file
+(e.g., a setuid program stopped with SIGSTOP and
+resumed after many days with SIGCONT, or simply intentionally creating
+a lot of work).
+If the temporary file isn't used for long enough,
+its temporary files are likely to be
+removed by the tmp cleaner.</P
+><P
+>The general problem when creating files in these shared directories is that
+you must guarantee that the filename you plan to use doesn't already
+exist at time of creation, and atomically create the file.
+Checking ``before'' you create the file doesn't work, because after the check
+occurs, but before creation, another process can create that file with
+that filename.
+Using an ``unpredictable'' or ``unique'' filename doesn't work in
+general, because another process can often repeatedly guess until it succeeds.
+Once you create the file atomically, you must alway use the returned
+file descriptor
+(or file stream, if created from the file descriptor using routines
+like fdopen()).
+You must never re-open the file, or use any operations that use the
+filename as a parameter - always use the file descriptor or
+associated stream.
+Otherwise, the tmpwatch race issues noted above will cause problems.
+You can't even create the file, close it, and re-open it, even if the
+permissions limit who can open it.
+Note that comparing the descriptor and a reopened file to verify inode
+numbers, creation times or file ownership is not sufficient - please refer
+to "Symlinks and Cryogenic Sleep" by Olaf Kirch.</P
+><P
+>Fundamentally, to create a temporary file in a shared (sticky) directory,
+you must repetitively: (1) create a ``random'' filename, (2) open it using 
+O_CREAT | O_EXCL and very narrow permissions (which atomically creates the
+file and fails if it's not created),
+and (3) stop repeating when the open succeeds.</P
+><P
+>According to the 1997 ``Single Unix Specification'', the preferred
+method for creating an arbitrary temporary file
+(using the C interface) is tmpfile(3).
+The tmpfile(3) function creates a temporary file
+and opens a corresponding stream, returning that stream (or NULL if it didn't).
+Unfortunately, the specification doesn't make any
+guarantees that the file will be created securely.
+In earlier versions of this book, I stated that I was concerned because
+I could not assure myself that all implementations do this securely.
+I've since found that older System V systems
+have an insecure implementation of tmpfile(3) (as well as insecure
+implementations of tmpnam(3) and tempnam(3)), so on at least some systems
+it's absolutely useless.
+Library implementations of tmpfile(3) should securely create such files,
+of course, but users don't always realize that their system libraries
+have this security flaw, and sometimes they can't do anything about it.</P
+><P
+>Kris Kennaway recommends using mkstemp(3) for making temporary files
+in general.
+His rationale is that you should use well-known library functions to perform
+this task instead of rolling your own functions, and that this function
+has well-known semantics.
+This is certainly a reasonable position.
+I would add that, if you use mkstemp(3), be sure to use umask(2) to limit
+the resulting temporary file permissions to only the owner.
+This is because
+some implementations of mkstemp(3) (basically older ones) make such
+files readable and writable by all,
+creating a condition in which an attacker can read or
+write private data in this directory.
+A minor nuisance is that mkstemp(3) doesn't directly support the
+environment variables TMP or TMPDIR (as discussed below), so
+if you want to support them you have to add code to do so.
+Here's a program in C that demonstrates how to use mkstemp(3)
+for this purpose, both directly and when adding support for TMP and TMPDIR:
+
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>#include &#60;stdio.h&#62;
+#include &#60;stdlib.h&#62;
+#include &#60;sys/types.h&#62;
+#include &#60;sys/stat.h&#62;
+
+void failure(msg) {
+ fprintf(stderr, "%s\n", msg);
+ exit(1);
+}
+
+/*
+ * Given a "pattern" for a temporary filename
+ * (starting with the directory location and ending in XXXXXX),
+ * create the file and return it.
+ * This routines unlinks the file, so normally it won't appear in
+ * a directory listing.
+ * The pattern will be changed to show the final filename.
+ */
+
+FILE *create_tempfile(char *temp_filename_pattern)
+{
+ int temp_fd;
+ mode_t old_mode;
+ FILE *temp_file;
+
+ old_mode = umask(077);  /* Create file with restrictive permissions */
+ temp_fd = mkstemp(temp_filename_pattern);
+ (void) umask(old_mode);
+ if (temp_fd == -1) {
+   failure("Couldn't open temporary file");
+ }
+ if (!(temp_file = fdopen(temp_fd, "w+b"))) {
+   failure("Couldn't create temporary file's file descriptor");
+ }
+ if (unlink(temp_filename_pattern) == -1) {
+   failure("Couldn't unlink temporary file");
+ }
+ return temp_file;
+}
+
+
+/*
+ * Given a "tag" (a relative filename ending in XXXXXX),
+ * create a temporary file using the tag.  The file will be created
+ * in the directory specified in the environment variables
+ * TMPDIR or TMP, if defined and we aren't setuid/setgid, otherwise
+ * it will be created in /tmp.  Note that root (and su'd to root)
+ * _will_ use TMPDIR or TMP, if defined.
+ * 
+ */
+FILE *smart_create_tempfile(char *tag)
+{
+ char *tmpdir = NULL;
+ char *pattern;
+ FILE *result;
+
+ if ((getuid()==geteuid()) &#38;&#38; (getgid()==getegid())) {
+   if (! ((tmpdir=getenv("TMPDIR")))) {
+     tmpdir=getenv("TMP");
+   }
+ }
+ if (!tmpdir) {tmpdir = "/tmp";}
+
+ pattern = malloc(strlen(tmpdir)+strlen(tag)+2);
+ if (!pattern) {
+   failure("Could not malloc tempfile pattern");
+ }
+ strcpy(pattern, tmpdir);
+ strcat(pattern, "/");
+ strcat(pattern, tag);
+ result = create_tempfile(pattern);
+ free(pattern);
+ return result;
+}
+
+
+
+main() {
+ int c;
+ FILE *demo_temp_file1;
+ FILE *demo_temp_file2;
+ char demo_temp_filename1[] = "/tmp/demoXXXXXX";
+ char demo_temp_filename2[] = "second-demoXXXXXX";
+
+ demo_temp_file1 = create_tempfile(demo_temp_filename1);
+ demo_temp_file2 = smart_create_tempfile(demo_temp_filename2);
+ fprintf(demo_temp_file2, "This is a test.\n");
+ printf("Printing temporary file contents:\n");
+ rewind(demo_temp_file2);
+ while (  (c=fgetc(demo_temp_file2)) != EOF) {
+   putchar(c);
+ }
+ putchar('\n');
+ printf("Exiting; you'll notice that there are no temporary files on exit.\n");
+}</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>Kennaway states that if you can't use mkstemp(3),
+then make yourself a directory using mkdtemp(3), which is protected
+from the outside world.
+However, as Michal Zalewski notes, this is a bad idea if there are
+tmp cleaners in use; instead, use a directory inside the user's HOME.
+Finally, if you really have to use the insecure mktemp(3), use lots of
+X's - he suggests 10 (if your libc allows it) so that the filename can't
+easily be guessed (using only 6 X's means that 5 are taken up by the
+PID, leaving only one random character and allowing an attacker to
+mount an easy race condition).
+Note that this is fundamentally insecure, so you should normally not do this.
+I add that you should avoid tmpnam(3) as well -
+some of its uses aren't reliable when threads are present, and
+it doesn't guarantee that it will work correctly after
+TMP_MAX uses (yet most practical uses must be inside a loop).</P
+><P
+>In general, you should avoid using the insecure functions
+such as mktemp(3) or tmpnam(3), unless you take specific measures to
+counter their insecurities or test for a secure library implementation
+as part of your installation routines.
+If you ever want to make a file in /tmp or a world-writable directory
+(or group-writable, if you don't trust the group) and don't want to
+use mk*temp() (e.g. you intend for the file to be predictably named),
+then <EM
+>always</EM
+> use the O_CREAT and O_EXCL flags to
+open() and <EM
+>check the return value</EM
+>.
+If you fail the open() call, then recover gracefully (e.g. exit).</P
+><P
+>The GNOME programming guidelines recommend the following C code when
+creating filesystem objects in shared (temporary) directories
+to securely open temporary files [Quintero 2000]:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> char *filename;
+ int fd;
+
+ do {
+   filename = tempnam (NULL, "foo");
+   fd = open (filename, O_CREAT | O_EXCL | O_TRUNC | O_RDWR, 0600);
+   free (filename);
+ } while (fd == -1);</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+Note that, although the insecure function tempnam(3) is being used, it
+is wrapped inside a loop using O_CREAT and O_EXCL to counteract its
+security weaknesses, so this use is okay.
+Note that you need to free() the filename.
+You should close() and unlink() the file after you are done.
+If you want to use the Standard C I/O library,
+you can use fdopen() with mode "w+b"
+to transform the file descriptor into a FILE *.
+Note that this approach won't work over
+NFS version 2 (v2) systems, because older
+NFS doesn't correctly support O_EXCL.
+Note that one minor disadvantage to this approach is that, since
+tempnam can be used insecurely, various compilers and security scanners
+may give you spurious warnings about its use.
+This isn't a problem with mkstemp(3).</P
+><P
+>If you need a temporary file in a shell script, you're probably
+best off using pipes, using a local directory (e.g., something inside the
+user's home directory), or in some cases using the current directory.
+That way, there's no sharing unless the user permits it.
+If you really want/need the temporary file
+to be in a shared directory like /tmp, do
+<EM
+>not</EM
+> use the traditional shell
+technique of using the process id in a template and just creating the file
+using normal operations like "&#62;".
+Shell scripts can use "$$" to indicate the PID, but the
+PID can be easily determined or guessed by an attacker,
+who can then pre-create files or links with the same name.
+Thus the following "typical" shell script is <EM
+>unsafe</EM
+>:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>   echo "This is a test" &#62; /tmp/test$$  # DON'T DO THIS.</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>If you need a temporary file or directory
+in a shell script, and you want it in /tmp,
+a solution sometimes suggested is to use
+mktemp(1), which is intended for use in shell scripts
+(note that mktemp(1) and mktemp(3) are different things).
+However, as Michal Zalewski notes, this is insecure in many environments
+that run tmp cleaners;
+the problem is that when a privileged program sweeps through a temporary
+directory, it will probably expose a race condition.
+Even if this weren't true, I do not recommend using shell scripts that
+create temporary files in shared directories;
+creating such files in private directories or using pipes instead is
+generally preferable, even if you're sure your tmpwatch program is okay
+(or that you have no local users).
+If you must use mktemp(1), note that
+mktemp(1) takes a template, then
+creates a file or directory using O_EXCL and returns the resulting name;
+thus, mktemp(1) won't work on NFS version 2 filesystems.
+Here are some examples of correct use of mktemp(1) in Bourne shell scripts;
+these examples are straight from the mktemp(1) man page:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> # Simple use of mktemp(1), where the script should quit
+ # if it can't get a safe temporary file.
+ # Note that this will be INSECURE on many systems, since they use
+ # tmpwatch-like programs that will erase "old" files and expose race
+ # conditions.
+
+   TMPFILE=`mktemp /tmp/$0.XXXXXX` || exit 1
+   echo "program output" &#62;&#62; $TMPFILE
+
+  # Simple example, if you want to catch the error:
+
+   TMPFILE=`mktemp -q /tmp/$0.XXXXXX`
+   if [ $? -ne 0 ]; then
+      echo "$0: Can't create temp file, exiting..."
+      exit 1
+   fi</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>Perl programmers should use File::Temp, which tries to
+provide a cross-platform means of securely creating temporary files.
+However, read the documentation carefully on how to use it properly first;
+it includes interfaces to unsafe functions as well.
+I suggest explicitly setting its safe_level to HIGH; this will invoke
+additional security checks.
+<A
+HREF="http://search.cpan.org/author/JHI/perl-5.8.0/lib/File/Temp.pm"
+TARGET="_top"
+>The Perl 5.8 documentation of File::Temp is available on-line</A
+>.</P
+><P
+>Don't reuse a temporary filename (i.e. remove and recreate it),
+no matter how you obtained the ``secure'' temporary filename in the
+first place.
+An attacker can observe the original filename
+and hijack it before you recreate it the second time.
+And of course, always use appropriate file permissions.
+For example, only allow world/group access
+if you need the world or a group to access the file, otherwise
+keep it mode 0600 (i.e., only the owner can read or write it).</P
+><P
+>Clean up after yourself, either by using an exit handler, or making
+use of UNIX filesystem semantics and unlink()ing the file immediately
+after creation so the directory entry goes away but the file itself
+remains accessible until the last file descriptor pointing to it is
+closed. You can then continue to access it within your program by
+passing around the file descriptor.
+Unlinking the file has a lot of advantages for code maintenance:
+the file is automatically deleted, no matter how your program crashes.
+It also decreases the likelihood that a maintainer will insecurely
+use the filename (they need to use the file descriptor instead).
+The one minor problem with immediate unlinking is that it makes it slightly
+harder for administrators to see how disk space is being used, since
+they can't simply look at the file system by name.</P
+><P
+>You might consider ensuring that your code for Unix-like systems
+respects the environment variables TMP or TMPDIR
+if the provider of these variable values is trusted.
+By doing so, you make it possible for users to move their temporary
+files into an unshared directory (and eliminating the problems discussed here),
+such as a subdirectory inside their home directory.
+Recent versions of Bastille can set these variables to reduce the sharing
+between users.
+Unfortunately, many users set TMP or TMPDIR to a shared directory
+(say /tmp), so your secure program must still
+correctly create temporary files even if these environment variables
+are set.
+This is one advantage of the GNOME approach, since at least on some
+systems tempnam(3) automatically uses TMPDIR, while
+the mkstemp(3) approach requires more code to do this.
+Please don't create yet more environment variables for temporary directories
+(such as TEMP), and in particular don't create a different environment
+name for each application (e.g., don't use "MYAPP_TEMP").
+Doing so greatly complicates managing systems,
+and users wanting a special temporary directory for a specific
+application can just set the environment variable specially
+when running that particular application.
+Of course, if these environment variables might have been set by an
+untrusted source, you should ignore them - which you'll do anyway
+if you follow the advice in
+<A
+HREF="environment-variables.html#ENV-VAR-SOLUTION"
+>Section 5.2.3</A
+>.</P
+><P
+>These techniques don't work if the temporary directory is remotely
+mounted using NFS version 2 (NFSv2), because NFSv2 doesn't properly
+support O_EXCL.
+See <A
+HREF="avoid-race.html#LOCKING-USING-FILES"
+>Section 7.11.2.1</A
+> for more information.
+NFS version 3 and later properly support O_EXCL; the simple solution
+is to ensure that temporary directories are either local or, if mounted
+using NFS, mounted using NFS version 3 or later.
+There is a technique for safely creating temporary files on NFS v2,
+involving the use of link(2) and stat(2), but it's complex; see
+<A
+HREF="avoid-race.html#LOCKING-USING-FILES"
+>Section 7.11.2.1</A
+> which has more information about this.</P
+><P
+>As an aside, it's worth noting that
+FreeBSD has recently changed the mk*temp() family to get rid of
+the PID component of the filename and replace the entire thing with
+base-62 encoded randomness. This drastically raises the number of
+possible temporary files for the "default" usage of 6 X's, meaning
+that even mktemp(3) with 6 X's is reasonably (probabilistically) secure
+against guessing, except under very frequent usage.
+However, if you also follow the guidance here, you'll eliminate the
+problem they're addressing.</P
+><P
+>Much of this information on temporary files was derived from
+<A
+HREF="http://lwn.net/2000/1221/a/sec-tmp.php3"
+TARGET="_top"
+>Kris Kennaway's
+posting to Bugtraq about temporary files on December 15, 2000</A
+>.</P
+><P
+>I should note that the Openwall Linux patch from
+<A
+HREF="http://www.openwall.com/linux/"
+TARGET="_top"
+>http://www.openwall.com/linux/</A
+>
+includes an optional ``temporary file directory'' policy that counters
+many temporary file based attacks.
+The Linux Security Module (LSM) project includes an "owlsm" module
+that implements some of the OpenWall ideas, so
+Linux Kernels with LSM can quickly insert these rules into a running system.
+When enabled, it has two protections:
+<P
+></P
+><UL
+><LI
+><P
+>Hard links: Processes may not make hard links to files in certain cases.
+The OpenWall documentation states that
+"Processes may not make hard links to files they do not have write access to."
+In the LSM version, the rules are as follows:
+if both the process' uid and fsuid (usually the same as the euid) is
+is different from the linked-to-file's uid, the
+process uid is not root, and the process lacks the FOWNER capability, then
+the hard link is forbidden.
+The check against the process uid may be dropped someday
+(they are work-arounds for the atd(8) program), at which point the rules
+would be:
+if both the process' fsuid (usually the same as the euid) is
+is different from the linked-to-file's uid and
+and the process lacks the FOWNER capability, then the hard link is forbidden.
+In other words, you can only create hard links to files you own,
+unless you have the FOWNER capability.&#13;</P
+></LI
+><LI
+><P
+>Symbolic links (symlinks): Certain symlinks are not followed.
+The original OpenWall documentation states that
+"root processes may not follow symlinks that
+are not owned by root", but the actual rules (from looking at the code)
+are more complicated.
+In the LSM version, if the directory is sticky ("+t" mode, used in shared
+directories like /tmp), symlinks are not followed if the symlink was
+created by anyone other than either the owner of the directory or
+the current process' fsuid (which is usually the effective uid).</P
+></LI
+></UL
+>
+Many systems do not implement this openwall policy, so you can't depend on
+this in general protecting your system.
+However, I encourage using this policy on your own system, and
+please make sure that your application will work when this policy is in place.</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="LOCKING"
+></A
+>7.11.2. Locking</H2
+><P
+>There are often situations in which a program must ensure that it has
+exclusive rights to something (e.g., a file, a device, and/or
+existence of a particular server process).
+Any system which locks resources must deal with the standard problems
+of locks, namely, deadlocks (``deadly embraces''), livelocks,
+and releasing ``stuck'' locks if a program doesn't clean up its locks.
+A deadlock can occur if programs are stuck waiting for each other to
+release resources.
+For example, a deadlock would occur if
+process 1 locks resources A and waits for resource B,
+while process 2 locks resource B and waits for resource A.
+Many deadlocks can be prevented by simply requiring all processes
+that lock multiple resources to lock them
+in the same order (e.g., alphabetically by lock name).</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="LOCKING-USING-FILES"
+></A
+>7.11.2.1. Using Files as Locks</H3
+><P
+>On Unix-like systems resource locking has traditionally been done by creating
+a file to indicate a lock, because this is very portable.
+It also makes it easy to ``fix'' stuck locks, because an administrator
+can just look at the filesystem to see what locks have been set.
+Stuck locks can occur because the program failed to clean up after
+itself (e.g., it crashed or malfunctioned) or because the whole system crashed.
+Note that these are ``advisory'' (not ``mandatory'') locks - all processes
+needed the resource must cooperate to use these locks.</P
+><P
+>However, there are several traps to avoid.
+First, don't use the technique used by
+very old Unix C programs,
+which is calling creat() or its open() equivalent, the open() mode
+O_WRONLY | O_CREAT | O_TRUNC, with the file mode set to 0 (no permissions).
+For normal users on normal file systems, this works, but
+this approach fails to lock the file when the user has root privileges.
+Root can always perform this operation, even when the file
+already exists.
+In fact, old versions of Unix had this particular problem in the
+old editor ``ed'' -- the symptom was that
+occasionally portions of the password file would be placed in user's files
+[Rochkind 1985, 22]!
+Instead, if you're creating a lock for processes that are on the local
+filesystem, you should use open() with the flags
+O_WRONLY | O_CREAT | O_EXCL (and again, no permissions, so that other
+processes with the same owner won't get the lock).
+Note the use of O_EXCL, which is the official way to
+create ``exclusive'' files; this even works for root on a local filesystem.
+[Rochkind 1985, 27].</P
+><P
+>Second, if the lock file may be on an NFS-mounted filesystem, then you have
+the problem that NFS version 2 doesn't completely support normal file semantics.
+This can even be a problem for work that's supposed to be ``local'' to a
+client, since some clients don't have local disks and may have <EM
+>all</EM
+>
+files remotely mounted via NFS.
+The manual for <EM
+>open(2)</EM
+> explains how to handle things in this case
+(which also handles the case of root programs):</P
+><P
+><SPAN
+CLASS="QUOTE"
+>"... programs which rely on
+[the O_CREAT and O_EXCL flags of open(2) to work on
+filesystems accessed via NFS version 2]
+for performing locking tasks will contain a race condition. The solution
+for performing atomic file locking using a lockfile is to create
+a unique file on the same filesystem (e.g., incorporating
+hostname and pid), use link(2) to make a link to
+the lockfile and use stat(2) on the unique file to
+check if its link count has increased to 2. Do
+not use the return value of the link(2) call."</SPAN
+></P
+><P
+>Obviously, this solution only works if all programs doing the locking
+are cooperating, and if all non-cooperating programs aren't allowed to
+interfere.
+In particular, the directories you're using for file locking
+must not have permissive file permissions for creating and removing files.</P
+><P
+>NFS version 3 added support for O_EXCL mode in open(2);
+see IETF RFC 1813,
+in particular the "EXCLUSIVE" value to the "mode" argument of "CREATE".
+Sadly, not everyone has switched to NFS version 3 or higher at the time of this
+writing, so you can't depend on this yet in portable programs.
+Still, in the long run there's hope that this issue will go away.</P
+><P
+>If you're locking a device or the existence of a process on a local
+machine, try to use standard conventions.
+I recommend using the Filesystem Hierarchy Standard (FHS);
+it is widely referenced by Linux systems, but it also tries to incorporate
+the ideas of other Unix-like systems.
+The FHS describes
+standard conventions for such locking files, including naming, placement,
+and standard contents of these files [FHS 1997].
+If you just want to be sure that your server doesn't execute more than once
+on a given machine, you should usually create a process identifier as
+/var/run/NAME.pid with the pid as its contents.
+In a similar vein, you should place lock files for things
+like device lock files in /var/lock.
+This approach has the minor disadvantage of leaving files hanging around
+if the program suddenly halts,
+but it's standard practice and that problem is
+easily handled by other system tools.</P
+><P
+>It's important that the programs which are cooperating using files to
+represent the locks use the same
+directory, not just the same directory name.
+This is an issue with networked systems: the FHS explicitly notes that
+/var/run and /var/lock are unshareable, while /var/mail is shareable.
+Thus, if you want the lock to work on a single machine, but not interfere
+with other machines, use unshareable directories like /var/run
+(e.g., you want to permit each machine to run its own server).
+However, if you want all machines sharing files in a network to obey the
+lock, you need to use a directory that they're sharing; /var/mail is
+one such location.  See FHS section 2 for more information on this subject.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="OTHER-LOCKING"
+></A
+>7.11.2.2. Other Approaches to Locking</H3
+><P
+>Of course, you need not use files to represent locks.
+Network servers often need not bother; the mere act of binding to a port
+acts as a kind of lock, since if there's an existing server bound to a given
+port, no other server will be able to bind to that port.</P
+><P
+>Another approach to locking
+is to use POSIX record locks, implemented through fcntl(2) as a
+``discretionary lock''.
+These are discretionary, that is, using them requires the cooperation of the
+programs needing the locks (just as the approach to using files to
+represent locks does).
+There's a lot to recommend POSIX record locks:
+POSIX record locking is supported on nearly all Unix-like platforms
+(it's mandated by POSIX.1), it
+can lock portions of a file (not just a whole file), and it can handle the
+difference between read locks and write locks.
+Even more usefully, if a process dies, its locks are automatically removed,
+which is usually what is desired.</P
+><P
+>You can also use mandatory locks, which are based on System V's
+mandatory locking scheme.
+These only apply to files where the locked file's setgid bit is set, but
+the group execute bit is not set.
+Also, you must mount the filesystem to permit mandatory file locks.
+In this case, every read(2) and write(2) is checked for locking;
+while this is more thorough than advisory locks, it's also slower.
+Also, mandatory locks don't port as widely to other Unix-like systems
+(they're available on Linux and System V-based systems, but not necessarily
+on others).
+Note that processes with root privileges
+can be held up by a mandatory lock, too, making it possible that
+this could be the basis of a denial-of-service attack.</P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="fail-safe.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="trustworthy-channels.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Fail Safe</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="internals.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Trust Only Trustworthy Channels</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,256 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Sockets and Network Connections</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Summary of Linux and Unix Security Features"
+HREF="features.html"><LINK
+REL="PREVIOUS"
+TITLE="System V IPC"
+HREF="sysv-ipc.html"><LINK
+REL="NEXT"
+TITLE="Signals"
+HREF="signals.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="sysv-ipc.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 3. Summary of Linux and Unix Security Features</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="signals.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="SOCKETS"
+>3.4. Sockets and Network Connections</A
+></H1
+><P
+>Sockets are used for communication, particularly over a network.
+Sockets were originally developed by the
+BSD branch of Unix systems, but they are generally portable to other
+Unix-like systems: Linux and System V variants support sockets as well, and
+socket support is required by the Open Group&#8217;s
+Single Unix Specification [Open Group 1997].
+System V systems traditionally used a different (incompatible) network
+communication interface, but it&#8217;s worth noting that systems like Solaris
+include support for sockets.
+Socket(2) creates an endpoint for communication and returns a descriptor,
+in a manner similar to open(2) for files.
+The parameters for socket specify the protocol family and type,
+such as the Internet domain (TCP/IP version 4), Novell&#8217;s IPX,
+or the <SPAN
+CLASS="QUOTE"
+>&#8220;Unix domain&#8221;</SPAN
+>.
+A server then typically calls bind(2), listen(2), and accept(2) or select(2).
+A client typically calls bind(2) (though that may be omitted) and
+connect(2).
+See these routine&#8217;s respective man pages for more information.
+It can be difficult to understand how to use sockets from their man pages;
+you might want to consult other papers such as
+Hall "Beej" [1999]
+to learn how these calls are used together.</P
+><P
+>The <SPAN
+CLASS="QUOTE"
+>&#8220;Unix domain sockets&#8221;</SPAN
+> don&#8217;t actually represent a network protocol; they
+can only connect to sockets on the same machine.
+(at the time of this writing for the standard Linux kernel).
+When used as a stream, they are fairly similar to named pipes, but with
+significant advantages.
+In particular, Unix domain socket is connection-oriented; each new connection to
+the socket results in a new communication channel, a very different situation
+than with named pipes.
+Because of this property, Unix domain sockets are often used instead of
+named pipes to implement IPC for many important services.
+Just like you can have unnamed pipes, you can have unnamed Unix domain sockets
+using socketpair(2); unnamed Unix domain sockets
+are useful for IPC in a way similar to unnamed pipes.</P
+><P
+>There are several interesting security implications of Unix domain sockets.
+First, although Unix domain sockets can appear in the filesystem and can have
+stat(2) applied to them, you can&#8217;t use open(2) to open them (you have
+to use the socket(2) and friends interface).
+Second, Unix domain sockets can be used to pass
+file descriptors between processes (not just the file&#8217;s contents).
+This odd capability, not available in any other IPC mechanism, has been used
+to hack all sorts of schemes (the descriptors can basically
+be used as a limited version of the
+<SPAN
+CLASS="QUOTE"
+>&#8220;capability&#8221;</SPAN
+> in the computer science sense of the term).
+File descriptors are sent using sendmsg(2), where the msg (message)&#8217;s
+field msg_control points to an array of control message headers
+(field msg_controllen must specify the number of bytes contained in the array).
+Each control message is a struct cmsghdr followed by data, and for this purpose
+you want the cmsg_type set to SCM_RIGHTS.
+A file descriptor is retrieved through recvmsg(2) and then tracked down in
+the analogous way.
+Frankly, this feature is quite baroque, but it&#8217;s worth knowing about.</P
+><P
+>Linux 2.2 and later
+supports an additional feature in Unix domain sockets: you can
+acquire the peer&#8217;s <SPAN
+CLASS="QUOTE"
+>&#8220;credentials&#8221;</SPAN
+> (the pid, uid, and gid).
+Here&#8217;s some sample code:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> /* fd= file descriptor of Unix domain socket connected
+    to the client you wish to identify */
+
+ struct ucred cr;
+ int cl=sizeof(cr);
+
+ if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &#38;cr, &#38;cl)==0) {
+   printf("Peer&#38;rsquo;s pid=%d, uid=%d, gid=%d\n",
+           cr.pid, cr.uid, cr.gid);</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>Standard Unix convention is that binding to
+TCP and UDP local port numbers less than 1024 requires
+root privilege, while any process can bind to an unbound port number
+of 1024 or greater.
+Linux follows this convention,
+more specifically, Linux requires a process to have the
+capability CAP_NET_BIND_SERVICE to bind to a port number less than 1024;
+this capability is normally only held by processes with an EUID of 0.
+The adventurous can check this in Linux by examining its Linux&#8217;s source;
+in Linux 2.2.12, it&#8217;s file <TT
+CLASS="FILENAME"
+>/usr/src/linux/net/ipv4/af_inet.c</TT
+>,
+function inet_bind().</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="sysv-ipc.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="signals.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>System V IPC</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="features.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Signals</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

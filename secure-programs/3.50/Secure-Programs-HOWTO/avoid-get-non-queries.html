@@ -1,0 +1,247 @@
+<HTML
+><HEAD
+><TITLE
+>Forbid HTTP GET To Perform Non-Queries</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Validate All Input"
+HREF="input.html"><LINK
+REL="PREVIOUS"
+TITLE="Filter HTML/URIs That May Be Re-presented"
+HREF="filter-html.html"><LINK
+REL="NEXT"
+TITLE="Counter SPAM"
+HREF="counter-spam.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="filter-html.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Validate All Input</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="counter-spam.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AVOID-GET-NON-QUERIES"
+></A
+>5.12. Forbid HTTP GET To Perform Non-Queries</H1
+><P
+>Web-based applications using HTTP should prevent the use of
+the HTTP ``GET'' or ``HEAD'' method for anything other than queries.
+HTTP includes a number of different methods; the two most popular methods
+used are GET and POST.
+Both GET and POST can be used to transmit data from a form, but the
+GET method transmits data in the URL, while the POST method
+transmits data separately.</P
+><P
+>The security problem of using GET to perform non-queries
+(such as changing data, transferring money, or signing up for a service)
+is that an attacker can create a hypertext link
+with a URL that includes malicious form data.
+If the attacker convinces a victim to click on the link
+(in the case of a hypertext link),
+or even just view a page (in the case of transcluded information
+such as images from HTML's img tag), the victim
+will perform a GET.
+When the GET is performed,
+all of the form data created by the attacker will be sent by the victim
+to the link specified.
+This is a cross-site malicious content attack, as discussed further in
+<A
+HREF="cross-site-malicious-content.html"
+>Section 7.16</A
+>.</P
+><P
+>If the only action that a malicious cross-site content attack can perform is
+to make the user view unexpected data, this isn't as serious a problem.
+This can still be a problem, of course, since there are some attacks
+that can be made using this capability.
+For example, there's a
+potential loss of privacy due to the user requesting something unexpected,
+possible real-world effects from appearing to request illegal or
+incriminating material, or by making the user request the information
+in certain ways the information may be exposed to an attacker
+in ways it normally wouldn't be exposed.
+However, even more serious effects can be caused if the malicious attacker
+can cause not just data viewing, but changes in data, through
+a cross-site link.</P
+><P
+>Typical HTTP interfaces (such as most CGI libraries) normally hide the
+differences between GET and POST, since for getting data it's useful
+to treat the methods ``the same way.''
+However, for actions that actually cause something other than a data query,
+check to see if the request is something other than POST;
+if it is, simply display a filled-in form with the data given and ask
+the user to confirm that they really mean the request.
+This will prevent cross-site malicious content attacks, while still
+giving users the convenience of confirming the action with
+a single click.</P
+><P
+>Indeed, this behavior is strongly recommended by the HTTP specification.
+According to the HTTP 1.1 specification (IETF RFC 2616 section 9.1.1),
+``the GET and HEAD methods SHOULD NOT have the significance of
+taking an action other than retrieval.
+These methods ought to be considered "safe".
+This allows user agents to represent other methods,
+such as POST, PUT and DELETE, in a special way,
+so that the user is made aware of the fact that a possibly
+unsafe action is being requested.''</P
+><P
+>In the interest of fairness, I should note that this doesn't
+completely solve the problem, because on some browsers
+(in some configurations) scripted posts can do the same thing.
+For example, imagine a web browser with ECMAscript (Javascript) enabled
+receiving the following HTML snippet - on some browsers, simply
+displaying this HTML snippet will
+automatically force the user to send a POST request to a website
+chosen by the attacker, with form data defined by the attacker:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  &#60;form action=http://remote/script.cgi method=post name=b&#62;
+    &#60;input type=hidden name=action value="do something"&#62;
+    &#60;input type=submit&#62;
+  &#60;/form&#62;
+  &#60;script&#62;document.b.submit()&#60;/script&#62;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+My thanks to David deVitry pointing this out.
+However, although this advice doesn't solve all problems, it's
+still worth doing.
+In part, this is because the remaining problem
+can be solved by smarter web browsers
+(e.g., by always confirming the data before
+allowing ECMAscript to send a web form) or
+by web browser configuration (e.g., disabling ECMAscript).
+Also, this attack doesn't work in many cross-site scripting exploits, because
+many websites don't allow users to post ``script'' commands but do
+allow arbitrary URL links.
+Thus, limiting the actions a GET command can perform to queries
+significantly improves web application security.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="filter-html.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="counter-spam.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Filter HTML/URIs That May Be Re-presented</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="input.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Counter SPAM</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

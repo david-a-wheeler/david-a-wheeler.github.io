@@ -1,0 +1,405 @@
+<HTML
+><HEAD
+><TITLE
+>Processes</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Summary of Linux and Unix Security Features"
+HREF="features.html"><LINK
+REL="PREVIOUS"
+TITLE="Summary of Linux and Unix Security Features"
+HREF="features.html"><LINK
+REL="NEXT"
+TITLE="Files"
+HREF="files.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="features.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 3. Summary of Linux and Unix Security Features</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="files.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="PROCESSES"
+></A
+>3.1. Processes</H1
+><P
+>In Unix-like systems,
+user-level activities are implemented by running processes.
+Most Unix systems support a ``thread'' as a separate concept;
+threads share memory inside a process, and the system scheduler actually
+schedules threads.
+Linux does this differently (and in my opinion uses a better approach):
+there is no essential difference between a thread and a process.
+Instead, in Linux, when a process creates another process it can choose
+what resources are shared (e.g., memory can be shared).
+The Linux kernel then performs optimizations to get thread-level speeds;
+see clone(2) for more information.
+It's worth noting that the Linux kernel developers tend to use the
+word ``task'', not ``thread'' or ``process'', but the external
+documentation tends to use the word process
+(so I'll use the term ``process'' here).
+When programming a multi-threaded application,
+it's usually better to use one of the standard
+thread libraries that hide these differences.
+Not only does this make threading more portable, but some libraries
+provide an additional level of indirection, by implementing more than
+one application-level thread as a single operating system thread;
+this can provide some improved performance on some systems for
+some applications.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="PROCESS-ATTRIBUTES"
+></A
+>3.1.1. Process Attributes</H2
+><P
+>Here are typical attributes associated with each process in a
+Unix-like system:
+
+<P
+></P
+><UL
+><LI
+><P
+>RUID, RGID - real UID and GID
+of the user on whose behalf the process is running</P
+></LI
+><LI
+><P
+>EUID, EGID - effective UID and GID
+used for privilege checks (except for the filesystem)</P
+></LI
+><LI
+><P
+>SUID, SGID - Saved UID and GID;
+used to support switching permissions ``on and off'' as discussed below.
+Not all Unix-like systems support this, but the vast majority do
+(including Linux and Solaris);
+if you want to check if a given system implements this option in the
+POSIX standard, you can use sysconf(2) to determine if
+_POSIX_SAVED_IDS is in effect.</P
+></LI
+><LI
+><P
+>supplemental groups - a list of groups (GIDs) in which this
+user has membership.
+In the original version 7 Unix, this didn't exist -
+processes were only a member of one group at a time, and a special
+command had to be executed to change that group.
+BSD added support for a list of groups in each process,
+which is more flexible, and
+this addition is now widely implemented (including by Linux and Solaris).</P
+></LI
+><LI
+><P
+>umask - a set of bits determining the default access control settings
+when a new filesystem object is created; see umask(2).</P
+></LI
+><LI
+><P
+>scheduling parameters - each process has a scheduling policy, and those
+with the default policy SCHED_OTHER have the additional parameters
+nice, priority, and counter.  See sched_setscheduler(2) for more information.</P
+></LI
+><LI
+><P
+>limits - per-process resource limits (see below).</P
+></LI
+><LI
+><P
+>filesystem root - the process' idea of where the root filesystem
+("/") begins; see chroot(2).</P
+></LI
+></UL
+>&#13;</P
+><P
+>Here are less-common attributes associated with processes:
+
+<P
+></P
+><UL
+><LI
+><P
+>FSUID, FSGID - UID and GID used for filesystem access checks;
+this is usually equal to the EUID and EGID respectively.
+This is a Linux-unique attribute.</P
+></LI
+><LI
+><P
+>capabilities - POSIX capability information; there are actually three
+sets of capabilities on a process: the effective, inheritable, and permitted
+capabilities.  See below for more information on POSIX capabilities.
+Linux kernel version 2.2 and greater support this; some other Unix-like
+systems do too, but it's not as widespread.</P
+></LI
+></UL
+>&#13;</P
+><P
+>In Linux,
+if you really need to know exactly what attributes are associated
+with each process, the most definitive source is the
+Linux source code, in particular
+<TT
+CLASS="FILENAME"
+>/usr/include/linux/sched.h</TT
+>'s definition of task_struct.</P
+><P
+>The portable way to create new processes it use the fork(2) call.
+BSD introduced a variant called vfork(2) as an optimization technique.
+The bottom line with vfork(2) is simple: <EM
+>don't</EM
+> use it if you
+can avoid it.
+See <A
+HREF="avoid-vfork.html"
+>Section 8.6</A
+> for more information.</P
+><P
+>Linux supports the Linux-unique clone(2) call.
+This call works like fork(2), but allows specification of which resources
+should be shared (e.g., memory, file descriptors, etc.).
+Various BSD systems implement an rfork() system call
+(originally developed in Plan9); it has different
+semantics but the same general idea (it also creates a process with tighter
+control over what is shared).
+Portable programs shouldn't use these calls directly, if possible;
+as noted earlier,
+they should instead rely on threading libraries that use such
+calls to implement threads.</P
+><P
+>This book is not a full tutorial on writing programs, so
+I will skip widely-available information handling processes.
+You can see the documentation for wait(2), exit(2), and so on for more
+information.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="POSIX-CAPABILITIES"
+></A
+>3.1.2. POSIX Capabilities</H2
+><P
+>POSIX capabilities are sets of bits that permit splitting of the privileges
+typically held by root into a larger set of more specific privileges.
+POSIX capabilities are defined
+by a draft IEEE standard; they're not unique to Linux but they're not
+universally supported by other Unix-like systems either.
+Linux kernel 2.0 did not support POSIX capabilities, while version 2.2
+added support for POSIX capabilities to processes.
+When Linux documentation (including this one)
+says ``requires root privilege'', in nearly all cases it
+really means ``requires a capability'' as documented in the capability
+documentation.
+If you need to know the specific capability required, look it up in the
+capability documentation.</P
+><P
+>In Linux,
+the eventual intent is to permit capabilities to be attached to files
+in the filesystem; as of this writing, however, this is not yet supported.
+There is support for transferring capabilities, but this is disabled
+by default.
+Linux version 2.2.11 added a feature that makes capabilities
+more directly useful, called the ``capability bounding set''.
+The capability bounding set is a list of capabilities
+that are allowed to be held by any process on the system (otherwise,
+only the special init process can hold it).
+If a capability does not appear in the bounding set, it may not be
+exercised by any process, no matter how privileged. 
+This feature can be used to, for example, disable kernel module loading.
+A sample tool that takes advantage of this is LCAP at
+<A
+HREF="http://pweb.netcom.com/~spoon/lcap/"
+TARGET="_top"
+>http://pweb.netcom.com/~spoon/lcap/</A
+>.</P
+><P
+>More information about POSIX capabilities is available at
+<A
+HREF="ftp://linux.kernel.org/pub/linux/libs/security/linux-privs"
+TARGET="_top"
+>ftp://linux.kernel.org/pub/linux/libs/security/linux-privs</A
+>.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="PROCESS-CREATION"
+></A
+>3.1.3. Process Creation and Manipulation</H2
+><P
+>Processes may be created using fork(2), the non-recommended vfork(2),
+or the Linux-unique clone(2); all of these system calls duplicate the existing
+process, creating two processes out of it.
+A process can execute a different program by calling execve(2),
+or various front-ends to it (for example, see exec(3), system(3), and popen(3)).</P
+><P
+>When a program is executed, and its file has its setuid or setgid bit set,
+the process' EUID or EGID (respectively) is usually set to the file's value.
+This functionality was the source of an old Unix security weakness
+when used to support setuid or setgid scripts, due to a race condition.
+Between the time the kernel opens the file to see which interpreter to run,
+and when the (now-set-id) interpreter turns around and reopens
+the file to interpret it, an attacker might change the file
+(directly or via symbolic links).</P
+><P
+>Different Unix-like systems handle the security issue for setuid scripts
+in different ways.
+Some systems, such as Linux, completely ignore the setuid and setgid
+bits when executing scripts, which is clearly a safe approach.
+Most modern releases of SysVr4 and BSD 4.4 use a different approach to
+avoid the kernel race condition.
+On these systems, when the kernel passes
+the name of the set-id script to open to the interpreter,
+rather than using a pathname (which would permit the race condition)
+it instead passes the filename /dev/fd/3.  This is a special
+file already opened on the script, so that there can be no
+race condition for attackers to exploit.
+Even on these systems I recommend against using the setuid/setgid
+shell scripts language for secure programs, as discussed below.</P
+><P
+>In some cases a process can affect the various UID and GID values; see
+setuid(2), seteuid(2), setreuid(2), and the Linux-unique setfsuid(2).
+In particular the saved user id (SUID) attribute
+is there to permit trusted programs to temporarily switch UIDs.
+Unix-like systems supporting the SUID use the following rules:
+If the RUID is changed, or the EUID is set to a value not equal to the RUID,
+the SUID is set to the new EUID.
+Unprivileged users can set their EUID from their SUID,
+the RUID to the EUID, and the EUID to the RUID.</P
+><P
+>The Linux-unique
+FSUID process attribute is intended to permit programs like the NFS server
+to limit themselves to only the filesystem rights of some given UID
+without giving that UID permission to send signals to the process.
+Whenever the EUID is changed, the FSUID is changed to the new
+EUID value; the FSUID value can be set separately using setfsuid(2), a
+Linux-unique call.
+Note that non-root callers can only set FSUID to the current
+RUID, EUID, SEUID, or current FSUID values.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="features.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="files.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Summary of Linux and Unix Security Features</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="features.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Files</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

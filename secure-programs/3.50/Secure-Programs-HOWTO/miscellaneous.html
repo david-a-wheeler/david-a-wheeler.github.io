@@ -1,0 +1,313 @@
+<HTML
+><HEAD
+><TITLE
+>Miscellaneous</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Special Topics"
+HREF="special.html"><LINK
+REL="PREVIOUS"
+TITLE="Physical Emissions"
+HREF="physical-emissions.html"><LINK
+REL="NEXT"
+TITLE="Conclusion"
+HREF="conclusion.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="physical-emissions.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 11. Special Topics</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="conclusion.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="MISCELLANEOUS"
+></A
+>11.11. Miscellaneous</H1
+><P
+>The following are miscellaneous security guidelines that I couldn't
+seem to fit anywhere else:</P
+><P
+>Have your program check at least some of its assumptions before it uses them
+(e.g., at the beginning of the program).
+For example, if you depend on the ``sticky'' bit being set on a given
+directory, test it; such tests take little time and could prevent
+a serious problem.
+If you worry about the execution time of some tests on each call, at least
+perform the test at installation time, or even better at least
+perform the test on application start-up.</P
+><P
+>If you have a built-in scripting language, it may be possible for the
+language to set an environment variable which adversely affects the
+program invoking the script.
+Defend against this.</P
+><P
+>If you need a complex configuration language,
+make sure the language has a comment
+character and include a number of commented-out secure examples.
+Often '#' is used for commenting, meaning ``the rest
+of this line is a comment''.</P
+><P
+>If possible, don't create setuid or setgid root programs;
+make the user log in as root instead.</P
+><P
+>Sign your code. That way, others can check to see if what's available
+was what was sent.</P
+><P
+>In some applications you may need to worry about timing attacks,
+where the variation in timing or CPU utilitization is enough to give
+away important information.
+This kind of attack has been used to obtain keying information from
+Smartcards, for example.
+Mauro Lacy has
+published a paper titled
+<A
+HREF="http://maurol.com.ar/security/RTT.pdf"
+TARGET="_top"
+>Remote Timing Techniques</A
+>,
+showing that you can (in some cases) determine over an Internet
+whether or not a given user id exists, simply from the effort expended
+by the CPU
+(which can be detected remotely using techniques described in the paper).
+The only way to deal with these sorts of problems is to make sure that
+the same effort is performed even when it isn't necessary.
+The problem is that in some cases this may make the system more vulnerable
+to a denial of service attack, since it can't optimize away unnecessary work.</P
+><P
+>Consider statically linking secure programs.
+This counters attacks on the dynamic link library mechanism
+by making sure that the secure programs don't use it.
+There are several downsides to this however.
+This is likely to increase disk and memory use (from multiple copies of the
+same routines).
+Even worse, it makes updating of libraries
+(e.g., for security vulnerabilities) more difficult - in most systems
+they won't be automatically updated and have to be tracked and
+implemented separately.</P
+><P
+>When reading over code, consider all the cases where a match is not made.
+For example, if there is a switch statement, what happens when none of the
+cases match?
+If there is an ``if'' statement, what happens when the condition is false?</P
+><P
+>Merely ``removing'' a file doesn't eliminate the file's data from a disk;
+on most systems this simply marks the content as ``deleted'' and makes it
+eligible for later reuse, and often data is at least temporarily stored
+in other places (such as memory, swap files, and temporary files).
+Indeed, against a determined attacker, writing over the data isn't enough.
+A classic paper on the problems of erasing magnetic media is
+Peter Gutmann's paper
+<A
+HREF="http://www-tac.cisco.com/Support_Library/field_alerts/fn13070.html"
+TARGET="_top"
+>``Secure Deletion of Data from Magnetic and Solid-State Memory''</A
+>.
+A determined adversary can use other means, too, such as monitoring
+electromagnetic emissions from computers (military systems have to obey
+TEMPEST rules to overcome this)
+and/or surreptitious attacks (such as monitors hidden in keyboards).</P
+><P
+>When fixing a security vulnerability,
+consider adding a ``warning'' to detect and log an attempt to
+exploit the (now fixed) vulnerability.
+This will reduce the likelihood of an attack, especially if there's
+no way for an attacker to predetermine if the attack will work,
+since it exposes an attack in progress.
+In short, it turns a vulnerability into an intrusion detection system.
+This also suggests that exposing the version of a server program
+before authentication is usually a bad idea for security, since doing so
+makes it easy for an attacker to only use attacks that would work.
+Some programs make it possible for users to intentionally ``lie'' about their
+version, so that attackers will use the ``wrong attacks'' and be detected.
+Also, if the vulnerability can be triggered over a network, please make
+sure that security scanners can detect the vulnerability.
+I suggest contacting Nessus
+(<A
+HREF="http://www.nessus.org"
+TARGET="_top"
+>http://www.nessus.org</A
+>)
+and make sure that their open source security scanner can detect the
+problem.
+That way, users who don't check their software for upgrades
+will at least learn about the problem during their security vulnerability
+scans (if they do them as they should).</P
+><P
+>Always include in your documentation contact information for
+where to report security problems.
+You should also support at least one of the common email addresses
+for reporting security problems
+(security-alert@SITE, secure@SITE, or security@SITE);
+it's often good to have support@SITE and info@SITE working as well.
+Be prepared to support industry practices by those who have a security
+flaw to report, such as the
+<A
+HREF="http://www.wiretrip.net/rfp/policy.html"
+TARGET="_top"
+>Full Disclosure Policy (RFPolicy)</A
+>
+and the IETF Internet draft,
+``Responsible Vulnerability Disclosure Process''.
+It's important to quickly work with anyone who
+is reporting a security flaw; remember that they are doing you a favor
+by reporting the problem to you, and that they are under no obligation
+to do so.
+It's especially important, once the problem is fixed, to give proper credit
+to the reporter of the flaw (unless they ask otherwise).
+Many reporters provide the information solely to gain the credit,
+and it's generally accepted that credit is owed to the reporter.
+Some vendors argue that people should never report vulnerabilities to the
+public; the problem with this argument is that this was once common, and the
+result was vendors who denied vulnerabilities while their customers were
+getting constantly subverted for years at a time.</P
+><P
+>Follow best practices and common conventions when leading a
+software development project.
+If you are leading an open source software / free software project,
+some useful guidelines can be found in
+<A
+HREF="http://www.tldp.org/HOWTO/Software-Proj-Mgmt-HOWTO/index.html"
+TARGET="_top"
+>Free Software Project Management HOWTO</A
+> and
+<A
+HREF="http://www.tldp.org/HOWTO/Software-Release-Practice-HOWTO/index.html"
+TARGET="_top"
+>Software Release Practice HOWTO</A
+>;
+you should also read
+<A
+HREF="http://www.catb.org/~esr/writings/cathedral-bazaar"
+TARGET="_top"
+>The Cathedral and the Bazaar</A
+>.</P
+><P
+>Every once in a while, review security guidelines like this one.
+At least re-read the conclusions in <A
+HREF="conclusion.html"
+>Chapter 12</A
+>,
+and feel free to go back to the introduction
+(<A
+HREF="introduction.html"
+>Chapter 1</A
+>) and start again!</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="physical-emissions.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="conclusion.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Physical Emissions</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="special.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Conclusion</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

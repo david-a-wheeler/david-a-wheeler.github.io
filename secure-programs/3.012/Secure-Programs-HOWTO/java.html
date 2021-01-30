@@ -1,0 +1,543 @@
+<HTML
+><HEAD
+><TITLE
+>Java</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Language-Specific Issues"
+HREF="language-specific.html"><LINK
+REL="PREVIOUS"
+TITLE="Ada"
+HREF="ada.html"><LINK
+REL="NEXT"
+TITLE="Tcl"
+HREF="tcl.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="ada.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 10. Language-Specific Issues</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="tcl.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="JAVA"
+>10.6. Java</A
+></H1
+><P
+>If you're developing secure programs using Java,
+frankly your first step (after learning Java)
+is to read the two primary texts for Java security, namely
+Gong [1999]
+and
+McGraw [1999] (for the latter, look particularly at section 7.1).
+You should also look at Sun's posted security code guidelines at
+<A
+HREF="http://java.sun.com/security/seccodeguide.html"
+TARGET="_top"
+>http://java.sun.com/security/seccodeguide.html</A
+>, and
+there's a nice
+<A
+HREF="http://www-106.ibm.com/developerworks/java/library/j-staticsec.html?loc=dwmain"
+TARGET="_top"
+>article by Sahu et al [2002]</A
+>
+A set of slides describing Java's security model are freely available at
+<A
+HREF="http://www.dwheeler.com/javasec"
+TARGET="_top"
+>http://www.dwheeler.com/javasec</A
+>.
+You can also see McGraw [1998].</P
+><P
+>Obviously, a great deal depends on the kind of application you're developing.
+Java code intended for use on the client side has a completely different
+environment (and trust model) than code on a server side.
+The general principles apply, of course; for example, you must
+check and filter any input from an untrusted source.
+However, in Java there are some ``hidden'' inputs or potential inputs that you
+need to be wary of, as discussed below.
+Johnathan Nightingale [2000] made an interesting statement
+summarizing many of the issues in Java programming:
+<A
+NAME="AEN1743"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>... the big thing with Java programming is minding your inheritances.
+If you inherit methods from parents, interfaces, or
+parents' interfaces, you risk opening doors to your code. </P
+></BLOCKQUOTE
+></P
+><P
+>The following are a few key guidelines, based on Gong [1999],
+McGraw [1999], Sun's guidance, and my own experience:
+
+<P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>Do not use public fields or variables; declare them as private and
+provide accessors to them so you can limit their accessibility.</P
+></LI
+><LI
+><P
+>Make methods private unless there is a good reason to do otherwise
+(and if you do otherwise, document why).
+These non-private methods must protect themselves, because they may
+receive tainted data (unless you've somehow arranged to protect them).</P
+></LI
+><LI
+><P
+>The JVM may not actually enforce the accessibility modifiers
+(e.g., ``private'') at run-time in an application
+(as opposed to an applet).
+My thanks to John Steven (Cigital Inc.), who pointed this out
+on the ``Secure Programming'' mailing list on November 7, 2000.
+The issue is that it all depends on what class loader
+the class requesting the access was loaded with.
+If the class was loaded with a trusted class loader (including the null/
+primordial class loader),
+the access check returns "TRUE" (allowing access).
+For example, this works
+(at least with Sun's 1.2.2 VM ; it might not work with
+other implementations):
+<P
+></P
+><OL
+TYPE="a"
+><LI
+><P
+>write a victim class (V) with a public field, compile it.</P
+></LI
+><LI
+><P
+>write an 'attack' class (A) that accesses that field, compile it </P
+></LI
+><LI
+><P
+>change V's public field to private, recompile</P
+></LI
+><LI
+><P
+>run A - it'll access V's (now private) field.</P
+></LI
+></OL
+></P
+><P
+>However, the situation is different with applets.
+If you convert A to an applet and run it as an applet
+(e.g., with appletviewer or browser), its class loader is no
+longer a trusted (or null) class loader.
+Thus, the code will throw
+java.lang.IllegalAccessError, with the message that
+you're trying to access a field V.secret from class A.</P
+></LI
+><LI
+><P
+>Avoid using static field variables. Such variables are attached to the
+class (not class instances), and classes can be located by any other class.
+As a result, static field variables can be found by any other class, making
+them much more difficult to secure.</P
+></LI
+><LI
+><P
+>Never return a mutable object to potentially malicious code
+(since the code may decide to change it).
+Note that arrays are mutable (even if the array contents aren't),
+so don't return a reference to an internal array with sensitive data.</P
+></LI
+><LI
+><P
+>Never store user given mutable objects (including arrays of objects)
+directly.
+Otherwise, the user could hand the object to the secure code, let the
+secure code ``check'' the object, and change the data while the secure code
+was trying to use the data.
+Clone arrays before saving them internally, and be careful here
+(e.g., beware of user-written cloning routines).</P
+></LI
+><LI
+><P
+>Don't depend on initialization.
+There are several ways to allocate uninitialized objects.</P
+></LI
+><LI
+><P
+>Make everything final, unless there's a good reason not to.
+If a class or method is non-final, an attacker could try to extend it
+in a dangerous and unforeseen way.
+Note that this causes a loss of extensibility, in exchange for security.</P
+></LI
+><LI
+><P
+>Don't depend on package scope for security.
+A few classes, such as java.lang, are closed by default, and some
+Java Virtual Machines (JVMs) let you close off other packages.
+Otherwise, Java classes are not closed.
+Thus, an attacker could introduce a new class inside your package,
+and use this new class to access the things you thought you were protecting.</P
+></LI
+><LI
+><P
+>Don't use inner classes.
+When inner classes are translated into byte codes, the inner class
+is translated into a class accesible to any class in the package.
+Even worse, the enclosing class's private fields silently
+become non-private to permit access by the inner class!</P
+></LI
+><LI
+><P
+>Minimize privileges.
+Where possible, don't require any special permissions at all.
+McGraw goes further and recommends not signing any code; I say
+go ahead and sign the code (so users can decide to ``run only
+signed code by this list of senders''), but try to write the program
+so that it needs nothing more than the sandbox set of privileges.
+If you must have more privileges, audit that code especially hard.</P
+></LI
+><LI
+><P
+>If you must sign your code, put it all in one archive file.
+Here it's best to quote McGraw [1999]:
+<A
+NAME="AEN1781"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>The goal of this rule is to prevent
+an attacker from carrying out a mix-and-match
+attack in which the attacker constructs a new applet
+or library that links some of your signed classes together
+with malicious classes, or links together signed classes that you
+never meant to be used together.
+By signing a group of classes together, you make this attack more difficult.
+Existing code-signing systems do an inadequate job of
+preventing mix-and-match attacks, so this rule cannot
+prevent such attacks completely. But using a single archive can't hurt.</P
+></BLOCKQUOTE
+></P
+></LI
+><LI
+><P
+>Make your classes uncloneable.
+Java's object-cloning mechanism allows an attacker to
+instantiate a class without running any of its constructors.
+To make your class uncloneable, just define the following method
+in each of your classes:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>public final Object clone() throws java.lang.CloneNotSupportedException {
+   throw new java.lang.CloneNotSupportedException();
+   }</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>If you really need to make your class cloneable, then there are some
+protective measures you can take to prevent attackers from redefining
+your clone method.
+If you're defining your own clone method, just make it final.
+If you're not, you can at least prevent the clone method from 
+being maliciously overridden by adding the following:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>public final void clone() throws java.lang.CloneNotSupportedException {
+  super.clone();
+  }</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+></LI
+><LI
+><P
+>Make your classes unserializeable.
+Serialization allows attackers to view the internal state of your objects,
+even private portions.
+To prevent this, add this method to your classes:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>private final void writeObject(ObjectOutputStream out)
+  throws java.io.IOException {
+     throw new java.io.IOException("Object cannot be serialized");
+  }</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>Even in cases where serialization is okay, be sure to use
+the transient keyword for the fields
+that contain direct handles to system resources and
+that contain information relative to an address space. 
+Otherwise, deserializing the class may permit improper access.
+You may also want to identify sensitive information as transient.</P
+><P
+>If you define your own serializing method for a class,
+it should not pass an internal array to any DataInput/DataOuput
+method that takes an array.
+The rationale: All DataInput/DataOutput methods can be overridden.
+If a Serializable class passes a private array directly to a DataOutput(write(byte [] b)) method, then an attacker
+could subclass ObjectOutputStream and override the write(byte [] b)
+method to enable him to access and modify the private array. 
+Note that the default serialization does not expose private
+byte array fields to DataInput/DataOutput byte array methods. </P
+></LI
+><LI
+><P
+>Make your classes undeserializeable.
+Even if your class is not serializeable, it may still be deserializeable.
+An attacker can create a sequence of bytes that happens
+to deserialize to an instance of your class with values of the
+attacker's choosing.
+In other words, deserialization is a kind of public constructor, allowing
+an attacker to choose the object's state - clearly a dangerous operation!
+To prevent this, add this method to your classes:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>private final void readObject(ObjectInputStream in)
+  throws java.io.IOException {
+    throw new java.io.IOException("Class cannot be deserialized");
+  }</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+></LI
+><LI
+><P
+>Don't compare classes by name.
+After all, attackers can define classes with identical names, and if
+you're not careful you can cause confusion by granting these classes
+undesirable privileges.
+Thus, here's an example of the <EM
+>wrong</EM
+> way
+to determine if an object has a given class:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  if (obj.getClass().getName().equals("Foo")) {</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>If you need to determine if two objects have exactly the
+same class, instead
+use getClass() on both sides and compare using the == operator, 
+Thus, you should use this form:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  if (a.getClass() == b.getClass()) {</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+If you truly need to determine if an object has a given classname, you
+need to be pedantic and be sure to use the current namespace
+(of the current class's ClassLoader).
+Thus, you'll need to use this format:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  if (obj.getClass() == this.getClassLoader().loadClass("Foo")) {</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>This guideline is from McGraw and Felten, and it's a good guideline.
+I'll add that, where possible, it's often a good idea to avoid comparing
+class values anyway.
+It's often better to try to design class methods and interfaces so you
+don't need to do this at all.
+However, this isn't always practical, so it's important to know these tricks.</P
+></LI
+><LI
+><P
+>Don't store secrets (cryptographic keys, passwords, or
+algorithm) in the code or data.
+Hostile JVMs can quickly view this data.
+Code obfuscation doesn't really hide the code from serious attackers.</P
+></LI
+></OL
+>&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="ada.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="tcl.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Ada</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="language-specific.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Tcl</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

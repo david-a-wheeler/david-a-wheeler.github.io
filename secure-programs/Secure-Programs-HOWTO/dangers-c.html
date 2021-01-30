@@ -1,0 +1,310 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Dangers in C/C++</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Restrict Operations to Buffer Bounds (Avoid Buffer Overflow)"
+HREF="buffer-overflow.html"><LINK
+REL="PREVIOUS"
+TITLE="Restrict Operations to Buffer Bounds (Avoid Buffer Overflow)"
+HREF="buffer-overflow.html"><LINK
+REL="NEXT"
+TITLE="Library Solutions in C/C++"
+HREF="library-c.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="buffer-overflow.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 6. Restrict Operations to Buffer Bounds (Avoid Buffer Overflow)</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="library-c.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="DANGERS-C"
+>6.1. Dangers in C/C++</A
+></H1
+><P
+>C users must avoid using dangerous functions that do not check bounds
+unless they've ensured that the bounds will never get exceeded.
+Functions to avoid in most cases (or ensure protection) include
+the functions strcpy(3), strcat(3), sprintf(3)
+(with cousin vsprintf(3)), and gets(3).
+These should be replaced with functions such as strncpy(3), strncat(3),
+snprintf(3), and fgets(3) respectively, but see the discussion below.
+The function strlen(3) should be avoided unless you can ensure that there
+will be a terminating NIL character to find.
+The scanf() family (scanf(3), fscanf(3),  sscanf(3),  vscanf(3),
+vsscanf(3), and vfscanf(3)) is often dangerous to use; do not use it
+to send data to a string without controlling the maximum length
+(the format %s is a particularly common problem).
+Other dangerous functions that may permit buffer overruns (depending on their
+use) include
+realpath(3), getopt(3), getpass(3),
+streadd(3), strecpy(3), and strtrns(3).
+You must be careful with getwd(3); the buffer sent to getwd(3) must be
+at least PATH_MAX bytes long.
+The select(2) helper macros
+FD_SET(), FD_CLR(), and FD_ISSET() do not check that the index fd
+is within bounds; make sure that fd &#62;= 0 and fd &#60;= FD_SETSIZE
+(this particular one has been exploited in pppd).</P
+><P
+>Unfortunately, snprintf()&#8217;s variants have additional problems.
+Officially, snprintf() is not a standard C function in the ISO 1990
+(ANSI 1989) standard, though sprintf() is,
+so some very old systems do not include snprintf().
+Even worse, some systems&#8217; snprintf() do not actually protect
+against buffer overflows; they just call sprintf directly.
+Old versions of Linux&#8217;s libc4 depended on a <SPAN
+CLASS="QUOTE"
+>&#8220;libbsd&#8221;</SPAN
+> that did this
+horrible thing, and I&#8217;m told that some old HP systems did the same.
+Linux&#8217;s current version of snprintf is known to work correctly, that is, it
+does actually respect the boundary requested.
+The return value of snprintf() varies as well;
+the Single Unix Specification (SUS) version 2
+and the C99 standard differ on what is returned by snprintf().
+Finally, it appears that at least some versions of
+snprintf don&#8217;t guarantee that its string will end in NIL; if the
+string is too long, it won&#8217;t include NIL at all.
+Note that the glib library (the basis of GTK, and not the same as the
+GNU C library glibc) has a g_snprintf(), which
+has a consistent return semantic, always NIL-terminates, and
+most importantly always respects the buffer length.</P
+><P
+>Of course, the problem is more than just calling string functions poorly.
+Here are a few additional examples of types of buffer overflow problems,
+graciously suggested by Timo Sirainen, involving manipulation of
+numbers to cause buffer overflows.</P
+><P
+>First, there&#8217;s the problem of signedness.
+If you read data that affects the buffer size,
+such as the "number of characters to be read,"
+be sure to check if the number is less than zero or one.
+Otherwise, the negative number may be cast to an unsigned number,
+and the resulting large positive number
+may then permit a buffer overflow problem.
+Note that sometimes an attacker can provide a large positive number and
+have the same thing happen;
+in some cases, the large value will be interpreted as a negative number
+(slipping by the check for large numbers if there&#8217;s no check
+for a less-than-one value),
+and then be interpreted later into a large positive value.
+
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> /* 1) signedness - DO NOT DO THIS. */
+ char *buf;
+ int i, len;
+
+ read(fd, &#38;len, sizeof(len));
+
+ /* OOPS!  We forgot to check for &#60; 0 */
+ if (len &#62; 8000) { error("too large length"); return; }
+
+ buf = malloc(len);
+ read(fd, buf, len); /* len casted to unsigned and overflows */</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>Here&#8217;s a second example identified by Timo Sirainen,
+involving integer size truncation.
+Sometimes the different sizes of integers
+can be exploited to cause a buffer overflow.
+Basically, make sure that you don&#8217;t truncate any integer results used to
+compute buffer sizes.
+Here&#8217;s Timo&#8217;s example for 64-bit architectures:
+
+ 
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> /* An example of an ERROR for some 64-bit architectures,
+    if "unsigned int" is 32 bits and "size_t" is 64 bits: */
+ 
+ void *mymalloc(unsigned int size) { return malloc(size); }
+ 
+ char *buf;
+ size_t len;
+ 
+ read(fd, &#38;len, sizeof(len));
+ 
+ /* we forgot to check the maximum length */
+ 
+ /* 64-bit size_t gets truncated to 32-bit unsigned int */
+ buf = mymalloc(len);
+ read(fd, buf, len);</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>Here&#8217;s a third example from Timo Sirainen, involving integer overflow.
+This is particularly nasty when combined with malloc(); an attacker
+may be able to create a situation where the computed buffer size
+is less than the data to be placed in it.
+Here is Timo&#8217;s sample:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> /* 3) integer overflow */
+ char *buf;
+ size_t len;
+ 
+ read(fd, &#38;len, sizeof(len));
+ 
+ /* we forgot to check the maximum length */
+ 
+ buf = malloc(len+1); /* +1 can overflow to malloc(0) */
+ read(fd, buf, len);
+ buf[len] = '\0';</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="buffer-overflow.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="library-c.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Restrict Operations to Buffer Bounds (Avoid Buffer Overflow)</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="buffer-overflow.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Library Solutions in C/C++</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

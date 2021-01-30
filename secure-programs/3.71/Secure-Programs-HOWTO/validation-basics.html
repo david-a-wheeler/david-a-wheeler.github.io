@@ -1,0 +1,498 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Basics of input validation</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Validate All Input"
+HREF="input.html"><LINK
+REL="PREVIOUS"
+TITLE="Validate All Input"
+HREF="input.html"><LINK
+REL="NEXT"
+TITLE="Input Validation Tools including Regular Expressions"
+HREF="validation-tools-regex.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="input.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Validate All Input</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="validation-tools-regex.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="VALIDATION-BASICS"
+>5.1. Basics of input validation</A
+></H1
+><P
+>First, make sure you identify <EM
+>all</EM
+>
+inputs from potentially untrusted users,
+so that you validate them all.
+Where you can, eliminate the inputs or make it impossible for untrusted users
+to provide information to them.
+At each remaining input from potentially untrusted users you need to
+validate the data that comes in.</P
+><P
+>You should determine what is legal, as narrowly as you reasonably can,
+and reject anything that does not match that definition.
+The rules that define what is legal, and by implication
+reject everything else, are called a
+<EM
+>whitelist</EM
+>.
+Do <EM
+>not</EM
+> do the reverse, that is,
+do not try to identify what is illegal and write code to reject those cases.
+This bad approach, where you try to list everything that should be
+rejected, is called <EM
+>blacklisting</EM
+>;
+the list of inputs that should be rejected is called a
+<EM
+>blacklist</EM
+>.
+Blacklisting typically leads to security vulnerabilities,
+because you are likely to forget to handle one or more
+important cases of illegal input.
+Improper input validation is such a common cause of security
+vulnerabilities that it has its own CWE identifier,
+CWE-20.</P
+><P
+>There is a good reason for identifying <SPAN
+CLASS="QUOTE"
+>&#8220;illegal&#8221;</SPAN
+> values, though, and that&#8217;s
+as a set of tests
+to be sure that your validation code is thorough.
+These tests may possibly just executed in your head, but at least a few
+should become test cases.
+When I set up an input filter,
+I mentally attack my whitelist with a few pre-identified illegal values
+to make sure that a few obvious illegal values will not get through.
+Depending on the input, here are a few examples of common <SPAN
+CLASS="QUOTE"
+>&#8220;illegal&#8221;</SPAN
+> values
+that your input filters may need to prevent:
+the empty string,
+<SPAN
+CLASS="QUOTE"
+>&#8220;.&#8221;</SPAN
+>, <SPAN
+CLASS="QUOTE"
+>&#8220;..&#8221;</SPAN
+>, <SPAN
+CLASS="QUOTE"
+>&#8220;../&#8221;</SPAN
+>,
+anything starting with <SPAN
+CLASS="QUOTE"
+>&#8220;/&#8221;</SPAN
+> or <SPAN
+CLASS="QUOTE"
+>&#8220;.&#8221;</SPAN
+>,
+anything with <SPAN
+CLASS="QUOTE"
+>&#8220;/&#8221;</SPAN
+> or <SPAN
+CLASS="QUOTE"
+>&#8220;&#38;&#8221;</SPAN
+>
+inside it, any control characters (especially NIL and newline), and/or
+any characters with the <SPAN
+CLASS="QUOTE"
+>&#8220;high bit&#8221;</SPAN
+> set (especially
+values decimal 254 and 255, and character 133 is the Unicode Next-of-line
+character used by OS/390).
+Again, your code should not be checking for <SPAN
+CLASS="QUOTE"
+>&#8220;bad&#8221;</SPAN
+> values; you should do
+this check mentally to be sure that your pattern ruthlessly limits input
+values to legal values.
+If your pattern isn&#8217;t sufficiently narrow, you need to carefully
+re-examine the pattern to see if there are other problems.</P
+><P
+>Limit the maximum character length (and minimum length if appropriate),
+and be sure to not lose control when such lengths are exceeded
+(see <A
+HREF="buffer-overflow.html"
+>Chapter 6</A
+> for more about buffer overflows).</P
+><P
+>Here are a few common data types, and things you should validate
+before using them from an untrusted user:
+<P
+></P
+><UL
+><LI
+><P
+>For strings, identify the legal characters or legal patterns
+(e.g., as a regular expression) and reject anything not matching that form.
+There are special problems when strings contain control characters
+(especially linefeed or NIL) or metacharacters (especially shell
+metacharacters); it is often
+best to <SPAN
+CLASS="QUOTE"
+>&#8220;escape&#8221;</SPAN
+> such metacharacters immediately when the input is received so
+that such characters are not accidentally sent.
+CERT goes further and recommends escaping all characters
+that aren&#8217;t in a list of characters not needing escaping [CERT 1998, CMU 1998].
+See <A
+HREF="handle-metacharacters.html"
+>Section 8.3</A
+>
+for more information on metacharacters.
+Note that
+<A
+HREF="http://www.w3.org/TR/2001/NOTE-newline-20010314"
+TARGET="_top"
+>line ending encodings vary on different computers</A
+>:
+Unix-based systems use character 0x0a (linefeed),
+CP/M and DOS based systems (including Windows) use 0x0d 0x0a
+(carriage-return linefeed, and some programs incorrectly reverse the order),
+the Apple MacOS uses 0x0d (carriage return), and IBM OS/390 uses
+0x85 (0x85) (next line, sometimes called newline).</P
+></LI
+><LI
+><P
+>Limit all numbers to the minimum (often zero) and maximum allowed values.</P
+></LI
+><LI
+><P
+>A full email address checker is actually quite complicated, because there
+are legacy formats that greatly complicate validation if you need
+to support all of them; see mailaddr(7) and IETF RFC 822 [RFC 822]
+for more information if such checking is necessary.
+Friedl [1997] developed a regular expression to check if
+an email address is valid (according to the specification);
+his <SPAN
+CLASS="QUOTE"
+>&#8220;short&#8221;</SPAN
+> regular expression is 4,724 characters,
+and his <SPAN
+CLASS="QUOTE"
+>&#8220;optimized&#8221;</SPAN
+> expression (in appendix B) is 6,598 characters long.
+And even that regular expression isn&#8217;t perfect; it can&#8217;t recognize local
+email addresses, and it can&#8217;t handle nested parentheses in comments
+(as the specification permits).
+Often you can simplify and only permit the <SPAN
+CLASS="QUOTE"
+>&#8220;common&#8221;</SPAN
+> Internet
+address formats.</P
+></LI
+><LI
+><P
+>Filenames should be checked; see
+<A
+HREF="file-names.html"
+>Section 5.6</A
+> for more information on filenames.</P
+></LI
+><LI
+><P
+>URIs (including URLs) should be checked for validity.
+If you are directly acting on a URI (i.e., you&#8217;re implementing a web
+server or web-server-like program and the URL is a request for your data),
+make sure the URI is valid, and be especially careful of URIs that
+try to <SPAN
+CLASS="QUOTE"
+>&#8220;escape&#8221;</SPAN
+> the document root (the area of the filesystem
+that the server is responding to).
+The most common ways to escape the document root are via <SPAN
+CLASS="QUOTE"
+>&#8220;..&#8221;</SPAN
+> or
+a symbolic link, so most servers check any <SPAN
+CLASS="QUOTE"
+>&#8220;..&#8221;</SPAN
+> directories themselves
+and ignore symbolic links unless specially directed.
+Also remember to decode any encoding first (via URL encoding or
+UTF-8 encoding), or an encoded <SPAN
+CLASS="QUOTE"
+>&#8220;..&#8221;</SPAN
+> could slip through.
+URIs aren&#8217;t supposed to even include UTF-8 encoding, so the safest thing
+is to reject any URIs that include characters with high bits set.</P
+><P
+>If you are implementing a system that uses the URI/URL as data,
+you&#8217;re not home-free at all; you need to ensure that malicious users
+can&#8217;t insert URIs that will harm other users.
+See <A
+HREF="filter-html.html#VALIDATING-URIS"
+>Section 5.13.4</A
+>
+for more information about this.</P
+></LI
+><LI
+><P
+>When accepting cookie values, make sure to check the the domain value
+for any cookie you&#8217;re using
+is the expected one.  Otherwise, a (possibly cracked) related site
+might be able to insert spoofed cookies.
+Here&#8217;s an example from IETF RFC 2965 of how failing to do this check could
+cause a problem:
+<P
+></P
+><UL
+><LI
+><P
+>         User agent makes request to victim.cracker.edu, gets back
+         cookie session_id="1234" and sets the default domain
+         victim.cracker.edu.</P
+></LI
+><LI
+><P
+>         User agent makes request to spoof.cracker.edu, gets back cookie
+         session-id="1111", with Domain=".cracker.edu".</P
+></LI
+><LI
+><P
+>         User agent makes request to victim.cracker.edu again, and passes:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="90%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>         Cookie: $Version="1"; session_id="1234",
+                 $Version="1"; session_id="1111"; $Domain=".cracker.edu"</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+         The server at victim.cracker.edu should detect that the second
+         cookie was not one it originated by noticing that the Domain
+         attribute is not for itself and ignore it.</P
+></LI
+></UL
+></P
+></LI
+></UL
+></P
+><P
+>Unless you account for them,
+the legal character patterns must not include characters
+or character sequences that have special meaning to either
+the program internals or the eventual output:
+<P
+></P
+><UL
+><LI
+><P
+>A character sequence may have special meaning to the program&#8217;s internal
+storage format.
+For example, if you store data (internally or externally) in delimited
+strings, make sure that the delimiters are not permitted data values.
+A number of programs
+store data in comma (,) or colon (:) delimited text files;
+inserting the delimiters
+in the input can be a problem unless the program accounts for it (i.e.,
+by preventing it or encoding it in some way).
+Other characters often causing these problems include single and double quotes
+(used for surrounding strings)
+and the less-than sign "&#60;"
+(used in SGML, XML, and HTML to indicate a tag&#8217;s beginning; this is important
+if you store data in these formats).
+Most data formats have an escape sequence to handle these cases; use it,
+or filter such data on input.</P
+></LI
+><LI
+><P
+>A character sequence may have special meaning if sent back out to a user.
+A common example of this is permitting HTML tags in data input that will later
+be posted to other readers (e.g., in a guestbook or <SPAN
+CLASS="QUOTE"
+>&#8220;reader comment&#8221;</SPAN
+> area).
+However, the problem is much more general.
+See <A
+HREF="cross-site-malicious-content.html"
+>Section 7.16</A
+> for a general discussion
+on the topic, and see <A
+HREF="filter-html.html"
+>Section 5.13</A
+> for a specific discussion
+about filtering HTML.</P
+></LI
+></UL
+></P
+><P
+>These tests should usually be centralized in one place so that the
+validity tests can be easily examined for correctness later.</P
+><P
+>Make sure that your validity test is actually correct; this is particularly
+a problem when checking input that will be used by another program
+(such as a filename, email address, or URL).
+Often these tests have subtle errors, producing the so-called
+<SPAN
+CLASS="QUOTE"
+>&#8220;deputy problem&#8221;</SPAN
+> (where the checking program
+makes different assumptions than the program that actually uses the data).
+If there&#8217;s a relevant standard, look at it, but also search to see if
+the program has extensions that you need to know about.</P
+><P
+>While parsing user input, it&#8217;s a good idea to temporarily drop all privileges,
+or even create separate processes (with the parser having permanently dropped
+privileges, and the other process performing security checks against the
+parser requests).
+This is especially true if the parsing task is complex (e.g., if you use
+a lex-like or yacc-like tool), or if the programming language
+doesn&#8217;t protect against buffer overflows (e.g., C and C++).
+See
+<A
+HREF="minimize-privileges.html"
+>Section 7.4</A
+>
+for more information on minimizing privileges.</P
+><P
+>When using data for security decisions (e.g., <SPAN
+CLASS="QUOTE"
+>&#8220;let this user in&#8221;</SPAN
+>),
+be sure to use trustworthy channels.
+For example, on a public Internet, don&#8217;t just use the machine IP address
+or port number as the sole way to authenticate users, because in most
+environments this information can be set
+by the (potentially malicious) user.
+See
+<A
+HREF="trustworthy-channels.html"
+>Section 7.12</A
+> for more information.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="input.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="validation-tools-regex.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Validate All Input</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="input.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Input Validation Tools including Regular Expressions</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

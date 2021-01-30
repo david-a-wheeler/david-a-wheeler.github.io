@@ -1,0 +1,93 @@
+#!/usr/bin/env perl
+
+# Tests to see if the url_pattern accepts what it should accept and
+# rejects what it should reject.
+
+$url_pattern =
+'(
+ (
+  # Handle http, https, and relative URIs:
+  ((https?://([A-Za-z0-9][A-Za-z0-9\-]*(\.[A-Za-z0-9][A-Za-z0-9\-]*)*\.?))|
+    ([A-Za-z0-9\-\_\.\!\~\*\'\(\)]|(%[2-9A-Fa-f][0-9a-fA-F]))+)?
+  ((/([A-Za-z0-9\-\_\.\!\~\*\'\(\)]|(%[2-9A-Fa-f][0-9a-fA-F]))+)*/?) # path
+   (\?(                                                              # query:
+       (([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+=
+        ([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+
+        (\&([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+=
+         ([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+)*)
+       |
+       (([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+  # isindex
+       )
+   ))?
+   (\#([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+)? # fragment
+  )|
+ # Handle ftp:
+ (ftp://([A-Za-z0-9][A-Za-z0-9\-]*(\.[A-Za-z0-9][A-Za-z0-9\-]*)*\.?)
+  ((/([A-Za-z0-9\-\_\.\!\~\*\'\(\)]|(%[2-9A-Fa-f][0-9a-fA-F]))+)*/?) # path
+  (\#([A-Za-z0-9\-\_\.\!\~\*\'\(\)\+]|(%[2-9A-Fa-f][0-9a-fA-F]))+)? # fragment
+  )
+ )';
+
+
+$GOOD = 1;
+$BAD  = 0;
+
+
+sub url_okay {
+ my $url = shift(@_);
+
+ # print " Testing url: !$url!\n";
+ if ($url =~ m!^${url_pattern}$!sx) {return $GOOD;}
+ else {return $BAD;}
+}
+
+
+sub check {
+ my ($url, $status) = @_;
+ my $actual_status = &url_okay($url);
+
+ if ($actual_status != $status) {
+   print "FAILURE! Expected $status, actual $actual_status from url=\"$url\"\n";
+ }
+}
+
+
+print "Running tests of URIs.\n";
+check("http://www.yahoo.com", $GOOD);
+check("http://www.yahoo.com/", $GOOD);
+check("http://1.2.3.4/", $GOOD);
+check("http://www.yaho%6f.com", $BAD);
+check("http://www.yahoo.com/stuff", $GOOD);
+check("http://www.yahoo.com/stuff/", $GOOD);
+check("http://www yahoo.com", $BAD);
+check("http://www.yahoo.com/hello world/", $BAD);
+check("http://www.yahoo.com/hello%00world/", $BAD);
+check("http://www.yahoo.com/hello%20world/", $GOOD);
+check("http://www.yahoo.com/hello+world/", $BAD);
+check("http://www.yahoo.com?name=obi", $GOOD);
+check("http://www.yahoo.com?name=obi&", $BAD);
+check("http://www.yahoo.com?name=obi&type=", $BAD);
+check("http://www.yahoo.com?name=obi+wan&status=jedi", $GOOD);
+check("http://www.yahoo.com?onery", $GOOD);
+check("http://www.yahoo.com?name=%00%01", $BAD);
+check("http://www.yahoo.com#bottom", $GOOD);
+check("http://www.yahoo.com/yelp.html#bottom", $GOOD);
+check("http://www.yahoo.com/yelp.html#", $BAD);
+check("http://www.yahoo.com/yelp.html#\"", $BAD);
+check("https://www.yahoo.com/", $GOOD);
+check("ftp://www.yahoo.com/", $GOOD);
+check("ftp://www.yahoo.com/hello", $GOOD);
+check("demo.txt", $GOOD);
+check("demo/hello.txt", $GOOD);
+check("demo/hello.txt?query=hello#fragment", $GOOD);
+check("/cgi-bin/query?query=hello#fragment", $GOOD);
+check("/demo.txt", $GOOD);
+check("/hello/demo.txt", $GOOD);
+check("hello/demo.txt", $GOOD);
+check("/", $GOOD);      # Document/anonymous-ftp root of current system
+check("//", $BAD);
+check("", $GOOD);       # Reference to beginning of this document.
+check("#here", $GOOD);  # Reference to location "here" of this document.
+print "Test ended, all errors reported.\n";
+
+

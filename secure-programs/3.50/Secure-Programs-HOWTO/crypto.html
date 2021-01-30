@@ -1,0 +1,722 @@
+<HTML
+><HEAD
+><TITLE
+>Cryptographic Algorithms and Protocols</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Special Topics"
+HREF="special.html"><LINK
+REL="PREVIOUS"
+TITLE="Specially Protect Secrets (Passwords and Keys) in User Memory"
+HREF="protect-secrets.html"><LINK
+REL="NEXT"
+TITLE="Using PAM"
+HREF="use-pam.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="protect-secrets.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 11. Special Topics</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="use-pam.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CRYPTO"
+></A
+>11.5. Cryptographic Algorithms and Protocols</H1
+><P
+>Often cryptographic algorithms and protocols are necessary to keep
+a system secure, particularly when communicating through an untrusted
+network such as the Internet.
+Where possible, use cryptographic techniques to authenticate information and
+keep the information private
+(but don't assume that simple encryption automatically authenticates as well).
+Generally you'll need to use a suite of available tools to
+secure your application.</P
+><P
+>For background information and code, you should probably look at
+the classic text ``Applied Cryptography'' [Schneier 1996].
+The newsgroup ``sci.crypt'' has a series of FAQ's; you can find them
+at many locations, including
+<A
+HREF="http://www.landfield.com/faqs/cryptography-faq"
+TARGET="_top"
+>http://www.landfield.com/faqs/cryptography-faq</A
+>.
+Linux-specific resources include the Linux Encryption HOWTO at
+<A
+HREF="http://marc.mutz.com/Encryption-HOWTO/"
+TARGET="_top"
+>http://marc.mutz.com/Encryption-HOWTO/</A
+>.
+A discussion on how protocols use the basic algorithms can be
+found in [Opplinger 1998].
+A useful collection of papers on how to apply cryptography in
+protocols can be found in [Stallings 1996].
+What follows here is just a few comments; these areas are rather
+specialized and covered more thoroughly elsewhere.</P
+><P
+>Cryptographic protocols and algorithms are difficult to get right,
+so do not create your own.
+Instead, where you can, use protocols and algorithms that are
+widely-used, heavily analyzed, and accepted as secure.
+When you must create anything, give the approach wide public review and
+make sure that professional security analysts examine it for problems.
+In particular, do not create your own encryption algorithms unless you are
+an expert in cryptology, know what you're doing, and plan to spend
+years in professional review of the algorithm.
+Creating encryption algorithms (that are any good) is a task for experts only.</P
+><P
+>A number of algorithms are patented; even if the owners permit
+``free use'' at the moment, without a signed contract they can always
+change their minds later, putting you at extreme risk later.
+In general, avoid all patented algorithms -
+in most cases there's an unpatented approach that is at least as good
+or better technically, and by doing so you avoid a large number
+of legal problems.</P
+><P
+>Another complication is that many counties regulate or restrict
+cryptography in some way.
+A survey of legal issues is available at the ``Crypto Law Survey'' site,
+<A
+HREF="http://rechten.kub.nl/koops/cryptolaw/"
+TARGET="_top"
+>http://rechten.kub.nl/koops/cryptolaw/</A
+>.</P
+><P
+>Often, your software should provide a way to
+reject ``too small'' keys, and let the user set what ``too small'' is.
+For RSA keys, 512 bits is too small for use.
+There is increasing evidence that
+1024 bits for RSA keys is not enough either;
+Bernstein has suggested techniques that simplify brute-forcing RSA, and
+other work based on it
+(such as Shamir and Tromer's "Factoring Large Numbers with the TWIRL device")
+now suggests that 1024 bit keys can be broken in a year
+by a $10 Million device.
+You may want to
+make 2048 bits the minimum for RSA if you really want a secure system,
+and you should certainly do so if you plan to use those keys after 2015.
+For more about RSA specifically, see
+<A
+HREF="http://www.rsasecurity.com/rsalabs/technotes/bernstein.html"
+TARGET="_top"
+>RSA's
+commentary on Bernstein's work</A
+>.
+For a more general discussion of key length and other general
+cryptographic algorithm issues, see
+<A
+HREF="http://csrc.nist.gov/encryption/kms/key-management-guideline-(workshop).pdf"
+TARGET="_top"
+>NIST's key management workshop in November 2001</A
+>.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CRYPTO-PROTOCOLS"
+></A
+>11.5.1. Cryptographic Protocols</H2
+><P
+>When you need a security protocol, try to use standard-conforming protocols
+such as IPSec, SSL (soon to be TLS), SSH, S/MIME, OpenPGP/GnuPG/PGP,
+and Kerberos.
+Each has advantages and disadvantages;
+many of them overlap somewhat in functionality, but each tends to be
+used in different areas:
+
+<P
+></P
+><UL
+><LI
+><P
+>Internet Protocol Security (IPSec).
+IPSec provides encryption and/or authentication at the IP packet level.
+However, IPSec is often used in a way that
+only guarantees authenticity of two
+communicating hosts, not of the users.
+As a practical matter, IPSec usually requires low-level support
+from the operating system (which not all implement) and
+an additional keyring server that must be configured.
+Since IPSec can be used as a "tunnel" to secure packets belonging to
+multiple users and multiple hosts, it is especially useful for
+building a Virtual Private Network (VPN) and connecting a remote machine.
+As of this time, it is much less often used to secure communication
+from individual clients to servers.
+The new version of the Internet Protocol, IPv6, comes with
+IPSec ``built in,'' but IPSec also works with the more common IPv4 protocol.
+Note that if you use IPSec, don't use the encryption mode without the
+authentication, because the authentication also acts as
+integrity protection.</P
+></LI
+><LI
+><P
+>Secure Socket Layer (SSL) / TLS.
+SSL/TLS works over TCP and tunnels other protocols using TCP, adding
+encryption, authentication of the server, and optional authentication
+of the client (but authenticating clients using SSL/TLS requires
+that clients have configured X.509 client certificates, something
+rarely done).
+SSL version 3 is widely used; TLS is a later adjustment to SSL that
+strengthens its security and improves its flexibility.
+Currently there is a slow transition going on from SSLv3 to TLS, aided
+because implementations can easily try to use TLS and then back off to SSLv3
+without user intervention.
+Unfortunately, a few bad SSLv3 implementations cause problems with the
+backoff, so you may need a preferences setting to allow users to skip
+using TLS if necessary.
+Don't use SSL version 2, it has some serious security weaknesses.</P
+><P
+>SSL/TLS is the primary method for protecting http (web) transactions.
+Any time you use an "https://" URL, you're using SSL/TLS.
+Other protocols that often use SSL/TLS include POP3 and IMAP.
+SSL/TLS usually use a separate TCP/IP port
+number from the unsecured port, which the IETF is a little unhappy about
+(because it consumes twice as many ports; there are solutions to this).
+SSL is relatively easy to use in programs, because
+most library implementations allow programmers to use operations
+similar to the operations on standard sockets like
+SSL_connect(), SSL_write(), SSL_read(), etc.
+A widely used OSS/FS implementation of SSL (as well as other capabilities)
+is OpenSSL, available at
+<A
+HREF="http://www.openssl.org"
+TARGET="_top"
+>http://www.openssl.org</A
+>.</P
+></LI
+><LI
+><P
+>OpenPGP and S/MIME.
+There are two competing, essentially incompatible standards for
+securing email: OpenPGP and S/MIME.
+OpenPHP is based on the PGP application; an OSS/FS implementation is
+GNU Privacy Guard from
+<A
+HREF="http://www.gnupg.org"
+TARGET="_top"
+>http://www.gnupg.org</A
+>.
+Currently, their certificates are often not interchangeable;
+work is ongoing to repair this.</P
+></LI
+><LI
+><P
+>SSH.
+SSH is the primary method of securing ``remote terminals'' over an 
+internet, and it also includes methods for
+tunelling X Windows sessions.
+However, it's been extended to support single sign-on and
+general secure tunelling for TCP streams, so it's often
+used for securing other data streams too (such as CVS accesses).
+The most popular implementation of SSH is OpenSSH
+<A
+HREF="http://www.openssh.com"
+TARGET="_top"
+>http://www.openssh.com</A
+>,
+which is OSS/FS.
+Typical uses of SSH allows the client to authenticate that the
+server is truly the server, and
+then the user enters a password to authenticate the user
+(the password is encrypted and sent to the other system for verification).
+Current versions of SSH can store private keys, allowing users to not
+enter the password each time.
+To prevent man-in-the-middle attacks, SSH records keying information
+about servers it talks to; that means that typical use of
+SSH is vulnerable to a man-in-the-middle attack during the
+very first connection, but it can detect problems afterwards.
+In contrast, SSL generally uses a certificate authority, which eliminates
+the first connection problem but requires special setup (and payment!) to
+the certificate authority.</P
+></LI
+><LI
+><P
+>Kerberos.
+Kerberos is a protocol for single sign-on and authenticating users
+against a central authentication and key distribution server. Kerberos
+works by giving authenticated users "tickets", granting them access to
+various services on the network.
+When clients then contact servers, the servers can verify the tickets.
+Kerberos is a primary method for securing and supporting authentication
+on a LAN, and for establishing shared secrets (thus, it needs to be
+used with other algorithms for the actual protection of communication).
+Note that to use Kerberos, both the client and server have to include
+code to use it, and since not everyone has a Kerberos setup, this has
+to be optional - complicating the use of Kerberos in some programs.
+However, Kerberos is widely used.</P
+></LI
+></UL
+></P
+><P
+>Many of these protocols allow you to select a number of different
+algorithms, so you'll still need to pick reasonable defaults for
+algorithms (e.g., for encryption).</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="SYMMETRIC-ENCRYPTION"
+></A
+>11.5.2. Symmetric Key Encryption Algorithms</H2
+><P
+>The use, export, and/or import of implementations of
+encryption algorithms are restricted in many countries, and the laws
+can change quite rapidly.
+Find out what the rules are before trying to build applications using
+cryptography.</P
+><P
+>For secret key (bulk data) encryption algorithms,
+use only encryption algorithms that have been openly published and withstood
+years of attack, and check on their patent status.
+I would recommend using the
+new Advanced Encryption Standard (AES), also known as Rijndahl --
+a number of cryptographers have analyzed it and not found any serious weakness
+in it, and I believe it has been through enough analysis
+to be trustworthy now.
+In August 2002 researchers Fuller and Millar
+discovered a mathematical property of the cipher that,
+while not an attack, might be exploitable and turned into an attack
+(the approach may actually has serious consequences for some other
+algorithms, too).
+However, heavy-duty worldwide analysis has yet to
+provide serious evidence that AES is actually vulnerable
+(see [Landau 2004] for more technical information on Rijndael).
+It's always worth staying tuned for future work, of course.
+A good alternative to AES is the Serpent algorithm, which is slightly slower
+but is very resistant to attack.
+For many applications triple-DES is a very good encryption algorithm; it
+has a reasonably lengthy key (112 bits), no patent issues, and
+a very long history of withstanding attacks (it's withstood attacks far
+longer than any other encryption algorithm with reasonable key length in the
+public literature, so it's probably the safest publicly-available
+symmetric encryption algorithm when properly implemented).
+However, triple-DES is very slow when implemented in software, so
+triple-DES can be considered ``safest but slowest.''
+Twofish appears to be a good encryption algorithm, but there are some
+lingering questions - Sean Murphy and Fauzan Mirza showed that Twofish
+has properties that cause many academics to be concerned (though as of yet
+no one has managed to exploit these properties).
+MARS is highly resistent to ``new and novel'' attacks, but it's more complex
+and is impractical on small-ability smartcards.
+For the moment I would avoid Twofish - it's quite likely that this will never
+be exploitable, but it's hard to be sure and there are alternative
+algorithms which don't have these concerns.
+Don't use IDEA - it's subject to U.S. and European patents.
+Don't use stupid algorithms such as XOR with a constant or constant string,
+the ROT (rotation)
+scheme, a Vinegere ciphers, and so on - these can be trivially broken
+with today's computers.
+Don't use ``double DES'' (using DES twice) - that's subject to a
+``man in the middle'' attack that triple-DES avoids.
+Your protocol should support multiple encryption algorithms, anyway;
+that way, when an encryption algorithm is broken,
+users can switch to another one.</P
+><P
+>For symmetric-key encryption (e.g., for bulk encryption), don't use a
+key length less than 90 bits if you want the information
+to stay secret through 2016
+(add another bit for every additional 18 months of security) [Blaze 1996].
+For encrypting worthless data, the old DES algorithm has some value,
+but with modern hardware it's too easy to break DES's 56-bit key using
+brute force.
+If you're using DES, don't just use the ASCII text key as the key -
+parity is in the least (not most) significant bit, so most DES algorithms
+will encrypt using a key value well-known to adversaries;
+instead, create a hash of the key and set the parity bits correctly
+(and pay attention to error reports from your encryption routine).
+So-called ``exportable'' encryption algorithms only have effective key lengths
+of 40 bits, and are essentially worthless;
+in 1996 an attacker could spend $10,000 to break such keys in twelve minutes
+or use idle computer time to break them in a few days,
+with the time-to-break halving every 18 months in either case.</P
+><P
+>Block encryption algorithms can be used in a number of different modes, such as
+``electronic code book'' (ECB) and ``cipher block chaining'' (CBC).
+In nearly all cases, use CBC, and do <EM
+>not</EM
+> use ECB mode -
+in ECB mode, the same block of data always returns the same result inside
+a stream, and this is often enough to reveal what's encrypted.
+Many modes, including CBC mode, require an ``initialization vector'' (IV).
+The IV doesn't need to be secret, but it does need to be unpredictable by
+an attacker.
+Don't reuse IV's across sessions - use a new IV each time you start a session.</P
+><P
+>There are a number of different streaming encryption algorithms, but
+many of them have patent restrictions.
+I know of no patent or technical issues with WAKE.
+RC4 was a trade secret of RSA Data Security Inc; it's been leaked since,
+and I know of no real legal impediment to its use, but RSA Data
+Security has often threatened
+court action against users of it (it's not at all clear what RSA Data
+Security could do,
+but no doubt they could tie up users in worthless court cases).
+If you use RC4, use it as intended - in particular, always discard the
+first 256 bytes it generates, or you'll be vulnerable to attack.
+SEAL is patented by IBM - so don't use it.
+SOBER is patented; the patent owner has claimed that it will allow many
+uses for free if permission is requested, but this creates an impediment for
+later use.
+Even more interestingly, block encryption algorithms can be used in modes that
+turn them into stream ciphers, and users who want stream ciphers should
+consider this approach (you'll be able to choose between far more
+publicly-available algorithms).</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="PUBLIC-KEY-ENCRYPTION"
+></A
+>11.5.3. Public Key Algorithms</H2
+><P
+>For public key cryptography (used, among other things, for
+signing and sending secret keys), there are only a few
+widely-deployed algorithms.
+One of the most widely-used algorithms is RSA;
+RSA's algorithm was patented, but only in the U.S., and that patent
+expired in September 2000, so RSA can be freely used.
+Never decrypt or sign a raw value that an attacker gives you directly using
+RSA and expose the result, because that could expose the private key
+(this isn't a problem in practice, because most protocols involve
+signing a hash computed by the user - not the raw value - or don't expose
+the result).
+Never decrypt or sign the exact same raw value multiple times
+(the original can be exposed).
+Both of these can be solved by always adding random padding
+(PGP does this) - the usual approach is called
+Optimal Asymmetric Encryption Padding (OAEP).</P
+><P
+>The Diffie-Hellman key exchange algorithm is widely used to permit
+two parties to agree on a session key.  By itself it doesn't guarantee that
+the parties are who they say they are, or that there is no middleman, but
+it does strongly help defend against passive listeners; its patent
+expired in 1997.
+If you use Diffie-Hellman to create a shared secret, be sure to hash it first
+(there's an attack if you use its shared value directly).</P
+><P
+>NIST developed the digital signature standard (DSS) (it's a
+modification of the ElGamal cryptosystem) for digital signature
+generation and verification; one of the conditions for its development
+was for it to be patent-free.</P
+><P
+>RSA, Diffie-Hellman, and El Gamal's techniques require more bits for the
+keys for equivalent security compared to typical symmetric keys;
+a 1024-bit key in these systems is supposed to be roughly equivalent
+to an 80-bit symmetric key.
+A 512-bit RSA key is considered completely unsafe;
+Nicko van Someren has demonstrated that such small RSA keys
+can be factored in 6 weeks using only already-available office hardware
+(never mind equipment designed for the job).
+In the past, a 1024-bit RSA key was considered reasonably secure, but
+recent advancements in factorization algorithms
+(e.g., by D. J. Bernstein) have raised concerns that perhaps even 1024 bits
+is not enough for an RSA key.
+Certainly, if your application needs to be highly secure or last beyond
+2015, you should use a 2048 bit keys.</P
+><P
+>If you need a public key that requires far fewer bits (e.g., for
+a smartcard), then you might use elliptic
+curve cryptography (IEEE P1363 has some suggested curves; finding curves
+is hard).
+However, be careful - elliptic curve cryptography isn't patented, but
+certain speedup techniques are patented.
+Elliptic curve cryptography is fast enough
+that it really doesn't need these speedups anyway for its usual use of
+encrypting session / bulk encryption keys.
+In general, you shouldn't try to do bulk encryption with elliptic keys;
+symmetric algorithms are much faster and are better-tested for the job.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="HASH"
+></A
+>11.5.4. Cryptographic Hash Algorithms</H2
+><P
+>Some programs need a one-way cryptographic hash algorithm, that is, a function
+that takes an ``arbitrary'' amount of data and generates a fixed-length
+number that hard for an attacker
+to invert (e.g., it's difficult for an attacker to
+create a different set of data to generate that same value).
+For a number of years MD5 has been a favorite, but recent efforts have
+shown that its 128-bit length may not be enough
+[van Oorschot 1994]
+and that certain attacks weaken MD5's protection
+[Dobbertin 1996].
+Indeed, there are rumors
+that a top industry cryptographer has broken MD5, but is bound by
+employee agreement to keep silent
+(see the Bugtraq 22 August 2000 posting by John Viega).
+Anyone can create a rumor, but enough weaknesses have been found that
+the idea of completing the break is plausible.
+If you're writing new code, use SHA-1 instead of MD5.
+Don't use the original SHA (now called ``SHA-0'');
+SHA-0 had the same weakness that MD5 does.
+If you need more bits in your hash algorithm, use SHA-256, SHA-384, or
+SHA-512; you can get the specifications in NIST FIPS PUB 180-2.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="INTEGRITY-CHECK"
+></A
+>11.5.5. Integrity Checking</H2
+><P
+>When communicating, you need some sort of integrity check (don't depend
+just on encryption, since an attacker can then induce changes of information
+to ``random'' values).
+This can be done with hash algorithms, but don't just use a hash function
+directly (this exposes users to an ``extension'' attack - the attacker
+can use the hash value, add data of their choosing, and compute the new hash).
+The usual approach is ``HMAC'', which computes the integrity check as
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  H(k xor opad, H(k xor ipad, data)).</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+where H is the hash function (typically MD5 or SHA-1) and k is the key.
+Thus, integrity checks are often HMAC-MD5 or HMAC-SHA-1.
+Note that although MD5 has some weaknesses, as far as I know MD5 isn't
+vulnerable when used in this construct, so HMAC-MD5 is (to my knowledge) okay.
+This is defined in detail in IETF RFC 2104.</P
+><P
+>Note that in the HMAC approach, a receiver can forge the same data as a sender.
+This isn't usually a problem, but if this must be avoided, then use
+public key methods and have the sender ``sign'' the data with the sender
+private key - this avoids this forging attack, but it's more expensive and
+for most environments isn't necessary.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="RMAC"
+></A
+>11.5.6. Randomized Message Authentication Mode (RMAC)</H2
+><P
+><A
+HREF="http://csrc.nist.gov/CryptoToolkit/modes"
+TARGET="_top"
+>NIST has developed and proposed
+a new mode</A
+> for using cryptographic algorithms called
+<A
+HREF="http://www.counterpane.com/crypto-gram-0301.html"
+TARGET="_top"
+>Randomized Message Authentication Code (RMAC)</A
+>.
+RMAC is intended for use as a message authentication code technique.</P
+><P
+>Although there's a formal proof showing that RMAC is secure, the
+proof depends on the highly questionable assumption that
+the underlying cryptographic algorithm
+meets the "ideal cipher model" - in particular, that the algorithm is
+secure against a variety of specialized attacks, including related-key attacks.
+Unfortunately, related-key attacks are poorly studied for many algorithms;
+this is not the kind of property or attack that most people worry about
+when analyzing with cryptographic algorithms.
+It's known triple-DES doesn't have this properly, and it's unclear if
+other widely-accepted algorithms like AES have this property
+(it appears that AES is at least weaker against related key attacks than
+usual attacks).</P
+><P
+>The best advice right now is "don't use RMAC".
+There are other ways to do message authentication, such as HMAC
+combined with a cryptographic hash algorithm (e.g., HMAC-SHA1).
+HMAC isn't the same thing (e.g., technically it doesn't include a
+nonce, so you should rekey sooner), but the theoretical weaknesses
+of HMAC are merely theoretical, while the problems in RMAC seem far
+more important in the real world.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CRYPTO-OTHER"
+></A
+>11.5.7. Other Cryptographic Issues</H2
+><P
+>You should both encrypt and include integrity checks of data that's important.
+Don't depend on the encryption also providing integrity - an attacker may
+be able to change the bits into a different value, and although the attacker
+may not be able to change it to a specific value, merely changing the
+value may be enough.
+In general, you should use different keys for integrity and secrecy, to
+avoid certain subtle attacks.</P
+><P
+>One issue not discussed often enough is the problem of ``traffic analysis.''
+That is, even if messages are encrypted and the encryption is not broken,
+an adversary may learn a great deal just from the encrypted messages.
+For example, if the presidents of two companies start exchanging many
+encrypted email messages, it may suggest that the two comparies are
+considering a merger.
+For another example, many SSH implementations have been found to have a
+weakness in exchanging passwords: observers could look at packets and 
+determine the length (or length range) of the password, even if they
+couldn't determine the password itself.
+They could also also determine other information about the password that
+significantly aided in breaking it.</P
+><P
+>Be sure to not make it possible to solve a problem in parts, and use
+different keys when the trust environment (who is trusted) changes.
+Don't use the same key for too long - after a while, change the session key
+or password so an adversary will have to start over.</P
+><P
+>Generally you should compress something you'll encrypt - this does
+add a fixed header, which isn't so good, but it eliminates many
+patterns in the rest of the message as well as making the result
+smaller, so it's usually viewed as a ``win'' if compression is likely
+to make the result smaller.</P
+><P
+>In a related note, if you must create your own communication
+protocol, examine the problems of what's gone on before.
+Classics such as Bellovin [1989]'s review of security problems
+in the TCP/IP protocol suite might help you, as well as
+Bruce Schneier [1998]
+and Mudge's breaking of Microsoft's PPTP implementation and their
+follow-on work.
+Again, be sure to give any new protocol widespread public review, and
+reuse what you can.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="protect-secrets.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="use-pam.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Specially Protect Secrets (Passwords and Keys) in User Memory</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="special.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Using PAM</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

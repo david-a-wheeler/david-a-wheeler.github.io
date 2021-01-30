@@ -1,0 +1,595 @@
+<HTML
+><HEAD
+><TITLE
+>Authenticating on the Web</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Special Topics"
+HREF="special.html"><LINK
+REL="PREVIOUS"
+TITLE="Passwords"
+HREF="passwords.html"><LINK
+REL="NEXT"
+TITLE="Random Numbers"
+HREF="random-numbers.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="passwords.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 11. Special Topics</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="random-numbers.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="WEB-AUTHENTICATION"
+></A
+>11.2. Authenticating on the Web</H1
+><P
+>On the web, a web server is usually authenticated to users by using SSL or TLS
+and a server certificate - but it's not as easy to authenticate who
+the users are.
+SSL and TLS do support client-side certificates, but there are many practical
+problems with actually using them (e.g., web browsers don't support a single
+user certificate format and users find it difficult to install them).
+You can learn about how to set up digital certificates from many places, e.g.,
+<A
+HREF="http://www.petbrain.com/modules.php?op=modload&name=pki&file=index"
+TARGET="_top"
+>Petbrain</A
+>.
+Using Java or Javascript has its own problems, since many users disable them,
+some firewalls filter them out, and they tend to be slow.
+In most cases, requiring every user to install a plug-in is impractical too,
+though if the system is only for an intranet for a relatively
+small number of users this may be appropriate.</P
+><P
+>If you're building an intranet application, you should generally use
+whatever authentication system is used by your users.
+Unix-like systems tend to use Kerberos, NIS+, or LDAP.
+You may also need to deal with a Windows-based authentication schemes
+(which can be viewed as proprietary variants of Kerberos and LDAP).
+Thus, if your organization depend on Kerberos,
+design your system to use Kerberos.
+Try to separate the authentication system from the rest of your application,
+since the organization may (will!) change their authentication system over
+time.
+The article
+<A
+HREF="http://www-106.ibm.com/developerworks/java/library/wa-singlesign/?ca=dgr-lnxw02CASsso"
+TARGET="_top"
+>Build and implement a single sign-on solution</A
+>
+discusses some approaches for implementing single sign-on (SSO) for
+intranets.</P
+><P
+>Many techniques for authentication
+don't work or don't work very well for Internet applications.
+One approach that works in some cases
+is to use ``basic authentication'', which is built into
+essentially all browsers and servers.
+Unfortunately, basic authentication sends passwords unencrypted, so it
+makes passwords easy to steal; basic authentication by itself is really
+useful only for worthless information.
+You could store authentication information in the URLs selected by the users,
+but for most circumstances you should never do this - not only are
+the URLs sent unprotected over the wire (as with basic authentication),
+but there are too many other ways that
+this information can leak to others
+(e.g., through the browser history logs stored by many browsers,
+logs of proxies, and to other web sites through the Referer: field).
+You could wrap all communication with a web server using
+an SSL/TLS connection (which would encrypt it); this is secure
+(depending on how you do it), and it's
+necessary if you have important data, but note that
+this is costly in terms of performance.
+You could also use ``digest authentication'', which exposes the communication
+but at least authenticates the user without exposing the
+underlying password used to authenticate the user.
+Digest authentication is intended to be a simple partial solution for
+low-value communications,
+but digest authentication
+is not widely supported in an interoperable way by web browsers and servers.
+In fact, as noted in a March 18, 2002 eWeek article,
+Microsoft's web client (Internet Explorer) and web server (IIS)
+incorrectly implement the standard  (RFC 2617), and thus won't work with
+other servers or browsers. Since Microsoft
+don't view this incorrect implementation as a serious
+problem, it will be a very long time before most of their customers have
+a correctly-working program.</P
+><P
+>Thus, the most common technique for storing authentication
+information on the web today is through cookies.
+Cookies weren't really designed for this purpose, but they can be used
+to support authentication - but there are many wrong ways to use them that
+create security vulnerabilities, so be careful.
+For more information about cookies, see IETF RFC 2965, along with the
+older specifications about them.
+Note that to use cookies, some browsers (e.g., Microsoft
+Internet Explorer 6) may insist that you
+have a privacy profile (named p3p.xml on the root directory of the server).</P
+><P
+>Note that some users don't accept cookies, so this solution still has
+some problems.
+If you want to support these users,
+you should send this authentication information back and forth via
+HTML form hidden fields
+(since nearly all browsers support them without concern).
+You'd use the same approach as with cookies - you'd just use a different
+technology to have the data sent from the user to the server.
+Naturally, if you implement this approach, you need to include settings to
+ensure that these pages aren't cached for use by others.
+However, while I think avoiding cookies
+is preferable, in practice these other approaches often require
+much more development effort.
+Since it's so hard to implement this on a large scale for many
+application developers, I'm not currently stressing these approaches.
+I would rather describe an approach that is reasonably secure and
+reasonably easy to implement, than emphasize approaches that are too
+hard to implement correctly (by either developers or users).
+However, if you can do so without much effort, by all means support
+sending the authentication information using form hidden fields and
+an encrypted link (e.g., SSL/TLS).
+As with all cookies, for these cookies you
+should turn on the HttpOnly flag unless
+you have a web browser script that must be able to read the cookie.</P
+><P
+>Fu [2001] discusses client authentication on the web, along with a
+suggested approach, and this is the approach I suggest for most sites.
+The basic idea is that client authentication is split into two parts,
+a ``login procedure'' and ``subsequent requests.''
+In the login procedure, the server asks for the user's username and password,
+the user provides them, and the server replies with an
+``authentication token''.
+In the subsequent requests, the client (web browser)
+sends the authentication token
+to the server (along with its request); the server verifies that the 
+token is valid, and if it is, services the request.
+Another good source of information about web authentication is
+Seifried [2001].</P
+><P
+>One serious problem with some web authentication techniques is that
+they are vulnerable to a problem called "session fixation".
+In a session fixation attack, the attacker fixes the user's session ID
+before the user even logs into the target server, thus eliminating the
+need to obtain the user's session ID afterwards.
+Basically, the attacker obtains an account, and then tricks another
+user into using the attacker's account - often by creating a special
+hypertext link and tricking the user into clicking on it.
+A good paper describing session fixation is the paper by
+<A
+HREF="http://www.acros.si/papers/session_fixation.pdf"
+TARGET="_top"
+>Mitja Kolsek [2002]</A
+>.
+A web authentication system you use should be resistant to session fixation.</P
+><P
+>A good general checklist that covers website authentication is
+<A
+HREF="http://www.securityfocus.com/infocus/1688"
+TARGET="_top"
+>Mark Burnett's articles on SecurityFocus</A
+>.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="WEB-AUTHENTICATION-LOGIN"
+></A
+>11.2.1. Authenticating on the Web: Logging In</H2
+><P
+>The login procedure is typically implemented as an HTML form;
+I suggest using the field names ``username'' and ``password'' so that
+web browsers can automatically perform some useful actions.
+Make sure that the password is sent over an encrypted connection
+(using SSL or TLS, through an https: connection) - otherwise, eavesdroppers
+could collect the password.
+Make sure all password text fields are marked as passwords in the HTML,
+so that the password text is not visible to
+anyone who can see the user's screen.</P
+><P
+>If both the username and password fields are filled in,
+do not try to automatically log in as that user.
+Instead, display the login form with the user and password fields;
+this lets the user verify that they really want to log in as that user.
+If you fail to do this, attackers will be able to exploit this weakness to
+perform a session fixation attack.
+Paranoid systems might want simply ignore the password field and make the
+user fill it in, but this interferes with browsers which can store
+passwords for users.</P
+><P
+>When the user sends username and password, it must be checked against
+the user account database.
+This database shouldn't store the passwords ``in the clear'', since if
+someone got a copy of the this database they'd suddenly get everyone's
+password (and users often reuse passwords).
+Some use crypt() to handle this, but crypt can only handle a small
+input, so I recommend using a different approach (this is my approach -
+Fu [2001] doesn't discuss this).
+Instead, the user database should store a username, salt, and 
+the password hash for that user.
+The ``salt'' is just a random sequence of characters, used to make it
+harder for attackers to determine a password even if they get the
+password database - I suggest an 8-character random sequence.
+It doesn't need to be cryptographically random, just different from
+other users.
+The password hash should be computed by concatenating
+``server key1'', the user's password, and the salt, and
+then running a cryptographically secure hash algorithm.
+Server key1 is a secret key unique to this server - keep it separate
+from the password database.
+Someone who has server key1 could then run programs to crack user
+passwords if they also had the password database;
+since it doesn't need to be memorized, it can be a long and complex
+password.
+Most secure would be HMAC-SHA-1 or HMAC-MD5;
+you could use SHA-1 (most web sites aren't really worried about
+the attacks it allows) or MD5 (but MD5 would be poorer choice;
+see the discussion about MD5).</P
+><P
+>Thus, when users create their accounts, the password is hashed and
+placed in the password database.
+When users try to log in, the purported password is hashed and compared
+against the hash in the database (they must be equal).
+When users change their password, they should type in both the old
+and new password, and the new password twice (to make sure they didn't
+mistype it); and again, make sure none of these password's characters
+are visible on the screen.</P
+><P
+>By default, don't save the passwords themselves on the client's
+web browser using cookies - users may sometimes use shared clients
+(say at some coffee shop).
+If you want, you can give users the option of ``saving the password''
+on their browser, but if you do, make sure that the password is set to
+only be transmitted on ``secure'' connections, and make sure the user has
+to specifically request it (don't do this by default).</P
+><P
+>Make sure that the page is marked to not be cached, or a proxy
+server might re-serve that page to other users.</P
+><P
+>Once a user successfully logs in, the server needs to send the client
+an ``authentication token'' in a cookie, which is described next.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="WEB-AUTHENTICATION-SUBSEQUENT"
+></A
+>11.2.2. Authenticating on the Web: Subsequent Actions</H2
+><P
+>Once a user logs in, the server sends back to the client a cookie
+with an authentication token that will be used from then on.
+A separate authentication token is used, so that users don't need to keep
+logging in, so that passwords aren't continually sent back and forth, and
+so that unencrypted communication can be used if desired.
+A suggested token (ignoring session fixation attacks) would look like this:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  exp=t&#38;data=s&#38;digest=m</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+Where t is the expiration time of the token (say, in several hours),
+and data s identifies the user (say, the user name or session id).
+The digest is a keyed digest of the other fields.
+Feel free to change the field name of ``data'' to be more descriptive
+(e.g., username and/or sessionid).
+If you have more than one field of data (e.g., both a username and a
+sessionid), make sure the digest uses both the field names and data values
+of all fields you're authenticating; concatenate them with a pattern
+(say ``%%'', ``+'', or ``&#38;'')
+that can't occur in any of the field data values.
+As described in a moment, it would be a good idea to include a username.
+The keyed digest should be a cryptographic hash of the other information in
+the token, keyed using a different server key2.
+The keyed digest should use HMAC-MD5 or HMAC-SHA1, using a different server
+key (key2), though simply using SHA1 might be okay for some purposes
+(or even MD5, if the risks are low).
+Key2 is subject to brute force guessing attacks, so it should be
+long (say 12+ characters) and unguessable; it does NOT need to be easily
+remembered.
+If this key2 is compromised, anyone can authenticate to the server, but
+it's easy to change key2 - when you do, it'll simply force currently
+``logged in'' users to re-authenticate.
+See Fu [2001] for more details.</P
+><P
+>There is a potential weakness in this approach.
+I have concerns that Fu's approach, as originally described, is weak against
+session fixation attacks (from several different directions, which
+I don't want to get into here).
+Thus, I now suggest modifying Fu's approach and using this token format
+instead:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>  exp=t&#38;data=s&#38;client=c&#38;digest=m</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+This is the same as the original Fu aproach, and older versions of
+this book (before December 2002) didn't suggest it.
+This modification adds a new
+"client" field to uniquely identify the client's current location/identity.
+The data in the client field should be something that should change
+if someone else tries to use the account; ideally, its new value should be
+unguessable, though that's hard to accomplish in practice.
+Ideally the client field would be the client's SSL client certificate,
+but currently that's a suggest that is hard to meet.
+At the least, it should be the user's IP address (as perceived from
+the server, and remember to plan for IPv6's longer addresses).
+This modification doesn't completely counter session fixation attacks,
+unfortunately (since if an attacker can determine what the user
+would send, the attacker may be able to make a request to a server
+and convince the client to accept those values).
+However, it does add resistance to the attack.
+Again, the digest must now include all the other data.</P
+><P
+>Here's an example.
+If a user logs into foobar.com sucessfully, you might establish
+the expiration date as 2002-12-30T1800 (let's assume we'll transmit as
+ASCII text in this format for the moment), the username as "fred",
+the client session as "1234", and you might determine that the
+client's IP address was 5.6.7.8.
+If you use a simple SHA-1 keyed digest
+(and use a key prefixing the rest of the data), with the server key2 value of
+"rM!V^m~v*Dzx", the digest could be computed over:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> exp=2002-12-30T1800&#38;user=fred&#38;session=1234&#38;client=5.6.7.8</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+A keyed digest can be computed by running a cryptographic hash code
+over, say, the server key2, then the data;
+in this case, the digest would be:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>101cebfcc6ff86bc483e0538f616e9f5e9894d94</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>From then on, the server must check the expiration time and recompute the
+digest of this authentication token, and only accept client requests
+if the digest is correct.
+If there's no token, the server should reply with the user login page
+(with a hidden form field to show where the successful login should go
+afterwards).</P
+><P
+>It would be prudent to display the username, especially on important
+screens, to help counter session fixation attacks.
+If users are given feedback on their username, they may notice if they
+don't have their expected username.  This is helpful anyway if it's
+possible to have an unexpected username (e.g., a family that shares the
+same machine).
+Examples of important screens include those when a file is uploaded
+that should be kept private.</P
+><P
+>One odd implementation issue: although the specifications for the
+"Expires:" (expiration time) field for cookies
+permit time zones, it turns out that some versions of
+Microsoft's Internet Explorer don't implement time zones correctly
+for cookie expiration.
+Thus, you need to always use UTC time (also called Zulu time)
+in cookie expiration times for maximum portability.
+It's a good idea in general to use UTC time for time values,
+and convert when necessary for human display, since this eliminates other
+time zone and daylight savings time issues.</P
+><P
+>If you include a sessionid in the authentication token, you can limit
+access further.
+Your server could ``track'' what pages a user has seen in a given session,
+and only permit access to other appropriate pages from that point
+(e.g., only those directly linked from those page(s)).
+For example,
+if a user is granted access to page foo.html, and page foo.html has
+pointers to resources bar1.jpg and bar2.png, then accesses to bar4.cgi
+can be rejected.
+You could even kill the session, though only do this if the authentication
+information is valid (otherwise, this would make it possible for
+attackers to cause denial-of-service attacks on other users).
+This would somewhat limit the access an attacker has, even if they
+successfully hijack a session, though clearly an attacker with time
+and an authentication token
+could ``walk'' the links just as a normal user would.</P
+><P
+>One decision is whether or not to require the authentication token and/or
+data to be sent over a secure connection (e.g., SSL).
+If you send an authentication token
+in the clear (non-secure), someone who intercepts the
+token could do whatever the user could do until the expiration time.
+Also, when you send data over an unencrypted link, there's the risk of
+unnoticed change by an attacker; if you're worried that someone might change the
+data on the way, then you need to authenticate the data being transmitted.
+Encryption by itself doesn't guarantee authentication, but it does make
+corruption more likely to be detected, and typical libraries can support
+both encryption and authentication in a TLS/SSL connection.
+In general, if you're encrypting a message, you should also authenticate it.
+If your needs vary,
+one alternative is to create two authentication tokens - one is used
+only in a ``secure'' connection for important operations, while the other
+used for less-critical operations.
+Make sure the token used for ``secure'' connections is marked so that only
+secure connections (typically encrypted SSL/TLS connections) are used.
+If users aren't really different, the authentication token could omit
+the ``data'' entirely.</P
+><P
+>Again, make sure that the pages with this authentication token aren't cached.
+There are other reasonable schemes also; the goal of this text is
+to provide at least one secure solution.
+Many variations are possible.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="WEB-AUTHENTICATION-LOGOUT"
+></A
+>11.2.3. Authenticating on the Web: Logging Out</H2
+><P
+>You should always provide users with a mechanism to ``log out'' - this
+is especially helpful for customers using shared browsers
+(say at a library).
+Your ``logout'' routine's task is simple - just unset the client's
+authentication token.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="passwords.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="random-numbers.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Passwords</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="special.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Random Numbers</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

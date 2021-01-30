@@ -1,0 +1,252 @@
+<HTML
+><HEAD
+><TITLE
+>Set up a Trusted Path</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Design Your Program for Security"
+HREF="internals.html"><LINK
+REL="PREVIOUS"
+TITLE="Trust Only Trustworthy Channels"
+HREF="trustworthy-channels.html"><LINK
+REL="NEXT"
+TITLE="Use Internal Consistency-Checking Code"
+HREF="internal-check.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="trustworthy-channels.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 7. Design Your Program for Security</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="internal-check.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="TRUSTED-PATH"
+></A
+>7.13. Set up a Trusted Path</H1
+><P
+>The counterpart to needing trustworthy channels
+(see <A
+HREF="trustworthy-channels.html"
+>Section 7.12</A
+>)
+is assuring users that they
+really are working with the program or system they intended to use.</P
+><P
+>The traditional example is a ``fake login'' program.
+If a program is written to look like the login screen of a system, then
+it can be left running.
+When users try to log in, the fake login program can then capture user
+passwords for later use.</P
+><P
+>A solution to this problem is a ``trusted path.''
+A trusted path is simply some mechanism that provides confidence that the
+user is communicating with what the user intended to communicate with,
+ensuring that attackers can't intercept or modify whatever information
+is being communicated.</P
+><P
+>If you're asking for a password, try to set up trusted path.
+Unfortunately, stock Linux distributions and many other Unixes don't
+have a trusted path even for their normal login sequence.
+One approach is to 
+require pressing an unforgeable key before login, e.g.,
+Windows NT/2000 uses ``control-alt-delete'' before logging in; since
+normal programs in Windows can't intercept this key pattern, this
+approach creates a trusted path.
+There's a Linux equivalent, termed the
+<A
+HREF="http://lwn.net/2001/0322/a/SAK.php3"
+TARGET="_top"
+>Secure Attention Key
+(SAK)</A
+>; it's recommended that this be mapped to
+``control-alt-pause''.
+Unfortunately, at the time of this writing SAK is immature and not
+well-supported by Linux distributions.
+Another approach for implementing a trusted path
+locally is to control a separate display that only the login
+program can perform.
+For example, if only trusted programs could modify the keyboard lights
+(the LEDs showing Num Lock, Caps Lock, and Scroll Lock),
+then a login program could display a running pattern to indicate that
+it's the real login program.
+Unfortunately, since in current Linux normal users can change the LEDs,
+the LEDs can't currently be used to confirm a trusted path.</P
+><P
+>Sadly, the problem is much worse for network applications.
+Although setting up a trusted path is desirable for network applications,
+completely doing so is quite difficult.
+When sending a password over a network, at the very least
+encrypt the password between trusted endpoints.
+This will at least prevent eavesdropping of passwords by those not
+connected to the system, and at least make attacks harder to perform.
+If you're concerned about trusted path for the actual communication, make
+sure that the communication is
+encrypted and authenticated (or at least authenticated).</P
+><P
+>It turns out that this isn't enough to have a trusted path
+to networked applications, in particular for web-based applications.
+There are documented methods for fooling users of web browsers into thinking
+that they're at one place when they are really at another.
+For example, Felten [1997] discusses ``web spoofing'',
+where users believe they're viewing one web page when in fact all the
+web pages they view go through an attacker's site (who can then monitor
+all traffic and modify any data sent in either direction).
+This is accomplished by rewriting the URL.
+The rewritten URLs can be made nearly invisible
+by using other technology (such as Javascript) to hide any possible
+evidence in the status line, location line, and so on.
+See their paper for more details.
+Another technique for hiding such URLs is exploiting rarely-used URL
+syntax, for example, the URL
+``http://www.ibm.com/stuff@mysite.com''
+is actually a request to view ``mysite.com'' (a potentially malevolent site)
+using the unusual username ``www.ibm.com/stuff'.
+If the URL is long enough,
+the real material won't be displayed and users are unlikely to
+notice the exploit anyway.
+Yet another approach is to create sites with names deliberately similar
+to the ``real'' site - users may not know the difference.
+In all of these cases, simply encrypting the line doesn't help -
+the attacker can be quite content in encrypting data while completely
+controlling what's shown.</P
+><P
+>Countering these problems is more difficult;
+at this time I have no good technical solution for fully preventing
+``fooled'' web users.
+I would encourage web browser developers to counter such ``fooling'',
+making it easier to spot.
+If it's critical that your users correctly connect to the correct site,
+have them use simple procedures to counter the threat.
+Examples include having them halt and restart their browser, and making sure
+that the web address is very simple and not normally misspelled
+(so misspelling it is unlikely).
+You might also want to gain ownership of some ``similar'' sounding DNS names,
+and search for other such DNS names and material to find attackers.
+<A
+HREF="http://news.netcraft.com/archives/2004/01/28/microsoft_to_remove_support_for_usernames_in_http_urls.html"
+TARGET="_top"
+>Some versions of
+Microsoft's Internet Explorer won't allow the "@" symbol at all in URLs</A
+>;
+this is an unfortunate restriction, but probably good for security.
+Another less draconian solution would have been to put up a warning
+dialogue, clearly displaying the real site name and user name.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="trustworthy-channels.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="internal-check.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Trust Only Trustworthy Channels</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="internals.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Use Internal Consistency-Checking Code</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

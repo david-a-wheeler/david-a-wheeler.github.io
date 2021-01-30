@@ -1,0 +1,357 @@
+<HTML
+><HEAD
+><TITLE
+>Summary of Linux and Unix Security Features</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Document Conventions"
+HREF="conventions.html"><LINK
+REL="NEXT"
+TITLE="Processes"
+HREF="processes.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="conventions.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="processes.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="FEATURES"
+>Chapter 3. Summary of Linux and Unix Security Features</A
+></H1
+><TABLE
+BORDER="0"
+WIDTH="100%"
+CELLSPACING="0"
+CELLPADDING="0"
+CLASS="EPIGRAPH"
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="LEFT"
+VALIGN="TOP"
+><I
+><P
+><I
+>Discretion will protect you, and understanding will guard you.</I
+></P
+></I
+></TD
+></TR
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+><SPAN
+CLASS="ATTRIBUTION"
+>Proverbs 2:11 (NIV)</SPAN
+></I
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>3.1. <A
+HREF="processes.html"
+>Processes</A
+></DT
+><DD
+><DL
+><DT
+>3.1.1. <A
+HREF="processes.html#PROCESS-ATTRIBUTES"
+>Process Attributes</A
+></DT
+><DT
+>3.1.2. <A
+HREF="processes.html#POSIX-CAPABILITIES"
+>POSIX Capabilities</A
+></DT
+><DT
+>3.1.3. <A
+HREF="processes.html#PROCESS-CREATION"
+>Process Creation and Manipulation</A
+></DT
+></DL
+></DD
+><DT
+>3.2. <A
+HREF="files.html"
+>Files</A
+></DT
+><DD
+><DL
+><DT
+>3.2.1. <A
+HREF="files.html#FSO-ATTRIBUTES"
+>Filesystem Object Attributes</A
+></DT
+><DT
+>3.2.2. <A
+HREF="files.html#FSO-INITIAL-VALUES"
+>Creation Time Initial Values</A
+></DT
+><DT
+>3.2.3. <A
+HREF="files.html#CHANGING-ACLS"
+>Changing Access Control Attributes</A
+></DT
+><DT
+>3.2.4. <A
+HREF="files.html#USING-ACLS"
+>Using Access Control Attributes</A
+></DT
+><DT
+>3.2.5. <A
+HREF="files.html#FILESYSTEM-HIERARCHY"
+>Filesystem Hierarchy</A
+></DT
+></DL
+></DD
+><DT
+>3.3. <A
+HREF="sysv-ipc.html"
+>System V IPC</A
+></DT
+><DT
+>3.4. <A
+HREF="sockets.html"
+>Sockets and Network Connections</A
+></DT
+><DT
+>3.5. <A
+HREF="signals.html"
+>Signals</A
+></DT
+><DT
+>3.6. <A
+HREF="quotas.html"
+>Quotas and Limits</A
+></DT
+><DT
+>3.7. <A
+HREF="dlls.html"
+>Dynamically Linked Libraries</A
+></DT
+><DT
+>3.8. <A
+HREF="audit.html"
+>Audit</A
+></DT
+><DT
+>3.9. <A
+HREF="pam.html"
+>PAM</A
+></DT
+><DT
+>3.10. <A
+HREF="unix-extensions.html"
+>Specialized Security Extensions for Unix-like Systems</A
+></DT
+></DL
+></DIV
+><P
+>Before discussing guidelines on how to use Linux or Unix security features,
+it's useful to know what those features are from a programmer's viewpoint.
+This section briefly describes those features that are widely available
+on nearly all Unix-like systems.
+However, note that there is considerable variation between
+different versions of Unix-like systems, and
+not all systems have the abilities described here.
+This chapter also notes some extensions or features specific to Linux;
+Linux distributions tend to be fairly similar to each other from the
+point-of-view of programming for security, because they all use essentially
+the same kernel and C library (and the GPL-based licenses encourage rapid
+dissemination of any innovations).
+It also notes some of the security-relevant differences between different
+Unix implementations, but please note that this isn't an exhaustive list.
+This chapter doesn't discuss issues such as implementations of
+mandatory access control (MAC) which many Unix-like systems do not implement.
+If you already know what
+those features are, please feel free to skip this section.</P
+><P
+>Many programming guides skim briefly over the security-relevant portions
+of Linux or Unix and skip important information.
+In particular, they often discuss ``how to use'' something in general terms
+but gloss over the security attributes that affect their use.
+Conversely, there's a great deal of detailed information in
+the manual pages about individual functions, but the manual pages
+sometimes obscure key security issues with detailed discussions on how
+to use each individual function.
+This section tries to bridge that gap; it gives an overview of
+the security mechanisms in Linux that are likely to be used
+by a programmer, but concentrating specifically on the security
+ramifications.
+This section has more depth than the typical programming guides, focusing
+specifically on security-related matters, and points to references
+where you can get more details.</P
+><P
+>First, the basics.
+Linux and Unix are
+fundamentally divided into two parts: the kernel and ``user space''.
+Most programs execute in user space (on top of the kernel).
+Linux supports the concept of ``kernel modules'', which is simply the
+ability to dynamically load code into the kernel, but note that it
+still has this fundamental division.
+Some other systems (such as the HURD) are ``microkernel'' based systems; they
+have a small kernel with more limited functionality, and a set of ``user''
+programs that implement the lower-level functions traditionally implemented
+by the kernel.</P
+><P
+>Some Unix-like systems have been extensively modified to support
+strong security, in particular to support U.S. Department of Defense
+requirements for Mandatory Access Control (level B1 or higher).
+This version of this book doesn't cover these systems or issues;
+I hope to expand to that in a future version.
+More detailed information on some of them is available elsewhere, for
+example, details on SGI's ``Trusted IRIX/B''
+are available in NSA's
+<A
+HREF="http://www.radium.ncsc.mil/tpep/library/fers/index.html"
+TARGET="_top"
+>Final
+Evaluation Reports (FERs)</A
+>.</P
+><P
+>When users log in, their usernames are mapped to integers marking their
+``UID'' (for ``user id'') and the ``GID''s (for ``group id'') that they
+are a member of.
+UID 0 is a special privileged user (role) traditionally called ``root'';
+on most Unix-like systems (including Unix) root
+can overrule most security checks and is used to administrate the system.
+On some Unix systems, GID 0 is also special and permits unrestricted access
+to resources at the group level [Gay 2000, 228];
+this isn't true on other systems (such as Linux), but even in those systems
+group 0 is essentially all-powerful because so many special system files
+are owned by group 0.
+Processes are the only ``subjects'' in terms of security (that is, only
+processes are active objects).
+Processes can access various data objects, in particular filesystem
+objects (FSOs), System V Interprocess Communication (IPC) objects, and
+network ports.
+Processes can also set signals.
+Other security-relevant topics include quotas and limits, libraries,
+auditing, and PAM.
+The next few subsections detail this.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="conventions.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="processes.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Document Conventions</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Processes</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

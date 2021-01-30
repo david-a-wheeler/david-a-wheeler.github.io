@@ -1,0 +1,299 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Dynamically Linked Libraries</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Summary of Linux and Unix Security Features"
+HREF="features.html"><LINK
+REL="PREVIOUS"
+TITLE="Quotas and Limits"
+HREF="quotas.html"><LINK
+REL="NEXT"
+TITLE="Audit"
+HREF="audit.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="quotas.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 3. Summary of Linux and Unix Security Features</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="audit.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="DLLS"
+>3.7. Dynamically Linked Libraries</A
+></H1
+><P
+>Practically all programs depend on libraries to execute.
+In most modern Unix-like systems, including Linux,
+programs are by default compiled to use <EM
+>dynamically linked libraries</EM
+>
+(DLLs).
+That way, you can update a library and all the programs using that library
+will use the new (hopefully improved) version if they can.</P
+><P
+>Dynamically linked libraries are typically placed in one a few special
+directories. The usual directories include
+<TT
+CLASS="FILENAME"
+>/lib</TT
+>, <TT
+CLASS="FILENAME"
+>/usr/lib</TT
+>, <TT
+CLASS="FILENAME"
+>/lib/security</TT
+>
+for PAM modules, 
+<TT
+CLASS="FILENAME"
+>/usr/X11R6/lib</TT
+> for X-windows, and <TT
+CLASS="FILENAME"
+>/usr/local/lib</TT
+>.
+You should use these standard conventions in your programs, in particular,
+except during debugging you shouldn&#8217;t use value computed from the
+current directory as a source for dynamically linked libraries (an
+attacker may be able to add their own choice <SPAN
+CLASS="QUOTE"
+>&#8220;library&#8221;</SPAN
+> values).</P
+><P
+>There are special conventions for naming libraries and having symbolic
+links for them, with the result that you can update libraries and still
+support programs that want to use old, non-backward-compatible versions
+of those libraries.
+There are also ways to override specific libraries or even just
+specific functions in a library when executing a particular program.
+This is a real advantage of Unix-like systems over
+Windows-like systems; I believe Unix-like systems have a much better system
+for handling library updates, one reason that Unix and Linux systems are reputed
+to be more stable than Windows-based systems.</P
+><P
+>On GNU glibc-based systems, including all Linux systems,
+the list of directories automatically searched during program start-up is
+stored in the file /etc/ld.so.conf.
+Many Red Hat-derived distributions don&#8217;t normally
+include <TT
+CLASS="FILENAME"
+>/usr/local/lib</TT
+>
+in the file <TT
+CLASS="FILENAME"
+>/etc/ld.so.conf</TT
+>.
+I consider this a bug, and adding <TT
+CLASS="FILENAME"
+>/usr/local/lib</TT
+> to
+<TT
+CLASS="FILENAME"
+>/etc/ld.so.conf</TT
+>
+is a common <SPAN
+CLASS="QUOTE"
+>&#8220;fix&#8221;</SPAN
+> required to run many programs on Red Hat-derived systems.
+If you want to just override a few functions in a library, but keep the
+rest of the library, you can enter the names of overriding libraries
+(.o files) in <TT
+CLASS="FILENAME"
+>/etc/ld.so.preload</TT
+>;
+these <SPAN
+CLASS="QUOTE"
+>&#8220;preloading&#8221;</SPAN
+> libraries will take precedence over the standard set.
+This preloading file is typically used for emergency patches;
+a distribution usually won&#8217;t include such a file when delivered.
+Searching all of these directories at program start-up would be too
+time-consuming, so a caching arrangement is actually used.
+The program ldconfig(8) by default reads in the file /etc/ld.so.conf,
+sets up the appropriate symbolic links in the dynamic link directories
+(so they&#8217;ll follow the standard conventions),
+and then writes a cache to /etc/ld.so.cache that&#8217;s then used by other
+programs.
+So, ldconfig has to be run whenever a DLL is added, when a DLL is removed,
+or when the set of DLL directories changes; running ldconfig is often
+one of the steps performed by package managers
+when installing a library.
+On start-up, then, a program uses the dynamic loader to
+read the file /etc/ld.so.cache and then load the libraries it needs.</P
+><P
+>Various environment variables can control this process, and in fact
+there are environment variables that permit you to
+override this process (so, for example, you can temporarily
+substitute a different library for this particular execution).
+In Linux,
+the environment variable
+LD_LIBRARY_PATH is a colon-separated set of directories where libraries
+are searched for first, before the standard set of directories;
+this is useful when debugging a new library or using a nonstandard
+library for special purposes, but be sure you trust those who can
+control those directories.
+The variable LD_PRELOAD lists object files with functions that override
+the standard set, just as /etc/ld.so.preload does.
+The variable LD_DEBUG, displays debugging information; if set
+to <SPAN
+CLASS="QUOTE"
+>&#8220;all&#8221;</SPAN
+>, voluminous information about the dynamic linking process
+is displayed while it&#8217;s occurring.</P
+><P
+>Permitting user control over dynamically linked libraries
+would be disastrous for setuid/setgid programs if special measures
+weren&#8217;t taken.
+Therefore, in the GNU glibc implementation, if the program is setuid or setgid
+these variables (and other similar variables) are ignored or greatly
+limited in what they can do.
+The GNU glibc library determines if a program is setuid or setgid
+by checking the program&#8217;s credentials;
+if the UID and EUID differ, or the GID and the EGID differ, the
+library presumes the program is setuid/setgid (or descended from one)
+and therefore greatly limits its abilities to control linking.
+If you load the GNU glibc libraries, you can see this; see especially
+the files elf/rtld.c and sysdeps/generic/dl-sysdep.c.
+This means that if you cause the UID and GID to equal the EUID and EGID,
+and then call a program, these variables will have full effect.
+Other Unix-like systems handle the situation differently but for the
+same reason: a setuid/setgid program should not be unduly affected
+by the environment variables set.
+Note that graphical user interface toolkits generally do permit
+user control over dynamically linked libraries, because
+executables that directly invoke graphical user inteface toolkits
+should never, ever, be setuid (or have other special privileges) at all.
+For more about how to develop secure GUI applications, see
+<A
+HREF="minimize-privileges.html#MINIMIZE-PRIVILEGED-MODULES"
+>Section 7.4.4</A
+>.</P
+><P
+>For Linux systems, you can get more information from my document, the
+<A
+HREF="http://www.dwheeler.com/program-library"
+TARGET="_top"
+><EM
+>Program Library HOWTO</EM
+></A
+>.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="quotas.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="audit.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Quotas and Limits</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="features.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Audit</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

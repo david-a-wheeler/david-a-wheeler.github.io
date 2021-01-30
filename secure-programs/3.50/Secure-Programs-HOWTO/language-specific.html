@@ -1,0 +1,302 @@
+<HTML
+><HEAD
+><TITLE
+>Language-Specific Issues</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Prevent Include/Configuration File Access"
+HREF="prevent-include-access.html"><LINK
+REL="NEXT"
+TITLE="C/C++"
+HREF="c-cpp.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="prevent-include-access.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="c-cpp.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="LANGUAGE-SPECIFIC"
+></A
+>Chapter 10. Language-Specific Issues</H1
+><TABLE
+BORDER="0"
+WIDTH="100%"
+CELLSPACING="0"
+CELLPADDING="0"
+CLASS="EPIGRAPH"
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="LEFT"
+VALIGN="TOP"
+><I
+><P
+><I
+>Undoubtedly there are all sorts of languages in the world,
+yet none of them is without meaning.</I
+></P
+></I
+></TD
+></TR
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+><SPAN
+CLASS="ATTRIBUTION"
+>1 Corinthians 14:10 (NIV)</SPAN
+></I
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>10.1. <A
+HREF="c-cpp.html"
+>C/C++</A
+></DT
+><DT
+>10.2. <A
+HREF="perl.html"
+>Perl</A
+></DT
+><DT
+>10.3. <A
+HREF="python.html"
+>Python</A
+></DT
+><DT
+>10.4. <A
+HREF="shell.html"
+>Shell Scripting Languages (sh and csh Derivatives)</A
+></DT
+><DT
+>10.5. <A
+HREF="ada.html"
+>Ada</A
+></DT
+><DT
+>10.6. <A
+HREF="java.html"
+>Java</A
+></DT
+><DT
+>10.7. <A
+HREF="tcl.html"
+>Tcl</A
+></DT
+><DT
+>10.8. <A
+HREF="php.html"
+>PHP</A
+></DT
+></DL
+></DIV
+><P
+>The issues discussed in the rest of this book generally apply to all
+languages (though some are more common, or not present, in particular
+languages).
+However, there are also many language-specific security issues.
+Many of them can be summarized as follows:
+<P
+></P
+><UL
+><LI
+><P
+>Turn on all relevant warnings and protection mechanisms available to you
+where practical.
+For compiled languages, this includes
+both compile-time mechanisms and run-time mechanisms.
+In general, security-relevant programs should compile cleanly with
+all warnings turned on.</P
+></LI
+><LI
+><P
+>If you can use a ``safe mode'' (e.g., a mode that limits the activities
+of the executable), do so.
+Many interpreted languages include such a mode.
+In general, don't depend on the safe mode to provide absolute protection;
+most language's safe modes have not been sufficiently analyzed for their
+security, and when they are, people usually discover many ways to exploit it.
+However, by writing your code so that it's secure out of safe mode, and
+then adding the safe mode, you end up with defense-in-depth (since in
+many cases, an attacker has to break both
+your application code and the safe mode).</P
+></LI
+><LI
+><P
+>Avoid dangerous and deprecated operations in the language.
+By ``dangerous'', I mean operations which are difficult to use correctly.
+For example, many languages include
+some mechanisms or functions that are ``magical'', that
+is, they try to infer the ``right'' thing to do using a heuristic -
+generally you should avoid them, because an attacker may be able to
+exploit the heuristic and do something dangerous instead of what was intended.
+A common error is an ``off-by-one'' error, in which the bound is
+off by one, and sometimes these result in exploitable errors.
+In general, write code in a way that minimizes the likelihood of
+off-by-one errors.
+If there are standard conventions in the language (e.g., for writing loops),
+use them.</P
+></LI
+><LI
+><P
+>Ensure that the languages'
+infrastructure (e.g., run-time library) is available and secured.</P
+></LI
+><LI
+><P
+>Languages that automatically garbage-collect strings should be
+especially careful to immediately erase secret data
+(in particular secret keys and passwords).</P
+></LI
+><LI
+><P
+>Know precisely the semantics of the operations that you are using.
+Look up each operation's semantics in its documentation.
+Do not ignore return values unless you're sure they cannot be relevant.
+Don't ignore the difference between ``signed'' and ``unsigned'' values.
+This is particularly difficult in languages which don't support exceptions,
+like C, but that's the way it goes.</P
+></LI
+></UL
+></P
+><P
+>Here are some of the key issues for specific languages.
+However, do not forget the issues discussed elsewhere.
+For example, most languages have a formatting library, so be careful
+to ensure that an attacker cannot control the format commands
+(see <A
+HREF="control-formatting.html"
+>Section 9.4</A
+> for more information).</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="prevent-include-access.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="c-cpp.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Prevent Include/Configuration File Access</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>C/C++</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

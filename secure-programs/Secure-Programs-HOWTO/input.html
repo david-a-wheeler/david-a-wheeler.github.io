@@ -1,0 +1,405 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Validate All Input</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Security Assurance Measure Requirements"
+HREF="cc-assurance-requirements.html"><LINK
+REL="NEXT"
+TITLE="Basics of input validation"
+HREF="validation-basics.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="cc-assurance-requirements.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="validation-basics.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="INPUT"
+></A
+>Chapter 5. Validate All Input</H1
+><TABLE
+BORDER="0"
+WIDTH="100%"
+CELLSPACING="0"
+CELLPADDING="0"
+CLASS="EPIGRAPH"
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="LEFT"
+VALIGN="TOP"
+><I
+><P
+><I
+>Wisdom will save you from the ways of wicked men,
+from men whose words are perverse...</I
+></P
+></I
+></TD
+></TR
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+><SPAN
+CLASS="ATTRIBUTION"
+>Proverbs 2:12 (NIV)</SPAN
+></I
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>5.1. <A
+HREF="validation-basics.html"
+>Basics of input validation</A
+></DT
+><DT
+>5.2. <A
+HREF="validation-tools-regex.html"
+>Input Validation Tools including Regular Expressions</A
+></DT
+><DD
+><DL
+><DT
+>5.2.1. <A
+HREF="validation-tools-regex.html#REGEX-BASICS"
+>Introduction to regular expressions</A
+></DT
+><DT
+>5.2.2. <A
+HREF="validation-tools-regex.html#REGEX-FOR-VALIDATION"
+>Using regular expressions for input validation</A
+></DT
+><DT
+>5.2.3. <A
+HREF="validation-tools-regex.html#REGEX-REDOS"
+>Regular expression denial of service (reDOS) attacks</A
+></DT
+></DL
+></DD
+><DT
+>5.3. <A
+HREF="command-line.html"
+>Command line</A
+></DT
+><DT
+>5.4. <A
+HREF="environment-variables.html"
+>Environment Variables</A
+></DT
+><DD
+><DL
+><DT
+>5.4.1. <A
+HREF="environment-variables.html#ENV-VARS-DANGEROUS"
+>Some Environment Variables are Dangerous</A
+></DT
+><DT
+>5.4.2. <A
+HREF="environment-variables.html#ENV-STORAGE-DANGEROUS"
+>Environment Variable Storage Format is Dangerous</A
+></DT
+><DT
+>5.4.3. <A
+HREF="environment-variables.html#ENV-VAR-SOLUTION"
+>The Solution - Extract and Erase</A
+></DT
+><DT
+>5.4.4. <A
+HREF="environment-variables.html#ENV-VAR-DONTSET"
+>Don&#8217;t Let Users Set Their Own Environment Variables</A
+></DT
+></DL
+></DD
+><DT
+>5.5. <A
+HREF="file-descriptors.html"
+>File Descriptors</A
+></DT
+><DT
+>5.6. <A
+HREF="file-names.html"
+>File Names</A
+></DT
+><DT
+>5.7. <A
+HREF="file-contents.html"
+>File Contents</A
+></DT
+><DT
+>5.8. <A
+HREF="web-apps.html"
+>Web-Based Application Inputs (Especially CGI Scripts)</A
+></DT
+><DT
+>5.9. <A
+HREF="other-inputs.html"
+>Other Inputs</A
+></DT
+><DT
+>5.10. <A
+HREF="locale.html"
+>Human Language (Locale) Selection</A
+></DT
+><DD
+><DL
+><DT
+>5.10.1. <A
+HREF="locale.html#HOW-LOCALES-SELECTED"
+>How Locales are Selected</A
+></DT
+><DT
+>5.10.2. <A
+HREF="locale.html#LOCALE-SUPPORT-MECHANISMS"
+>Locale Support Mechanisms</A
+></DT
+><DT
+>5.10.3. <A
+HREF="locale.html#LOCALE-LEGAL-VALUES"
+>Legal Values</A
+></DT
+><DT
+>5.10.4. <A
+HREF="locale.html#LOCALE-BOTTOM-LINE"
+>Bottom Line</A
+></DT
+></DL
+></DD
+><DT
+>5.11. <A
+HREF="character-encoding.html"
+>Character Encoding</A
+></DT
+><DD
+><DL
+><DT
+>5.11.1. <A
+HREF="character-encoding.html#CHARACTER-ENCODING-INTRO"
+>Introduction to Character Encoding</A
+></DT
+><DT
+>5.11.2. <A
+HREF="character-encoding.html#CHARACTER-ENCODING-UTF8"
+>Introduction to UTF-8</A
+></DT
+><DT
+>5.11.3. <A
+HREF="character-encoding.html#UTF8-SECURITY-ISSUES"
+>UTF-8 Security Issues</A
+></DT
+><DT
+>5.11.4. <A
+HREF="character-encoding.html#UTF8-LEGAL-VALUES"
+>UTF-8 Legal Values</A
+></DT
+><DT
+>5.11.5. <A
+HREF="character-encoding.html#UTF8-RELATED-ISSUES"
+>UTF-8 Related Issues</A
+></DT
+></DL
+></DD
+><DT
+>5.12. <A
+HREF="input-protection-cross-site.html"
+>Prevent Cross-site Malicious Content on Input</A
+></DT
+><DT
+>5.13. <A
+HREF="filter-html.html"
+>Filter HTML/URIs That May Be Re-presented</A
+></DT
+><DD
+><DL
+><DT
+>5.13.1. <A
+HREF="filter-html.html#REMOVE-HTML-TAGS"
+>Remove or Forbid Some HTML Data</A
+></DT
+><DT
+>5.13.2. <A
+HREF="filter-html.html#ENCODING-HTML-TAGS"
+>Encoding HTML Data</A
+></DT
+><DT
+>5.13.3. <A
+HREF="filter-html.html#VALIDATING-HTML-TAGS"
+>Validating HTML Data</A
+></DT
+><DT
+>5.13.4. <A
+HREF="filter-html.html#VALIDATING-URIS"
+>Validating Hypertext Links (URIs/URLs)</A
+></DT
+><DT
+>5.13.5. <A
+HREF="filter-html.html#OTHER-HTML-TAGS"
+>Other HTML tags</A
+></DT
+><DT
+>5.13.6. <A
+HREF="filter-html.html#RELATED-ISSUES"
+>Related Issues</A
+></DT
+></DL
+></DD
+><DT
+>5.14. <A
+HREF="avoid-get-non-queries.html"
+>Forbid HTTP GET To Perform Non-Queries</A
+></DT
+><DT
+>5.15. <A
+HREF="counter-spam.html"
+>Counter SPAM</A
+></DT
+><DT
+>5.16. <A
+HREF="limit-time.html"
+>Limit Valid Input Time and Load Level</A
+></DT
+></DL
+></DIV
+><P
+>Some inputs are from untrustable users, so those inputs must be validated
+(filtered) before being
+used.
+We will first discuss the basics of input validation.
+This is followed by
+subsections that discuss different kinds of inputs to a program;
+note that input includes process state such as environment variables,
+umask values, and so on.
+Not all inputs are under the control of an untrusted user, so you need
+only worry about those inputs that are.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="cc-assurance-requirements.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="validation-basics.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Security Assurance Measure Requirements</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Basics of input validation</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

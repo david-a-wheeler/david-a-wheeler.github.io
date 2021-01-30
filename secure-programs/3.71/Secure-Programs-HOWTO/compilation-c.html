@@ -1,0 +1,321 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Compilation Solutions in C/C++</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Restrict Operations to Buffer Bounds (Avoid Buffer Overflow)"
+HREF="buffer-overflow.html"><LINK
+REL="PREVIOUS"
+TITLE="Library Solutions in C/C++"
+HREF="library-c.html"><LINK
+REL="NEXT"
+TITLE="Other Languages"
+HREF="other-languages.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="library-c.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 6. Restrict Operations to Buffer Bounds (Avoid Buffer Overflow)</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="other-languages.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="COMPILATION-C"
+>6.3. Compilation Solutions in C/C++</A
+></H1
+><P
+>A completely different approach is to use compilation methods that perform
+bounds-checking (see [Sitaker 1999] for a list).
+In my opinion, such tools are very useful in having multiple layers of
+defense, but it&#8217;s not wise to use this technique as your sole defense.
+Many such tools only provide a partial defense.
+More-complete defenses tend to be slower (and generally people choose
+to use C/C++ because performance is important for their application).
+Also, for open source programs you cannot be certain what tools
+will be used to compile the program;
+using the default <SPAN
+CLASS="QUOTE"
+>&#8220;normal&#8221;</SPAN
+> compiler
+for a given system might suddenly open security flaws.</P
+><P
+>Historically a very important tool is
+<SPAN
+CLASS="QUOTE"
+>&#8220;StackGuard&#8221;</SPAN
+>, a modification of the
+standard GNU C compiler gcc.
+StackGuard works by inserting a <SPAN
+CLASS="QUOTE"
+>&#8220;guard&#8221;</SPAN
+> value (called a <SPAN
+CLASS="QUOTE"
+>&#8220;canary&#8221;</SPAN
+>)
+in front of the return address; if a buffer overflow
+overwrites the return address, the canary&#8217;s value (hopefully) changes
+and the system detects this before using it.
+This is quite valuable, but note that this does not protect against
+buffer overflows overwriting other values (which they may still be able
+to use to attack a system).
+There is work to extend StackGuard to be able to add canaries to other
+data items, called <SPAN
+CLASS="QUOTE"
+>&#8220;PointGuard&#8221;</SPAN
+>.
+PointGuard will automatically protect certain values (e.g., function
+pointers and longjump buffers).
+However, protecting other variable types using PointGuard
+requires specific programmer intervention (the programmer
+has to identify which data values must be protected with canaries).
+This can be valuable, but it&#8217;s easy to accidentally omit
+protection for a data value you didn&#8217;t think needed protection -
+but needs it anyway.
+More information on StackGuard, PointGuard, and other alternatives
+is in Cowan [1999].
+StackGuard inspired the development of many other run-time mechanisms to
+detect and counter attacks.</P
+><P
+><A
+HREF="http://www.trl.ibm.com/projects/security/ssp"
+TARGET="_top"
+>IBM
+has developed a stack protection system called ProPolice
+based on the ideas of StackGuard</A
+>.
+IBM doesn&#8217;t include the ProPolice name in its current website - it&#8217;s just called
+a "GCC extension for protecting applications from stack-smashing attacks".
+However, it&#8217;s hard to talk about something without using a name, so
+I&#8217;ll continue to use the name ProPolice.
+Like StackGuard, ProPolice
+is a GCC (Gnu Compiler Collection) extension for
+protecting applications from stack-smashing attacks.
+Applications written in C are protected by automatically inserting
+protection code into an application at compilation time.
+ProPolice is slightly different than StackGuard, however, by adding
+three features:
+(1) reordering local variables to place buffers after pointers
+(to avoid the corruption of pointers that could be used
+to further corrupt arbitrary memory locations),
+(2) copying pointers in function arguments to an area
+preceding local variable buffers (to prevent the corruption of pointers
+that could be used to further corrupt arbitrary memory locations), and
+(3) omitting instrumentation code from some functions
+(it basically assumes that only character arrays are dangerous; while
+this isn&#8217;t strictly true, it&#8217;s mostly true, and as a result ProPolice
+has better performance while retaining most of its protective capabilities).</P
+><P
+>Red Hat engineers in 2005 re-implemented buffer overflow countermeasures
+in GCC based on lessons learned from ProPolice.
+They implemented the GCC flags -fstack-protector flag
+(which only protects some vulnerable functions), and the
+-fstack-protector-all flag (which protects all functions).
+In 2012, Google engineers added the -fstack-protector-strong flag
+that tries to strike a better balance (it protects more functions than
+-fstack-protector, but not all of them as -fstack-protector-all does).
+Many Linux distributions use one of these flags, as a default or for
+at least some packages, to harden application programs.</P
+><P
+>On Windows, Microsoft&#8217;s compilers include the /GS option to include
+StackGuard-like protection against buffer overflows.
+However, it&#8217;s worth noting that
+at least on
+<A
+HREF="http://www.nextgenss.com/papers/defeating-w2k3-stack-protection.pdf "
+TARGET="_top"
+>Microsoft Windows 2003 Server these protection mechanisms can be
+defeated.</A
+></P
+><P
+>An especially strong hardening approach is "Address Sanitizer" (ASan).
+ASan is available in LLVM and gcc compilers as the "-fsanitize=address" flag.
+ASan counters buffer overflow (global/stack/heap),
+use-after-free, and double-free based attacks.
+It can also detect use-after-return and memory leaks.
+It can also counters some other C/C++ memory issues,
+but due to its design it cannot detect read-before-write.
+Its has a measured overhead of
+73% average CPU overhead (often 2x), with 2x-4x memory overhead;
+this is low compared to previous approaches, but it is still significant.
+Still, this is sometimes acceptable overhead for deployment,
+and it is typically quite acceptable for testing including fuzz testing.
+The development processes for Chromium and Firefox, for example, use ASan.
+Details of how ASan works is available at
+<A
+HREF="http://code.google.com/p/address-sanitizer/"
+TARGET="_top"
+>http://code.google.com/p/address-sanitizer/</A
+>,
+particularly in the paper
+"AddressSanitizer: A Fast Address Sanity Checker" by Konstantin Serebryany, Derek Bruening, Alexander Potapenko, and Dmitry Vyukov (Google), USENIX ATC 2012
+Fundamentally ASan uses "shadow bytes" to record memory addressability.
+ASAN tracks addressability of memory, where addressability means
+if a read or write is permitted.
+All memory allocations (global, stack, and heap) are
+aligned to (at least) 8 bytes, and every 8 bytes of memory's
+addressability is represented by a "shadow byte".
+In the shadow byte, a 0 means all 8 bytes addressable, 1..7 means
+only next N are addressable,
+and negative (high bit) means no bytes are addressable.
+All allocations are surrounded by inaccessible "red zones"
+(with a default size of 128 bytes).
+Every allocation/deallocation in stack and heap manipulates the shadow bytes,
+and every read/write first checks the shadow bytes to see if
+access is allowed.
+This countermeasure is very strong, though it
+can be fooled if a calculated address is in a different valid region.
+That said, ASAN is a remarkably strong defense for applications written
+in C or C++, in cases where these overheads are acceptable.</P
+><P
+>A "non-executable segment" approach was developed by
+Ingo Molnar, termed
+<A
+HREF="http://lwn.net/Articles/31032/"
+TARGET="_top"
+>Exec Shield</A
+>.
+Molnar&#8217;s exec shield limits the region that executable code can exist,
+and then moves executable code below that region.
+If the code is moved to an area where a zero byte must occur, then
+it&#8217;s harder to exploit because many ASCII-based attacks cannot insert
+a zero byte.
+This isn&#8217;t foolproof, but it does prevent certain attacks.
+However, many programs invoke libraries that in aggregate are so large
+that their addresses can have a non-zero in them, making them much
+more vulnerable.</P
+><P
+>A different approach is to limit transfer of control; this doesn&#8217;t
+prevent all buffer overflow attacks (e.g., those that attack data) but
+it can make other attacks harder
+[Kiriansky 2002]</P
+><P
+>In short, it&#8217;s better to work first on developing a correct program
+that defends itself against buffer overflows.
+Then, after you&#8217;ve done this, by all means use techniques and tools
+like StackGuard as an additional safety net.
+If you&#8217;ve worked hard to eliminate buffer overflows in the code itself,
+then StackGuard (and tools like it) are
+are likely to be more effective because there will be
+fewer <SPAN
+CLASS="QUOTE"
+>&#8220;chinks in the armor&#8221;</SPAN
+> that StackGuard will be called on to protect.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="library-c.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="other-languages.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Library Solutions in C/C++</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="buffer-overflow.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Other Languages</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

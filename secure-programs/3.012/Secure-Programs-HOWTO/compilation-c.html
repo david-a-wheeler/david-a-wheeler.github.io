@@ -1,0 +1,249 @@
+<HTML
+><HEAD
+><TITLE
+>Compilation Solutions in C/C++</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Avoid Buffer Overflow"
+HREF="buffer-overflow.html"><LINK
+REL="PREVIOUS"
+TITLE="Library Solutions in C/C++"
+HREF="library-c.html"><LINK
+REL="NEXT"
+TITLE="Other Languages"
+HREF="other-languages.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="library-c.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 6. Avoid Buffer Overflow</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="other-languages.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="COMPILATION-C"
+>6.3. Compilation Solutions in C/C++</A
+></H1
+><P
+>A completely different approach is to use compilation methods that perform
+bounds-checking (see [Sitaker 1999] for a list).
+In my opinion, such tools are very useful in having multiple layers of
+defense, but it's not wise to use this technique as your sole defense.
+There are at least two reasons for this.
+First of all, such tools generally only provide a partial defense against
+buffer overflows (and the ``complete'' defenses are generally
+12-30 times slower); C and C++ were simply not designed to protect
+against buffer overflows.
+Second of all, for open source programs you cannot be certain what tools
+will be used to compile the program; using the default ``normal'' compiler
+for a given system might suddenly open security flaws.</P
+><P
+>One of the more useful tools is ``StackGuard'', a modification of the
+standard GNU C compiler gcc.
+StackGuard works by inserting a ``guard'' value (called a ``canary'')
+in front of the return address; if a buffer overflow
+overwrites the return address, the canary's value (hopefully) changes
+and the system detects this before using it.
+This is quite valuable, but note that this does not protect against
+buffer overflows overwriting other values (which they may still be able
+to use to attack a system).
+There is work to extend StackGuard to be able to add canaries to other
+data items, called ``PointGuard''.
+PointGuard will automatically protect certain values (e.g., function
+pointers and longjump buffers).
+However, protecting other variable types using PointGuard
+requires specific programmer intervention (the programmer
+has to identify which data values must be protected with canaries).
+This can be valuable, but it's easy to accidentally omit
+protection for a data value you didn't think needed protection -
+but needs it anyway.
+More information on StackGuard, PointGuard, and other alternatives
+is in Cowan [1999].</P
+><P
+><A
+HREF="http://www.trl.ibm.com/projects/security/ssp"
+TARGET="_top"
+>IBM has developed a stack protection system called ProPolice
+based on the ideas of StackGuard</A
+>.
+IBM doesn't include the ProPolice in its current website - it's just called
+a "GCC extension for protecting applications from stack-smashing attacks."
+Like StackGuard, ProPolice
+is a GCC (Gnu Compiler Collection) extension for
+protecting applications from stack-smashing attacks.
+Applications written in C are protected by automatically inserting
+protection code into an application at compilation time.
+ProPolice is slightly different than StackGuard, however, by adding
+three features:
+(1) reordering local variables to place buffers after pointers
+(to avoid the corruption of pointers that could be used
+to further corrupt arbitrary memory locations),
+(2) copying pointers in function arguments to an area
+preceding local variable buffers (to prevent the corruption of pointers
+that could be used to further corrupt arbitrary memory locations), and
+(3) omitting instrumentation code from some functions
+(it basically assumes that only character arrays are dangerous; while
+this isn't strictly true, it's mostly true, and as a result ProPolice
+has better performance while retaining most of its protective capabilities).
+The IBM website includes information for how to build Red Hat Linux and
+FreeBSD with this protection;
+<A
+HREF="http://www.deadly.org/article.php3?sid=20021202175508"
+TARGET="_top"
+>OpenBSD
+has already added ProPolice to their base system</A
+>.
+I think this is extremely promising, and I hope to see this capability included
+in future versions of gcc and used in various distributions.
+In fact, I think this kind of capability should be the default -
+this would mean that the largest single class of attacks would no longer
+enable attackers to take control in most cases.</P
+><P
+>As a related issue, in Linux you could modify the Linux kernel so that
+the stack segment is not executable; such a patch to Linux does exist
+(see Solar Designer's patch, which includes this, at
+<A
+HREF="http://www.openwall.com/linux/"
+TARGET="_top"
+>http://www.openwall.com/linux/</A
+>
+However, as of this writing this is not built into the Linux kernel.
+Part of the rationale is that this is less protection than it seems;
+attackers can simply force the system to call other ``interesting'' locations
+already in the program (e.g., in its library, the heap,
+or static data segments).
+Also, sometimes Linux does require executable code in the stack,
+e.g., to implement signals and to implement GCC ``trampolines''.
+Solar Designer's patch does handle these cases, but this does
+complicate the patch.
+Personally, I'd like to see this merged into the main Linux
+distribution, since it does make attacks somewhat more difficult and
+it defends against a range of existing attacks.
+However, I agree with Linus Torvalds and others
+that this does not add the amount of protection it would appear to and
+can be circumvented with relative ease.
+You can read Linus Torvalds' explanation for not including this support at
+<A
+HREF="http://old.lwn.net/1998/0806/a/linus-noexec.html"
+TARGET="_top"
+>http://old.lwn.net/1998/0806/a/linus-noexec.html</A
+>.&#13;</P
+><P
+>In short, it's better to work first on developing a correct program
+that defends itself against buffer overflows.
+Then, after you've done this, by all means use techniques and tools
+like StackGuard as an additional safety net.
+If you've worked hard to eliminate buffer overflows in the code itself,
+then StackGuard (and tools like it) are
+are likely to be more effective because there will be
+fewer ``chinks in the armor'' that StackGuard will be called on to protect.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="library-c.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="other-languages.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Library Solutions in C/C++</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="buffer-overflow.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Other Languages</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

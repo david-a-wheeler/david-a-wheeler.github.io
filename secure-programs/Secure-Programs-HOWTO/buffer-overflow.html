@@ -1,0 +1,407 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Restrict Operations to Buffer Bounds (Avoid Buffer Overflow)</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Limit Valid Input Time and Load Level"
+HREF="limit-time.html"><LINK
+REL="NEXT"
+TITLE="Dangers in C/C++"
+HREF="dangers-c.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="limit-time.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="dangers-c.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="BUFFER-OVERFLOW"
+></A
+>Chapter 6. Restrict Operations to Buffer Bounds (Avoid Buffer Overflow)</H1
+><TABLE
+BORDER="0"
+WIDTH="100%"
+CELLSPACING="0"
+CELLPADDING="0"
+CLASS="EPIGRAPH"
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="LEFT"
+VALIGN="TOP"
+><I
+><P
+><I
+>An enemy will overrun the land;
+he will pull down your strongholds and
+plunder your fortresses.</I
+></P
+></I
+></TD
+></TR
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+><SPAN
+CLASS="ATTRIBUTION"
+>Amos 3:11 (NIV)</SPAN
+></I
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>6.1. <A
+HREF="dangers-c.html"
+>Dangers in C/C++</A
+></DT
+><DT
+>6.2. <A
+HREF="library-c.html"
+>Library Solutions in C/C++</A
+></DT
+><DD
+><DL
+><DT
+>6.2.1. <A
+HREF="library-c.html#BUFFER-STANDARD-SOLUTION"
+>Standard C Library Solution</A
+></DT
+><DT
+>6.2.2. <A
+HREF="library-c.html#STATIC-VS-DYNAMIC-BUFFERS"
+>Static and Dynamically Allocated Buffers</A
+></DT
+><DT
+>6.2.3. <A
+HREF="library-c.html#STRLCPY"
+>strlcpy and strlcat</A
+></DT
+><DT
+>6.2.4. <A
+HREF="library-c.html#ASPRINTF"
+>asprintf and vasprintf</A
+></DT
+><DT
+>6.2.5. <A
+HREF="library-c.html#LIBMIB"
+>libmib</A
+></DT
+><DT
+>6.2.6. <A
+HREF="library-c.html#SAFESTR"
+>Safestr library (Messier and Viega)</A
+></DT
+><DT
+>6.2.7. <A
+HREF="library-c.html#STD-STRING"
+>C++ std::string class</A
+></DT
+><DT
+>6.2.8. <A
+HREF="library-c.html#LIBSAFE"
+>Libsafe</A
+></DT
+><DT
+>6.2.9. <A
+HREF="library-c.html#OTHER-BUFFER-LIBRARIES"
+>Other Libraries</A
+></DT
+></DL
+></DD
+><DT
+>6.3. <A
+HREF="compilation-c.html"
+>Compilation Solutions in C/C++</A
+></DT
+><DT
+>6.4. <A
+HREF="other-languages.html"
+>Other Languages</A
+></DT
+></DL
+></DIV
+><P
+>Programs often use memory buffers to capture input and process data.
+In some cases (particularly in C or C++ programs)
+it may be possible to perform an operation,
+but either read from or write to a memory location
+that is outside of the intended boundary of the buffer.
+In many cases this can lead to an extremely serious
+security vulnerability.
+This is such a common problem that it has a CWE identifier,
+<A
+HREF="http://cwe.mitre.org/data/definitions/119.html"
+TARGET="_top"
+>CWE-119</A
+>.
+Exceeding buffer bounds is a problem with a program&#8217;s internal
+implementation, but it&#8217;s such a common and serious problem that
+I&#8217;ve placed this information in its own chapter.</P
+><P
+>There are many variations of a failure to restrict operations to
+buffer bounds.
+A subcategory of exceeding buffer bounds is
+a <EM
+>buffer overflow</EM
+>.
+The term buffer overflow has a number of varying definitions.
+For our purposes,
+a buffer overflow occurs if
+a program attempts to write more data in a buffer than it can hold
+or write into a memory area outside the boundaries of the buffer.
+A particularly common situation is writing character data beyond the
+end of a buffer (through copying or generation).
+A buffer overflow can occur when reading input from the user into a buffer,
+but it can also occur during other kinds of processing in a program.
+Buffer overflows are also called <EM
+>buffer overruns</EM
+>.
+This subcategory is such a common problem that it has its own
+CWE identifier,
+<A
+HREF="http://cwe.mitre.org/data/definitions/120.html"
+TARGET="_top"
+>CWE-120</A
+>.</P
+><P
+>Buffer overflows are an extremely common and dangerous security flaw,
+and in many cases a buffer overlow can lead immediately to an attacker
+having complete control over the vulnerable program.
+To give you an idea of how important this subject is,
+at the CERT, 9 of 13 advisories in 1998 and at least half of
+the 1999 advisories involved buffer overflows.
+An informal 1999 survey on Bugtraq found that approximately 2/3 of the
+respondents felt that buffer overflows were the leading cause of
+system security vulnerability (the remaining respondents identified
+<SPAN
+CLASS="QUOTE"
+>&#8220;mis-configuration&#8221;</SPAN
+> as the leading cause) [Cowan 1999].
+This is an old, well-known problem, yet it continues to resurface
+[McGraw 2000].</P
+><P
+>Attacks that exploit a buffer overflow vulnerability
+are often named depending on where the buffer is, e.g.,
+a <SPAN
+CLASS="QUOTE"
+>&#8220;stack smashing&#8221;</SPAN
+> attack attacks a buffer on the stack,
+while a
+<SPAN
+CLASS="QUOTE"
+>&#8220;heap smashing&#8221;</SPAN
+> attack attacks a buffer on the heap
+(memory that is allocated by operators such as
+malloc and new).
+More details can be found from Aleph1 [1996], Mudge [1995], LSD [2001],
+or the Nathan P. Smith&#8217;s
+<EM
+>Stack Smashing Security Vulnerabilities</EM
+> website at
+<A
+HREF="http://destroy.net/machines/security/"
+TARGET="_top"
+>http://destroy.net/machines/security/</A
+>.
+A discussion of the problem and some ways to counter them is given
+by Crispin Cowan et al, 2000, at
+<A
+HREF="http://immunix.org/StackGuard/discex00.pdf"
+TARGET="_top"
+>http://immunix.org/StackGuard/discex00.pdf</A
+>.
+A discussion of the problem and some ways to counter them in Linux
+is given by
+Pierre-Alain Fayolle and Vincent Glaume
+at
+<A
+HREF="http://www.enseirb.fr/~glaume/indexen.html"
+TARGET="_top"
+>http://www.enseirb.fr/~glaume/indexen.html</A
+>.</P
+><P
+>Allowing attackers to read data beyond a buffer boundary can also result
+in vulnerabilities, and this weakness has its own identifier
+(<A
+HREF="http://cwe.mitre.org/data/definitions/125.html"
+TARGET="_top"
+>CWE-125</A
+>).
+For example, the
+<A
+HREF="http://www.dwheeler.com/essays/heartbleed.html"
+TARGET="_top"
+>Heartbleed</A
+>
+vulnerability was this kind of weakness.
+The Heartbleed vulnerability in OpenSSL allowed attackers to
+extract critically-important data such as private keys, and then use them
+(e.g., so they could impersonate trusted sites).</P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="TRAIN-OVERFLOW-BUFFER"
+></A
+><P
+><B
+>Figure 6-1. A physical buffer overflow: The Montparnasse derailment of 1895</B
+></P
+><DIV
+CLASS="MEDIAOBJECT"
+><P
+><IMG style="max-width:90%"
+SRC="Train_wreck_at_Montparnasse_1895.jpg"
+ALIGN="CENTER"></P
+></DIV
+></DIV
+><P
+>Most high-level programming languages are essentially
+immune to exceeding buffer boundaries, either
+because they automatically resize arrays (this applies to most
+languages such as Perl), or because they normally
+detect and prevent buffer overflows (e.g., Ada95).
+However, the C language provides no protection against
+such problems, and C++ can be easily used in ways to cause this problem too.
+Assembly language and Forth also provide no protection, and some languages
+that normally include such protection (e.g., C#, Ada, and Pascal) can have
+this protection disabled (for performance reasons).
+Even if most of your program is written in another language,
+many library routines are written in C or C++,
+as well as <SPAN
+CLASS="QUOTE"
+>&#8220;glue&#8221;</SPAN
+> code to
+call them, so other languages often don&#8217;t provide as complete a protection
+from buffer overflows as you'd like.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="limit-time.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="dangers-c.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Limit Valid Input Time and Load Level</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Dangers in C/C++</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

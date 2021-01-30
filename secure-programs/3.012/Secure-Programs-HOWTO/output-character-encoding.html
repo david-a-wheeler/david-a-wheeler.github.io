@@ -1,0 +1,244 @@
+<HTML
+><HEAD
+><TITLE
+>Control Character Encoding in Output</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Send Information Back Judiciously"
+HREF="output.html"><LINK
+REL="PREVIOUS"
+TITLE="Control Data Formatting (Format Strings/Formatation)"
+HREF="control-formatting.html"><LINK
+REL="NEXT"
+TITLE="Prevent Include/Configuration File Access"
+HREF="prevent-include-access.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="control-formatting.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 9. Send Information Back Judiciously</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="prevent-include-access.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="OUTPUT-CHARACTER-ENCODING"
+>9.5. Control Character Encoding in Output</A
+></H1
+><P
+>In general, a secure program must ensure that it synchronizes its
+clients to any assumptions made by the secure program.
+One issue often impacting web applications is that they forget to
+specify the character encoding of their output.
+This isn't a problem if all data is from trusted sources, but if
+some of the data is from untrusted sources, the untrusted source may
+sneak in data that uses a different encoding than the one expected
+by the secure program.
+This opens the door for a cross-site malicious content attack; see
+<A
+HREF="input-protection-cross-site.html"
+>Section 5.10</A
+> for more information.</P
+><P
+><A
+HREF="http://www.cert.org/tech_tips/malicious_code_mitigation.html"
+TARGET="_top"
+>CERT's tech tip on malicious code mitigation</A
+> explains the problem
+of unspecified character encoding fairly well, so I quote it here:
+
+<A
+NAME="AEN1638"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>Many web pages leave the character encoding
+("charset" parameter in HTTP) undefined.
+In earlier versions of HTML and HTTP, the character encoding
+was supposed to default to ISO-8859-1 if it wasn't defined.
+In fact, many browsers had a different default, so it was not possible
+to rely on the default being ISO-8859-1.
+HTML version 4 legitimizes this - if the character encoding isn't specified,
+any character encoding can be used.</P
+><P
+>If the web server doesn't specify which character encoding is in use,
+it can't tell which characters are special.
+Web pages with unspecified character encoding work most of the time
+because most character sets assign the same characters to byte values
+below 128.
+But which of the values above 128 are special?
+Some 16-bit character-encoding schemes have additional
+multi-byte representations for special characters such as "&#60;".
+Some browsers recognize this alternative encoding and act on it.
+This is "correct" behavior, but it makes attacks using malicious scripts
+much harder to prevent.
+The server simply doesn't know which byte sequences
+represent the special characters.</P
+><P
+>For example, UTF-7 provides alternative encoding for "&#60;" and "&#62;",
+and several popular browsers recognize these as the start and end of a tag.
+This is not a bug in those browsers.
+If the character encoding really is UTF-7, then this is correct behavior.
+The problem is that it is possible to get into a situation in which
+the browser and the server disagree on the encoding. </P
+></BLOCKQUOTE
+></P
+><P
+>Thankfully, though explaining the issue is tricky, its resolution in HTML
+is easy.
+In the HTML header, simply specify the charset, like this example
+from CERT:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+>&#60;HTML&#62;
+&#60;HEAD&#62;
+&#60;META http-equiv="Content-Type"
+content="text/html; charset=ISO-8859-1"&#62;
+&#60;TITLE&#62;HTML SAMPLE&#60;/TITLE&#62;
+&#60;/HEAD&#62;
+&#60;BODY&#62;
+&#60;P&#62;This is a sample HTML page
+&#60;/BODY&#62;
+&#60;/HTML&#62;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>&#13;</P
+><P
+>From a technical standpoint,
+an even better approach is to set the character encoding as part of
+the HTTP protocol output, though some libraries make this more difficult.
+This is technically better because it doesn't force the client to
+examine the header to determine a character encoding that would enable it
+to read the META information in the header.
+Of course, in practice a browser that couldn't read the META information
+given above and use it correctly would not succeed in the marketplace,
+but that's a different issue.
+In any case, this just means that the server would need to send
+as part of the HTTP protocol, a ``charset'' with the desired value.
+Unfortunately, it's hard to heartily recommend this (technically better)
+approach, because some older HTTP/1.0 clients did not deal properly with
+an explicit charset parameter.
+Although the HTTP/1.1 specification requires clients to obey the parameter,
+it's suspicious enough that you probably ought to use it as an
+adjunct to forcing the use of the correct
+character encoding, and not your sole mechanism.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="control-formatting.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="prevent-include-access.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Control Data Formatting (Format Strings/Formatation)</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="output.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Prevent Include/Configuration File Access</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

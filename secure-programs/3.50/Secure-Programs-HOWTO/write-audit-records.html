@@ -1,0 +1,199 @@
+<HTML
+><HEAD
+><TITLE
+>Write Audit Records</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Special Topics"
+HREF="special.html"><LINK
+REL="PREVIOUS"
+TITLE="Windows CE"
+HREF="windows-ce.html"><LINK
+REL="NEXT"
+TITLE="Physical Emissions"
+HREF="physical-emissions.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="windows-ce.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 11. Special Topics</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="physical-emissions.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="WRITE-AUDIT-RECORDS"
+></A
+>11.9. Write Audit Records</H1
+><P
+>Write audit logs for program startup, session startup, and
+for suspicious activity.
+Possible information of value includes date, time, uid, euid, gid, egid,
+terminal information, process id, and command line values.
+You may find the function syslog(3) helpful for implementing audit logs.
+One awkward problem is that any logging system should be able to record
+a lot of information (since this information could be very helpful), yet
+if the information isn't handled carefully the information itself could be
+used to create an attack.
+After all, the attacker controls some of the input being sent to the program.
+When recording data sent by a possible attacker,
+identify a list of ``expected'' characters and
+escape any ``unexpected'' characters so that the log isn't corrupted.
+Not doing this can be a real problem; users may include characters
+such as control characters (especially NIL or end-of-line) that
+can cause real problems.
+For example, if an attacker embeds a newline, they can then forge
+log entries by following the newline with the desired log entry.
+Sadly, there doesn't seem to be a standard convention for escaping these
+characters.
+I'm partial to the URL escaping mechanism
+(%hh where hh is the hexadecimal value of the escaped byte) but there
+are others including the C convention (\ooo for the octal value and \X
+where X is a special symbol, e.g., \n for newline).
+There's also the caret-system (^I is control-I), though that doesn't
+handle byte values over 127 gracefully.</P
+><P
+>There is the danger that a user could create a denial-of-service attack
+(or at least stop auditing)
+by performing a very large number of events that cut an audit record until
+the system runs out of resources to store the records.
+One approach to counter to this threat is to rate-limit audit record
+recording; intentionally slow down the response rate
+if ``too many'' audit records are being cut.
+You could try to slow the response rate only to the suspected attacker,
+but in many
+situations a single attacker can masquerade as potentially many users.</P
+><P
+>Selecting what is ``suspicious activity'' is, of course, dependent on
+what the program does and its anticipated use.
+Any input that fails the filtering checks discussed earlier is
+certainly a candidate (e.g., containing NIL).
+Inputs that could not result from normal use should probably be logged,
+e.g., a CGI program where certain required fields are missing
+in suspicious ways.
+Any input with phrases like /etc/passwd or /etc/shadow
+or the like is very suspicious in many cases.
+Similarly, trying to access Windows ``registry'' files or .pwl files
+is very suspicious.</P
+><P
+>Do not record passwords in an audit record.
+Often people accidentally enter passwords for a different system,
+so recording a password may allow a system administrator to break into a
+different computer outside the administrator's domain.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="windows-ce.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="physical-emissions.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Windows CE</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="special.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Physical Emissions</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

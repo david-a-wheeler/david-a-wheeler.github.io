@@ -1,0 +1,177 @@
+<HTML
+><HEAD
+><TITLE
+>Avoid Algorithmic Complexity Attacks</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Design Your Program for Security"
+HREF="internals.html"><LINK
+REL="PREVIOUS"
+TITLE="Be Careful with Data Types"
+HREF="careful-typing.html"><LINK
+REL="NEXT"
+TITLE="Carefully Call Out to Other Resources"
+HREF="call-out.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="careful-typing.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 7. Design Your Program for Security</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="call-out.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="COMPLEXITY-ATTACKS"
+></A
+>7.19. Avoid Algorithmic Complexity Attacks</H1
+><P
+>If it's important that your system keep working
+(and not be vulnerable to denial-of-service attacks), then it needs
+to be designed so it's not vulnerable to
+"Algorithmic Complexity Attacks".
+These attacks exploit the difference between 'typical case' behavior
+versus worst-case behavior; they intentionally send data that
+causes an algorithm to consistently display worst-case behavior.
+For examples, hash tables usually have O(1) performance for all operations,
+but in many implementations an attacker can
+construct input so a large number of 'hash collisions' occur.
+Other common algorithms that can be attacked include sorting
+routines (e.g., quicksort's worst case is O(n^2) instead of O(n log n))
+and regular expression implementations.
+Many higher-level capabilities are built on these basic algorithms
+(e.g., many searches use hash tables).
+More information about this attack is available in
+Crosby and Wallach's paper on the subject [Crosby 2003].</P
+><P
+>There are several solutions.
+One approach is to choose
+algorithms with the best "worst-case" behavior, not just the
+best "average-case" behavior;
+many "real-time" algorithms are specially designed to have the best
+"worst-case" behavior, so search for those versions.
+Crosby and Wallach propose a "universal hashing library" hash function
+that avoids this problem.
+Although I've seen no proof that they'd work, trivially keyed
+hashes (where what is to be hashed is first passed
+through a random local key) should be effective, and cryptographically
+keyed hashes should be very effective - just make sure the attacker
+can't determine the key.
+Judy trees may be an effective alternative to b-trees.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="careful-typing.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="call-out.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Be Careful with Data Types</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="internals.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Carefully Call Out to Other Resources</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

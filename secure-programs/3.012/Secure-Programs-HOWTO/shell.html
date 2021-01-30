@@ -1,0 +1,290 @@
+<HTML
+><HEAD
+><TITLE
+>Shell Scripting Languages (sh and csh Derivatives)</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Language-Specific Issues"
+HREF="language-specific.html"><LINK
+REL="PREVIOUS"
+TITLE="Python"
+HREF="python.html"><LINK
+REL="NEXT"
+TITLE="Ada"
+HREF="ada.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="python.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 10. Language-Specific Issues</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="ada.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="SHELL"
+>10.4. Shell Scripting Languages (sh and csh Derivatives)</A
+></H1
+><P
+>I strongly recommend against using
+standard command shell scripting languages (such as csh, sh, and bash)
+for setuid/setgid secure code.
+Some systems (such as Linux) completely disable setuid/setgid
+shell scripts, so creating setuid/setgid shell scripts creates
+an unnecessary portability problem.
+On some old systems they are fundamentally insecure due to a race condition
+(as discussed in <A
+HREF="processes.html#PROCESS-CREATION"
+>Section 3.1.3</A
+>).
+Even for other systems, they're not really a good idea.</P
+><P
+>In fact, there are a vast number of circumstances where shell scripting
+languages shouldn't be used at all for secure programs.
+Standard command shells are notorious for being affected by nonobvious inputs -
+generally because command shells were designed to try to do
+things ``automatically'' for an interactive user, not to defend against
+a determined attacker.
+Shell programs are fine for programs that don't need to be secure
+(e.g., they run at the same privilege as the unprivileged
+user and don't accept ``untrusted'' data).
+They can also be useful when they're running with privilege, as long as
+all the input (e.g., files, directories, command line, environment, etc.)
+are all from trusted users - which is why they're
+often used quite successfully in startup/shutdown scripts.</P
+><P
+>Writing secure shell programs in the presence of malicious
+input is harder than in many other languages because
+of all the things that shells are affected by.
+For example,
+``hidden'' environment variables (e.g., the ENV, BASH_ENV, and IFS values)
+can affect how they operate or even execute arbitrary user-defined
+code before the script can even execute.
+Even things like filenames of the executable or directory contents can
+affect execution.
+If an attacker can create filenames containing
+some control characters (e.g., newline),
+or whitespace, or shell metacharacters, or begin with a dash
+(the option flag syntax), there are often ways to exploit them.
+For example, on many Bourne shell implementations, doing the following
+will grant root access (thanks to NCSA for describing this
+exploit):
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> % ln -s /usr/bin/setuid-shell /tmp/-x
+ % cd /tmp
+ % -x</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>
+Some systems may have closed this hole, but the point still stands:
+most command shells aren't intended for writing secure setuid/setgid programs.
+For programming purposes, avoid creating setuid shell scripts, even
+on those systems that permit them.
+Instead, write a small program in another language to clean up the
+environment, then have it call other executables (some of which
+might be shell scripts).</P
+><P
+>If you still insist on using shell scripting languages, at least
+put the script in a directory where it cannot be moved or changed.
+Set PATH and IFS to known values very early in your script; indeed, the
+environment should be cleaned before the script is called.
+Also, very early on, ``cd'' to a safe directory.
+Use data only from directories that is controlled by trusted users, e.g., /etc,
+so that attackers can't insert maliciously-named files into those directories.
+Be sure to quote every filename passed on a command line, e.g., use
+"$1" not $1, because filenames with whitespace will be split.
+Call commands using "--" to disable additional options where you can,
+because attackers may create or pass filenames beginning with dash in the
+hope of tricking the program into processing it as an option.
+Be especially careful of filenames embedding other characters
+(e.g., newlines and other control characters).
+Examine input filenames especially carefully and be very restrictive
+on what filenames are permitted.</P
+><P
+>If you don't mind limiting your program to only work with GNU tools
+(or if you detect and optionally use the GNU tools instead when
+they are available), you might want
+to use NIL characters as the filename terminator instead of newlines.
+By using NIL characters, rather than whitespace or newlines,
+handling nasty filenames (e.g., those with
+embedded newlines) is much simpler.
+Several GNU tools that output or input filenames can use this format
+instead of the more common ``one filename per line'' format.
+Unfortunately, the name of this option isn't consistent between tools;
+for many tools the name of this option is ``--null'' or ``-0''.
+GNU programs xargs and cpio allow using either --null or -0,
+tar uses --null,
+find uses -print0,
+grep uses either --null or -Z, and
+sort uses either -z or --zero-terminated.
+Those who find this inconsistency particularly disturbing are invited
+to supply patches to the GNU authors;
+I would suggest making sure every program supported ``--null'' since that
+seems to be the most common option name.
+For example, here's one way to move files to a target directory, even
+if there may be a vast number of files and some may have awkward names
+with embedded newlines
+(thanks to Jim Dennis for reminding me of this):
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="PROGRAMLISTING"
+> find . -print0 | xargs --null mv --target-dir=$TARG</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>In a similar vein, I recommend <EM
+>not</EM
+> trusting
+``restricted shells'' to implement secure policies.
+Restricted shells are shells that intentionally prevent users from
+performing a large set of activities - their goal is to force users
+to only run a small set of programs.
+A restricted shell can be useful as a defense-in-depth measure, but
+restricted shells are notoriously hard to configure correctly and as
+configured are often subvertable.
+For example, some restricted shells will start by running some file
+in an unrestricted mode (e.g., ``.profile'') - if a user can change this
+file, they can force execution of that code.
+A restricted shell should be set up to only run a few programs, but
+if any of those programs have ``shell escapes'' to let users run more
+programs, attackers can use those shell escapes to escape the
+restricted shell.
+Even if the programs don't have shell escapes, it's quite likely that
+the various programs can be used together (along with the shell's capabilities)
+to escape the restrictions.
+Of course, if you don't set the PATH of a restricted shell (and allow
+any program to run), then an attacker can use the shell escapes of
+many programs (including text editors, mailers, etc.).
+The problem is that the purpose of a shell is to run other programs,
+but those other programs may allow unintended operations -- and the
+shell doesn't interpose itself to prevent these operations.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="python.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="ada.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Python</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="language-specific.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Ada</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,195 @@
+<HTML
+><HEAD
+><TITLE
+>Python</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Language-Specific Issues"
+HREF="language-specific.html"><LINK
+REL="PREVIOUS"
+TITLE="Perl"
+HREF="perl.html"><LINK
+REL="NEXT"
+TITLE="Shell Scripting Languages (sh and csh Derivatives)"
+HREF="shell.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="perl.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 10. Language-Specific Issues</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="shell.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="PYTHON"
+>10.3. Python</A
+></H1
+><P
+>As with any language,
+beware of any functions which allow data to be executed as parts of
+a program, to make sure an untrusted user can't affect their input.
+This includes exec(), eval(), and execfile()
+(and frankly, you should check carefully any call to compile()).
+The input() statement is also surprisingly dangerous.
+[Watters 1996, 150].</P
+><P
+>Python programs with privileges that can be invoked by unprivileged users
+(e.g., setuid/setgid programs)
+must <EM
+>not</EM
+> import the ``user'' module.
+The user module causes the pythonrc.py file to be read and executed.
+Since this file would be under the control of an untrusted user,
+importing the user module allows an attacker to force the trusted
+program to run arbitrary code.</P
+><P
+>Python does very little compile-time checking -- it has essentially
+no compile-time type information, and it doesn't even check that the
+number of parameters passed are legal for a given function or method.
+This is unfortunate, resulting in a lot of latent bugs
+(both John Viega and I have experienced this problem).
+Hopefully someday Python will implement optional static typing and
+type-checking, an idea that's been discussed for some time.
+A partial solution for now is PyChecker, a lint-like program that
+checks for common bugs in Python source code.
+You can get PyChecker from
+<A
+HREF="http://pychecker.sourceforge.net"
+TARGET="_top"
+>http://pychecker.sourceforge.net</A
+></P
+><P
+>Python includes support for ``Restricted Execution'' through
+its RExec class.
+This is primarily intended for executing applets and mobile code, but
+it can also be used to limit privilege in a program even when the
+code has not been provided externally.
+By default, a restricted execution
+environment permits reading (but not writing) of files,
+and does not include operations for network access or GUI interaction.
+These defaults can be changed, but beware of creating loopholes in
+the restricted environment.
+In particular, allowing a user to unrestrictedly add attributes to a
+class permits all sorts of ways to subvert the environment
+because Python's implementation calls many ``hidden'' methods.
+Note that, by default, most Python objects are passed by reference; if you
+insert a reference to a mutable value into a restricted program's environment,
+the restricted program can change the object in a way that's visible
+outside the restricted environment!
+Thus, if you want to give access to a mutable value, in many cases
+you should copy the mutable value or use the Bastion module (which supports
+restricted access to another object).
+For more information, see
+Kuchling [2000].
+I'm uncertain of the amount of auditing that the restricted
+execution capability has undergone, so programmer beware.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="perl.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="shell.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Perl</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="language-specific.html"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Shell Scripting Languages (sh and csh Derivatives)</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

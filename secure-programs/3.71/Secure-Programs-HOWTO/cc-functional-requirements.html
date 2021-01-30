@@ -1,0 +1,297 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Security Functionality Requirements</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Security Requirements"
+HREF="requirements.html"><LINK
+REL="PREVIOUS"
+TITLE="Security Environment and Objectives"
+HREF="cc-environment.html"><LINK
+REL="NEXT"
+TITLE="Security Assurance Measure Requirements"
+HREF="cc-assurance-requirements.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="cc-environment.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 4. Security Requirements</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="cc-assurance-requirements.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CC-FUNCTIONAL-REQUIREMENTS"
+>4.3. Security Functionality Requirements</A
+></H1
+><P
+>This section briefly describes the CC security functionality requirements
+(by CC class),
+primarily to give you an idea of the kinds of security requirements
+you might want in your software.
+If you want more detail about the CC&#8217;s requirements, see CC part 2.
+Here are the major classes of CC security requirements, along with
+the 3-letter CC abbreviation for that class:
+<P
+></P
+><UL
+><LI
+><P
+>Security Audit (FAU).
+Perhaps you&#8217;ll need to recognize, record, store, and analyze
+security-relevant activities.
+You&#8217;ll need to identify what you want to make auditable, since
+often you can&#8217;t leave all possible auditing capabilities enabled.
+Also, consider what to do when there&#8217;s no room left for auditing -
+if you stop the system, an attacker may intentionally do things to be logged
+and thus stop the system.</P
+></LI
+><LI
+><P
+>Communication/Non-repudiation (FCO).
+This class is poorly named in the CC; officially it&#8217;s called
+communication, but the real meaning is non-repudiation.
+Is it important that an originator cannot deny having sent a message, or
+that a recipient cannot deny having received it?
+There are limits to how well technology itself can support
+non-repudiation (e.g., a user might be able to give their private key away
+ahead of time if they wanted to be able to repudiate something later),
+but nevertheless for some applications supporting non-repudiation
+capabilities is very useful.</P
+></LI
+><LI
+><P
+>Cryptographic Support (FCS).
+If you&#8217;re using cryptography, what operations use cryptography,
+what algorithms and key sizes are you using, and how are you managing
+their keys (including distribution and destruction)?</P
+></LI
+><LI
+><P
+>User Data Protection (FDP).
+This class specifies requirement for protecting user data, and is a big
+class in the CC with many families inside it.
+The basic idea is that you should specify a policy for data
+(access control or information flow rules),
+develop various means to implement the policy,
+possibly support off-line storage, import, and export, and
+provide integrity when transferring user data between TOEs.
+One often-forgotten issue is residual information protection - is it
+acceptable if an attacker can later recover <SPAN
+CLASS="QUOTE"
+>&#8220;deleted&#8221;</SPAN
+> data?</P
+></LI
+><LI
+><P
+>Identification and authentication (FIA).
+Generally you don&#8217;t just want a user to report who they are
+(identification) - you need to verify their identity, a process
+called authentication.
+Passwords are the most common mechanism for authentication.
+It&#8217;s often useful to limit the number of authentication attempts
+(if you can) and limit the feedback during authentication
+(e.g., displaying asterisks instead of the actual password).
+Certainly, limit what a user can do before authenticating; in many cases,
+don&#8217;t let the user do anything without authenticating.
+There may be many issues controlling when a session can start, but in the CC
+world this is handled by the "TOE access" (FTA) class described below instead.</P
+></LI
+><LI
+><P
+>Security Management (FMT).
+Many systems will require some sort of management (e.g., to
+control who can do what), generally by those who are given a more
+trusted role (e.g., administrator).
+Be sure you think through what those special operations are, and ensure that
+only those with the trusted roles can invoke them.
+You want to limit trust; ideally, even more trusted roles should be limited
+in what they can do.</P
+></LI
+><LI
+><P
+>Privacy (FPR).
+Do you need to support anonymity, pseudonymity, unlinkability,
+or unobservability?
+If so, are there conditions where you want or don&#8217;t want these
+(e.g., should an administrator be able to determine the real identity
+of someone hiding behind a pseudonym?).
+Note that these can seriously conflict with
+non-repudiation, if you want those too.
+If you&#8217;re worried about sophisticated threats, these functions
+can be hard to provide.</P
+></LI
+><LI
+><P
+>Protection of the TOE Security Functions/Self-protection (FPT).
+Clearly, if the TOE can be subverted, any security functions it provides
+aren&#8217;t worthwhile, and in many cases a TOE has to provide at least some
+self-protection.
+Perhaps you should "test the underlying abstract machine" - i.e., test
+that the underlying components meet your assumptions,
+or have the product run self-tests
+(say during start-up, periodically, or on request).
+You should probably "fail secure", at least under certain conditions;
+determine what those conditions are.
+Consider phyical protection of the TOE.
+You may want some sort of secure recovery function after a failure.
+It&#8217;s often useful to have replay detection (detect when an attacker is
+trying to replay older actions) and counter it.
+Usually a TOE must make sure that any access checks are
+always invoked and actually succeed before performing a restricted action.</P
+></LI
+><LI
+><P
+>Resource Utilization (FRU).
+Perhaps you need to provide fault tolerance,
+a priority of service scheme, or support
+resource allocation (such as a quota system).</P
+></LI
+><LI
+><P
+>TOE Access (FTA).
+There may be many issues controlling sessions.
+Perhaps there should be a limit on the number of concurrent sessions
+(if you&#8217;re running a web service, would it make sense for the same user
+to be logged in simultaneously, or from two different machines?).
+Perhaps you should lock or terminate a session automatically
+(e.g., after a timeout), or let users initiate a session lock.
+You might want to include a standard warning banner.
+One surprisingly useful piece of information is displaying, on login,
+information about the last session (e.g., the date/time and location of the
+last login) and the date/time of the
+last unsuccessful attempt - this gives users information
+that can help them detect interlopers.
+Perhaps sessions can only be established based on other criteria
+(e.g., perhaps you can only use the program during business hours).</P
+></LI
+><LI
+><P
+>Trusted path/channels (FTP).
+A common trick used by attackers is to make the screen appear to be
+something it isn&#8217;t, e.g., run an ordinary program that looks like a
+login screen or a forged web site.
+Thus, perhaps there needs to be a "trusted path" - a way that users
+can ensure that they are talking to the "real" program.</P
+></LI
+></UL
+>
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="cc-environment.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="cc-assurance-requirements.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Security Environment and Objectives</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="requirements.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Security Assurance Measure Requirements</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

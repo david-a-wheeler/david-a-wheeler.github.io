@@ -1,0 +1,648 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Handle Metacharacters</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Carefully Call Out to Other Resources"
+HREF="call-out.html"><LINK
+REL="PREVIOUS"
+TITLE="Limit Call-outs to Valid Values"
+HREF="limit-call-outs.html"><LINK
+REL="NEXT"
+TITLE="Call Only Interfaces Intended for Programmers"
+HREF="call-intentional-apis.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="limit-call-outs.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 8. Carefully Call Out to Other Resources</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="call-intentional-apis.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="HANDLE-METACHARACTERS"
+>8.3. Handle Metacharacters</A
+></H1
+><P
+>Many systems, such as SQL interpreters and the command line shell,
+have <EM
+>metacharacters</EM
+>,
+that is, characters in their input that are not interpreted as data.
+Such characters might commands, or delimit data from commands or other data.
+If there&#8217;s a language specification for that system&#8217;s interface
+that you&#8217;re using, then it certainly has metacharacters.
+If your program invokes those other systems and allows attackers to
+insert such metacharacters, the usual result is that an attacker can
+completely control your program.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="SQL-INJECTION"
+>8.3.1. SQL injection</A
+></H2
+><P
+>Most database systems include a language that can let you
+create arbitrary queries, and typically many other functions too.
+The SQL language is especially common, and many other languages for databases
+are similar to the SQL language.</P
+><P
+>SQL and its related languages, unsurprisingly, include metacharacters.
+When metacharacters are provided as input to trigger SQL metacharacters,
+it&#8217;s often called
+<EM
+>SQL injection</EM
+>.
+Even if the language is technically not SQL, if it's an
+attack on a language for a database system it's typically still
+called a SQL injection attack.
+There are many ways to trigger SQL injection attacks; attackers
+can insert single or double quotes, semicolons (which act as command
+separators), "--" which is a comment token, and so on.
+See
+<A
+HREF="http://www.spidynamics.com/papers/SQLInjectionWhitePaper.pdf"
+TARGET="_top"
+>SPI Dynamic&#8217;s paper <SPAN
+CLASS="QUOTE"
+>&#8220;SQL Injection: Are your Web Applications Vulnerable?&#8221;</SPAN
+></A
+>
+for further discussion on this.</P
+><P
+>Perhaps the best single approach for countering SQL injection are
+prepared statements.
+Prepared statement allow programmers to identify placeholders;
+a pre-exisitng library then escapes it properly for that specific
+implementation.
+This approach has many advantages.
+First, since the library does the escaping for you,
+it is  simpler and more likely to get right.
+Second, it tends to produce easier-to-maintain code, since the code
+tends to be easier to read.
+Prepared statements are especially important when dealing with SQL,
+because different SQL engines have different syntax rules.</P
+><P
+>There are other approaches, of course.
+You can write your own escape code, but this is difficult to get correct,
+and typically a waste of time since there are usually existing libraries
+to do the job.
+You can also use stored procedures, which can also help prevent SQL injection.</P
+><P
+>There are other solutions that limit inputs.
+Different SQL implementations have different metacharacters, so blacklisting
+is even more a bad idea for countering SQL injection.
+As discussed in <A
+HREF="input.html"
+>Chapter 5</A
+>,
+define a very limited pattern and only allow data matching that
+pattern to enter; if you limit your pattern to ^[0-9]$ or
+^[0-9A-Za-z]*$ then you won&#8217;t have a problem.
+If you must handle data that may include SQL metacharacters, a good approach
+is to convert it (as early as possible) to some other encoding before
+storage, e.g.,
+HTML encoding (in which case you&#8217;ll need to encode any ampersand characters
+too).
+Also, prepend and append a quote to all user input, even
+if the data is numeric; that way, insertions of white space and other
+kinds of data won&#8217;t be as dangerous.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="SHELL-INJECTION"
+>8.3.2. Shell injection</A
+></H2
+><P
+>Many metacharacter problems involve shell metacharacters.
+An attack that tries to exploit a vulnerabliity in shell metacharacter
+processing is called a
+<EM
+>shell injection</EM
+> attack.
+For example, the standard Unix-like command shell
+(typically stored in /bin/sh)
+interprets a number of characters specially.
+If these characters are sent to the shell, then their special interpretation
+will be used unless escaped; this fact can be used to break programs.
+According to the WWW Security FAQ [Stein 1999, Q37], these metacharacters are:
+
+<TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="SCREEN"
+>&#38; ; ` ' \ " | * ? ~ &#60; &#62; ^ ( ) [ ] { } $ \n \r</PRE
+></FONT
+></TD
+></TR
+></TABLE
+></P
+><P
+>The # character is a comment character, and thus is also a metacharacter.
+The separator values can be changed by setting the IFS environment
+variable, but if you can&#8217;t trust the source of this variable you should
+have thrown it out or reset it anyway as part of your environment
+variable processing.</P
+><P
+>Unfortunately, in real life this isn&#8217;t a complete list.
+Here are some other characters that can be problematic:
+<P
+></P
+><UL
+><LI
+><P
+>'!' means <SPAN
+CLASS="QUOTE"
+>&#8220;not&#8221;</SPAN
+> in an expression (as it does in C);
+    if the return value of a program is tested, prepending !
+    could fool a script into thinking something had failed when it
+    succeeded or vice versa.
+    In some shells, the "!" also accesses the command history, which can
+    cause real problems.
+    In bash, this only occurs for interactive mode, but tcsh
+    (a csh clone found in some Linux distributions) uses "!" even in scripts.</P
+></LI
+><LI
+><P
+>'#' is the comment character; all further text on the line is ignored.</P
+></LI
+><LI
+><P
+>'-' can be misinterpreted as leading an option (or, as - -, disabling
+all further options).  Even if it&#8217;s in the <SPAN
+CLASS="QUOTE"
+>&#8220;middle&#8221;</SPAN
+> of a filename,
+if it&#8217;s preceded by what the shell considers as whitespace you may
+have a problem.</P
+></LI
+><LI
+><P
+>' ' (space), '\t' (tab), '\n' (newline), '\r' (return),
+'\v' (vertical space), '\f' (form feed),
+and other whitespace characters can have many dangerous effects.
+They can may turn a <SPAN
+CLASS="QUOTE"
+>&#8220;single&#8221;</SPAN
+> filename into multiple arguments, for example,
+or turn a single parameter into multiple parameter when stored.
+Newline and return have a number of additional dangers, for example,
+they can be used to create <SPAN
+CLASS="QUOTE"
+>&#8220;spoofed&#8221;</SPAN
+> log entries in some programs,
+or inserted just before a separate command that is then executed
+(if an underlying protocol uses newlines or returns as command
+separators).</P
+></LI
+><LI
+><P
+>Other control characters (in particular, NIL) may cause problems for
+some shell implementations.</P
+></LI
+><LI
+><P
+>Depending on your usage, it&#8217;s even conceivable that <SPAN
+CLASS="QUOTE"
+>&#8220;.&#8221;</SPAN
+>
+(the <SPAN
+CLASS="QUOTE"
+>&#8220;run in current shell&#8221;</SPAN
+>) and <SPAN
+CLASS="QUOTE"
+>&#8220;=&#8221;</SPAN
+> (for setting variables) might
+be worrisome characters.
+However, any example I&#8217;ve found so far where these
+are issues have other (much worse) security problems.</P
+></LI
+></UL
+>&#13;</P
+><P
+>Forgetting one of these characters can be disastrous, for example,
+many programs omit backslash as a shell metacharacter [rfp 1999].
+As discussed in the <A
+HREF="input.html"
+>Chapter 5</A
+>, a recommended approach
+by some
+is to immediately escape at least all of these characters when they are input.</P
+><P
+>So simply creating a list of characters that are forbidden is a bad
+idea (because that is a <EM
+>blacklist</EM
+>).
+Instead, identify the characters that are acceptable, and then
+forbid or correctly escape all others (a <EM
+>whitelist</EM
+>).</P
+><P
+>What makes the shell metacharacters particularly pervasive is
+that several important library calls, such as popen(3) and system(3),
+are implemented by calling the command shell, meaning that they will
+be affected by shell metacharacters too.
+Similarly, execlp(3) and execvp(3) may cause the shell to be called.
+Many guidelines suggest avoiding popen(3), system(3), execlp(3), and execvp(3)
+entirely and use execve(3) directly in C when trying to spawn
+a process [Galvin 1998b].
+At the least, avoid using system(3) when you can use the execve(3);
+since system(3) uses the shell to expand characters, there is more
+opportunity for mischief in system(3).
+In a similar manner the Perl and shell backtick (`) also call a command shell;
+for more information on Perl see <A
+HREF="perl.html"
+>Section 10.2</A
+>.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="FILENAMES"
+>8.3.3. Problematic pathnames and filenames</A
+></H2
+><P
+>A "pathname" is a sequence of bytes that describes how to find
+a file system object.
+On Unix-like systems, a pathname is a sequence of one or more filenames
+separated by one or more "/".
+On Windows systems a pathname is more complicated but the idea is the same.
+In practice, many people use the term "filename" to refer to pathnames.</P
+><P
+>Unfortunately,
+pathnames are often at least partly controlled by an untrusted user.
+For example, it is often useful to use file/directory
+names as a key to identify relevant data, but this can lead
+to untrusted users controlling filenames.
+Another example is when monitoring or managing of shared systems
+(e.g., virtual machines or containerized filesystems);
+in this case an untrusted monitoree controls filenames.
+Even when an attacker should not be able to gain this kind of control,
+it is often important to counter this kind of problem as a defense-in-depth
+measure, to counter attackers who gain a small amount of control.</P
+><P
+>An obvious case is that systems are not supposed to allow
+redirection outside of some direction (e.g., a "document root"
+of a web server).
+If a web application allowed ".", "/", and/or "\", it might be
+easy to foil that rule.
+For example, if a program tries to access a path that is a
+concatentation of "trusted_root_path" and "username", the attacker
+might be able to create a username "../../../mysecrets"
+and foil the limitations.
+As always, use a very limited whitelist for information that will be
+used to create filenames.</P
+><P
+>Microsoft Windows pathnames can be difficult to deal with securely.
+Windows pathname interpretations vary depending on
+the version of Windows and the API used
+(many calls use CreateFile which supports \\.\ - and these interpret
+pathnames differently than the other calls that do not).
+Perhaps most obviously, "letter:" and "\\server\share..."
+have a special meaning in Windows.
+A nastier issue is that there are reserved filenames,
+whose form depend on the API used and the local configuration.
+The built-in reserved device names are as follows:
+CON, PRN, AUX, NUL, COM1, COM2, COM3, COM4, COM5, COM6, COM7, COM8, COM9, LPT1, LPT2, LPT3, LPT4, LPT5, LPT6, LPT7, LPT8, and LPT9.
+Even worse, drivers can create more reserved names - so you actually
+cannot know ahead-of-time what names are reserved.
+You should avoid creating filenames with reserved names, both
+with and without an extension;
+if attacker can trick the program into reading/writing the name
+(e.g., com1.txt), it may (depending on API) cause read or write to a device
+instead of a file.
+In this case, even simple alphanumerics can cause disaster and be
+interpreted as metacharacters - this is a rare situation, since usually
+alphanumerics are safe.
+Windows supports "/" as a directory separator, but it conventionally
+uses "\" as the directory separator (which is annoying because
+\ is widely used as an escape character).
+In Windows,
+don't end a file or directory name with a space or period;
+the underlying file system may support it, but the
+Windows shell and user interface generally do not.
+More info is available at
+<A
+HREF="http://msdn.microsoft.com/en-us/library/aa365247.aspx"
+TARGET="_top"
+>http://msdn.microsoft.com/en-us/library/aa365247.aspx</A
+>.</P
+><P
+>Filenames and pathnames on Unix-like systems are not always easy to
+deal with either.
+On most Unix-like systems, a filename can be any sequence of bytes
+that does not include \0 (the terminator) or slash.
+One common misconception is that Unix filenames are a string of characters.
+Unix filenames are not a string of one or more characters;
+they are merely a sequence of bytes, so a filename
+does not need to be a legal sequence of characters.
+For example, while it's a common convention to interpret filenames
+as a UTF-8 encoding of characters, most systems do not actually enforce this.
+Indeed, they tend to enforce nothing, so many problematic filenames
+can be created, including filenames with spaces (or only spaces),
+control characters (including newline, tab, escape, etc.), bytes
+that are not legal UTF-8, or including a leading "-"
+(the marker for command options).
+These problematic filenames can cause trouble later.
+Some potential problems with filenames are specific to the shell, but
+filename problems are not limited to the shell.</P
+><P
+>A common problem is that "-" is the option flag on many commands, but it is a
+legal beginning of a filename.
+A simple solution is to prefix all globs or filenames where needed with "./"
+so that they cannot begin with "-".
+So for example, never use "*.pdf" to refer to a set of PDFs; use "./*.pdf".</P
+><P
+>Be careful about displaying or storing pathnames, since they can include
+newlines, tabs, escape (which can begin terminal controls), or sequences
+that are not legal strings.
+On some systems, merely displaying filenames can invoke terminal controls,
+which can then run commands with the privilege of the one displaying.</P
+><P
+>For more detailed information, see
+<A
+HREF="http://www.dwheeler.com/essays/filenames-in-shell.html"
+TARGET="_top"
+>Filenames and Pathnames in Shell: How to do it correctly</A
+>.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="OTHER-INJECTION"
+>8.3.4. Other injection issues</A
+></H2
+><P
+>A number of programs, especially those designed for human interaction,
+have <SPAN
+CLASS="QUOTE"
+>&#8220;escape&#8221;</SPAN
+> codes that perform <SPAN
+CLASS="QUOTE"
+>&#8220;extra&#8221;</SPAN
+> activities.
+One of the more common (and dangerous) escape codes is one that brings
+up a command line.
+Make sure that these <SPAN
+CLASS="QUOTE"
+>&#8220;escape&#8221;</SPAN
+> commands can&#8217;t be included
+(unless you&#8217;re sure that the specific command is safe).
+For example, many line-oriented mail programs (such as mail or mailx) use
+tilde (~) as an escape character, which can then be used to send a number
+of commands.
+As a result, apparently-innocent commands such as
+<SPAN
+CLASS="QUOTE"
+>&#8220;mail admin &#60; file-from-user&#8221;</SPAN
+> can be used to execute arbitrary programs.
+Interactive programs such as vi, emacs, and ed have <SPAN
+CLASS="QUOTE"
+>&#8220;escape&#8221;</SPAN
+> mechanisms
+that allow users to run arbitrary shell commands from their session.
+Always examine the documentation of programs you call to search for
+escape mechanisms.
+It&#8217;s best if you call only programs intended for use by other programs; see
+<A
+HREF="call-intentional-apis.html"
+>Section 8.4</A
+>.</P
+><P
+>The issue of avoiding
+escape codes even goes down to low-level hardware components
+and emulators of them.
+Most modems implement the so-called <SPAN
+CLASS="QUOTE"
+>&#8220;Hayes&#8221;</SPAN
+> command set.
+Unless the command set is disabled, inducing
+a delay, the phrase <SPAN
+CLASS="QUOTE"
+>&#8220;+++&#8221;</SPAN
+>, and then another delay forces the modem
+to interpret any following text as commands to the modem instead.
+This can be used to implement denial-of-service attacks (by
+sending <SPAN
+CLASS="QUOTE"
+>&#8220;ATH0&#8221;</SPAN
+>, a hang-up command) or even forcing
+a user to connect to someone else (a sophisticated attacker could
+re-route a user&#8217;s connection through a machine under the attacker&#8217;s control).
+For the specific case of modems, this is easy to counter
+(e.g., add "ATS2-255" in the modem initialization string), but the
+general issue still holds: if you&#8217;re controlling a lower-level component,
+or an emulation of one, make sure that you disable or otherwise handle
+any escape codes built into them.</P
+><P
+>Many <SPAN
+CLASS="QUOTE"
+>&#8220;terminal&#8221;</SPAN
+> interfaces implement the escape
+codes of ancient, long-gone physical terminals like the VT100.
+These codes can be useful, for example, for bolding characters,
+changing font color, or moving to a particular location
+in a terminal interface.
+However, do not allow arbitrary untrusted data to be sent directly
+to a terminal screen, because some of those codes can cause serious problems.
+On some systems you can remap keys (e.g., so when a user presses
+"Enter" or a function key it sends the command you want them to run).
+On some you can even send codes to
+clear the screen, display a set of commands you&#8217;d like the victim to run,
+and then send that set <SPAN
+CLASS="QUOTE"
+>&#8220;back&#8221;</SPAN
+>, forcing the victim to run
+the commands of the attacker&#8217;s choosing without even waiting for a keystroke.
+This is typically implemented using <SPAN
+CLASS="QUOTE"
+>&#8220;page-mode buffering&#8221;</SPAN
+>.
+This security problem is why emulated tty&#8217;s (represented as device files,
+usually in /dev/) should only be writeable by
+their owners and never anyone else - they should never have
+<SPAN
+CLASS="QUOTE"
+>&#8220;other write&#8221;</SPAN
+> permission set, and unless only the user is a member of
+the group (i.e., the <SPAN
+CLASS="QUOTE"
+>&#8220;user-private group&#8221;</SPAN
+> scheme), the <SPAN
+CLASS="QUOTE"
+>&#8220;group write&#8221;</SPAN
+>
+permission should not be set either for the terminal [Filipski 1986].
+If you&#8217;re displaying data to the user at a (simulated) terminal, you probably
+need to filter out all control characters (characters with values less
+than 32) from data sent back to
+the user unless they&#8217;re identified by you as safe.
+Worse comes to worse, you can identify tab and newline (and maybe
+carriage return) as safe, removing all the rest.
+Characters with their high bits set (i.e., values greater than 127)
+are in some ways trickier to handle; some old systems implement them as
+if they weren&#8217;t set, but simply filtering them inhibits much international
+use.
+In this case, you need to look at the specifics of your situation.</P
+><P
+>A related problem is that the NIL character (character 0) can have
+surprising effects.
+Most C and C++ functions assume
+that this character marks the end of a string, but string-handling routines
+in other languages (such as Perl and Ada95) can handle strings containing NIL.
+Since many libraries and kernel calls use the C convention, the result
+is that what is checked is not what is actually used [rfp 1999].</P
+><P
+>When calling another program or referring to a file
+it may be wise to specify its full path
+(e.g, <TT
+CLASS="FILENAME"
+>/usr/bin/sort</TT
+>).
+For program calls,
+this will eliminate possible errors in calling the <SPAN
+CLASS="QUOTE"
+>&#8220;wrong&#8221;</SPAN
+> command,
+even if the PATH value is incorrectly set.
+For other file referents, this reduces problems from <SPAN
+CLASS="QUOTE"
+>&#8220;bad&#8221;</SPAN
+> starting
+directories.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="limit-call-outs.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="call-intentional-apis.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Limit Call-outs to Valid Values</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="call-out.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Call Only Interfaces Intended for Programmers</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,802 @@
+<HTML
+><HEAD
+><TITLE
+>Minimize Privileges</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Design Your Program for Security"
+HREF="internals.html"><LINK
+REL="PREVIOUS"
+TITLE="Separate Data and Control"
+HREF="data-vs-control.html"><LINK
+REL="NEXT"
+TITLE="Minimize the Functionality of a Component"
+HREF="minimize-functionality.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="data-vs-control.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 7. Design Your Program for Security</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="minimize-functionality.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="MINIMIZE-PRIVILEGES"
+></A
+>7.4. Minimize Privileges</H1
+><P
+>As noted earlier, it is an important general
+principle that programs have the minimal amount of privileges
+necessary to do its job (this is termed ``least privilege'').
+That way, if the program is broken, its damage is limited.
+The most extreme example is to simply not write a secure program at all -
+if this can be done, it usually should be.
+For example, don't make your program setuid or setgid if you can; just
+make it an ordinary program, and require the administrator to log in as such
+before running it.</P
+><P
+>In Linux and Unix, the primary determiner of a process' privileges
+is the set of id's associated with it:
+each process has a real, effective and saved id for both the user and group
+(a few very old Unixes don't have a ``saved'' id).
+Linux also has, as a special extension, a separate filesystem UID and GID
+for each process.
+Manipulating these values is critical to keeping privileges minimized,
+and there are several ways to minimize them (discussed below).
+You can also use chroot(2) to minimize the files visible to a program,
+though using chroot() can be difficult to use correctly.
+There are a few other values determining privilege in Linux and Unix, for
+example, POSIX capabilities (supported by Linux 2.2 and greater, and by
+some other Unix-like systems).</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MIMIMIZE-PRIVILEGES-GRANTED"
+></A
+>7.4.1. Minimize the Privileges Granted</H2
+><P
+>Perhaps the most effective technique is to simply minimize
+the highest privilege granted.
+In particular, avoid granting a program root privilege if possible.
+Don't make a program <EM
+>setuid root</EM
+> if it only needs access
+to a small set of files;
+consider creating separate user or group accounts for different function.</P
+><P
+>A common technique is to
+create a special group, change a file's group ownership to that group,
+and then make the program <EM
+>setgid</EM
+> to that group.
+It's better to make a program <EM
+>setgid</EM
+> instead of <EM
+>setuid</EM
+>
+where you can,
+since group membership grants fewer rights (in particular, it does not
+grant the right to change file permissions).</P
+><P
+>This is commonly done for game high scores.
+Games are usually setgid <EM
+>games</EM
+>,
+the score files are owned by the group <EM
+>games</EM
+>,
+and the programs themselves and their configuration files
+are owned by someone else (say root).
+Thus, breaking into a game allows the perpetrator to change high scores but
+doesn't grant the privilege to change the game's executable or
+configuration file.
+The latter is important; if an attacker could change a game's executable
+or its configuration files (which might control what the executable runs),
+then they might be able to gain control of a user who ran the game.</P
+><P
+>If creating a new group isn't sufficient, consider creating a
+new pseudouser (really, a special role) to manage a set of resources -
+often a new pseudogroup (again, a special role) is also created just
+to run a program.
+Web servers typically do this; often web servers are set up with a special
+user (``nobody'') so that they can be isolated from other users.
+Indeed, web servers are instructive here: web servers typically need
+root privileges to start up (so they can attach to port 80), but once
+started they usually shed all their privileges and run as the user ``nobody''.
+However, don't use the ``nobody'' account (unless you're writing a
+webserver); instead, create your own pseudouser or new group.
+The purpose of this approach is to isolate different programs,
+processes, and data from each other,
+by exploiting the operating system's ability to keep users and groups separate.
+If different programs shared the same account, then breaking into one program
+would also grant privileges to the other.
+Usually the pseudouser should not own the programs it runs;
+that way, an attack who breaks into the account cannot change
+the program it runs.
+By isolating different parts of the system into running separate users
+and groups, breaking one part will not necessarily break the
+whole system's security.</P
+><P
+>If you're using a database system (say, by calling its query interface),
+limit the rights of the database user that the application uses.
+For example, don't give that user access to all of the system stored procedures
+if that user only needs access to a handful of user-defined ones.
+Do everything you can inside stored procedures.
+That way, even if someone does manage to force arbitrary strings into the
+query, the damage that can be done is limited.
+If you must directly pass a regular SQL query with client supplied data
+(and you usually shouldn't), wrap it in something that limits its activities
+(e.g., sp_sqlexec).
+(My thanks to SPI Labs for these database system suggestions).</P
+><P
+>If you <EM
+>must</EM
+> give a program privileges
+usually reserved for root,
+consider using POSIX capabilities as soon as your program can
+minimize the privileges available to your program.
+POSIX capabilities are available in Linux 2.2 and in many other
+Unix-like systems.
+By calling cap_set_proc(3) or the Linux-specific capsetp(3) 
+routines immediately after starting, you can permanently
+reduce the abilities of your program to just those abilities it actually needs.
+For example the network time daemon (ntpd) traditionally has run as root,
+because it needs to modify the current time.
+However, patches have been developed so ntpd only needs a single
+capability, CAP_SYS_TIME, so even if an attacker gains control over
+ntpd it's somewhat more difficult to exploit the program.</P
+><P
+>I say ``somewhat limited'' because, unless other steps are taken,
+retaining a privilege using POSIX capabilities
+requires that the process continue to have the root user id.
+Because many important files (configuration files, binaries, and so on)
+are owned by root, an attacker controlling a program
+with such limited capabilities can still modify
+key system files and gain full root-level privilege.
+A Linux kernel extension (available in versions 2.4.X and 2.2.19+)
+provides a better way to limit the available privileges:
+a program can start as root (with all POSIX capabilities),
+prune its capabilities down to just what it needs, call
+prctl(PR_SET_KEEPCAPS,1), and then use setuid() to change to a
+non-root process.
+The PR_SET_KEEPCAPS setting marks a process so that when a process does
+a setuid to a nonzero value, the capabilities aren't cleared
+(normally they are cleared).
+This process setting is cleared on exec().
+However, note that PR_SET_KEEPCAPS is a Linux-unique extension for newer
+versions of the linux kernel.</P
+><P
+>One tool you can use to simplify minimizing granted privileges
+is the ``compartment'' tool developed by SuSE.
+This tool, which only works on Linux,
+sets the filesystem root, uid, gid, and/or the
+capability set, then runs the given program.
+This is particularly handy for running some other program without
+modifying it.
+Here's the syntax of version 0.5:
+
+<TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="SCREEN"
+>&#13;Syntax: compartment [options] /full/path/to/program
+
+Options:
+  --chroot path   chroot to path
+  --user user     change UID to this user
+  --group group   change GID to this group
+  --init program  execute this program before doing anything
+  --cap capset    set capset name. You can specify several
+  --verbose       be verbose
+  --quiet         do no logging (to syslog)</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>&#13;</P
+><P
+>Thus, you could start a more secure anonymous ftp server using:
+
+<TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="SCREEN"
+>  compartment --chroot /home/ftp --cap CAP_NET_BIND_SERVICE anon-ftpd</PRE
+></FONT
+></TD
+></TR
+></TABLE
+>&#13;</P
+><P
+>At the time of this writing, the tool is immature and not available on
+typical Linux distributions, but this may quickly change.
+You can download the program via
+<A
+HREF="http://www.suse.de/~marc"
+TARGET="_top"
+>http://www.suse.de/~marc</A
+>.
+A similar tool is dreamland; you can that at
+<A
+HREF="http://www.7ka.mipt.ru/~szh/dreamland"
+TARGET="_top"
+>http://www.7ka.mipt.ru/~szh/dreamland</A
+>.</P
+><P
+>Note that <EM
+>not</EM
+> all Unix-like systems,
+implement POSIX capabilities, and PR_SET_KEEPCAPS is currently
+a Linux-only extension.
+Thus, these approaches limit portability.
+However, if you use it merely as an optional safeguard only
+where it's available, using this
+approach will not really limit portability.
+Also, while the Linux kernel version 2.2 and greater includes the low-level
+calls, the C-level libraries to make their use easy are not installed
+on some Linux distributions, slightly complicating their use in applications.
+For more information on Linux's implementation of POSIX capabilities, see
+<A
+HREF="http://linux.kernel.org/pub/linux/libs/security/linux-privs"
+TARGET="_top"
+>http://linux.kernel.org/pub/linux/libs/security/linux-privs</A
+>.</P
+><P
+>FreeBSD has the jail() function for limiting privileges;
+see the
+<A
+HREF="http://docs.freebsd.org/44doc/papers/jail/jail.html"
+TARGET="_top"
+>jail
+documentation</A
+>
+for more information.
+There are a number of specialized tools and extensions for limiting
+privileges; see <A
+HREF="unix-extensions.html"
+>Section 3.10</A
+>.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MINIMIZE-TIME-PRIVILEGE-USABLE"
+></A
+>7.4.2. Minimize the Time the Privilege Can Be Used</H2
+><P
+>As soon as possible, permanently give up privileges.
+Some Unix-like systems, including Linux,
+implement ``saved'' IDs which store the ``previous'' value.
+The simplest approach is to reset
+any supplemental groups if appropriate (e.g., using setgroups(2)),
+and then set the other id's twice to an untrusted id.
+In setuid/setgid programs, you should usually set the effective gid and uid
+to the real ones, in particular right after a fork(2),
+unless there's a good reason not to.
+Note that you have to change the gid first when dropping from root to another
+privilege or it won't work - once you drop root privileges, you won't
+be able to change much else.
+Note that in some systems, just setting the group isn't enough, if the
+process belongs to supplemental groups with privileges.
+For example, the ``rsync'' program didn't remove the supplementary groups
+when it changed its uid and gid, which created a potential exploit.</P
+><P
+>It's worth noting that there's a well-known related bug that
+uses POSIX capabilities to interfere with this minimization.
+This bug affects Linux kernel 2.2.0 through 2.2.15, and possibly a number
+of other Unix-like systems with POSIX capabilities.
+See Bugtraq id 1322 on http://www.securityfocus.com for more information.
+Here is their summary:
+<A
+NAME="AEN1322"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>POSIX "Capabilities" have recently been implemented in the Linux kernel.
+These "Capabilities" are an additional form of privilege control to enable
+more specific control over what privileged processes can do. Capabilities are
+implemented as three (fairly large) bitfields, which each bit representing a
+specific action a privileged process can perform. By setting specific bits, the
+actions of privileged processes can be controlled -- access can be granted for
+various functions only to the specific parts of a program that require them.
+It is a security measure. The problem is that capabilities are copied with
+fork() execs, meaning that if capabilities are modified by a parent process,
+they can be carried over. The way that this can be exploited is by setting all
+of the capabilities to zero (meaning, all of the bits are off) in each of the
+three bitfields and then executing a setuid program that attempts to drop
+privileges before executing code that could be dangerous if run as root, such
+as what sendmail does. When sendmail attempts to drop privileges using
+setuid(getuid()), it fails not having the capabilities required to do so in its
+bitfields and with no checks on its return value . It continues executing with
+superuser privileges, and can run a users .forward file as root leading to a
+complete compromise.</P
+></BLOCKQUOTE
+>
+One approach, used by sendmail, is to attempt to do
+setuid(0) after a setuid(getuid()); normally this should fail.
+If it succeeds, the program should stop.
+For more information, see
+http://sendmail.net/?feed=000607linuxbug.
+In the short term this might be a good idea in
+other programs, though clearly the better
+long-term approach is to upgrade the underlying system.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MINIMIZE-TIME-PRIVILEGE-ACTIVE"
+></A
+>7.4.3. Minimize the Time the Privilege is Active</H2
+><P
+>Use setuid(2), seteuid(2), setgroups(2),
+and related functions to ensure that the program
+only has these privileges active when necessary,
+and then temporarily deactivate the privilege when it's not in use.
+As noted above, you might want to ensure that these privileges are disabled
+while parsing user input, but more generally, only turn on privileges when
+they're actually needed.</P
+><P
+>Note that some buffer overflow attacks, if successful, can force a program
+to run arbitrary code, and that code could re-enable privileges that were
+temporarily dropped.
+Thus, there are <EM
+>many</EM
+>
+attacks that temporarily deactivating a privilege won't counter -
+it's always much better to completely drop privileges as soon as possible.
+There are many papers that describe how to do this, such as
+<A
+HREF="http://www.enderunix.org/docs/en/sc-en.txt"
+TARGET="_top"
+>"Designing
+Shellcode Demystified"</A
+>.
+Some people even claim that ``seteuid() [is] considered harmful'' because
+of the many attacks it doesn't counter.
+Still, temporarily deactivating these permissions
+prevents a whole class of attacks,
+such as techniques to convince a program to write into a file that
+perhaps it didn't intend to write into.
+Since this technique prevents many attacks,
+it's worth doing if permanently dropping the privilege can't be done
+at that point in the program.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MINIMIZE-PRIVILEGED-MODULES"
+></A
+>7.4.4. Minimize the Modules Granted the Privilege</H2
+><P
+>If only a few modules are granted the privilege, then it's much
+easier to determine if they're secure.
+One way to do so is to have a single module use the
+privilege and then drop it, so that other modules called later cannot misuse
+the privilege.
+Another approach is to have separate commands in separate
+executables; one command might be a complex
+tool that can do a vast number of tasks for a privileged user (e.g., root),
+while the other tool is setuid but is a small, simple tool that
+only permits a small command subset (and does not trust its invoker).
+The small, simple tool checks to see if the input meets various criteria for
+acceptability, and then if it determines the input is acceptable, it
+passes the data on to the complex tool.
+Note that the small, simple tool must do a thorough job checking its inputs
+and limiting what it will pass along to the complex tool, or this can
+be a vulnerability.
+The communication could be via shell invocation, or any IPC mechanism.
+These approaches can even be layered several ways, for example,
+a complex user tool could call a simple setuid
+``wrapping'' program (that checks its inputs for secure values)
+that then passes on information to another complex trusted tool.</P
+><P
+>This approach is the normal approach for developing GUI-based applications
+which requre privilege, but must be run by unprivileged users.
+The GUI portion is run as a normal unprivileged user process;
+that process then passes security-relevant requests on to another process
+that has the special privileges (and does not trust the first process, but
+instead limits the requests to whatever the user is allowed to do).
+Never develop a program that is
+privileged (e.g., using setuid) and also directly invokes a graphical toolkit:
+Graphical toolkits aren't designed to be used this way, and it would be
+extremely difficult to audit graphical toolkits
+in a way to make this possible.
+Fundamentally, graphical toolkits must be large, and it's extremely
+unwise to place so much faith in the perfection of that much code, so
+there is no point in trying to make them do what should never be done.
+Feel free to create a small setuid program that invokes two separate programs:
+one without privileges (but with the graphical interface), and one with
+privileges (and without an external interface).
+Or, create a small setuid program that can be invoked by the unprivileged
+GUI application.
+But never combine the two into a single process.
+For more about this, see the statement by
+<A
+HREF="http://www.gtk.org/setuid.html"
+TARGET="_top"
+>Owen Taylor about GTK
+and setuid, discussing why GTK_MODULES is not a security hole</A
+>.</P
+><P
+>Some applications can be best developed by dividing the problem
+into smaller, mutually untrusting programs.
+A simple way is divide up the problem into separate programs that
+do one thing (securely), using the filesystem and locking to
+prevent problems between them.
+If more complex interactions are needed, one approach is to
+fork into multiple processes, each of which has different privilege.
+Communications channels can be set up in a variety of ways; one
+way is to have a "master" process create communication channels
+(say unnamed pipes or unnamed sockets),
+then fork into different processes and have each process
+drop as many privileges as possible.
+If you're doing this, be sure to watch for deadlocks.
+Then use a simple protocol to allow the less trusted processes
+to request actions from the more trusted process(es), and ensure that the more
+trusted processes only support a limited set of requests.
+Setting user and group permissions so that no one else can even start
+up the sub-programs makes it harder to break into.</P
+><P
+>Some operating systems have the concept of multiple
+layers of trust in a single process, e.g., Multics' rings.
+Standard Unix and Linux don't have a way of separating multiple levels of trust
+by function inside a single process
+like this; a call to the kernel increases privileges,
+but otherwise a given process has a single level of trust.
+This is one area where technologies like Java 2, C# (which copies
+Java's approach), and
+Fluke (the basis of security-enhanced Linux) have an advantage.
+For example,
+Java 2 can specify fine-grained permissions such as the permission to
+only open a specific file.
+However, general-purpose operating systems do not typically
+have such abilities at this time; this may change in the near future.
+For more about Java, see <A
+HREF="java.html"
+>Section 10.6</A
+>.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CONSIDER-FSUID"
+></A
+>7.4.5. Consider Using FSUID To Limit Privileges</H2
+><P
+>Each Linux process has two Linux-unique state values called
+filesystem user id (FSUID) and filesystem group id (FSGID).
+These values are used when checking against the filesystem permissions.
+If you're building a program that operates as a file server for arbitrary
+users (like an NFS server), you might consider using these Linux extensions.
+To use them, while holding root privileges change
+just FSUID and FSGID before accessing files on behalf of a normal user.
+This extension is fairly useful, and provides a mechanism for limiting
+filesystem access rights without removing other (possibly necessary) rights.
+By only setting the FSUID (and not the EUID), a local user cannot send
+a signal to the process.
+Also, avoiding race conditions is much easier in this situation.
+However, a disadvantage of this approach
+is that these calls are not portable to other Unix-like systems.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CONSIDER-CHROOT"
+></A
+>7.4.6. Consider Using Chroot to Minimize Available Files</H2
+><P
+>You can use chroot(2) to limit the files visible to your program.
+This requires carefully setting up a directory (called the ``chroot jail'')
+and correctly entering it.
+This can be a fairly effective technique for improving a program's
+security - it's hard to interfere with files you can't see.
+However, it depends on a whole bunch of assumptions, in particular,
+the program must lack root privileges, it must not have any way to get
+root privileges, and the chroot jail must be properly set up
+(e.g., be careful what you put inside the chroot jail, and make sure that
+users can never control its contents before calling chroot).
+I recommend using chroot(2) where it makes sense to do so, but don't depend
+on it alone; instead, make it part of a layered set of defenses.
+Here are a few notes about the use of chroot(2):
+
+<P
+></P
+><UL
+><LI
+><P
+>The program can still use non-filesystem objects that are shared
+across the entire machine
+(such as System V IPC objects and network sockets).
+It's best to also
+use separate pseudo-users and/or groups, because all Unix-like systems include
+the ability to isolate users; this will at least limit the damage
+a subverted program can do to other programs.
+Note that current most Unix-like systems (including Linux)
+won't isolate intentionally cooperating programs; if you're worried about
+malicious programs cooperating, you need to get a system that implements
+some sort of mandatory access control and/or limits covert channels.</P
+></LI
+><LI
+><P
+>Be sure to close any filesystem descriptors to outside files if you
+don't want them used later.
+In particular, don't have any descriptors open to directories outside
+the chroot jail, or set up a situation where such a descriptor could be
+given to it (e.g., via Unix sockets or an old implementation of /proc).
+If the program is given a descriptor to a directory outside the chroot jail,
+it could be used to escape out of the chroot jail.</P
+></LI
+><LI
+><P
+>The chroot jail has to be set up to be secure - it must never be
+controlled by a user and every file added must be carefully examined.
+Don't use a normal user's home directory, subdirectory, or
+other directory that can ever be controlled by a user as a chroot jail;
+use a separate directory directory specially set aside
+for the purpose.
+Using a directory controlled by a user is a disaster - for example,
+the user could create a ``lib'' directory containing a trojaned linker or libc
+(and could link a setuid root binary into that space, if the files you
+save don't use it).
+Place the absolute minimum number of files and directories there.
+Typically you'll have a /bin, /etc/, /lib, and maybe one or two others
+(e.g., /pub if it's an ftp server).
+Place in /bin only what you need to run after doing the chroot(); sometimes
+you need nothing at all (try to avoid placing a shell like /bin/sh
+there, though sometimes that can't be helped).
+You may need a /etc/passwd and /etc/group so file listings can show
+some correct names, but if so, try not to include the real system's
+values, and certainly replace all passwords with "*".</P
+><P
+>You need to ensure that either the program running has all the executable
+code (including libraries), or that the chroot jail has the code you'll need.
+You should place only what you need into the chroot jail.
+You could recompile any necessary programs to be statically linked,
+so that they don't need dynamically loaded libraries at all.
+If you use dynamically-loaded libraries,
+include only the ones you need;
+use ldd(1) to query each program in /bin to find out what it needs
+(typically they go in /lib or /usr/lib).
+On Linux, you'll probably need a few basic libraries like ld-linux.so.2, and
+in some circumstances not much else.
+You can also use LD_PRELOAD to force some libraries into an executable's
+area, which can help sometimes.
+A longer discussion on how to use chroot jails is given in
+<A
+HREF="http://www.etc.msys.ch/docs/chrooted_httpd.pdf"
+TARGET="_top"
+>Marc Balmer's "Using OpenBSDs chrooted httpd"</A
+>.
+Balmer's paper is specifically about using Apache in a chroot jail, but
+the approaches he discusses can be applied elsewhere too.</P
+><P
+>It's usually wiser to completely copy in all files, instead of making
+hard links; while this wastes some time and disk space, it makes it so that
+attacks on the chroot jail files do not automatically propagate into the
+regular system's files.
+Mounting a /proc filesystem, on systems where this is supported, is
+generally unwise. In fact, in very old versions of Linux (versions 2.0.x,
+at least up through 2.0.38) it's a
+known security flaw, since there are pseudo-directories in /proc that
+would permit a chroot'ed program to escape.
+Linux kernel 2.2 fixed this known problem, but there may be others; if
+possible, don't do it.</P
+></LI
+><LI
+><P
+>Chroot really isn't effective if 
+the program can acquire root privilege.
+For example, the program could use calls like mknod(2) to create a device
+file that can view physical memory, and then use the resulting
+device file to modify kernel memory to give itself
+whatever privileges it desired.
+Another example of how a root program can break out of chroot
+is demonstrated at
+<A
+HREF="http://www.suid.edu/source/breakchroot.c"
+TARGET="_top"
+>http://www.suid.edu/source/breakchroot.c</A
+>.
+In this example, the program opens a file descriptor for
+the current directory, creates and chroots into a subdirectory, sets
+the current directory to the previously-opened current directory,
+repeatedly cd's up from the current directory (which since it is
+outside the current chroot succeeds in moving up to the real filesystem
+root), and then calls chroot on the result.
+By the time you read this, these weaknesses may have been plugged,
+but the reality is that root privilege has traditionally meant ``all
+privileges'' and it's hard to strip them away.
+It's better to assume that a program requiring continuous root privileges
+will only be mildly helped using chroot().
+Of course, you may be able to break your program into parts, so that
+at least part of it can be in a chroot jail.</P
+></LI
+></UL
+>&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MINIMIZE-ACCESSIBLE-DATA"
+></A
+>7.4.7. Consider Minimizing the Accessible Data</H2
+><P
+>Consider minimizing the amount of data that can be accessed by the user.
+For example, in CGI scripts, place all data used by the CGI script
+outside of the document tree unless there is a reason the user needs to
+see the data directly.
+Some people have the false notion that, by not publicly providing a
+link, no one can access the data, but this is simply not true.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MINIMIZE-RESOURCES"
+></A
+>7.4.8. Consider Minimizing the Resources Available</H2
+><P
+>Consider minimizing the computer resources available to a given
+process so that, even if it ``goes haywire,'' its damage can be limited.
+This is a fundamental technique for preventing a denial of service.
+For network servers,
+a common approach is to set up a separate process for each session,
+and for each process limit the amount of CPU time (et cetera) that session
+can use.
+That way, if an attacker makes a request that chews up memory or uses
+100% of the CPU, the limits will kick in and prevent that single session
+from interfering with other tasks.
+Of course, an attacker can establish many sessions, but this at least
+raises the bar for an attack.
+See <A
+HREF="quotas.html"
+>Section 3.6</A
+> for more information on how to set these limits
+(e.g., ulimit(1)).</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="data-vs-control.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="minimize-functionality.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Separate Data and Control</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="internals.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Minimize the Functionality of a Component</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

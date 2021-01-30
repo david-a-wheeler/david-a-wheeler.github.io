@@ -1,0 +1,509 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Environment Variables</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Validate All Input"
+HREF="input.html"><LINK
+REL="PREVIOUS"
+TITLE="Command line"
+HREF="command-line.html"><LINK
+REL="NEXT"
+TITLE="File Descriptors"
+HREF="file-descriptors.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="command-line.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Validate All Input</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="file-descriptors.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="ENVIRONMENT-VARIABLES"
+>5.4. Environment Variables</A
+></H1
+><P
+>By default, environment variables are inherited from a process&#8217; parent.
+However, when a program executes another program, the calling program
+can set the environment variables to arbitrary values.
+This is dangerous to setuid/setgid programs, because their invoker can
+completely control the environment variables they&#8217;re given.
+Since they are usually inherited, this also applies transitively; a
+secure program might call some other program and, without special measures,
+would pass potentially dangerous environment variables values on to the
+program it calls.
+The following subsections discuss environment variables and what to
+do with them.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="ENV-VARS-DANGEROUS"
+>5.4.1. Some Environment Variables are Dangerous</A
+></H2
+><P
+>Some environment variables are dangerous because
+many libraries and programs are controlled by environment
+variables in ways that are obscure, subtle, or undocumented.
+For example, the IFS variable is used by the <EM
+>sh</EM
+> and <EM
+>bash</EM
+>
+shell to determine which characters separate command line arguments.
+Since the shell is invoked by several low-level calls
+(like system(3) and popen(3) in C, or the back-tick operator in Perl),
+setting IFS to unusual values can subvert apparently-safe calls.
+This behavior is documented in bash and sh, but it&#8217;s obscure;
+many long-time users only know about IFS because of its use in breaking
+security, not because it&#8217;s actually used very often for its intended purpose.
+What is worse is that not all environment variables are documented, and
+even if they are, those other programs may change and add dangerous
+environment variables.
+Thus, the only real solution (described below) is to select the ones you
+need and throw away the rest.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="ENV-STORAGE-DANGEROUS"
+>5.4.2. Environment Variable Storage Format is Dangerous</A
+></H2
+><P
+>Normally, programs should use the standard access routines to access
+environment variables.
+For example, in C, you should get values
+using getenv(3), set them using the
+POSIX standard routine putenv(3) or the BSD extension setenv(3)
+and eliminate environment variables using unsetenv(3).
+I should note here that setenv(3) is implemented in Linux, too.</P
+><P
+>However, crackers need not be so nice; crackers can directly control the
+environment variable data area passed to a program using execve(2).
+This permits some nasty attacks, which can only be understood by
+understanding how environment variables really work.
+In Linux, you can see environ(5) for a summary how about environment variables
+really work.
+In short, environment variables are internally stored as a pointer to
+an array of pointers to characters; this array is stored in order and
+terminated by a NULL pointer (so you&#8217;ll know when the array ends).
+The pointers to characters, in turn, each
+point to a NIL-terminated string value of the form <SPAN
+CLASS="QUOTE"
+>&#8220;NAME=value&#8221;</SPAN
+>.
+This has several implications, for example, environment variable names
+can&#8217;t include the equal sign, and neither the name nor value can have
+embedded NIL characters.
+However, a more dangerous implication of this format is that it allows
+multiple entries with the same variable name, but with different values
+(e.g., more than one value for SHELL).
+While typical command shells prohibit doing this,
+a locally-executing cracker can create such a situation using execve(2).</P
+><P
+>The problem with this storage format (and the way it&#8217;s set)
+is that a program might check one of these values
+(to see if it&#8217;s valid) but actually use a different one.
+In Linux,
+the GNU glibc libraries try to shield programs from this;
+glibc 2.1&#8217;s implementation of getenv will always get the first matching
+entry, setenv and putenv will always set the first matching entry, and
+unsetenv will actually unset <EM
+>all</EM
+> of the matching entries
+(congratulations to the GNU glibc implementers for implementing
+unsetenv this way!).
+However, some programs go directly to the environ variable and iterate
+across all environment variables; in this case,
+they might use the last matching entry instead of the first one.
+As a result, if checks were made against the first matching entry instead,
+but the actual value used is the last matching entry,
+a cracker can use this fact to circumvent the protection routines.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="ENV-VAR-SOLUTION"
+>5.4.3. The Solution - Extract and Erase</A
+></H2
+><P
+>For secure setuid/setgid programs, the short list of environment variables
+needed as input (if any) should be carefully extracted.
+Then the entire environment should be erased,
+followed by resetting a small set of necessary environment
+variables to safe values.
+There really isn&#8217;t a better way if you make any calls to subordinate
+programs; there&#8217;s no practical
+method of listing <SPAN
+CLASS="QUOTE"
+>&#8220;all the dangerous values&#8221;</SPAN
+>.
+Even if you reviewed the source code of every program you call
+directly or indirectly,
+someone may add new undocumented environment variables after you
+write your code, and one of them may be exploitable.</P
+><P
+>The simple way to erase the environment in C/C++
+is by setting the global variable
+<EM
+>environ</EM
+>
+to NULL.
+The global variable environ is defined in &#60;unistd.h&#62;; C/C++ users will
+want to #include this header file.
+You will need to manipulate this value before spawning threads, but that&#8217;s
+rarely a problem, since you want to do these manipulations very early in
+the program&#8217;s execution (usually before threads are spawned).</P
+><P
+>The global variable environ&#8217;s definition is defined in various standards; it&#8217;s
+not clear that the official standards condone directly changing its value,
+but I&#8217;m unaware of any Unix-like system that has trouble
+with doing this.
+I normally just modify the <SPAN
+CLASS="QUOTE"
+>&#8220;environ&#8221;</SPAN
+> directly;
+manipulating such low-level components is possibly non-portable, but 
+it assures you that you get a clean (and safe) environment.
+In the rare case where you need later access to the entire set of
+variables, you could save the <SPAN
+CLASS="QUOTE"
+>&#8220;environ&#8221;</SPAN
+> variable&#8217;s value somewhere,
+but this is rarely necessary; nearly all programs need only a few values,
+and the rest can be dropped.</P
+><P
+>Another way to clear the environment
+is to use the undocumented clearenv() function.
+The function
+clearenv() has an odd history; it was supposed to be defined in POSIX.1, but
+somehow never made it into that standard.
+However, clearenv() is defined in POSIX.9
+(the Fortran 77 bindings to POSIX), so there is a quasi-official status for it.
+In Linux,
+clearenv() is defined in &#60;stdlib.h&#62;, but before using #include
+to include it you must make sure that __USE_MISC is #defined.
+A somewhat more <SPAN
+CLASS="QUOTE"
+>&#8220;official&#8221;</SPAN
+> approach is to cause __USE_MISC to be defined
+is to first #define either _SVID_SOURCE or _BSD_SOURCE, and then
+#include &#60;features.h&#62; -
+these are the official feature test macros.</P
+><P
+>One environment value you&#8217;ll almost certainly re-add is PATH,
+the list of directories to search for programs; PATH should
+<EM
+>not</EM
+> include the current directory and usually be something simple like
+<SPAN
+CLASS="QUOTE"
+>&#8220;/bin:/usr/bin&#8221;</SPAN
+>.
+Typically you&#8217;ll also set
+IFS (to its default of <SPAN
+CLASS="QUOTE"
+>&#8220; \t\n&#8221;</SPAN
+>, where space is the first character)
+and TZ (timezone).
+Linux won&#8217;t die if you don&#8217;t supply either IFS or TZ,
+but some System V based systems have problems if you don&#8217;t supply a TZ value,
+and it&#8217;s rumored that some shells need the IFS value set.
+In Linux, see environ(5) for a list of common environment variables that you
+<EM
+>might</EM
+> want to set.</P
+><P
+>If you really need user-supplied values, check the values first
+(to ensure that the values match a pattern for legal values and that they
+are within some reasonable maximum length).
+Ideally there would be some standard trusted file in /etc with the
+information for <SPAN
+CLASS="QUOTE"
+>&#8220;standard safe environment variable values&#8221;</SPAN
+>,
+but at this time there&#8217;s no standard file defined for this purpose.
+For something similar, you might want to examine the PAM module pam_env
+on those systems which have that module.
+If you allow users to set an arbitrary environment variable, then you&#8217;ll
+let them subvert restricted shells (more on that below).</P
+><P
+>If you&#8217;re using a shell as your programming language,
+you can use the <SPAN
+CLASS="QUOTE"
+>&#8220;/usr/bin/env&#8221;</SPAN
+> program with the <SPAN
+CLASS="QUOTE"
+>&#8220;-&#8221;</SPAN
+> option
+(which erases all environment variables of the program being run).
+Basically, you call /usr/bin/env, give it the <SPAN
+CLASS="QUOTE"
+>&#8220;-&#8221;</SPAN
+> option,
+follow that with the set of variables and their values you wish to set
+(as name=value),
+and then follow that with the name of the program to run and its arguments.
+You usually want to call the program using the full pathname
+(/usr/bin/env) and not just as <SPAN
+CLASS="QUOTE"
+>&#8220;env&#8221;</SPAN
+>, in case a user has created
+a dangerous PATH value.
+Note that GNU&#8217;s env also accepts the options
+"-i" and "--ignore-environment" as synonyms (they also erase the
+environment of the program being started), but these aren&#8217;t portable to
+other versions of env.</P
+><P
+>If you&#8217;re programming a setuid/setgid program in a language
+that doesn&#8217;t allow you to reset the environment directly,
+one approach is to create a <SPAN
+CLASS="QUOTE"
+>&#8220;wrapper&#8221;</SPAN
+> program.
+The wrapper sets the environment program to safe values, and then
+calls the other program.
+Beware: make sure the wrapper will actually invoke the intended program;
+if it&#8217;s an interpreted program, make sure there&#8217;s no race condition possible
+that would allow the interpreter to load a different program than the one
+that was granted the special setuid/setgid privileges.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="ENV-VAR-DONTSET"
+>5.4.4. Don&#8217;t Let Users Set Their Own Environment Variables</A
+></H2
+><P
+>If you allow users to set their own environment variables,
+then users will be able to escape out of restricted accounts
+(these are accounts that are supposed to only let
+the users run certain programs and not work as a general-purpose machine).
+This includes letting users write or modify certain files in their home
+directory (e.g., like .login),
+supporting conventions that load in environment variables from
+files under the user&#8217;s control (e.g., openssh&#8217;s .ssh/environment file),
+or supporting protocols that transfer environment variables
+(e.g., the Telnet Environment Option; see CERT Advisory CA-1995-14
+for more).
+Restricted accounts should never be allowed to modify or add any 
+file directly contained in their home directory, and instead should be
+given only a specific subdirectory that they are allowed to modify
+(if they can modify any).</P
+><P
+>ari posted a detailed discussion of this problem on Bugtraq
+on June 24, 2002:
+<A
+NAME="AEN1144"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>Given the similarities with certain other security issues, i'm surprised
+this hasn&#8217;t been discussed earlier.  If it has, people simply haven&#8217;t
+paid it enough attention.</P
+><P
+>This problem is not necessarily ssh-specific, though most telnet daemons
+that support environment passing should already be configured to remove
+dangerous variables due to a similar (and more serious) issue back in
+'95 (ref: [1]).  I will give ssh-based examples here.</P
+><P
+>Scenario one:
+Let&#8217;s say admin bob has a host that he wants to give people ftp access
+to.  Bob doesn&#8217;t want anyone to have the ability to actually _log into_
+his system, so instead of giving users normal shells, or even no shells,
+bob gives them all (say) /usr/sbin/nologin, a program he wrote himself
+in C to essentially log the attempt to syslog and exit, effectively
+ending the user&#8217;s session.  As far as most people are concerned, the
+user can&#8217;t do much with this aside from, say, setting up an encrypted
+tunnel.</P
+><P
+>The thing is, bob&#8217;s system uses dynamic libraries (as most do), and
+/usr/sbin/nologin is dynamically linked (as most such programs are).  If
+a user can set his environment variables (e.g. by uploading a
+<SPAN
+CLASS="QUOTE"
+>&#8220;.ssh/environment&#8221;</SPAN
+>
+file) and put some arbitrary file on the system (e.g.
+<SPAN
+CLASS="QUOTE"
+>&#8220;doevilstuff.so&#8221;</SPAN
+>),
+he can bypass any functionality of /usr/sbin/nologin
+completely via LD_PRELOAD (or another member of the LD_* environment
+family).</P
+><P
+>The user can now gain a shell on the system (with his own privileges, of
+course, barring any <SPAN
+CLASS="QUOTE"
+>&#8220;UseLogin&#8221;</SPAN
+>
+issues (ref: [2])), and administrator
+bob, if he were aware of what just occurred, would be extremely unhappy.</P
+><P
+>Granted, there are all kinds of interesting ways to (more or less) do
+away with this problem.  Bob could just grit his teeth and give the ftp
+users a nonexistent shell, or he could statically compile nologin,
+assuming his operating system comes with static libraries.  Bob could
+also, humorously, make his nologin program setuid and let the standard C
+library take care of the situation.  Then, of course, there are also the
+ssh-specific access controls such as AllowGroup and AllowUsers.  These
+may appease the situation in this scenario, but it does not correct the
+problem.</P
+><P
+>... Now, what happens if bob, instead of using /usr/sbin/nologin, wants to
+use (for example) some BBS-type interface that he wrote up or
+downloaded?  It can be a script written in perl or tcl or python, or it
+could be a compiled program; doesn&#8217;t matter.  Additionally, bob need not
+be running an ftp server on this host; instead, perhaps bob uses nfs or
+veritas to mount user home directories from a fileserver on his network;
+this exact setup is (unfortunately) employed by many bastion hosts,
+password management hosts and mail servers---to name a few.  Perhaps bob
+runs an ISP, and replaces the user&#8217;s shell when he doesn&#8217;t pay.  With
+all of these possible (and common) scenarios, bob&#8217;s going to have a
+somewhat more difficult time getting around the problem.</P
+><P
+>... Exploitation of the problem is simple.  The circumvention code would be
+compiled into a dynamic library and LD_PRELOAD=/path/to/evil.so should
+be placed into ~user/.ssh/environment (a similar environment option may
+be appended to public keys in the authohrized_keys file).  If no
+dynamically loadable programs are executed, this will have no effect.</P
+><P
+>ISPs and universities (along with similarly affected organizations)
+should compile their rejection (or otherwise restricted) binaries
+statically (assuming your operating system comes with static libraries)...</P
+><P
+>Ideally, sshd (and all remote access programs that allow user-definable
+environments) should strip any environment settings that libc ignores
+for setuid programs.</P
+></BLOCKQUOTE
+></P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="command-line.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="file-descriptors.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Command line</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="input.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>File Descriptors</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

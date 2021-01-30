@@ -1,0 +1,240 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Python</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Language-Specific Issues"
+HREF="language-specific.html"><LINK
+REL="PREVIOUS"
+TITLE="Perl"
+HREF="perl.html"><LINK
+REL="NEXT"
+TITLE="Shell Scripting Languages (sh and csh Derivatives)"
+HREF="shell.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="perl.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 10. Language-Specific Issues</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="shell.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="PYTHON"
+>10.3. Python</A
+></H1
+><P
+>As with any language,
+beware of any functions which allow data to be executed as parts of
+a program, to make sure an untrusted user can&#8217;t affect their input.
+This includes exec(), eval(), and execfile()
+(and frankly, you should check carefully any call to compile()).
+The input() statement is also surprisingly dangerous.
+[Watters 1996, 150].</P
+><P
+>Python programs with privileges that can be invoked by unprivileged users
+(e.g., setuid/setgid programs)
+must <EM
+>not</EM
+> import the <SPAN
+CLASS="QUOTE"
+>&#8220;user&#8221;</SPAN
+> module.
+The user module causes the pythonrc.py file to be read and executed.
+Since this file would be under the control of an untrusted user,
+importing the user module allows an attacker to force the trusted
+program to run arbitrary code.</P
+><P
+>Python does very little compile-time checking -- it has essentially
+no compile-time type information, for example.
+This is unfortunate, resulting in a lot of latent bugs
+(both John Viega and I have experienced this problem).
+Hopefully someday Python will implement optional static typing and
+type-checking, an idea that&#8217;s been discussed for some time.
+A partial solution for now is PyChecker, a lint-like program that
+checks for common bugs in Python source code.
+You can get PyChecker from
+<A
+HREF="http://pychecker.sourceforge.net"
+TARGET="_top"
+>http://pychecker.sourceforge.net</A
+></P
+><P
+>Before Python version 2.3,
+Python included support for <SPAN
+CLASS="QUOTE"
+>&#8220;Restricted Execution&#8221;</SPAN
+> through
+its RExec and Bastion classes.
+The RExec class was primarily intended for executing applets and mobile code,
+but it could also be used to try to limit privilege in a program even when the
+code has not been provided externally.
+The Bastion module was intended to supports
+restricted access to another object.
+For more information, see Kuchling [2000].
+Earlier versions of this book identified these functions but noted them as
+"programmer beware", and I was right to be concerned.
+More recent analysis has found that RExec and Bastion are
+fundamentally flawed, and have unfixable exploitable security flaws.
+Thus, these classes have been removed from Python 2.3,
+and should not be used to enforce security in any version of Python.
+There is ongoing work to develop alternative approaches to running
+untrusted Python code, such as the experimental
+<A
+HREF="http://www.procoders.net/download.php?fname=SandBox.py"
+TARGET="_top"
+>Sandbox.py module</A
+>.
+Do not use this experimental Sandbox.py module for serious purposes yet.</P
+><P
+>Supporting secure execution of untrusted code in Python turns out to be a
+rather difficult problem.
+For example, allowing a user to unrestrictedly add attributes to a
+class permits all sorts of ways to subvert the environment
+because Python&#8217;s implementation calls many <SPAN
+CLASS="QUOTE"
+>&#8220;hidden&#8221;</SPAN
+> methods.
+By default, most Python objects are passed by reference; if you
+insert a reference to a mutable value into a restricted program&#8217;s environment,
+the restricted program can change the object in a way that&#8217;s visible
+outside the restricted environment.
+Thus, if you want to give access to a mutable value, in many cases
+you should copy the mutable value.
+Fundamentally, Python is designed to be a clean and highly reflexive
+language, which is good for a general-purpose language but makes handling
+malicious code more difficult.</P
+><P
+>Python supports operations called "pickle" and "unpickling"
+to conveniently store and retrieve sets of objects.
+NEVER unpickle data from an untrusted source.
+Python 2.2 did a half-hearted job of trying to support unpickling from
+untrusted sources (the __safe_for_unpickling__ attribute),
+but it was never audited and probably never really worked.
+Python 2.3 has removed all of this, and made explicitly clear that
+unpickling is not a safe operation.
+For more information, see
+<A
+HREF="http://www.python.org/peps/pep-0307.html"
+TARGET="_top"
+>PEP 307</A
+>.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="perl.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="shell.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Perl</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="language-specific.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Shell Scripting Languages (sh and csh Derivatives)</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

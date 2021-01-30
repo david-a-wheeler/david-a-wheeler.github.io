@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Fail Safe</TITLE><meta name="viewport" content="width=device-width, initial-scale=1.0><meta name="ignore" content="ignore"
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Secure Programming HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Design Your Program for Security"
+HREF="internals.html"><LINK
+REL="PREVIOUS"
+TITLE="Minimize the Accessible Data"
+HREF="minimize-data-access.html"><LINK
+REL="NEXT"
+TITLE="Avoid Race Conditions"
+HREF="avoid-race.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="minimize-data-access.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 7. Design Your Program for Security</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="avoid-race.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="FAIL-SAFE"
+>7.10. Fail Safe</A
+></H1
+><P
+>A secure program should always <SPAN
+CLASS="QUOTE"
+>&#8220;fail safe&#8221;</SPAN
+>, that is,
+it should be designed so that if the program does fail, the safest
+result should occur.
+For security-critical programs, that usually means that
+if some sort of misbehavior is detected (malformed input,
+reaching a <SPAN
+CLASS="QUOTE"
+>&#8220;can&#8217;t get here&#8221;</SPAN
+> state, and so on), then the program
+should immediately deny service and stop processing that request.
+Don&#8217;t try to <SPAN
+CLASS="QUOTE"
+>&#8220;figure out what the user wanted&#8221;</SPAN
+>: just deny the service.
+Sometimes this can decrease reliability or useability
+(from a user&#8217;s perspective), but it increases security.
+There are a few cases where this might not be desired (e.g., where denial of
+service is much worse than loss of confidentiality or integrity), but
+such cases are quite rare.</P
+><P
+>Note that I recommend <SPAN
+CLASS="QUOTE"
+>&#8220;stop processing the request&#8221;</SPAN
+>, not <SPAN
+CLASS="QUOTE"
+>&#8220;fail altogether&#8221;</SPAN
+>.
+In particular, most servers should not completely halt when given malformed
+input, because that creates a trivial opportunity for a denial of service
+attack (the attacker just sends garbage bits to prevent you from using the
+service).
+Sometimes taking the whole server down is necessary, in particular,
+reaching some <SPAN
+CLASS="QUOTE"
+>&#8220;can&#8217;t get here&#8221;</SPAN
+>
+states may signal a problem so drastic
+that continuing is unwise.</P
+><P
+>Consider carefully what error message you send back when a failure is detected.
+if you send nothing
+back, it may be hard to diagnose problems, but sending back too much
+information may unintentionally aid an attacker.
+Usually the best approach is to reply with <SPAN
+CLASS="QUOTE"
+>&#8220;access denied&#8221;</SPAN
+> or
+<SPAN
+CLASS="QUOTE"
+>&#8220;miscellaneous error encountered&#8221;</SPAN
+> and then
+write more detailed information to an audit log (where you can have more
+control over who sees the information).</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="minimize-data-access.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="avoid-race.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Minimize the Accessible Data</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="internals.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Avoid Race Conditions</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

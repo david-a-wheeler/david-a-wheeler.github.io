@@ -1,0 +1,248 @@
+<HTML
+><HEAD
+><TITLE
+>Trust Only Trustworthy Channels</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Design Your Program for Security"
+HREF="internals.html"><LINK
+REL="PREVIOUS"
+TITLE="Avoid Race Conditions"
+HREF="avoid-race.html"><LINK
+REL="NEXT"
+TITLE="Set up a Trusted Path"
+HREF="trusted-path.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="avoid-race.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 7. Design Your Program for Security</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="trusted-path.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="TRUSTWORTHY-CHANNELS"
+></A
+>7.12. Trust Only Trustworthy Channels</H1
+><P
+>In general, only trust information (input or results)
+from trustworthy channels.
+For example,
+the routines getlogin(3) and ttyname(3) return information that can be
+controlled by a local user, so don't trust them for security purposes.</P
+><P
+>In most computer networks (and certainly for the Internet at large),
+no unauthenticated transmission is trustworthy.
+For example,
+packets sent over the public Internet can be viewed and modified at any
+point along their path, and arbitrary new packets can be forged.
+These forged packets might include forged information about the sender
+(such as their machine (IP) address and port) or receiver.
+Therefore, don't use these values as your primary criteria for
+security decisions unless you can authenticate them (say using cryptography).</P
+><P
+>This means that, except under special circumstances,
+two old techniques for authenticating users
+in TCP/IP should often not be used as the sole authentication mechanism.
+One technique is to limit users to ``certain machines'' by checking
+the ``from'' machine address in a data packet; the other is to
+limit access by requiring that the sender use a ``trusted'' port number
+(a number less that 1024).
+The problem is that in many environments an attacker can forge these values.</P
+><P
+>In some environments, checking these values (e.g., the sending machine
+IP address and/or port) can have some value, so
+it's not a bad idea to support such checking as an option in a program.
+For example, if a system runs behind a firewall, the firewall can't
+be breached or circumvented, and the firewall stops
+external packets that claim to be from the inside, 
+then you can claim that any packet saying it's from the inside really does.
+Note that you can't be sure the packet actually comes from the machine
+it claims it comes from - so you're only countering external threats,
+not internal threats.
+However, broken firewalls, alternative paths, and mobile code make
+even these assumptions suspect.</P
+><P
+>The problem is supporting untrustworthy information as the only way
+to authenticate someone.
+If you need a trustworthy channel over an untrusted network,
+in general you need some sort of cryptologic
+service (at the very least, a cryptologically safe hash).
+See <A
+HREF="crypto.html"
+>Section 11.5</A
+>
+for more information on cryptographic algorithms and protocols.
+If you're implementing a standard and inherently insecure protocol
+(e.g., ftp and rlogin), provide safe defaults and document
+the assumptions clearly.</P
+><P
+>The Domain Name Server (DNS) is widely used on the Internet to maintain
+mappings between the names of computers and their IP (numeric) addresses.
+The technique called ``reverse DNS'' eliminates some simple
+spoofing attacks, and is useful for determining a host's name.
+However, this technique is not trustworthy for authentication decisions.
+The problem is that, in the end, a DNS request will be sent eventually
+to some remote system that may be controlled by an attacker.
+Therefore, treat DNS results as an input that needs
+validation and don't trust it for serious access control.</P
+><P
+>Arbitrary email (including the ``from'' value of addresses)
+can be forged as well.
+Using digital signatures is a method to thwart many such attacks.
+A more easily thwarted approach is to require emailing back and forth
+with special randomly-created values, but for low-value transactions
+such as signing onto a public mailing list this is usually acceptable.</P
+><P
+>Note that in any client/server model, including CGI, that the server
+must assume that the client (or someone interposing between the
+client and server) can modify any value.
+For example, so-called ``hidden fields'' and cookie values can be
+changed by the client before being received by CGI programs.
+These cannot be trusted unless special precautions are taken.
+For example, the hidden fields could be signed in a way the client
+cannot forge as long as the server checks the signature.
+The hidden fields could also be encrypted using a key only the trusted
+server could decrypt (this latter approach is the basic idea behind the
+Kerberos authentication system).
+InfoSec labs has further discussion about hidden fields and applying
+encryption at
+<A
+HREF="http://www.infoseclabs.com/mschff/mschff.htm"
+TARGET="_top"
+>http://www.infoseclabs.com/mschff/mschff.htm</A
+>.
+In general, you're better off keeping data you care about at the server end
+in a client/server model.
+In the same vein,
+don't depend on HTTP_REFERER for authentication in a CGI program, because
+this is sent by the user's browser (not the web server).</P
+><P
+>This issue applies to data referencing other data, too.
+For example, HTML or XML allow you to include by reference other files
+(e.g., DTDs and style sheets) that may be stored remotely.
+However, those external references could be modified so that users
+see a very different document than intended;
+a style sheet could be modified to ``white out'' words at critical
+locations, deface its appearance, or insert new text.
+External DTDs could be modified to prevent use of the document
+(by adding declarations that break validation) or insert different
+text into documents [St. Laurent 2000].</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="avoid-race.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="trusted-path.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Avoid Race Conditions</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="internals.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Set up a Trusted Path</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

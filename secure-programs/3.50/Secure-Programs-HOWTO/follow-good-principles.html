@@ -1,0 +1,302 @@
+<HTML
+><HEAD
+><TITLE
+>Follow Good Security Design Principles</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Design Your Program for Security"
+HREF="internals.html"><LINK
+REL="PREVIOUS"
+TITLE="Design Your Program for Security"
+HREF="internals.html"><LINK
+REL="NEXT"
+TITLE="Secure the Interface"
+HREF="secure-interface.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="internals.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 7. Design Your Program for Security</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="secure-interface.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="FOLLOW-GOOD-PRINCIPLES"
+></A
+>7.1. Follow Good Security Design Principles</H1
+><P
+>Saltzer [1974] and later Saltzer and Schroeder [1975]
+list the following design principles when creating secure programs,
+which are still valid:
+
+<P
+></P
+><UL
+><LI
+><P
+><EM
+>Least privilege</EM
+>.
+Each user and program should operate using the fewest privileges possible.
+This principle limits the damage from an accident, error, or attack.
+It also reduces the number of potential interactions among privileged programs,
+so unintentional,
+unwanted, or improper uses of privilege are less likely to occur. 
+This idea can be extended to the internals of a program: only the smallest
+portion of the program which needs those privileges should have them.
+See <A
+HREF="minimize-privileges.html"
+>Section 7.4</A
+> for more about how to do this.</P
+></LI
+><LI
+><P
+><EM
+>Economy of mechanism/Simplicity</EM
+>.
+The protection system's design should be simple and
+small as possible.
+In their words,
+``techniques such as line-by-line inspection of software and physical
+examination of hardware that implements protection mechanisms are necessary.
+For such techniques to be successful, a small and simple design is essential.''
+This is sometimes described as the ``KISS'' principle
+(``keep it simple, stupid'').</P
+></LI
+><LI
+><P
+><EM
+>Open design</EM
+>.
+The protection mechanism must not depend on attacker ignorance.
+Instead, the mechanism should be public, depending on the secrecy of
+relatively few (and easily changeable) items like passwords or private keys.
+An open design makes extensive public scrutiny possible, and it also
+makes it possible for users to convince themselves that the system about
+to be used is adequate.
+Frankly, it isn't realistic to try to maintain secrecy for a system that
+is widely distributed;
+decompilers and subverted hardware can quickly expose any ``secrets''
+in an implementation.
+Even if you pretend that source code is necessary to find exploits (it isn't),
+source code has often been stolen and redistributed
+(at least once from Cisco and twice from Microsoft).
+This is one of the oldest and strongly supported principles, based
+on many years in cryptography.
+For example, the older Kerckhoffs's Law states
+that "A cryptosystem
+should be designed to be secure if everything is known about it except
+the key information."
+Claude Shannon, the inventor of information theory, restated Kerckhoff's Law
+as: "[Assume] the enemy knows the system."
+Indeed, security expert
+Bruce Schneier goes further and
+argues that smart engineers should ``demand
+open source code for anything related to security'',
+as well as ensuring that it receives widespread review and that
+any identified problems are fixed [Schneier 1999].</P
+></LI
+><LI
+><P
+><EM
+>Complete mediation</EM
+>.
+Every access attempt must be checked; position the mechanism
+so it cannot be subverted.
+For example, in a client-server model, generally the server must do all
+access checking because users can build or modify their own clients.
+This is the point of all of
+<A
+HREF="input.html"
+>Chapter 5</A
+>, as well as
+<A
+HREF="secure-interface.html"
+>Section 7.2</A
+>.</P
+></LI
+><LI
+><P
+><EM
+>Fail-safe defaults (e.g., permission-based approach)</EM
+>.
+The default should be denial of service, and the
+protection scheme should then identify conditions under which
+access is permitted.
+See <A
+HREF="safe-configure.html"
+>Section 7.7</A
+> and <A
+HREF="fail-safe.html"
+>Section 7.10</A
+>
+for more.</P
+></LI
+><LI
+><P
+><EM
+>Separation of privilege</EM
+>.
+Ideally, access to objects should depend on more than one condition, so
+that defeating one protection system won't enable complete access.</P
+></LI
+><LI
+><P
+><EM
+>Least common mechanism</EM
+>.
+Minimize the amount and
+use of shared mechanisms (e.g. use of the /tmp or /var/tmp directories).
+Shared objects provide potentially dangerous channels for information
+flow and unintended interactions.
+See <A
+HREF="avoid-race.html"
+>Section 7.11</A
+> for more information.</P
+></LI
+><LI
+><P
+><EM
+>Psychological acceptability / Easy to use</EM
+>.
+The human interface must be designed for ease of use so users will routinely
+and automatically use the protection mechanisms correctly.
+Mistakes will be reduced if
+the security mechanisms closely match the user's mental image of
+his or her protection goals.</P
+></LI
+></UL
+>&#13;</P
+><P
+>A good overview of various design principles for security is available in
+Peter Neumann's
+<A
+HREF="http://www.csl.sri.com/users/neumann/chats.html#4"
+TARGET="_top"
+>Principled Assuredly Trustworthy Composable Architectures</A
+>.
+For examples of complete failures to consider these issues
+(not limited to information technology), see the "winners" of
+<A
+HREF="http://www.privacyinternational.org/activities/stupidsecurity"
+TARGET="_top"
+>Privacy International's "Stupid Security" Competition</A
+>.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="internals.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="secure-interface.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Design Your Program for Security</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="internals.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Secure the Interface</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

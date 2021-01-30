@@ -1,0 +1,518 @@
+<HTML
+><HEAD
+><TITLE
+>Introduction</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Secure Programming for Linux and Unix HOWTO"
+HREF="index.html"><LINK
+REL="NEXT"
+TITLE="Background"
+HREF="background.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Secure Programming for Linux and Unix HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="background.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="INTRODUCTION"
+>Chapter 1. Introduction</A
+></H1
+><TABLE
+BORDER="0"
+WIDTH="100%"
+CELLSPACING="0"
+CELLPADDING="0"
+CLASS="EPIGRAPH"
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="LEFT"
+VALIGN="TOP"
+><I
+><P
+><I
+>A wise man attacks the city of the mighty
+and pulls down the stronghold in which they trust.</I
+></P
+></I
+></TD
+></TR
+><TR
+><TD
+WIDTH="45%"
+>&nbsp;</TD
+><TD
+WIDTH="45%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+><SPAN
+CLASS="ATTRIBUTION"
+>Proverbs 21:22 (NIV)</SPAN
+></I
+></TD
+></TR
+></TABLE
+><P
+>This book describes a set of guidelines for
+writing secure programs on Linux and Unix systems.
+For purposes of this book, a ``secure program'' is a program
+that sits on a security boundary, taking input from a source that does
+not have the same access rights as the program.
+Such programs include application programs used as viewers of remote data,
+web applications (including CGI scripts),
+network servers, and setuid/setgid programs.
+This book does not address modifying the operating system kernel itself,
+although many of the principles discussed here do apply.
+These guidelines were developed as a survey of
+``lessons learned'' from various sources on how to create such programs
+(along with additional observations by the author),
+reorganized into a set of larger principles.
+This book includes specific guidance for a number of languages,
+including C, C++, Java, Perl, PHP, Python, Tcl, and Ada95.</P
+><P
+>You can find the master copy of this book at
+<A
+HREF="http://www.dwheeler.com/secure-programs"
+TARGET="_top"
+>http://www.dwheeler.com/secure-programs</A
+>.
+This book is also part of the Linux Documentation Project (LDP) at
+<A
+HREF="http://www.tldp.org"
+TARGET="_top"
+>http://www.tldp.org</A
+>
+It's also mirrored in several other places.
+Please note that these mirrors, including the LDP copy and/or the
+copy in your distribution, may be older than the master copy.
+I'd like to hear comments on this book, but please do not send comments
+until you've checked to make sure that your comment is valid for the
+latest version.</P
+><P
+>This book does not cover assurance measures, software engineering
+processes, and quality assurance approaches,
+which are important but widely discussed elsewhere.
+Such measures include testing, peer review,
+configuration management, and formal methods.
+Documents specifically identifying sets of development
+assurance measures for security issues include
+the Common Criteria (CC, [CC 1999]) and the
+Systems Security Engineering Capability Maturity Model [SSE-CMM 1999].
+Inspections and other peer review techniques are discussed in
+[Wheeler 1996].
+This book does briefly discuss ideas from the CC, but only as an organizational
+aid to discuss security requirements.
+More general sets of software engineering processes
+are defined in documents such as the
+Software Engineering Institute's Capability Maturity Model for Software
+(SW-CMM) [Paulk 1993a, 1993b]
+and ISO 12207 [ISO 12207].
+General international standards for quality systems are defined in
+ISO 9000 and ISO 9001 [ISO 9000, 9001].
+&#13;</P
+><P
+>This book does not discuss how to configure a system (or network)
+to be secure in a given environment. This is clearly necessary for
+secure use of a given program,
+but a great many other documents discuss secure configurations.
+An excellent general book on configuring Unix-like systems to be
+secure is Garfinkel [1996].
+Other books for securing Unix-like systems include Anonymous [1998].
+You can also find information on configuring Unix-like systems at web sites
+such as
+<A
+HREF="http://www.unixtools.com/security.html"
+TARGET="_top"
+>http://www.unixtools.com/security.html</A
+>.
+Information on configuring a Linux system to be secure is available in a
+wide variety of documents including
+Fenzi [1999], Seifried [1999], Wreski [1998], Swan [2001],
+and Anonymous [1999].
+Geodsoft [2001] describes how to harden OpenBSD,
+and many of its suggestions are useful for any Unix-like system.
+Information on auditing existing Unix-like systems are discussed in
+Mookhey [2002].
+For Linux systems (and eventually other Unix-like systems),
+you may want to examine the Bastille Hardening System, which
+attempts to ``harden'' or ``tighten'' the Linux operating system. 
+You can learn more about Bastille at
+<A
+HREF="http://www.bastille-linux.org"
+TARGET="_top"
+>http://www.bastille-linux.org</A
+>;
+it is available for free under the General Public License (GPL).
+Other hardening systems include
+<A
+HREF="http://www.grsecurity.net"
+TARGET="_top"
+>grsecurity</A
+>.
+For Windows 2000, you might want to look at
+Cox [2000].
+The U.S. National Security Agency (NSA) maintains a set of
+security recommendation guides at
+<A
+HREF="http://nsa1.www.conxion.com"
+TARGET="_top"
+>http://nsa1.www.conxion.com</A
+>,
+including the ``60 Minute Network Security Guide.''
+If you're trying to establish a public key infrastructure (PKI) using
+open source tools, you might want to look at the
+<A
+HREF="http://ospkibook.sourceforge.net"
+TARGET="_top"
+>Open Source PKI Book.</A
+>
+More about firewalls and Internet security is found in
+[Cheswick 1994].</P
+><P
+>Configuring a computer is only part of Security Management, a larger
+area that also covers how to deal with viruses, what kind of
+organizational security policy is needed, business continuity plans, and
+so on.
+There are international standards and guidance for security management.
+ISO 13335 is a five-part
+technical report giving guidance on security management [ISO 13335].
+ISO/IEC 17799:2000 defines a code of practice [ISO 17799];
+its stated purpose is to give high-level and general
+``recommendations for information security management
+for use by those who are responsible for initiating, implementing or
+maintaining security in their organization.''
+The document specifically identifies itself as
+"a starting point for developing organization specific guidance."
+It also states that not all of the guidance and controls it contains may be
+applicable, and that additional controls not contained may be required.
+Even more importantly, they are intended to be
+broad guidelines covering a number of areas.
+and not intended to give definitive details or "how-tos".
+It's worth noting that the original
+signing of ISO/IEC 17799:2000 was controversial;
+Belgium, Canada, France, Germany, Italy, Japan and the US
+voted <EM
+>against</EM
+> its adoption.
+However, it appears that these votes were primarily a protest on
+parliamentary procedure, not on the content of the document,
+and certainly people are welcome to use ISO 17799 if they find it helpful.
+More information about ISO 17799 can be found in NIST's
+<A
+HREF="http://csrc.nist.gov/publications/secpubs/otherpubs/reviso-faq.pdf"
+TARGET="_top"
+>ISO/IEC 17799:2000 FAQ</A
+>.
+ISO 17799 is highly related to BS 7799 part 1 and 2;
+more information about BS 7799 can be found at
+<A
+HREF="http://www.xisec.com/faq.htm"
+TARGET="_top"
+>http://www.xisec.com/faq.htm</A
+>.
+ISO 17799 is currently under revision.
+It's important to note that none of these standards
+(ISO 13335, ISO 17799, or BS 7799 parts 1 and 2)
+are intended to be a detailed set of technical guidelines for software
+developers;
+they are all intended to provide broad guidelines in a number of areas.
+This is important, because software developers who
+simply only follow (for example) ISO 17799 will
+generally <EM
+>not</EM
+> produce
+secure software - developers need much, much, much
+more detail than ISO 17799 provides.</P
+><P
+>The Commonly Accepted Security Practices &#38; Recommendations (CASPR)
+project at
+<A
+HREF="http://www.caspr.org"
+TARGET="_top"
+>http://www.caspr.org</A
+>
+is trying to distill information security knowledge into a series of
+papers available to all (under the GNU FDL license, so that future
+document derivatives will continue to be available to all).
+Clearly, security management needs to include keeping with patches
+as vulnerabilities are found and fixed.
+Beattie [2002] provides an
+interesting analysis on how to determine when to apply patches
+contrasting risk of a bad patch to the risk of intrusion
+(e.g., under certain conditions, patches are optimally
+applied 10 or 30 days after they are released).</P
+><P
+>If you're interested in the current state of vulnerabilities, there are
+other resources available to use.
+The CVE at http://cve.mitre.org gives a standard identifier for each
+(widespread) vulnerability.
+The paper
+<A
+HREF="http://securitytracker.com/learn/securitytracker-stats-2002.pdf"
+TARGET="_top"
+>SecurityTracker Statistics</A
+>
+analyzes vulnerabilities to determine what were the
+most common vulnerabilities.
+The Internet Storm Center at http://isc.incidents.org/
+shows the prominence of various Internet attacks around the world.</P
+><P
+>This book assumes that the reader understands computer
+security issues in general, the general security model of Unix-like systems,
+networking (in particular TCP/IP based networks),
+and the C programming language.
+This book does include some information about the Linux and Unix
+programming model for security.
+If you need more information on how TCP/IP based networks and protocols
+work, including their security protocols, consult general works on
+TCP/IP such as [Murhammer 1998].</P
+><P
+>When I first began writing this document, there were many short articles
+but no books on writing secure programs.
+There are now two other books on writing secure programs.
+One is ``Building Secure Software'' by John Viega and Gary McGraw [Viega 2002];
+this is a very good book that discusses a number of important security issues,
+but it omits a large number of important security problems that are
+instead covered here.
+Basically, this book selects several important topics and covers them
+well, but at the cost of omitting many other important topics.
+The Viega book has a little more information for Unix-like systems than for
+Windows systems, but much of it is independent of the kind of system.
+The other book is ``Writing Secure Code'' by Michael Howard and David LeBlanc
+[Howard 2002].
+The title of this other book is misleading;
+the book is solely about writing secure programs for Windows,
+and is basically worthless if you are writing programs for any other system.
+This shouldn't be surprising; it's published by Microsoft press, and its
+copyright is owned by Microsoft.
+If you are trying to write secure programs for Microsoft's
+Windows systems, it's a good book.
+Another useful source of secure programming guidance is the
+<A
+HREF="http://www.owasp.org/guide"
+TARGET="_top"
+>The Open Web Application Security Project (OWASP)
+Guide to Building Secure Web Applications and Web Services</A
+>;
+it has more on process, and less specifics than this book, but it
+has useful material in it.</P
+><P
+>This book covers all Unix-like systems, including Linux and the
+various strains of Unix, and it particularly stresses Linux and provides
+details about Linux specifically.
+There's some material specifically on Windows CE, and in fact much of
+this material is not limited to a particular operating system.
+If you know relevant information not already included here, please let
+me know.</P
+><P
+>This book is copyright (C) 1999-2002 David A. Wheeler and is covered by the
+GNU Free Documentation License (GFDL);
+see <A
+HREF="about-license.html"
+>Appendix C</A
+> and
+<A
+HREF="fdl.html"
+>Appendix D</A
+> for more information.</P
+><P
+><A
+HREF="background.html"
+>Chapter 2</A
+>
+discusses the background of Unix, Linux, and security.
+<A
+HREF="features.html"
+>Chapter 3</A
+>
+describes the general Unix and Linux security model,
+giving an overview of the security attributes and operations of
+processes, filesystem objects, and so on.
+This is followed by the meat of this book, a set of design and implementation
+guidelines for developing applications on Linux and Unix systems.
+The book ends with conclusions in
+<A
+HREF="conclusion.html"
+>Chapter 12</A
+>,
+followed by a lengthy bibliography and appendixes.</P
+><P
+>The design and implementation guidelines are divided into
+categories which I believe emphasize the programmer's viewpoint.
+Programs accept inputs, process data, call out to other resources,
+and produce output, as shown in <A
+HREF="introduction.html#ABSTRACT-PROGRAM"
+>Figure 1-1</A
+>;
+notionally all security guidelines fit into one of these categories.
+I've subdivided ``process data'' into
+structuring program internals and approach,
+avoiding buffer overflows (which in some cases can also be considered
+an input issue),
+language-specific information, and special topics.
+The chapters are ordered to make the material easier to follow.
+Thus, the book chapters giving guidelines discuss
+validating all input (<A
+HREF="input.html"
+>Chapter 5</A
+>),
+avoiding buffer overflows (<A
+HREF="buffer-overflow.html"
+>Chapter 6</A
+>),
+structuring program internals and approach (<A
+HREF="internals.html"
+>Chapter 7</A
+>),
+carefully calling out to other resources (<A
+HREF="call-out.html"
+>Chapter 8</A
+>),
+judiciously sending information back (<A
+HREF="output.html"
+>Chapter 9</A
+>),
+language-specific information (<A
+HREF="language-specific.html"
+>Chapter 10</A
+>),
+and finally information on special topics such as how to acquire random
+numbers (<A
+HREF="special.html"
+>Chapter 11</A
+>).</P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="ABSTRACT-PROGRAM"
+></A
+><P
+><B
+>Figure 1-1. Abstract View of a Program</B
+></P
+><DIV
+CLASS="MEDIAOBJECT"
+><P
+><IMG
+SRC="program.png"
+ALT="A program accepts inputs, processes data,
+possibly calls out to other programs, and produces output.
+          "
+></IMG
+></P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="index.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="background.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Secure Programming for Linux and Unix HOWTO</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Background</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>
