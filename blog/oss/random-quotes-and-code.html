@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Sun, 12 Mar 2006</h1>
+<p><a name="random-quotes-and-code"><font size="+2"><b>Random Quotes and Code - Why You Need a Community</b></font></a></p><p></p>
+<p>
+You need a community, not just some dump of posted code,
+if you want good open source software.
+I can demonstrate this through my
+trivial hunt for &#8220;random quote&#8221; code&#8230; so let me tell you my story.
+</p>
+
+<p>
+I recently decided that I&#8217;d like the front page of my website to
+show a randomly-selected quote.
+For security reasons, I avoid using dynamically-run code on my own site,
+so I needed to use Javascript (ECMAscript) to do this.
+Easy enough, I thought&#8230; I&#8217;ll just use Google to find a program that did this,
+and I searched on &#8220;random quotation Javascript&#8221;.
+</p>
+
+<p>
+But what I found was that a lot of people don&#8217;t seem to care about
+long-term maintenance, <i>or</i> correctness.
+<a href="http://www.codelifter.com/main/javascript/randomquote.shtml">
+Codelifter&#8217;s sample code by etLux</a> does the job, but also shows the
+problem.  The code has a lot of statements like this:
+<pre>
+ Quotation[0] = "Time is of the essence! Comb your hair.";
+ Quotation[1] = "Sanity is a golden apple with no shoelaces.";
+ ...
+</pre>
+Does this work? Sure, but it&#8217;s <i>terrible</i> for maintenance.
+Now you have to write extra code, unnecessarily maintain index numbers,
+and if you want to delete a quote in the middle, you have to renumber things.
+Even for tiny tasks like this, maintenance matters over time.
+I&#8217;m going to use this for my personal website, which I plan to have
+for decades; life is too short to fight hard-to-maintain code over a long time.
+</p>
+<p>
+Even worse, this and many other examples did a lousy job of
+picking a random quote.
+Many sample programs picked the random quote using this kind of code
+(where Q is the number of quotes):
+<pre>
+ var whichQuotation=Math.round(Math.random()*(Q-1));
+</pre>
+This actually doesn&#8217;t choose the values with equal probability.
+To see why, walk through the logic if there are only 3 quotes.
+Math.random returns a value between 0 and 1 (not including 1); if there
+are 3 quotes, Math.random()*(Q-1) produces a floating point
+value between 0 and 2 (not including 2).
+Rounding a value between 0 and 0.5 (not including 0.5) produces 0, between 0.5
+and 1.5 (not including 1.5) produces 1, and between 1.5 and 2 produces 2&#8230;.
+which means that the middle quote is <i>far</i> more likely to be selected
+(it will be selected 50% of the time, instead of the correct 33%).
+The &#8220;round&#8221; operation is the wrong operator in this case!
+</p>
+<p>
+I&#8217;m not really interested in picking on the author of this
+code sample; LOTS of different sample codes do exactly the wrong thing.
+</p>
+<p>
+The problem seems to be that once some code snippet gets posted,
+in many places there&#8217;s no mechanism to discuss the code or to propose
+an improvement.
+In other words, there&#8217;s no community.
+I noticed these problems immediately in several samples I saw, yet
+there was no obvious way for me to do anything about it.
+</p>
+<p>
+In the end, I ended up writing my own code. For your amusement,
+here it is.
+Perhaps there needs to be a &#8220;trivial SourceForge&#8221; for taking tiny
+fragments like this and allowing community improvement.
+</p>
+
+<p>
+First, I put this in the head section of my HTML:
+</p>
+
+<pre>
+&lt;script language="JavaScript">
+ // Code by David A. Wheeler; this trivial ECMAscript is public domain:
+  var quotations = new Array(
+    "Quote1",
+    "Quote2",
+    "Quote3"
+  );
+ var my_pick = Math.floor(quotations.length*Math.random());
+ var random_quote = "Your random quote: &lt;i>" + quotations[my_pick] + "&lt;/i>";
+&lt;/script>
+</pre>
+
+<p>
+I then put this in the body section of my HTML:
+</p>
+
+<pre>
+&lt;script language="JavaScript">
+ document.write(random_quote)
+&lt;/script>
+</pre>
+
+<p>
+I intentionally didn&#8217;t include some defensive measures against bad
+software libraries.
+Unfortunately, many software libraries are terrible, and that certainly
+includes many random number generators.
+For example, Math.random() isn&#8217;t supposed to return 1, only values less
+than that&#8230; but returning an (incorrect) 1 isn&#8217;t an unknown defect,
+and that would cause an out-of-bounds error.
+Also, many implementations of random() are notoriously bad; they
+often have trivially tiny cycles, or fail even trivial randomness tests.
+I would put defensive measures in software designed to be highly
+reliable or secure (for example, I might re-implement the random function
+to be sure I got a reasonable one).
+But in this case, I thought it&#8217;d be better to just rely on the libraries&#8230;
+if the results are terrible, then users might complain to the library
+implementors.  And if the library implementors fix their implementations,
+it helps <i>everyone</i>.
+</p>
+
+<p>
+I donate the above snippet to the public domain. It&#8217;s not clear
+at all that it can be copyrighted, actually; it&#8217;s far too trivial.
+But it&#8217;s still useful to have such snippets, and I hope that someone will
+organize a community for sharing and maintaining trivial snippets like this.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2006/03/12#random-quotes-and-code">permanent link to this entry</a></p>
+</body></html>

@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Tue, 15 Jun 2004</h1>
+<p><a name="flawfinder-1.26"><font size="+2"><b>Flawfinder version 1.26 released!</b></font></a></p><p></p>
+I&#8217;ve released yet another new version of
+<a href="http://www.dwheeler.com/flawfinder">flawfinder</a> - now
+it&#8217;s version 1.26.
+Flawfinder is a simple program that examines C/C++ source code and
+reports on likely security flaws in the program, ranked by risk level.
+When I announced
+<a href="http://www.dwheeler.com/blog/2004/05/31#flawfinder-1.25">
+flawfinder version 1.25</a>, people responded with a flurry of useful
+improvements, so I thought I&#8217;d incorporate those right away for all
+to enjoy.
+<p>
+You can view the
+<a href="http://www.dwheeler.com/flawfinder/ChangeLog">Flawfinder
+ChangeLog</a> for the details.
+Here are some of the highlights:
+<ol>
+<li>
+Added code to better support Microsoft&#8217;s approach to internationalization,
+based in large part on work by Jared Robinson (thanks!!).
+This adds many more functions:
+_getts(), vswprintf(), _stprintf(), _vstprintf(), vwprintf(),
+vfwprintf(), _vtprintf(), _ftprintf(), _vftprintf(), _sntprintf(),
+_vsntprintf(), _ftscanf(), and _gettc().
+The macros _T() and _TEXT() are treated like gettext(), to eliminate
+spurious warnings.
+<li>
+Added two new rules for GLib functions,
+&#8220;g_get_home_dir&#8221; and &#8220;g_get_tmp_dir&#8221;, per a suggestion by
+Steve Kemp.
+This closes the wishlist item in
+<a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=250432">
+Debian bug report #250432</a>.
+Contributors - please email wishlist items to me;
+I can&#8217;t monitor every distribution&#8217;s local bug tracking system.
+PLEASE tell upstream developers when there&#8217;s a bug/wishlist
+item, we can&#8217;t fix it if we don&#8217;t know.
+<li>
+I added rules, e.g., for curl_getenv()
+(another getenv-like function),
+as well as more rules for input functions:
+recv, recvfrom, recvmsg, fread, and readv.
+<li>
+I tightened the false positive test slightly; if a name is
+followed by = or - or + it&#8217;s unlikely to be a function call,
+so it&#8217;ll be quietly discarded.
+<li>
+I modified the summary report format slightly, to make it nicer.
+<li>
+I modified the getpass text to remove an extraneous character,
+thanks to a bug report from Joerg Beyer (thanks!).
+<li>
+I modified the installation instructions to clarify how to set
+INSTALL_DIR at run-time so it installs elsewhere.
+Flawfinder uses the standard GNU conventions, but not everyone
+knows about them. By default, flawfinder installs in /usr/local.
+Just use normal make overrides to change that, e.g.,
+make INSTALL_DIR=/usr INSTALL_DIR_MAN=/usr/share/man install
+I do NOT use the ?= macro-setting commands in the makefile,
+because that&#8217;s not standard (e.g., it&#8217;s not in SUSv3), so
+while that would work in GNU make, it wouldn&#8217;t work in others.
+I did this to answer some questions about installation - the flexibility
+has always been there, but now it&#8217;s documented in a clearer way.
+</ol>
+<p>
+<b>NOTE:</b>
+Due to an error on my part, the tar file
+for version 1.25 on my website was for a short period
+(between 2004-06-05 and 2004-06-15) actually a functional equivalent of
+version 1.26 (without some stuff that only affects me),
+incorrectly labelled as 1.25.
+This wasn&#8217;t true for the RPM packages (the 1.25s stayed as 1.25), so
+suspicious people could look inside the RPM packages to see if the tar file
+within was correct.
+In some sense this wasn&#8217;t a serious problem - tar users got the latest
+version of flawfinder a little sooner than I intended.
+But I really want version numbers to mean what they say, and I know others
+do too; for those folks, my sincere apologies!!
+Please upgrade to 1.26, since that way you&#8217;ll be SURE to get the right version.
+If you want to check, here are the md5sum&#8217;s of various correct files:
+<pre>
+dcdd0a7a5b9dc8d0ffc85c1a5833bc43  flawfinder-1.25-1.noarch.rpm
+744f0cc317c583de6d295860db3c7cbe  flawfinder-1.25-1.src.rpm
+fa5b644e00aa4862de5b790f0e1a3ad7  flawfinder-1.25.tar.gz (the real 1.25)
+530b11016c52d473ebb7bc9639d4338b  flawfinder-1.26-1.noarch.rpm
+cbc61513620bc7b17bcc29f8eb50fb9f  flawfinder-1.26-1.src.rpm
+242a90ecf2f21a709a2425c8771ef38e  flawfinder-1.26.tar.gz
+</pre>
+
+Here&#8217;s the md5sum of the file that was briefly labelled as
+flawfinder-1.25.tar.gz, but was actually a functional equivalent of 1.26:
+<pre>
+e1fa5fcb540b91d27c3ae427595a182e  flawfinder-1.25.tar.gz-actually1.26
+</pre>
+
+<p>
+Just go to the 
+<a href="http://www.dwheeler.com/flawfinder">flawfinder home page</a>
+to get the latest version.
+<p>path: <a href="http://www.dwheeler.com/blog/security">/security</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2004/06/15#flawfinder-1.26">permanent link to this entry</a></p>
+</body></html>

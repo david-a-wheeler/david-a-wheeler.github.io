@@ -1,0 +1,144 @@
+<?xml version="1.0"?>
+<!-- name="generator" content="blosxom/2.0" -->
+
+<rss version="2.0">
+  <channel>
+    <title>David A. Wheeler's Blog   </title>
+    <link>http://www.dwheeler.com/blog</link>
+    <description>David A. Wheeler's weblog.</description>
+    <language>en</language>
+
+  <item>
+    <title>Random Quotes and Code - Why You Need a Community</title>
+    <link>http://www.dwheeler.com/blog/2006/03/12#random-quotes-and-code</link>
+    <pubDate>Sun, 12 Mar 2006 18:27 GMT</pubDate>
+    <!-- date: 2006-03-12 -->
+    <description>
+&lt;p&gt;
+You need a community, not just some dump of posted code,
+if you want good open source software.
+I can demonstrate this through my
+trivial hunt for &amp;#8220;random quote&amp;#8221; code&amp;#8230; so let me tell you my story.
+&lt;/p&gt;
+
+&lt;p&gt;
+I recently decided that I&amp;#8217;d like the front page of my website to
+show a randomly-selected quote.
+For security reasons, I avoid using dynamically-run code on my own site,
+so I needed to use Javascript (ECMAscript) to do this.
+Easy enough, I thought&amp;#8230; I&amp;#8217;ll just use Google to find a program that did this,
+and I searched on &amp;#8220;random quotation Javascript&amp;#8221;.
+&lt;/p&gt;
+
+&lt;p&gt;
+But what I found was that a lot of people don&amp;#8217;t seem to care about
+long-term maintenance, &lt;i&gt;or&lt;/i&gt; correctness.
+&lt;a href=&quot;http://www.codelifter.com/main/javascript/randomquote.shtml&quot;&gt;
+Codelifter&amp;#8217;s sample code by etLux&lt;/a&gt; does the job, but also shows the
+problem.  The code has a lot of statements like this:
+&lt;pre&gt;
+ Quotation[0] = &quot;Time is of the essence! Comb your hair.&quot;;
+ Quotation[1] = &quot;Sanity is a golden apple with no shoelaces.&quot;;
+ ...
+&lt;/pre&gt;
+Does this work? Sure, but it&amp;#8217;s &lt;i&gt;terrible&lt;/i&gt; for maintenance.
+Now you have to write extra code, unnecessarily maintain index numbers,
+and if you want to delete a quote in the middle, you have to renumber things.
+Even for tiny tasks like this, maintenance matters over time.
+I&amp;#8217;m going to use this for my personal website, which I plan to have
+for decades; life is too short to fight hard-to-maintain code over a long time.
+&lt;/p&gt;
+&lt;p&gt;
+Even worse, this and many other examples did a lousy job of
+picking a random quote.
+Many sample programs picked the random quote using this kind of code
+(where Q is the number of quotes):
+&lt;pre&gt;
+ var whichQuotation=Math.round(Math.random()*(Q-1));
+&lt;/pre&gt;
+This actually doesn&amp;#8217;t choose the values with equal probability.
+To see why, walk through the logic if there are only 3 quotes.
+Math.random returns a value between 0 and 1 (not including 1); if there
+are 3 quotes, Math.random()*(Q-1) produces a floating point
+value between 0 and 2 (not including 2).
+Rounding a value between 0 and 0.5 (not including 0.5) produces 0, between 0.5
+and 1.5 (not including 1.5) produces 1, and between 1.5 and 2 produces 2&amp;#8230;.
+which means that the middle quote is &lt;i&gt;far&lt;/i&gt; more likely to be selected
+(it will be selected 50% of the time, instead of the correct 33%).
+The &amp;#8220;round&amp;#8221; operation is the wrong operator in this case!
+&lt;/p&gt;
+&lt;p&gt;
+I&amp;#8217;m not really interested in picking on the author of this
+code sample; LOTS of different sample codes do exactly the wrong thing.
+&lt;/p&gt;
+&lt;p&gt;
+The problem seems to be that once some code snippet gets posted,
+in many places there&amp;#8217;s no mechanism to discuss the code or to propose
+an improvement.
+In other words, there&amp;#8217;s no community.
+I noticed these problems immediately in several samples I saw, yet
+there was no obvious way for me to do anything about it.
+&lt;/p&gt;
+&lt;p&gt;
+In the end, I ended up writing my own code. For your amusement,
+here it is.
+Perhaps there needs to be a &amp;#8220;trivial SourceForge&amp;#8221; for taking tiny
+fragments like this and allowing community improvement.
+&lt;/p&gt;
+
+&lt;p&gt;
+First, I put this in the head section of my HTML:
+&lt;/p&gt;
+
+&lt;pre&gt;
+&amp;lt;script language=&quot;JavaScript&quot;&gt;
+ // Code by David A. Wheeler; this trivial ECMAscript is public domain:
+  var quotations = new Array(
+    &quot;Quote1&quot;,
+    &quot;Quote2&quot;,
+    &quot;Quote3&quot;
+  );
+ var my_pick = Math.floor(quotations.length*Math.random());
+ var random_quote = &quot;Your random quote: &amp;lt;i&gt;&quot; + quotations[my_pick] + &quot;&amp;lt;/i&gt;&quot;;
+&amp;lt;/script&gt;
+&lt;/pre&gt;
+
+&lt;p&gt;
+I then put this in the body section of my HTML:
+&lt;/p&gt;
+
+&lt;pre&gt;
+&amp;lt;script language=&quot;JavaScript&quot;&gt;
+ document.write(random_quote)
+&amp;lt;/script&gt;
+&lt;/pre&gt;
+
+&lt;p&gt;
+I intentionally didn&amp;#8217;t include some defensive measures against bad
+software libraries.
+Unfortunately, many software libraries are terrible, and that certainly
+includes many random number generators.
+For example, Math.random() isn&amp;#8217;t supposed to return 1, only values less
+than that&amp;#8230; but returning an (incorrect) 1 isn&amp;#8217;t an unknown defect,
+and that would cause an out-of-bounds error.
+Also, many implementations of random() are notoriously bad; they
+often have trivially tiny cycles, or fail even trivial randomness tests.
+I would put defensive measures in software designed to be highly
+reliable or secure (for example, I might re-implement the random function
+to be sure I got a reasonable one).
+But in this case, I thought it&amp;#8217;d be better to just rely on the libraries&amp;#8230;
+if the results are terrible, then users might complain to the library
+implementors.  And if the library implementors fix their implementations,
+it helps &lt;i&gt;everyone&lt;/i&gt;.
+&lt;/p&gt;
+
+&lt;p&gt;
+I donate the above snippet to the public domain. It&amp;#8217;s not clear
+at all that it can be copyrighted, actually; it&amp;#8217;s far too trivial.
+But it&amp;#8217;s still useful to have such snippets, and I hope that someone will
+organize a community for sharing and maintaining trivial snippets like this.
+&lt;/p&gt;
+</description>
+   </item>
+  </channel>
+</rss>

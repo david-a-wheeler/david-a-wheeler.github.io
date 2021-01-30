@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Sat, 06 Mar 2010</h1>
+<p><a name="robocopy"><font size="+2"><b>Robocopy</b></font></a></p><p></p>
+<p>
+If you use Microsoft Windows (XP or some later version),
+and don&#8217;t have an allergic
+reaction to the command line, you should know about
+<a href="http://en.wikipedia.org/wiki/Robocopy">Robocopy</a>.
+Robocopy (&#8220;robust file copy&#8221;) is a command-line program from
+Microsoft that copies collections of files from one place to
+another in an efficient way. Robocopy is included in Windows
+Vista, Windows 7, and Windows Server 2008. Windows XP and Windows
+Server 2003 users can download Robocopy for free from Microsoft
+as part of the
+<a href="http://www.microsoft.com/downloads/en/confirmation.aspx?familyId=9d467a69-57ff-4ae7-96ee-b18c4790cffd&displayLang=en">
+Windows Server 2003 &#8220;Resource Kit Tools&#8221;</a>.
+</p>
+<p>
+Robocopy copies files, like the COPY command,
+but Robocopy will only copy a file if the source and destination
+have different time stamps or different file sizes.
+Robocopy is nowhere near as capable as the Unix/Linux &#8220;rsync&#8221; command,
+but for some tasks it suffices.  Robocopy will not copy files that
+are currently open (by default it will repeatedly retry copying them),
+it can only do one-way mirroring (not bi-directional synchronization),
+it can only copy mounted filesystems, and it&#8217;s foolish about how it copies
+across a network (it copies the whole file, not just the changed parts).
+Anyway, you invoke it at the command line like this:
+<pre>
+ROBOCOPY Source Destination OPTIONS
+</pre>
+</p>
+<p>
+So, here&#8217;s an example of copying everything from &#8220;c:\data&#8221; to &#8220;q:\data&#8221;:
+<pre>
+ robocopy c:\data u:\data /MIR /NDL /R:20
+</pre>
+</p>
+<p>
+To do this on an automated schedule in Windows XP,
+put your commands into a text file with a name ending in &#8220;.bat&#8221; and
+select Control Panel-&gt; Scheduled Tasks-&gt; Add Scheduled Task.
+Select your text file to run, have it run &#8220;daily&#8221;.
+You would think that you can&#8217;t run it more than once a day this way,
+but that&#8217;s actually not true.
+Click on &#8220;Open advanced properties for this task when I click Finish&#8221;
+and then press Finish. Now select the &#8220;Schedule&#8221; tab.
+Set it to start at some time when you&#8217;re probably using the computer,
+click on &#8220;Advanced&#8221;, and set &#8220;repeat task&#8221; so it will run (say, every hour
+with a duration of 2 hours).
+Then click on &#8220;Show multiple schedules&#8221;, click &#8220;new&#8221;,
+and then select &#8220;At system startup&#8221;.
+Now it will make copies on startup AND every hour.
+You may want to go to the &#8220;Settings&#8221; tab and tweak it further.
+You can use Control Panel-&gt; Scheduled tasks
+to change the schedule or other settings.
+</p>
+<p>
+<a href="http://technet.microsoft.com/en-us/magazine/2006.11.utilityspotlight.aspx"> A GUI for Robocopy is available</a>.
+An alternative to Robocopy is
+<a href="http://en.wikipedia.org/wiki/SyncToy">SyncToy</a>; SyncToy
+has a GUI, but Microsoft won&#8217;t support it,
+I&#8217;ve had reliability and speed problems with it, and
+SyncToy has a nasty bug in its &#8220;Echo&#8221; mode&#8230; so I don&#8217;t use it.
+I suspect the Windows Vista and Windows 7 synchronization tools might
+make Robocopy a less useful, but I find that
+the Windows XP synchronization tools are terrible&#8230; making
+using Robocopy a better approach.
+There are a boatload of applications out there that do one-way or two-way
+mirroring, including ports of rsync, but getting them installed in some
+security-conscious organizations can be difficult.
+</p>
+<p>
+Of course, if you&#8217;re using Unix/Linux, then use rsync and be happy.
+Rsync usually comes with Unix/Linux, and
+rsync is leaps-and-bounds better than robocopy.
+But not everyone has that option.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2010/03/06#robocopy">permanent link to this entry</a></p>
+</body></html>

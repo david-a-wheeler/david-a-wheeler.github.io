@@ -1,0 +1,2307 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Thu, 06 Dec 2007</h1>
+<p><a name="readable-sweet-lisp3"><font size="+2"><b>Readable s-expressions (sweet-expressions) draft 0.2 for Lisp-like languages</b></font></a></p><p></p>
+<p>
+<a href="http://www.dwheeler.com/blog/2006/06/17/#readable-sweet-lisp">
+Back in 2006 I posted my basic ideas about &#8220;sweet-expressions&#8221;</a>.
+Lisp-based programming languages
+normally represent programs as <i>s-expressions</i>, and though they are
+regular, most people find them hard to read.
+I hope to create an alternative to s-expressions that have their
+advantages, and not their disadvantages.
+You can see more at my
+<a href="http://www.dwheeler.com/readable">readable Lisp</a> page.
+I&#8217;ve gotten lots of feedback, based on both my prototype of the idea,
+as well as on the mailing list discussing it.
+</p>
+
+<p>
+I&#8217;ve just posted a
+<a href="http://www.dwheeler.com/readable/version02.html">a draft of
+version 0.2 of sweet-expressions</a>.
+This takes that feedback into account, in particular, it&#8217;s now
+<i>much</i> more backwards-compatible.
+There&#8217;s still a big question about whether or not infix should be a default;
+see the page for more details.
+</p>
+
+<p>
+Here are the improvements over version 0.1:
+<ol>
+<li>This version is <i>much</i> more compatible with existing Lisp code.
+The big change is that
+an unprefixed &#8220;(&#8221; immediately calls the underlying s-expression reader.
+This way, people can quietly replace their readers with a sweet-reader,
+without harming most existing code.
+In fact, many implementations could quietly switch to a sweet-reader and
+users might not notice until they use the new features.
+Instead of using (&#8230;), this uses {..} and [&#8230;] for grouping expressions
+without disabling sweet-expressions.
+</li>
+<li>It can work more cleanly with
+macros that provide infix precedence (for those who want precedence rules).
+</li>
+<li>It extends version 0.1&#8217;s &#8220;name-prefixing&#8221; into &#8220;term-prefixing&#8221;.
+This is not only more general, it also makes certain kinds of functional
+programming much more pleasant.
+</li>
+<li>It adds syntax for the common case of accessing maps
+(such as indexed or associative arrays) - now a[j] is translated into
+(bracketaccess a j).
+</li>
+<li>Infix default supports arbitrarily-spelled infix operators, and it
+automatically accepts &#8220;and&#8221; and &#8220;or&#8221;.
+</li>
+</ol>
+</p>
+
+<p>
+Here&#8217;s an example of (ugly) s-expressions:
+<pre>
+ (defun factorial (n)
+   (if (&lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+</pre>
+</p>
+
+<p>
+Here&#8217;s sweet-expressions version 0.1:
+<pre>
+ defun factorial (n)
+   if (n &lt;= 1)
+       1
+       n * factorial(n - 1)
+</pre>
+</p>
+
+<p>
+Here is sweet-expressions version 0.2 (draft), with infix default
+(it figures out when you have an infix operation from the spelling of the
+operation):
+<pre>
+ defun factorial (n)
+   if {n &lt;= 1}
+       1
+       n * factorial(n - 1)
+</pre>
+</p>
+
+<p>
+Here is sweet-expressions version 0.2 (draft), with infix non-default
+(you <i>must</i> surround every infix operator with {&#8230;}):
+<pre>
+ defun factorial (n)
+   if {n &lt;= 1}
+       1
+       {n * factorial{n - 1}}
+</pre>
+</p>
+
+<p>
+I&#8217;m still taking comments.
+If you&#8217;re interested, take a look at
+<a href="http://www.dwheeler.com/readable">http://www.dwheeler.com/readable</a>.
+And if you&#8217;re really interested, please
+<a href="https://lists.sourceforge.net/lists/listinfo/readable-discuss">
+join the readable-discuss mailing list</a>.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/12/06#readable-sweet-lisp3">permanent link to this entry</a></p>
+<h1>Mon, 05 Nov 2007</h1>
+<p><a name="high-assurance-floss-components"><font size="+2"><b>Please point me to High-Assurance Free-Libre / Open Source Software (FLOSS) Components</b></font></a></p><p></p>
+<p>
+I&#8217;m looking for
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html#highassurancecomponents">High Assurance and Free-Libre / Open Source Software (FLOSS) components</a>.
+Can anyone <a href="http://www.dwheeler.com/contactme.html">point me to ones I don&#8217;t know about</a>?
+A little context might help, I suppose&#8230;
+</p>
+<p>
+A while back I posted a paper,
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)</a>.
+For purposes of the paper,
+I define &#8220;high assurance software&#8221;
+as software where there&#8217;s an <i>argument
+that could convince skeptical parties</i>
+that the software <i>will always perform or never perform</i>
+certain key functions <i>without fail</i>.
+That means you have to show convincing evidence that there are
+<i>absolutely no software defects</i>
+that would interfere with the software&#8217;s key functions.
+Almost all software built today is <i>not</i> high assurance;
+developing high assurance software is currently a specialist&#8217;s field.
+</p>
+<p>
+High assurance and FLOSS are potentially a great match.
+We achieve high assurance in scientific analysis and
+mathematical proofs by subjecting them to peer review, and then
+worldwide review.
+FLOSS programs, unlike proprietary programs, can receive similar kinds of
+review, and many FLOSS programs achieve
+really good reliability figures for medium assurance.
+So it can be easily argued that
+stepping up to high assurance should be <i>easier</i> for
+FLOSS than for proprietary software.
+In addition, there are a vast number of FLOSS tools that support developing
+high assurance components,
+including PVS, ACL2, Isabelle/HOL, prover9, and Alloy
+(there&#8217;s lots more, see the paper for more details).
+</p>
+<p>
+Yet it&#8217;s hard to find
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html#highassurancecomponents">High Assurance Free-Libre / Open Source Software (FLOSS) components</a>.
+To be fair, high assurance software components
+are exceedingly rare in the non-FLOSS world as well.
+But I suspect there are more than I&#8217;ve found, and I hope that people
+will help me by pointing them out to me.
+I&#8217;d like to know about such components for direct use, and also simply for
+use as demonstrations of how to actually develop high assurance software.
+Today, it&#8217;s nearly impossible to explain how to develop high assurance
+software, because there are almost no fully-published examples.
+Existing &#8220;formal methods successes&#8221; papers generally
+don&#8217;t publish everything including their specs, proofs, and code&#8230;
+which makes it impossible to really learn how to do it.
+And no, I don&#8217;t <i>require</i> that proofs prove every line of machine code;
+but showing how correspondance demonstrations are made would be valuable,
+and that&#8217;s currently not well demonstrated by working examples.
+</p>
+<p>
+If you&#8217;re curious about the general topic, take a peek at <a href="http://www.dwheeler.com/essays/high-assurance-floss.html">High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)</a>.
+I&#8217;ve collected lots of interesting information;
+hopefully it will be useful to some of you.
+And <a href="http://www.dwheeler.com/contactme.html">let me know</a> of
+high-assurance FLOSS components that I don&#8217;t already know about.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/11/05#high-assurance-floss-components">permanent link to this entry</a></p>
+<h1>Sun, 04 Nov 2007</h1>
+<p><a name="mapreduce"><font size="+2"><b>Added &#8220;MapReduce&#8221; to the &#8220;Software Innovations&#8221; list</b></font></a></p><p></p>
+<p>
+<a href="http://blog.krugle.com/?p=272">Ken Krugler&#8217;s recent blog</a>
+said that my article of
+<a href="http://www.dwheeler.com/innovation/innovation.html">
+The Most Important Software Innovations</a> was &#8220;very good&#8221;, but he
+was surprised that I hadn&#8217;t included
+<a href="http://labs.google.com/papers/mapreduce.html">MapReduce</a>
+as an important software innovation.
+Basically, MapReduce makes writing certain kinds of
+programs that process <i>huge</i> amounts of data, on vast distributed
+clusters, remarkably easy and efficient.
+(<a href="http://en.wikipedia.org/wiki/MapReduce">Wikipedia explains
+MapReduce</a>, including links to alternative implementations like
+the open source <a href="http://lucene.apache.org/hadoop/">Hadoop</a>.)
+</p>
+<p>
+It&#8217;s not because I didn&#8217;t know about MapReduce;
+I read about it almost immediately after it got published.
+I thought it was <i>very</i> promising, and even forwarded the original
+paper to some co-workers.
+I think MapReduce is especially promising because, now that we have
+cheap commodity computers, having a way to <i>easily</i> exploit their
+capabilities is really valuable.
+But even with something this promising, I didn&#8217;t want to add it to
+my list of innovations right away - after all,
+maybe after a little while it turns out to be not so helpful.
+</p>
+<p>
+Currently, there&#8217;s aren&#8217;t many who have Google-sized clusters of computers
+available.
+But it&#8217;s clear that this approach is useful in many other circumstances
+as well.
+It&#8217;s new, but I think it&#8217;s stood the test of time enough that it&#8217;s
+a worthy addition&#8230; so I&#8217;ve just added it.
+</p>
+<p>
+One interesting issue is that the
+MapReduce framework is itself built primarily on
+the &#8220;map&#8221; and &#8220;reduce&#8221; functions, which are far, far older.
+So, is MapReduce really a <i>new</i> idea,
+or is it just a high-quality implementation of an old idea?
+I&#8217;ll accept that it&#8217;s a new idea, but that can be difficult to judge.
+This judgment doesn&#8217;t <i>really</i> matter unless you think
+software patents are a good idea
+(since every software patents in theory prevents progress for 20 years).
+But I think it&#8217;s quite clear that software patents are a foolish idea,
+and it&#8217;s clear that others have come to the same conclusion.
+<a href="http://press.ffii.org/Press_releases/Economist_Critic_of_Software_Patents_gets_Nobel_Prize">
+Eric S. Maskin, an economist who has long criticised the patenting
+of software, recently received the 2007 Nobel Prize for Economics</a>.
+Here&#8217;s a nice quote:
+&#8220;&#8230; when patent protection was extended to software in the 1980s,
+[&#8230;] standard arguments would predict that R&amp;D
+intensity and productivity should have increased among patenting firms.
+Consistent with our model, however, these increases did not occur.&#8221;
+Someone who correctly predicted that software patents were harmful
+to innovation just received a Nobel prize.
+I hope to someday see people receive other prizes because they
+ended software patenting in the United States.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/11/04#mapreduce">permanent link to this entry</a></p>
+<h1>Mon, 22 Oct 2007</h1>
+<p><a name="donald-macleay"><font size="+2"><b>Donald Macleay</b></font></a></p><p></p>
+<p>
+Don Macleay was my mentor and friend, and he just passed away
+(Oct. 15, 2007).
+So, this is a small blog entry in his honor.
+</p>
+<p>
+<img src="http://www.dwheeler.com/images/don-macleay.jpg" width="163" height="214" alt="Donald (Don) Macleay" align="left">
+</img>
+Here&#8217;s what I said at his funeral:
+&#8220;In 1980, Don was the manager of a computer store.
+I was only 15, but he took a chance on employing me, and I&#8217;m grateful.
+He taught me much, in particular, showing by example
+that you could be in business (even as a salesman!) and be an honest person.
+He later moved to other companies, and I moved twice with him,
+because I found that good bosses were hard to find.
+Don was honest, reliable, a good friend, and an inspiration to me.
+I will miss him, and I look forward to seeing him again in heaven.&#8221;
+I should add that he spoke at my Eagle scout ceremony.
+Later on,
+when he moved out to the country, it was always a pleasure to visit him
+and his family.
+</p>
+<p>
+Here&#8217;s a part of his biography, as printed in the funeral bulletin:
+&#8220;Born in Washington, D.C., on October 27, 1934, Donald Macleay was
+raised in Falls Church.  He attained the rank of Eagle Scout and
+graduated at the top of the first class of St. Stephen&#8217;s School in 1952.
+In 1956, he graduated with a Bachelor of Arts in English from
+the Virginia Military Institute (VMI).
+</p>
+<p>
+After serving as a Marine Corps officer, Donald Macleay spent many years
+in the business world before becoming a Parole Officer for the
+Department of Juvenile Justice in Stafford County.
+As well, in 1992, he was a candidate for the U.S. Congress as
+an Independent.&#8221;
+</p>
+<p>
+The biography goes on to note that he &#8220;valued being a Christian,
+a husband, a father and grandfather, and a friend.&#8221;
+Much of his last years were spent helping troubled youth in his area
+(Fredericksburg, VA), and from all accounts he was extraordinarily
+successful at helping them and their families.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/10/22#donald-macleay">permanent link to this entry</a></p>
+<h1>Thu, 11 Oct 2007</h1>
+<p><a name="readable-sweet-lisp2"><font size="+2"><b>Readable s-expressions (sweet-expressions) for Lisp-like languages</b></font></a></p><p></p>
+<p>
+<a href="http://www.dwheeler.com/blog/2006/06/17/#readable-sweet-lisp">
+Back in 2006 I posted my basic ideas about &#8220;sweet-expressions&#8221;</a>.
+Here&#8217;s a basic recap, before I discuss what&#8217;s new.
+Lisp-based programming languages
+normally represent programs as <i>s-expressions</i>,
+where an operation and its parameters are surrounded by parentheses.
+The operation to be performed is identified first,
+and each parameter afterwards is
+separated by whitespace.  So the traditional &#8220;2+3&#8221; is written as
+&#8220;(+&nbsp;2&nbsp;3)&#8221; instead.
+This is regular, but most people find this hard to read.
+Here&#8217;s a longer example of an s-expression - notice the many parentheses
+and the lack of infix operations:
+<pre>
+ (defun factorial (n)
+   (if (&lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+</pre>
+</p>
+
+<p>
+Lisp-based systems are very good at symbol manipulation tasks,
+including program analysis.
+But many software developers avoid Lisp-based languages,
+even in cases where they would be a good tool to use, because
+most software developers find s-expressions really hard to read.
+I think I&#8217;ve found a better solution, which I call &#8220;sweet-expressions&#8221;.
+Here&#8217;s that same program be written using sweet-expressions:
+<pre>
+ defun factorial (n)         ; Parameters can be indented, but need not be
+   if (n &lt;= 1)               ; Supports infix, prefix, &amp; function &lt;=(n 1)
+       1                     ; This has no parameters, so it's an atom.
+       n * factorial(n - 1)  ; Function(...) notation supported
+</pre>
+</p>
+
+<p>
+Sweet-expressions add the following abilities:
+<ol>
+<li><b>Indentation</b>. Indentation may be used instead
+of parentheses to start and end
+expressions: any indented line is a parameter of its parent,
+later terms on a line are parameters of the first term,
+lists of lists are marked with GROUP, and
+a function call with 0 parameters is surrounded or followed by a pair of
+parentheses [e.g., (pi) and pi()].
+A &#8220;(&#8221; disables indentation until its matching &#8220;)&#8221;.
+Blank lines at the beginning of a new expression are ignored.
+A term that begins at the left edge and is immediately followed by newline
+is immediately executed, to make interactive use pleasant.
+<li><b>Name-ending</b>. Terms of the form &#8216;NAME(x y&#8230;)&#8217;, with no whitespace before
+&#8216;(&#8217;, are interpreted as &#8216;(NAME x y&#8230;)&#8217;;.
+Parameters are space-separated inside.
+If its content is an infix expression, it&#8217;s considered one parameter instead
+(so f(2 + 3) computes 2 + 3 and passes its result, 5, to f).
+<li><b>Infix</b>.  Optionally,
+expressions are automatically interpreted as infix
+if their second parameter is an infix operator
+(by matching an &#8220;infix operator&#8221; pattern of symbols),
+the first parameter is not an infix operator,
+and it has at least three parameters.
+Otherwise, expressions are interpreted as
+normal &#8220;function first&#8221; prefix notation.
+To disable infix interpretation, surround the second parameter with as(&#8230;).
+Infix expressions must have an odd number of parameters with the
+even ones being the same binary infix operator.
+You must separate each infix operator with whitespace on both sides.
+Precedence is not supported; just use parens
+(a lot more about that in a moment).
+Use the &#8220;name-ending&#8221; form for unary operations, e.g., -(x) for &#8220;negate x&#8221;.
+Thus &#8220;2 + (y * -(x))&#8221; is a valid expression, equivalent to (+ 2 (* y (- x))).
+&#8220;(2 + 3 + 4)&#8221; is fine too.
+Infix operators must match this pattern (and in Scheme cannot be =&gt;):
+<pre>
+    [+-\*/&lt;&gt;=&amp;\|\p{Sm}]{1-4}|\:
+</pre>
+</ol>
+</p>
+
+<p>
+For more information on sweet-expressions or on making
+s-expressions more readable in general, see my website page at
+<a href="http://www.dwheeler.com/readable">http://www.dwheeler.com/readable</a>.
+For example, I provide a demo sweet-expression reader in Scheme
+(under the MIT license), as well as an indenting pretty-printer in
+Common Lisp.
+In particular, you can
+<a href="http://www.dwheeler.com/readable/readable-s-expressions.html">
+see my lengthy paper about why sweet-expressions do what they do, and
+some plausible alternatives.</a>
+You can also download some other implementation code.
+I&#8217;ve also set up a
+<a href="http://sourceforge.net/projects/readable">
+SourceForge project named &#8220;readable&#8221;</a> to
+discuss options in making s-expressions more readable,
+and to distribute open source software to implement them
+(unimplemented ideas don&#8217;t go far!).
+</p>
+
+<p>
+Okay, but all of that was true in 2006 - what&#8217;s new?
+What&#8217;s new is a change of heart about precedence.
+I&#8217;ve been occasionally trying to figure out how to
+&#8220;flesh out&#8221; sweet-expressions with operator precedence, and I just
+kept hitting one annoying complication after another.
+Precedence is nearly universal among programming languages;
+they&#8217;re very useful, and only a few infix-supporting languages
+(such as Smalltalk) lack them.
+&#8220;Everyone&#8221; knows that 2+3*4 is 14, not 20, because of years of training
+in math classes that you multiply before you add.
+They&#8217;re also pretty easy to code (it&#8217;s an old solved problem).
+But I&#8217;ve discovered that
+in the typical use cases of a Lisp-like language&#8217;s expression reader,
+supporting precedence (in the general case)
+has some significant downsides that are irrelevant in other situations.
+Which is interesting, given how widespread they are elsewhere, so
+let&#8217;s see why that is.
+</p>
+
+<p>
+First, let&#8217;s talk about a big advantage to <i>not</i> supporting
+precedence in sweet-expressions:
+It makes the creation of every new list obvious in the text.
+That&#8217;s very valuable in a list processing language; the key advantage of
+list processing languages is that you can process programs like data, and
+data like programs, in a very fluid way, so having clear markers of new lists
+using parentheses and indentation is very valuable.
+</p>
+
+<p>
+Now let me note the downsides to supporting precedence
+in the specific cases of a Lisp-like language, which
+leads me to believe that it&#8217;s a bad idea for this particular use.
+Basically, adding precedence rules to a general-purpose list expression
+processor creates a slippery slope of complexity.
+There are two basic approaches to defining precedence: dynamic and static.
+<ul>
+<li><i>Dynamic:</i>
+You can trivially create commands that dynamically
+create new infix operators, as well as
+express their precedence and direction.
+Coding this is not a problem, and in fact there are several implementations
+of this in Lisp already out there.
+But using this kind of dynamism for s-expressions themselves
+gets hideously complicated in many uses of a Lisp-like language.
+In a Lisp-like language,
+objects often shift between being data and being code.
+Often you&#8217;re working at multiple levels and meta-levels of input -
+and you may not want their precedences to be the same.
+Yet trying to handle those different levels
+turns out to require very complex management of the reader routine&#8230; you
+have to keep passing to the various readers the various incompatible
+precedence states (ugh).
+Combining code from different sources can be a nightmare if
+they have different precedence values, too.
+In short, having precedences dynamically vary by meta-level
+creates complexities you just don&#8217;t want to deal with.
+</li>
+<li><i>Static:</i>
+All of the above suggests that dynamic control is painful; one
+solution would be a
+completely static, pre-canned set of precedence levels.
+That would eliminate passing state, at least.
+And indeed, this is what most programming languages do; you don&#8217;t get
+to reset the precedence of C operators
+(a few languages, like Prolog, are an exception here).
+Fine, but someone has to predefine that set.
+That turns out to be really hard; the meanings of various infix operators
+are <i>not</i> cast in stone, so it&#8217;s difficult to preset the precedence
+levels meaningfully (since you don&#8217;t know what the operators mean).
+That&#8217;s particularly true if, like me, you&#8217;re trying to define a single
+expression syntax that would work (more or less) on arbitrary
+Lisp-like languages.
+The one obvious case is that * and / have higher precedence than binary
++ and - basically everywhere.
+That particular rule <i>could</i> be built-in, but if that&#8217;s <i>all</i> you
+build in, there&#8217;s little evidence that it&#8217;s worth the trouble.
+This kind of odd exception (there&#8217;s no precedence, except for * and /
+over + and -)
+is unlikely to help development, and it&#8217;s yet another rule to remember.
+And if we&#8217;re going to have such a limited support for precedence anyway,
+why not completely forbid mixing the operators -
+the advantage there is that it would make the mapping between
+lists and their textual representation much clearer.
+</li>
+</ul>
+</p>
+
+<p>
+It&#8217;s easier to add precedence later, if that turns out to be important after
+more experimentation.
+But after the experimentation I&#8217;ve done so far,
+it appears that precedence simply isn&#8217;t worth it in this case.
+Precedence creates complexity in this case, and it
+hides where the lists begin/end.
+It&#8217;s not hard to work without it; you can even argue that (2 + (5 * 6)) 
+is actually clearer than (2 + 5 * 6).
+Precedence is great in many circumstances - I&#8217;d hate to lose it
+in other languages - but in this particular set of use cases,
+it seems to be more of a hurt than a help.
+</p>
+
+<p>
+Of course, you can write code in some Lisp dialect to implement a language that
+includes precedence.
+Many programs written in Lisp, including PVS and Maxima, do just that.
+But when you&#8217;re implementing another language, you know what the operators
+are, and you&#8217;re probably implementing other syntactic sugar too, so
+adding precedence is a non-problem.
+Also, if you&#8217;re really happy with s-expressions as they are, and just
+want precedence in a few places in your code, a simple macro to implement them
+(such as <a href="http://folk.uio.no/jornv/infpre/infpre.html">infpre</a>)
+works very well.
+But sweet-expressions are intended to be a universal representation
+in Lisp-like languages,
+just like S-expressions are, so their role is different.
+In that different role, precedence causes problems that don&#8217;t
+show up in most other uses.
+It think not supporting precedence turns
+out to be much better for this different role.
+</p>
+
+<p>
+Here are some more examples, this time in Scheme (another Lisp dialect):
+<table cellpadding="4">
+<tr>
+<th align="left">Sweet-expression</th>
+<th align="left">(Ugly) S-expression</th>
+</tr>
+<tr>
+<td align="left">
+<pre>
+define factorial(n)
+   if (n &lt;= 1)
+       1
+       n * factorial(n - 1)
+substring("Hello" (1 + 1) string-length("Hello"))
+define move-n-turn(angle)
+   tortoise-move(100)
+   tortoise-turn(angle)
+if (0 &lt;= 5 &lt;= 10)
+   display("True\n")
+   display("Uh oh\n")
+define int-products(x y)
+  if (x = y)
+    x
+    x * int-products((x + 1) y)
+int-products(3 5)
+(2 + 3 + (4 * 5) + 7.1)
+(2 + 3 + (4 / (5 * 6)))
+*(2 3 4 5)
+</pre>
+</td>
+<td align="left">
+<pre>
+(define (factorial n)
+   (if (&lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+(substring "Hello" (+ 1 1) (string-length "Hello"))
+(define (move-n-turn angle)
+   (tortoise-move 100)
+   (tortoise-turn angle))
+(if (&lt;= 0 5 10)
+   (display "True\n")
+   (display "Uh oh\n"))
+(define (int-products x y)
+  (if (= x y)
+      x
+      (* x (int-products (+ x 1) y))))
+(int-products 3 5)
+(+ 2 3 (* 4 5) 7.1)
+(+ 2 3 (/ 4 (* 5 6)))
+(* 2 3 4 5)
+</pre>
+</td>
+</tr>
+</table>
+</p>
+
+<p>
+So I&#8217;ve modified my demo program so that it supports infix operator
+chaining, such as (2 + 3 + 4).
+Since I no longer need to implement precedence, the addition of
+chaining means that I now have a working model of the whole idea,
+ready for experimentation.
+My demo isn&#8217;t ready for &#8220;serious use&#8221; in development yet;
+it has several known bugs and weaknesses.
+But it&#8217;s good enough for experimentation, to see if the basic idea is
+sensible - and I think it is.
+You can actually sit down and play with it, and see if it has merit.
+There are still some whitespace rules I&#8217;d like to fiddle with,
+to make both long files and interactive use as comfortable as possible,
+but these are at the edges of the definitions&#8230; not at its core.
+</p>
+
+<p>
+I&#8217;m suggesting the use of &amp;&amp; for &#8220;logical and&#8221;,
+and || for &#8220;logical or&#8221;.  These are common symbols in other languages,
+and using the same symbols aids readability.
+Now, in Common Lisp and some Scheme implementations, ||
+is &#8220;the symbol with 0-length name&#8221;.
+Oddly enough, this doesn&#8217;t seem to be a problem; Lisps can generally
+bind to the symbol with the 0-length name, and print it the same way, so
+it works perfectly well!
+In Scheme this is trivially done by running this:
+<pre>
+define(&amp;&amp; and)
+define(|| or)
+</pre>
+Then you can do this:
+<pre>
+(#t &amp;&amp; #t)
+if ((a &gt; b) || ((a * 2) &lt; (c + d + e))) ...
+</pre>
+Instead of the hideous s-expressions:
+<pre>
+(and #t #t)
+(if (or (&gt; a b) (&lt; (* a 2) (+ c d e))) ...)
+</pre>
+</p>
+
+<p>
+Here are some quotable quotes, by the way, showing that I&#8217;m not the
+only one who thinks there&#8217;s room for improvement:
+<ul>
+<li><i>I&#8217;ve used Lisp my whole programming life and
+I still don&#8217;t find prefix math expressions natural.</i>
+- <a href="http://paulgraham.com/popular.html">Paul Graham</a>
+</li>
+<li><i>I have more faith that you could convince the
+world to use esperanto than [to use] prefix notation.</i>
+- <a href="http://people.csail.mit.edu/gregs/ll1-discuss-archive-html/msg01571.html">Paul Prescod</a>
+</li>
+</ul>
+</p>
+
+<p>
+Lisp-based languages are all over the place.
+There are vast number of implementations of Common Lisp and Scheme.
+GNU guile is a Scheme implementation embedding into many other
+programs, for example.
+GNU emacs is a widely-used text editor, built on its own dialect of Lisp.
+AutoCAD has its own variant under the covers, too.
+Programs like PVS are implemented in Lisp, and interacting with it
+currently requires using s-expressions.
+It&#8217;d be great if all of these supported an alternative, simpler syntax.
+With sweet-expressions, typical s-expressions are legal too.
+So I think this is a widely-useful idea.
+</p>
+
+<p>
+So if you&#8217;re interested, take a look at
+<a href="http://www.dwheeler.com/readable">http://www.dwheeler.com/readable</a>.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/10/11#readable-sweet-lisp2">permanent link to this entry</a></p>
+<h1>Thu, 04 Oct 2007</h1>
+<p><a name="assurance-2007"><font size="+2"><b>Software Assurance 2007</b></font></a></p><p></p>
+<p>
+Lots of interesting things are happening
+with the various efforts to eliminate or counter software vulnerabilities.
+The <a href="http://iac.dtic.mil/iatac/download/security.pdf">
+Software Security Assurance (SwA) State-of-the-Art Report (SOAR)</a>
+tries to list what&#8217;s going on, especially in things related to the
+U.S. government.
+As with any such document, it&#8217;s incomplete, and it&#8217;s only a snapshot
+(things keep changing!).
+But if you haven&#8217;t been following this world, and want to know
+&#8220;what&#8217;s going on&#8221;, it&#8217;s the best place I know of to start.
+Of course, you can also look at sites such as the
+<a href="https://buildsecurityin.us-cert.gov/">
+U.S. DHS / CERT &#8220;build security in&#8221; site</a>.
+</p>
+
+<p>
+The <a href="http://nvd.nist.gov/">U.S. National Vulnerability Database</a>
+tracks specific vulnerabilities in specific products; they identify each
+vulnerability using the unique id defined by <a href="http://cve.mitre.org/">
+Common Vulnerabilities and Exposures (CVE)</a>.
+But if the world is going to prevent these kinds of
+vulnerabilities from happening in the future, we need to categorize them
+in a way that everyone agrees what the categories are.
+Informally, there are lots of ways to categorize them, but their meanings
+differ between people.
+That&#8217;s a real problem when comparing tools; different tools find different
+problems, but without agreed-on terminology, it&#8217;s hard to even describe
+their differences.
+MITRE is currently developing a way to categorize all vulnerabilities in
+a way that everyone can agree on, called
+<a href="http://cwe.mitre.org/">Common Weakness Enumeration (CWE)</a>.
+The U.S. National Vulnerability Database and MITRE have worked out a
+<a href="http://nvd.nist.gov/cwe.cfm">set of CWEs that they will use to
+categorize vulnerabilities</a>.
+The CWE is still being developed, but at least some common terminology
+is getting worked out.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/security">/security</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/10/04#assurance-2007">permanent link to this entry</a></p>
+<h1>Mon, 24 Sep 2007</h1>
+<p><a name="floss-license-slide-lgpl"><font size="+2"><b>FLOSS License Slide - Modified for LGPL</b></font></a></p><p></p>
+<p>
+My
+<a href="http://www.dwheeler.com/essays/floss-license-slide.html">
+&#8220;Free-Libre / Open Source Software (FLOSS) FLOSS License Slide&#8221;</a>
+helps people figure out if the most widely-used FLOSS licenses are compatible
+(that is, if you can combine their software to produce new works).
+The main body of the PDF text fits all on one page, which can be handy.
+</p>
+<p>
+My thanks to Olaf Schmidt, who found an error of omission in the
+previous version of my &#8220;slide&#8221;.
+He pointed out to me that
+the GNU Lessor General Public License (LGPL) 2.1 is even <i>more</i>
+compatible with various versions of the GPL than the plain reading of
+my &#8220;slide&#8221; originally noted.
+That&#8217;s because the LGPL has explicit text noting
+that you can switch its license to GPL version 2 <i>or later</i>, and
+similarly LGPL version 3 explicitly says that you can also use
+GPL version 3 <i>or later</i>.
+I fixed this by adding one more arrow to my diagram,
+which was enough to capture this.
+I also noted that the previous version of the LGPL is version 2.1, not 2
+(previous versions of the LGPL exist but are becoming uncommon).
+I also added some additional text, so I hope that the LGPL-related text
+is even clearer now.
+</p>
+<p>
+Enjoy!
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/09/24#floss-license-slide-lgpl">permanent link to this entry</a></p>
+<h1>Wed, 18 Jul 2007</h1>
+<p><a name="navy-direction-unchanged"><font size="+2"><b>Navy: Open Source Software IS Commercial Software</b></font></a></p><p></p>
+<p>
+<a href="http://oss-institute.org/Navy/DONCIO_OSS_User_Guidance.pdf">
+On June 5, 2007, the U.S.
+Navy released some guidance on Open Source Software</a>.
+In particular, they noted that if
+Open Source Software (OSS) met the U.S. law definition of &#8220;commercial item&#8221;,
+it was a commercial item.
+(They actually say OSS that meets that definition is
+commercial off-the-shelf (COTS), not just a &#8220;commercial item&#8221; -
+presumably because they had in mind the off-the-shelf
+open source software.)
+I&#8217;m delighted to see this guidance, because
+<a href="http://www.dwheeler.com/essays/commercial-floss.html">
+I&#8217;ve been saying the same thing</a>.
+This Navy memo was pretty clear, yet
+some people seemed to have really odd interpretations of it.
+In particular,
+<a href="http://www.gcn.com/print/26_14/44462-1.html?topic=defense-technology&amp;CMP=OTC-RSS">
+GCN reported</a> that
+&#8220;After several years of evaluation, the Navy Department has
+approved the use of open-source software in all Navy and Marine Corps
+information technology systems.&#8221;
+This GCN article
+makes it seem like there&#8217;s been some big change in direction,
+and I think that&#8217;s a terrible misunderstanding of what&#8217;s going on here.
+</p>
+
+<p>
+I believe this 2007 Navy memo is <i>not</i> a change in policy or direction.
+This Navy memo merely tries to counter a widespread misunderstanding that is
+sometimes resulting in a failure to obey U.S. law, the U.S. government&#8217;s
+Federal Acquisition Regulations (aka the FAR), and (by
+implication) the U.S. Department of Defense&#8217;s (DoD)
+Defense Federal Acquisition Regulation Supplement (DFARS).
+This memo also serves as a restatement that
+Navy policy continues to obey <i>existing</i>
+DoD and U.S. government policies
+regarding open source software (OSS), as were already formally established in
+2003-2004.
+</p>
+
+<p>
+Below are some supporting details to justify those statements. I hope
+they will help put this memo in context.
+As is usual in any blog, my conclusions are just my own opinion,
+not the official position of any organization.
+On the other hand, I think I have really good evidence!
+So let&#8217;s see&#8230;
+</p>
+
+<p>
+Years ago some people had the strange idea that OSS was prohibited in
+the DoD or U.S. federal government, even though there was no such
+prohibition. This was particularly bizarre in the DoD, since a MITRE
+report (final publication early 2003) found that OSS use was already
+widespread and very helpful to the DoD.  That MITRE report concluded
+that &#8220;Neither the survey nor the analysis supports the premise that
+banning or seriously restricting [Free / Open Source Software (FOSS)]
+would benefit DoD security or defensive capabilities. To the contrary,
+the combination of an ambiguous status and largely ungrounded fears that
+it cannot be used with other types of software are keeping FOSS from
+reaching optimal levels of use.&#8221;:
+<a href="http://www.terrybollinger.com/dodfoss/dodfoss_pdf_hyperlinked.pdf">http://www.terrybollinger.com/dodfoss/dodfoss_pdf_hyperlinked.pdf</a>
+</p>
+
+<p>
+So in May 2003 an official DoD policy memo (&#8220;OSS in DoD&#8221;) was released.
+It affirmed that OSS was fine as long as it met the applicable DoD
+requirements, just as any other kind of software had to meet the
+applicable DoD requirements:
+<a href="http://www.egovos.org/rawmedia_repository/822a91d2_fc51_4e6e_8120_1c2d4d88fa06?/document.pdf">http://www.egovos.org/rawmedia_repository/822a91d2_fc51_4e6e_8120_1c2d4d88fa06?/document.pdf</a>
+</p>
+
+<p>
+This problem was government-wide, so in July 2004, OMB released a
+similar policy memo (M-04-16), which explicitly stated that U.S. federal
+government acquisition policy was neutral about using OSS vs.
+proprietary software. In particular, it said that government &#8220;policies
+are intentionally technology and vendor neutral, and to the maximum
+extent practicable, agency implementation should be similarly neutral.&#8221;:
+<a href="http://www.whitehouse.gov/omb/memoranda/fy04/m04-16.html">http://www.whitehouse.gov/omb/memoranda/fy04/m04-16.html</a>
+</p>
+
+<p>
+Yet there still seemed to be some strange misunderstandings, in spite of
+these 2003 and 2004 policy memos explicitly stating that U.S. DoD and
+federal acquisition policies were neutral on the question of using OSS
+vs. proprietary software (they merely had to obey the usual
+requirements). More recently, these misunderstandings seem to revolve
+around a failure to read and understand the term &#8220;commercial item&#8221; as
+defined by U.S. Code Title 41, Chapter 7, section 403, as well as its
+corresponding FAR text. These define a &#8220;commercial item&#8221; as an item
+&#8220;customarily used by the general public or by non-governmental entities&#8221;
+(i.e., they have uses not unique to a government) and have been &#8220;sold,
+leased, or licensed to the general public&#8221;). It would seem obvious that
+if OSS meets the U.S. law/FAR definition for a commercial item, it is a
+commercial item for government acquisition purposes.  And nearly all
+extant OSS  does indeed meet this definition; nearly all extant OSS
+has non-government uses and are licensed to the public.
+In addition, almost all  already-existing OSS software also meets the definition
+of commercial-off-the-shelf (COTS), since they are commercial items
+that are ALREADY available to the public (&#8220;off the shelf&#8221;).
+</p>
+
+<p>
+The problem was that some acquisition programs were redefining the term
+&#8220;commercial item&#8221; (and COTS) to exclude OSS competitors. These
+redefinitions were in contradiction to the existing DoD and federal
+government-wide explicit policy for neutrality regarding OSS, and in
+contradiction to the clear definition of &#8220;commercial item&#8221; given in U.S.
+law, the FAR, and by implication the DFARS. The Navy memo simply tries
+to correct this misunderstanding, as well as re-iterating that the
+existing DoD and federal government policy on OSS continues.  This Navy
+memo was signed by Department of the Navy CIO Robert J. Carey on June 5,
+2007, and titled &#8220;Department of the Navy Open Source Software Guidance&#8221;.
+You can find the Navy memo here:
+<a href="http://oss-institute.org/Navy/DONCIO_OSS_User_Guidance.pdf">http://oss-institute.org/Navy/DONCIO_OSS_User_Guidance.pdf</a>
+</p>
+
+<p>
+The main implication of this definition of &#8220;commercial item&#8221; is that (as
+required by law and the FAR) contractors and their subcontractors at all
+tiers must do market research of the commercial market and consider ALL
+their commercial options&#8230; including the OSS options.   This is
+certainly NOT a special preference for OSS, and ALL evaluation
+characteristics for software are still valid (e.g., functionality, total
+cost of ownership, quality, security, support, and flexibility). But in
+cases where the OSS option is the better option, by policy the U.S.
+government intends to take advantage of it.
+</p>
+
+<p>
+This approach makes sense, given the major changes that are happening
+in the software industry.  In many market segments OSS programs are
+the #1 or #2 product by market share, and OSS in aggregate now
+represents billions of dollars of development effort.   Many
+companies are developing OSS and/or selling commercial support
+for OSS, including Red Hat, Novell, Sun Microsystems, IBM, and
+MySQL AB.  Microsoft competes with some OSS programs, business models,
+and licenses, but in other areas Microsoft uses, develops,
+and encourages OSS (Microsoft&#8217;s Windows includes
+BSD-developed networking applications; Microsoft OSS projects include WiX and
+IronPython; Microsoft runs the &#8220;Codeplex&#8221; website to encourage
+OSS development on Windows).  In areas where they are appropriate
+some major OSS programs have received the relevant Common Criteria
+or FIPS 140-2 IT security certificates.
+</p>
+
+<p>
+OSS potentially affects how acquisition programs acquire software, but
+acquisition programs should <i>expect</i> to be affected by changes in relevant
+commercial industries.  This was anticipated; the DoD policy memo
+&#8220;Commercial Acquisitions&#8221; (Jan. 5, 2001) explains that the benefits of
+commercial item acquisition include &#8220;increased competition; use of
+market and catalog prices; and access to leading edge technology and
+&#8216;non-traditional&#8217; business segments&#8221;.  In other words, DoD policy
+anticipates that there WILL be &#8220;non-traditional business segments&#8221; - and
+its policy is to embrace and exploit such changes where appropriate.
+(Given its growth and breadth, it&#8217;s become increasingly difficult to
+argue that OSS is &#8220;non-traditional&#8221; anyway.)  AT&L&#8217;s &#8220;Commercial Item
+Handbook&#8221; (November 2001) explains that this broad definition of
+&#8220;commercial item&#8221; is intentional, because it &#8220;enables the Government to
+take greater advantage of the commercial marketplace.&#8221; See:
+<a href="http://www.acq.osd.mil/dpap/Docs/cihandbook.pdf">http://www.acq.osd.mil/dpap/Docs/cihandbook.pdf</a>
+</p>
+
+<p>
+In other words, U.S. contractors must consider <i>all</i> their options,
+and then
+select the best one.  They are <i>not</i> allowed to arbitrarily ignore a
+relevant commercial industry sector, and are specifically <i>not</i> allowed to
+ignore OSS options.
+</p>
+
+<p>
+If you&#8217;re interested in this topic,
+you might also be interested in some related articles of mine, such as
+<a href="http://www.dwheeler.com/essays/oss-government-acquisitions.html">
+Open Source Software (OSS) in U.S. Government Acquisitions</a>
+and
+<a href="http://www.dwheeler.com/essays/commercial-floss.html">
+“Commercial” is not the opposite of Free-Libre / Open Source Software (FLOSS):
+Nearly all FLOSS is Commercial</a>.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/07/18#navy-direction-unchanged">permanent link to this entry</a></p>
+<h1>Wed, 11 Jul 2007</h1>
+<p><a name="floss-license-slide-2"><font size="+2"><b>FLOSS License Slide - Released!</b></font></a></p><p></p>
+<p>
+There are a large number of Free-Libre / Open Source Software (FLOSS)
+licenses, but only a few are widely used.
+Unsurprisingly, the widely-used licenses tend to be compatible &#8212;
+that is, it’s possible to combine software under the different licenses
+to produce a larger work. But many people have trouble figuring out
+when they can be combined, or how.
+</p>
+<p>
+So I&#8217;ve created a little figure which I call the “FLOSS license slide” to
+make it easier to see if FLOSS licenses can be combined in many common
+cases, and if so, what the basic ramifications are.
+I&#8217;ve crafted it so that the figure and explanatory text all fit in a page,
+which can be handy.
+</p>
+<p>
+You can look at the FLOSS license slide in one of three formats:
+<ul>
+<li><a href="http://www.dwheeler.com/essays/floss-license-slide.html">HTML of &#8220;FLOSS License Slide&#8221;</a></li>
+<li><a href="http://www.dwheeler.com/essays/floss-license-slide.pdf">PDF of &#8220;FLOSS License Slide&#8221;</a></li>
+<li><a href="http://www.dwheeler.com/essays/floss-license-slide.odt">OpenDocument version of &#8220;FLOSS License Slide&#8221;</a></li>
+</ul>
+</p>
+<p>
+I had released a
+<a href="http://www.dwheeler.com/blog/2007/06/11/#floss-license-slide">draft
+of this earlier</a>, and got some nice feedback.
+I added &#8220;public domain&#8221;; there seemed to be enough questions about
+public domain software that it made sense to add that to the figure.
+Yes, I know that technically &#8220;public domain&#8221; isn&#8217;t a license, but it&#8217;s
+much easier to understand and explain by treating it as if it were one.
+Some of the earlier text was not clear enough; hopefully this one is clearer.
+For example, GPLv2+ and the Affero GPL 3 licenses are compatible via GPLv3,
+but some people had trouble understanding why. Now the text
+notes that they are compatible via the GPL version 3,
+which will hopefully make that clearer.
+I also added the HTML format.
+</p>
+<p>
+I&#8217;m not a lawyer, and if you need formal legal advice you need to consult your
+own attorney. But for many people, this is the information you needed,
+in a conveniently small format, so here it is.
+Enjoy!
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/07/11#floss-license-slide-2">permanent link to this entry</a></p>
+<h1>Sun, 08 Jul 2007</h1>
+<p><a name="government-oss-interest-2007"><font size="+2"><b>Increasing Government Interest in Free-Libre / Open Source Software (FLOSS)</b></font></a></p><p></p>
+<p>
+There&#8217;s more on the web now about governments and
+Free-Libre / Open Source Software (FLOSS), both on my
+own site and other sites.   I think this suggests more and more interest
+by governments in FLOSS.
+</p>
+
+<p>
+I&#8217;ve now posted
+<a href="http://www.dwheeler.com/essays/oss-government-acquisitions.html">
+Open Source Software (OSS) in U.S. Government Acquisitions</a>,
+which is a slightly-updated version of my article which was published in the
+<a href="https://www.softwaretechnews.com/stn_view.php?stn_id=42">
+&#8220;DoD Software Tech News&#8221; issue devoted to
+free-libre / open source software (FLOSS)</a>.
+<a href="http://www.dwheeler.com/blog/2007/06/19#software-tech-magazine">
+As I noted earlier</a>, this issue has lots of good articles.
+I was asked to create the article (not the other way around), so I think
+the very existance of this issue
+is evidence of increasing interest, not just a personal interest of mine.
+</p>
+
+<p>
+I should probably mention why I&#8217;m posting a revision.
+<i>After</i> I submitted my article, the
+<a href="http://oss-institute.org/Navy/DONCIO_OSS_User_Guidance.pdf">
+Department of the Navy CIO Robert J. Carey signed a June 5, 2007 memorandum titled “Department of the Navy Open Source Software Guidance”</a>
+which notes that FLOSS needs to be considered a commercial item when it meets
+the U.S. government&#8217;s standard definition of a commercial item
+(nearly all extant FLOSS does).
+That is the same basic point that I raised in my presentation and paper,
+and I would have gladly mentioned the Navy memo&#8230; had it been released
+at the time.  So my modified version now points to the Navy memo, as well
+as making a few tweaks based on other feedback.
+This realization that FLOSS programs are (almost always) commercial items
+is an important point in the U.S. government.
+Why?  Because
+<a href="http://enterprise.linux.com/enterprise/07/06/06/0135204.shtml">
+as noted in Linux.com</a>, that means that extant FLOSS software must be
+considered when the U.S. government acquires software the same way as
+other commercial software is considered (i.e., it must be considered
+<i>before</i> starting a new project to write their own).
+The Navy memo&#8217;s assertion of this makes it worth posting an update.
+</p>
+
+<p>
+But think of this updated essay as a only sampler&#8230;
+for the rest of the articles,
+you&#8217;ll still need to go read the 
+<a href="https://www.softwaretechnews.com/stn_view.php?stn_id=42">
+&#8220;DoD Software Tech News&#8221; issue</a>.
+Getting the issue does require registration, but registration is
+free and in this case it&#8217;s worthwhile.
+</p>
+
+<p>
+Anyway, it&#8217;s not just one issue about FLOSS in one magazine.
+Here&#8217;s more evidence it&#8217;s not just me -
+on July 5, 2007, the article
+<a href="http://robertogaloppini.net/2007/07/05/open-source-government-good-will-needed/">Open Source Government: good-will needed</a>
+was posted by
+<a href="http://robertogaloppini.net/">
+Roberto Galoppini&#8217;s Commercial Open Source Software blog</a>.
+He points in turn to various articles, including
+<a href="http://blogs.cnet.com/8301-13505_1-9739745-16.html?part=rss&amp;subj=TheOpenRoad">
+Matt Asay&#8217;s &#8220;Open source in government: Leadership needed&#8221;</a>,
+which then leads you back to a very interesting research paper:
+<a href="http://oss-institute.org/whitepapers/NCDG_Hamel_07-004.pdf">
+&#8220;Open-Source Collaboration in the Public Sector: The Need for Leadership
+and Value&#8221;</a> by Michael P. Hamel.
+There&#8217;s lots of interesting discussion in those articles
+about how governments can use FLOSS, and
+in particular how governments can use FLOSS components and approaches
+more effectively.
+I&#8217;ll throw in my own two cents here.  I would certainly agree that
+leadership is important in any project, including FLOSS projects;
+the leadership of Linus Torvalds of the Linux kernel is well-documented,
+for example.
+But there are different kinds and levels of leadership.
+Roberto Galoppini says,
+&#8220;I think that first we need politicians with good-will, willing to put their
+intellectual potential to work for the overall desires of the
+general public&#8230;&#8221;; while that&#8217;s good, often what&#8217;s important is the
+ability to lead <i>concept</i> into <i>practice</i>.
+It&#8217;s easy to &#8220;lead&#8221; by saying words, but I think that
+often what&#8217;s needed is the kind of leadership that rolls up its sleeves and
+makes actual projects produce useful results.
+Focusing on specific, measurable products can often get better results.
+Certainly politicians with goodwill are a good thing, but they can provide
+value primarily by providing &#8220;cover&#8221; for those who actually do the
+hands-on leading of projects, but the latter make or break such efforts.
+</p>
+
+<p>
+While I can quibble with some of the stuff Hamel says, some of the
+his statements seem dead-on with what I see.
+Hamel notes that &#8220;participants
+in both groups also believe that the creation of value, or products
+that are appropriate and effective in addressing
+members’ wants and needs, is critical&#8221;&#8230; to which I say, Amen.
+Hamel concludes that
+&#8220;Collaborations with a strong leadership structure, and more
+importantly a single leader
+who is persistent, passionate and willing to spend a great deal of time
+maintaining and improving
+the organization are much more likely to succeed. Value is also a critical
+component, and
+requires that efforts meet the wants and needs of members and clients, whether
+they be in the
+form of software, documentation, research or even policy advocacy.&#8221;
+Focusing on a few most useful projects is critical:
+&#8220;a conscious effort to focus energy on a small
+number of projects in early stages may be an important component in creating
+value for members of collaborative efforts.&#8221;
+A FLOSS project requires collaboration to be successful, and collaboration
+requires that the project gain the trust of potential users/developers;
+&#8220;In this research I found that leadership, face-to-face contact, and
+the legal framework were the primary factors leading to trust.
+A willingness and ability to evolve, which may be tied
+to creating products of value to clients and members, might also be an
+important factor in developing a successful collaboration.&#8221;
+Those statements, at least, seem very sound.
+These aren&#8217;t new ideas, to be sure, but it sure is easy to lose sight of them.
+</p>
+
+<p>
+I think there&#8217;s a vast opportunity here for governments to use FLOSS.
+Which is odd in a sense, because in fact, FLOSS is already widely used
+in governments. MITRE determined back in 2003 that FLOSS was already
+critically important to the U.S. Department of Defense (DoD).
+But that widespread use is small compared to its potential, and to how
+many commercial organizations use FLOSS, and there are a lot of
+reasons for that.
+Governments have long aquisition times, often tend to avoid doing anything
+&#8220;risky&#8221; (aka &#8220;different than the way we did it before&#8221;, abetted because
+there&#8217;s no competitor to force them to improve),
+and many proprietary
+vendors target governments to try to prevent them from using competing
+FLOSS products.
+Which means that even when it makes sense to use FLOSS,
+it can often take much longer for FLOSS components and approaches to
+enter into government use.
+But it has already entered into significant use, and I expect that
+to accelerate over the years.
+</p>
+
+<p>
+There are some other goodies on my web site if you&#8217;re interested in
+this topic (government and FLOSS).
+My essay is basically a text version of my
+<a href="http://www.dwheeler.com/essays/oss_200703.pdf">March 2007
+presentation on Free-libre / Open Source Software (FLOSS)</a>.
+It includes snippets from much longer papers that
+<a href="http://www.dwheeler.com/oss_fs_why.html">give statistics about FLOSS</a>,
+<a href="http://www.dwheeler.com/oss_fs_eval.html">explain how to
+evaluate FLOSS</a>,
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+discuss FLOSS and security</a>, and
+<a href="http://www.dwheeler.com/essays/commercial-floss.html">
+explain why most FLOSS is commercial software</a>.
+There&#8217;s even a hint of my essay
+<a href="http://www.dwheeler.com/essays/gpl-compatible.html">
+Make Your Open Source Software GPL-Compatible. Or Else</a>, since
+I note the widespread use of the GPL.
+</p>
+
+<p>
+Again, if you have a true <a href="http://lifehacker.com/software/office-culture/dealing-with-clueless-supervisors-128768.php">PHB</a>, I can&#8217;t help you.
+But many managers are trying to the right thing, and just need reasonable
+information so that they <i>can</i> do the right thing.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/07/08#government-oss-interest-2007">permanent link to this entry</a></p>
+<h1>Sat, 23 Jun 2007</h1>
+<p><a name="unlawful-modifications"><font size="+2"><b>ISPs Inserting Ads Into Your Pages: Unlawful Modifications (Copyright Violation)</b></font></a></p><p></p>
+<p>
+Here&#8217;s a nasty trick.
+Apparantly some
+<a href="http://yro.slashdot.org/yro/07/06/23/1233212.shtml">
+shady Internet Service Providers (ISPs) are
+inserting advertizements into other people&#8217;s web pages without their
+permission</a>.
+</p>
+
+<p>
+I believe these are usually <i>illegal modifications</i>.
+Whoever creates a work automatically has a copyright on that work.
+(If you&#8217;re doing work for someone else, or if you
+sell the copyright, <i>they</i> have the copyright.)
+Anyone who releases a public web page obviously grants others the right
+to copy that work to <i>view</i> it, but unless otherwise stated, you
+don&#8217;t have the right to <i>modify</i> the work.
+U.S. law also has &#8220;fair use&#8221; provisions that let you quote another work
+without being sued, and so on, but those can&#8217;t possibly be stretched into
+letting someone insert ads.
+The copyright owner can release works permitting such actions
+(that&#8217;s how Free-libre / open source software works), but they have to
+give that permission&#8230; you can&#8217;t just unilaterally <i>modify</i> it.
+What really angers me is that they might insert stuff I am
+morally opposed to, and sullying <i>my</i> reputation.
+</p>
+
+<p>
+If you run a website, here&#8217;s a sample letter that you can send to inform
+these ISPs that what they&#8217;re doing is wrong.
+<pre>
+Dear (name here),
+
+I am concerned that you appear to be violating copyright laws,
+by unlawfully modifying and then redistributing copyrighted works
+of mine and many others.
+
+In particular, your "terms of service" say... (quote them, if you can).
+
+My website, (www.dwheeler.com), distributes many copyrighted works
+at no charge, but I do _NOT_ give the right to modify many of
+those works.  Many other websites do the same.  (Some can add:
+In addition, I have ads on my site; by adding your own ads, you are
+diluting the value of MY ads and in essence stealing from me.)
+
+Please stop modifying my web pages immediately.  It is my hope that
+this was just a misunderstanding, and that we can settle this amicably.
+
+Thank you very much.
+</pre>
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/06/23#unlawful-modifications">permanent link to this entry</a></p>
+<h1>Tue, 19 Jun 2007</h1>
+<p><a name="software-tech-magazine"><font size="+2"><b>&#8220;DoD Software Tech News&#8221; posts open source software issue</b></font></a></p><p></p>
+<p>
+The U.S. Department of Defense (DoD)&#8217;s software technology magazine
+<a href="https://www.softwaretechnews.com/stn_view.php?stn_id=42">
+&#8220;DoD Software Tech News&#8221; has posted a
+whole issue devoted to free-libre / open source software (FLOSS)</a>.
+If you&#8217;re trying to get FLOSS seriously considered by acquisition or
+management people, this may be what you need.
+This issue includes essays by David A. Wheeler (that&#8217;s me!),
+Terry Bollinger, John M. Weathersby, Mark Lucas (on Geospatial FLOSS),
+Peter Gallagher, Matt Asay (Alfresco), and Andrew Gordon.
+Free registration required. 
+My essay is basically a text version of my
+<a href="http://www.dwheeler.com/essays/oss_200703.pdf">March 2007
+presentation on Free-libre / Open Source Software (FLOSS)</a>;
+it includes snippets from my papers that
+<a href="http://www.dwheeler.com/oss_fs_why.html">give statistics about FLOSS</a>,
+<a href="http://www.dwheeler.com/oss_fs_eval.html">explain how to
+evaluate FLOSS</a>,
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+discuss FLOSS and security</a>, and
+<a href="http://www.dwheeler.com/essays/commercial-floss.html">
+explain why most FLOSS is commercial software</a>.
+There&#8217;s even a hint of my essay
+<a href="http://www.dwheeler.com/essays/gpl-compatible.html">
+Make Your Open Source Software GPL-Compatible. Or Else</a>, since
+I note the widespread use of the GPL.
+</p>
+<p>
+After I submitted my article, but before it got published, the
+<a href="http://oss-institute.org/Navy/DONCIO_OSS_User_Guidance.pdf">
+Department of the Navy CIO Robert J. Carey signed a June 5, 2007 memorandum titled “Department of the Navy Open Source Software Guidance”</a>
+which notes that FLOSS needs to be considered a commercial item when it meets
+the U.S. government&#8217;s standard definition of a commercial item
+(and nearly all extant FLOSS meets that definition).
+That is the same basic point that I raised in my presentation.
+It feels nice to have made a key statement, and then find that the
+U.S. Navy officially confirms it.
+<a href="http://enterprise.linux.com/enterprise/07/06/06/0135204.shtml">
+As noted in Linux.com</a>, that means that extant FLOSS software must be
+considered when the U.S. government acquires software, the same way as
+other commercial software is considered (i.e., it must be considered
+<i>before</i> starting a new project to write their own).
+</p>
+<p>
+If you have a true <a href="http://lifehacker.com/software/office-culture/dealing-with-clueless-supervisors-128768.php">PHB</a>, I can&#8217;t help you.
+But many managers just need some honest information, and this is at least one
+way to get it to them.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/06/19#software-tech-magazine">permanent link to this entry</a></p>
+<h1>Mon, 11 Jun 2007</h1>
+<p><a name="reviews"><font size="+2"><b>Reviews of Books, Movies, etc.</b></font></a></p><p></p>
+<p>
+I read voraciously, and occasionally I&#8217;ve even been known to see a movie.
+So I&#8217;ve started to write down
+<a href="http://www.dwheeler.com/reviews.html">Reviews of
+Books, Movies and Other Stuff</a>.
+There you can see what I think of various books, movies, etc.
+It&#8217;s not huge yet, but I intend to make it grow.
+</p>
+<p>
+In many cases you can click on it to get your own copy via
+Amazon.com.  If you buy something that way, I even get a small cut.
+I won&#8217;t get rich that way, but if you choose to buy something by doing that,
+thanks very much!
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/06/11#reviews">permanent link to this entry</a></p>
+<p><a name="floss-license-slide"><font size="+2"><b>FLOSS License Slide</b></font></a></p><p></p>
+<p>
+There are a large number of Free-Libre / Open Source Software (FLOSS)
+licenses, but only a few are widely used.
+Unsurprisingly, the widely-used licenses tend to be compatible &#8212;
+that is, it’s possible to combine software under the different licenses
+to produce a larger work. But many people have trouble figuring out
+when they can be combined, or how.
+</p>
+<p>
+So I&#8217;ve created a little figure which I call the “FLOSS license slide” to
+make it easier to see if FLOSS licenses can be combined in many common
+cases, and if so, what the basic ramifications are.
+I&#8217;ve crafted it so that the figure and explanatory text all fit in a page,
+which can be handy.
+</p>
+<p>
+You can look at the FLOSS license slide in one of two formats:
+<ul>
+<li><a href="http://www.dwheeler.com/essays/floss-license-slide.pdf">PDF of &#8220;FLOSS License Slide&#8221;</a></li>
+<li><a href="http://www.dwheeler.com/essays/floss-license-slide.odt">OpenDocument version of &#8220;FLOSS License Slide&#8221;</a></li>
+</ul>
+</p>
+<p>
+This is currently a draft, because I&#8217;d like to hear comments before
+&#8220;finishing&#8221; this.  Also, it&#8217;s based on the &#8220;final draft&#8221; of GPLv3; things
+could change before that revision is complete (though I doubt it).
+There&#8217;s no end in trying to add other licenses, but
+if there&#8217;s a big mistake in this document, I&#8217;d like to know.
+I&#8217;m not a lawyer, and if you need formal legal advice you need to consult your
+own attorney. But for many people, this is the information you needed,
+so here it is.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/06/11#floss-license-slide">permanent link to this entry</a></p>
+<h1>Tue, 05 Jun 2007</h1>
+<p><a name="odf-msxml-ooxml-compare"><font size="+2"><b>Comparing OpenDocument (ODF) with MS-XML (OOXML/EOOXML) - and why Multiple Competing Standards are a Bad Idea</b></font></a></p><p></p>
+<p>
+Microsoft continues to give its bizarre argument that multiple
+competing (conflicting) standards for the same purpose is a good thing.
+They are dreadfully confused.
+Having multiple competing <i>products</i> is a good thing, but having
+multiple competing <i>standards</i> is <b>terrible</b>.
+</p>
+<p>
+<b><i>Multiple competing standards risk massive property loss, many lives,
+and even the loss of your country</i></b>, according to history.
+My presentation
+<a href="http://www.dwheeler.com">Open Standards and Security</a> notes two
+of the many historical examples, the 1904 Baltimore fire
+and the U.S. Civil war:
+<ol>
+<li>In 1904, a huge (80-block) area of Baltimore burned to the ground.
+Fire fighters from other cities came but couldn&#8217;t effectively connect their
+fire hoses to the fire hydrants, because every city had their own
+incompatible standard.
+That resulted in 2,500 burned buildings over a 30 hour period.
+</li>
+<li>Perhaps even more strikingly, one of the important reasons the U.S. South
+(the Confederacy) lost the U.S. Civil War was because the southern
+states had incompatible rail gauges.
+The U.S. North had a single rail gauge standard (for the most part), and
+could move troops and materiel to battles far more quickly
+than the U.S. South, even though the U.S. North
+had far greater distance to travel.
+<a href="http://fredericksburg.com/News/FLS/2005/112005/11122005/144022">
+Ned Harrison&#8217;s paper
+“&#8217;States Rights&#8217; doomed Confederate nation&#8221; (Nov. 12, 2005)</a>
+cites the problems with railroads, including the rail gauge incompatibility,
+as an important factor in the U.S. South&#8217;s loss
+(it certainly was not the <i>only</i> reason, but it was an important factor).
+Indeed, when the North conquered an area, one of the first things it did
+was move the rails to the Northern standard&#8230; so it could continue to
+exploit that advantage as it advanced.
+</li>
+</ol>
+</p>
+<p>
+But what about document converters, don&#8217;t they make it easy to have
+multiple competing standards?
+Well, it&#8217;s true that there are converters like
+<a href="http://odf-converter.sourceforge.net/">ODF Converter</a>.
+But while converters are very useful for one-time transitions,
+they are lousy long-term solutions&#8230;
+they make it clear that there has been a <i>failure</i>, not a success,
+in standards-making.
+Look at the problems multiple standards cause in other areas.
+We can easily convert between metric and English units, but
+<a href="http://www.cnn.com/TECH/space/9909/30/mars.metric.02/">
+NASA lost a $125 million Mars orbiter because a Lockheed Martin engineering
+team used English units of measurement while the agency&#8217;s team used the more
+conventional metric system</a>.
+Another example is the
+<a href="http://www.casa.gov.au/fsa/2003/jul/22-27.pdf">Gimli Glider</a>,
+a Boeing 767 that ran out of fuel in Canada in 1983 due, in
+large part, to confusion about English/metric conversion.
+Why do we want this problem in office documents too?
+Also, as of June 5, 2007, there are 6 pages of problems
+converting MS XML to ODF, but only 2 pages of problems
+converting ODF to MS XML. In general,
+ODF appears to be a <i>much</i> more capable format; just from
+that list it appears that it&#8217;ll be easier to improve ODF than to try to use
+MS XML for all documents.
+Which is unsurprising; the ODF work included membership from a variety of
+office suite implementors, while MS XML is the work of just one.
+That&#8217;s even more true when you consider that OpenDocument uses existing
+standards, instead of creating a trade barrier through nonsense
+one-off specifications.
+Microsoft claims that OOXML is necessary to &#8220;fully&#8221; capture old binary
+documents, but I have not seen much evidence this is actually true.
+A quick look at the CONVERT function in OOXML revealed many absolutely
+incorrect unit measures, for example.
+More generally, I have no reason to believe that the OOXML spec actually
+includes what is needed to capture the older binary formats like .doc -
+no mapping has been presented to prove this claim, and it&#8217;d be easy for
+the OOXML spec to omit lots of important information.
+</p>
+<p>
+Regardless of the facts, Microsoft continues to press for ISO
+standardization of its format, aka
+&#8220;Microsoft XML&#8221; (MS-XML), OOXML, or EOOXML.
+There are now several papers about problems with OOXML.
+<a href="http://www.grokdoc.net/index.php/EOOXML_objections">
+Groklaw&#8217;s EOOXML objections</a> has lots of good information.
+<a href="ftp://officeboxsystems.com/odfa_ukag/">
+Edward Macnaghten&#8217;s
+<i>Technical Distinctions of ODF and OOXML: A Consultation Document</i>
+(ODFA UKAG)</a>
+is interesting because it shows what <i>actual documents look like</i> using
+the different specs - and it exposes a lot of problems
+in MS XML that have not been widely discussed before.
+<a href="http://fussnotes.typepad.com/Achieving_Openness_1point0.html">
+Sam Hiser has an interesting ODF / OOXML comparison</a> as well.
+<a href="http://www.robweir.com/blog/">Rob Weir</a> has interesting
+comments as well.
+</p>
+<p>
+Perhaps a more elegant demonstration the OOXML is absurd is
+<a href="http://fussnotes.typepad.com/plexnex/2007/05/ooxml_more_than_1.html">
+this picture of their 6000-page spec, printed.</a>
+This is a <i>single</i> spec; no wonder there&#8217;s been so little review
+compared to OpenDocument.
+Yet even with this hideously large size, MS XML (OOXML)
+still fails to give the important details that a spec really needs.
+The reason it&#8217;s so hideously long, while still failing to give the
+important details a spec needs, is simply because they ignored a vast
+number of standards - so they end up re-inventing lots of already-existing
+standards.
+Thus, they end up conflicting with a large number of different standards.
+They even ignored MathML, a widely-used standard that even they supported,
+and redid things from scratch.
+</p>
+<p>
+Even on the ground this pressure for OOXML makes little sense.
+<a href="http://www.itwire.com.au/content/view/12608/1023/">Magazines like
+Science and Nature reject Office 2007 documents</a>.
+<a href="http://www.macworld.com/2006/12/opinion/microsoft/">Macintoshes
+still can&#8217;t read the .docx (etc) format</a>, nor can Pocket PCs.
+</p>
+<p>
+I guess one good result is that Microsoft has encouraged voting
+<i>for</i> OpenDocument, because that&#8217;s the only logical thing it can
+do if it really believes that having
+&#8220;many conflicting formats are a good thing&#8221;.
+In contrast, there&#8217;s no reason that someone who wants a truly open <i>single</i>
+format needs to vote for OOXML.
+It&#8217;s perfectly reasonable to reject OOXML on the grounds that it conflicts
+with an already-existing ISO standard (OpenDocument).
+If there&#8217;s something that OOXML does that OpenDocument doesn&#8217;t, it would be
+much easier to add that tweak to OpenDocument, because OpenDocument builds
+on existing standards while OOXML fails to do so.
+</p>
+<p>
+Microsoft is <i>not</i> a &#8220;universal evil&#8221;, and I praise them when they
+do good things.
+But encouraging multiple conflicting standards for the same
+area is <i>not</i> a good thing.
+In some sense, I don&#8217;t care if MS XML or ODF become &#8220;the&#8221; format for office
+documents, as long as the final specification is truly open.
+But the materials noted above lead me to believe that MS XML is not
+really open; it appears to be effectively controlled by one vendor, both
+in its current and future forms, as one obvious example.
+So MS XML isn&#8217;t really an option, and we already have a nice working solution.
+</p>
+<p>
+What I want is a single document format that is fully open.
+What&#8217;s that mean? See
+<a href="http://www.dwheeler.com/essays/opendocument-open.html">
+Is OpenDocument an Open Standard? Yes!</a> to see what the phrase
+&#8220;open standard&#8221; <i>really</i> means.
+And let&#8217;s look at it in practice.
+Currently I can edit text documents using the program &#8220;vim&#8221;, and I don&#8217;t
+even bother to ask if the other person uses emacs, or Notepad&#8230; just by
+saying &#8220;simple text format&#8221; we can exchange our files.
+Similarly, I can edit a GIF or PNG file without wondering what originally
+created the file - or who will edit it next.
+That&#8217;s generally true with other standards like HTML, HTTP, and TCP/IP.
+That&#8217;s the beauty of open standards - real open standards
+enable a thriving industry of competing products,
+allowing users to choose and re-choose between them.
+I want to see that beautiful sunlight in office suites as well.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/06/05#odf-msxml-ooxml-compare">permanent link to this entry</a></p>
+<h1>Sat, 26 May 2007</h1>
+<p><a name="i-am-linux"><font size="+2"><b>Funny &#8220;I&#8217;m Linux&#8221; ads from Novell</b></font></a></p><p></p>
+<p>
+This came out a little while ago, but I just saw them and they&#8217;re hilarous.
+Here are three ads from Novell that spoof Apple&#8217;s &#8220;I&#8217;m a Mac&#8221; ads,
+and I thought they were really funny and well-done.
+</p>
+<p>
+Here are links to the Hi-Res Novell Videos:
+<ol>
+<li>Meet Linux
+<a href="http://cdn.novell.com/cached/video/bs_07/mac_pc_linux.mpg">mpg</a>
+<a href="http://cdn.novell.com/cached/video/bs_07/mac_pc_linux.OGG">ogg</a>
+<a href="http://www.youtube.com/v/pDc9I3z7ab4">Flash on YouTube</a>
+<li>
+New Duds
+<a href="http://cdn.novell.com/cached/video/bs_07/mac_pc_linux_2.mpg">mpg</a>
+<a href="http://cdn.novell.com/cached/video/bs_07/mac_pc_linux_2.OGG">ogg</a>
+<a href="http://www.youtube.com/v/8LAXg_UmzTY">Flash on YouTube</a>
+<li>
+Running Linux
+<a href="http://cdn.novell.com/cached/video/bs_07/mac_pc_linux_3.mpg">mpg</a>
+<a href="http://cdn.novell.com/cached/video/bs_07/mac_pc_linux_3.OGG">ogg</a>
+<a href="http://www.youtube.com/v/NkFQVcl62qo">Flash on YouTube</a>
+</ol>
+</p>
+<p>
+<a href="http://reverendted.wordpress.com/2007/03/19/mac-vs-pc-how-would-linux-fit/">Here&#8217;s some background about how these ads were created</a>.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/05/26#i-am-linux">permanent link to this entry</a></p>
+<h1>Wed, 18 Apr 2007</h1>
+<p><a name="gmu-sample-document"><font size="+2"><b>George Mason University (GMU) Thesis/Dissertation Sample Document in OpenDocument Format</b></font></a></p><p></p>
+<p>
+I&#8217;ve released a &#8220;sample document&#8221; that implements all the requirements of
+<a href="http://www.gmu.edu/library/specialcollections/dtabout.htm">
+George Mason University (GMU)&#8217;s Thesis/Dissertation format</a>
+in the OpenDocument format.
+You can get it in
+<a href="http://www.dwheeler.com/misc/gmu-sample-format.odt">OpenDocument</a>
+or
+<a href="http://www.dwheeler.com/misc/gmu-sample-format.pdf">PDF</a> formats.
+</p>
+<p>
+If you&#8217;re a student at GMU who needs it, you really need this.. but even
+if you&#8217;re not, there&#8217;s lots that can be shown from this template.
+</p>
+<p>
+First, if you&#8217;re a student at GMU who needs it, let me explain why you
+<i>really</i> need it.
+Most universities have their own formats that have many detailed requirements,
+so by using a pre-created format, you immediately comply with lots of the
+details that are meaningless, yet you can&#8217;t graduate without meeting them.
+GMU requires page numbers to be on the top right, except at chapter headings
+(where they are centered on the bottom)&#8230; except that appendix chapter
+headings aren&#8217;t considered chapter headings.
+Got all that?
+GMU requires that there be a horizontal line between any
+footnotes and the main text, and it must be exactly 2&#8221; long.
+Oh, and there are lots of margin requirements, which you must get exactly right.
+Every university has its own oddnesses; this format, for example, is
+explicitly single-sided, uses U.S. customary measurement units everywhere,
+and has its own odd placement rules (e.g., appendixes must be placed
+<i>after</i>, not before, the bibliography).
+Headings are 2&#8221; from the top.. except that level 1 appendix headings aren&#8217;t
+considered headings.
+It took me a long time of back-and-forth discussions with the GMU
+dissertation and thesis coordinator to get all the details right.
+(The problem wasn&#8217;t that OpenDocument couldn&#8217;t do it; the problem was
+understanding what the GMU requirements actually were.)
+You can spend many, many hours to redo these details&#8230;
+or just grab this sample document and have the problems solved for you.
+</p>
+<p>
+But whether you&#8217;re a GMU student or not, there&#8217;s lots that can be shown
+from this template.
+It certainly shows that OpenDocument is fully capable of representing
+fairly complicated (and odd!) formats, for large documents,
+completely automatically.
+That shouldn&#8217;t be surprising; one of the OpenDocument
+developers was Boeing, who develop so many large documents
+to build an airplane that the documents (when printed) outweigh the plane.
+</p>
+<p>
+In particular, this document shows that an OpenDocument document can automate
+all sorts of things, easing development:
+<ol>
+<li>Just create a &#8220;Heading 1&#8221; (control-1 in OpenOffice.org) and the page format
+automatically switches to first chapter format (with page numbering in
+a different place).
+<li>The spacing and text flow all happen automatically, without weird
+artifacts like undesired &#8220;extra&#8221; vertical space on the top of a page.
+In fact, nearly everything is very automatic - you can concentrate
+on writing a paper, instead of fixing formats.
+The entire document is based on &#8220;paragraph styles&#8221; - just make sure each
+paragraph has the right style (which is nearly always correct), and the
+document will look right.
+<li>Tables of Contents, of tables, and figures can all be automatically
+regenerated.
+<li>Even the bibliography can be regenerated automatically, so that only
+documents actually cited in the paper are listed. You can even
+determine what order is appropriate
+(e.g., alphabetically or in citation order).
+</ol>
+</p>
+<p>
+What&#8217;s particularly amusing is to compare the OpenDocument template to
+the GMU Word templates, because their Word templates are <i>horrible</i>
+to use.
+GMU&#8217;s Word templates are a bunch of individual files, completely
+inappropriate for actual use by a writer. Even the first page of a chapter
+and the rest of a chapter are in separate documents, and the
+table of contents has to be regenerated by hand.
+But even merging these files together won&#8217;t completely solve the problem;
+Word sometimes fails to correctly generate tables of contents
+(it&#8217;s happened to me!),
+which is one reason why so many people hand-create tables of contents.
+And Word certainly doesn&#8217;t match other OpenDocument capabilities,
+such as automated bibliography management.
+What&#8217;s worse, even though Word <i>does</i> have paragraph styles, Word
+seems to work especially hard to subvert and make their use difficult.
+Word seems to love redefining all your carefully-crafted styles,
+making Word painful to use as the document gets long.
+In contrast, OpenDocument is a breeze to use (at least in
+OpenOffice.org, and probably other OpenDocument-based systems as well) -
+setting paragraph styles is trivial (and for the most part completely
+automatic), once set they stay set, and they can make all the other
+formatting decisions automatic.
+Creating useful sample documents in Word is also painful;
+I started and completed one in OpenDocument quite easily,
+while GMU is still struggling to create a Word template.
+</p>
+<p>
+You don&#8217;t have to use OpenOffice.org to use OpenDocument, which is great -
+choice and competition are good things.
+But OpenOffice.org is a reasonable choice.
+Bruce Byfield&#8217;s articles
+<a href="http://www.newsforge.com/article.pl?sid=04/10/04/150207">
+Replacing FrameMaker with OOo Writer</a> and
+<a
+href="http://software.newsforge.com/article.pl?sid=05/06/14/2137222">
+OpenOffice.org Writer vs. Microsoft Word</a>
+showed that OpenOffice.org is remarkably capable, especially in its word
+processor.
+Byfield&#8217;s comparison of OpenOffice.org with the widely-lionized
+FrameMaker is especially enlightening:
+&#8220;I began comparing FrameMaker and Writer when a regular on the OpenOffice.org
+User&#8217;s list asked what it would take to give Writer the power of FrameMaker.
+When I started, I mentally pictured a scale with Microsoft Word on one end and
+FrameMaker on another, with Writer in the middle, but closer to Microsoft
+Word.  As I proceeded, I found Writer was a much stronger contender than I had
+expected. At the end of the comparison, I had to conclude that the two
+products compare quite closely, depending on what features are more important
+to a given user&#8230;
+[OpenOffice.org users]
+can be in little doubt that they are using software that
+competes with FrameMaker on its own terms, and wins as often it loses. Even
+ignoring the cost and philosophical differences, OpenOffice.org is clearly an
+acceptable alternative to FrameMaker.&#8221;
+</p>
+<p>
+In short, if you&#8217;re creating a thesis at GMU, use OpenDocument.
+I&#8217;ve used Word, Word Perfect, OpenOffice.org, and FrameMaker to write
+large documents.
+FrameMaker is nice but hideously overpriced, and because it&#8217;s overpriced,
+non-standard, and poorly supported,
+it&#8217;s mostly disappearing from the marketplace.
+Word works well for 1-2 page documents, but its weaknesses become apparant
+as your documents get larger, and it&#8217;s based on proprietary formats that
+lock you into a single product.
+It&#8217;s painful to use for larger documents;
+GMU has yet to create a Word template that is even slightly non-painful.
+In contrast, in short order I created an OpenDocument format that
+did everything they wanted, with lots of automation.
+OpenDocument is an ISO standard, with nice products
+to support it, and specifically designed for large documents.
+If you need to make large documents, use the right tool for the job.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/04/18#gmu-sample-document">permanent link to this entry</a></p>
+<h1>Thu, 12 Apr 2007</h1>
+<p><a name="oss-why-20070412"><font size="+2"><b>April 2007 release of &#8220;Why OSS/FS? Look at the Numbers!&#8221;</b></font></a></p><p></p>
+<p>
+Finally, I&#8217;ve released a new version of
+<a href="http://www.dwheeler.com/oss_fs_why.html">&#8220;Why Open Source Software /
+Free Software (OSS/FS, FLOSS, FOSS)? Look at the Numbers!&#8221;</a>
+This paper continues to provide
+&#8220;quantitative data that, in many cases, using open source
+software / free software (abbreviated as OSS/FS, FLOSS, or FOSS) is a
+reasonable or even superior approach to using their proprietary competition
+according to various measures. This paper’s goal is to show that you should
+consider using OSS/FS when acquiring software.&#8221;
+</p>
+<p>
+It&#8217;s been a while; my last release was November 14, 2005.
+The <a href="http://www.dwheeler.com/archive/ChangeLog">ChangeLog</a>
+has all the details, but here are some of the highlights:
+<ol>
+<li>
+Updated webserver stats, and noted issues with the Go Daddy change
+and lighttpd.
+</li>
+<li>
+<a href="http://www.esecurityplanet.com/views/article.php/3665801">
+Noted Kenneth van Wyk&#8217;s article about Linux security</a>
+</li>
+<li>
+Added quotes from Microsoft&#8217;s Bill Hilf, from
+&#8220;Cracking Open the Door to Open Source&#8221; by Carolyn A. April,
+&#8220;Redmond&#8221; magazine, March 2007, pp. 26-36.
+<li>
+<a href="http://www.cs.vu.nl/~ast/brown/">
+Added link to Andy Tanenbaum&#8217;s article about Ken Brown and ADTI</a>.
+</li>
+<li>
+Added a link to an
+<a href="http://www.cyber-rights.org/interception/echelon/European_parliament_resolution.htm">approved European Parliament resolution,
+A5-0264/2001</a>, which calls &#8220;on the Commission and Member States to promote software projects
+whose source text is made public (open-source software), as this is the only
+way of guaranteeing that no backdoors are built into programmes [and calls] on
+the Commission to lay down a standard for the level of security of e-mail
+software packages, placing those packages whose source code has not been made
+public in the &#8216;least reliable&#8217; category&#8221; (5 September, 2001; 367 votes
+for, 159 against and 39 abstentions).
+</li>
+<li>
+Added a reference to the Forrester report &#8220;Open Source Becoming
+	   Mission-Critical In North America And Europe&#8221; by Michael Goulde 
+	   that says &#8220;Firms Should Consider Open Source Options
+	   For Mission-Critical Applications&#8221;.
+</li>
+<li>
+Added references to a
+<a href="http://ec.europa.eu/enterprise/ict/policy/doc/2006-11-20-flossimpact.pdf">major new European Commission-sponsored study,
+&#8220;Study on the Economic impact of open source software
+on innovation and the competitiveness of the
+Information and Communication Technologies (ICT) sector in the EU&#8221;,
+November 20, 2006</a>.  This is a major new study;
+&#8220;Our findings show that, in almost all the cases,
+a transition toward open source reports of savings
+on the long term&#8221;.  There is LOTS of quantitative information here.
+</li>
+<li>
+Added reference to Communications of the ACM (CACM) Jan. 2007,
+<a href="http://portal.acm.org/citation.cfm?id=1188921">
+&#8220;Increased Security through Open Source&#8221;</a>
+It doesn&#8217;t say anything new, and it omits the many quantitative studies
+cited here, but it&#8217;s a prestigious journal that says it.
+</li>
+<li>
+<a href="http://www.oreillynet.com/pub/a/sysadmin/2007/01/05/fingerprinting-mail-servers.html">Added reference to mail server market survey:
+	  Sendmail and Postfix and #1 and #2 in the market</a>.
+</li>
+<li>
+Added references to
+<a href="http://defectivebydesign.org">defectivebydesign.org</a>
+and to Raymond/Landley&#8217;s &#8220;World Domination 201&#8221; into desktop section.
+</li>
+<li>
+<a href="http://blog.washingtonpost.com/securityfix/2007/01/internet_explorer_unsafe_for_2.html">IE vs. Firefox unsafe days in 2006.</a> Eek&#8230; it&#8217;s scary.
+</li>
+<li>
+Added
+<a href="http://www.computerworld.com/action/article.do?command=viewArticleBasic&articleId=9006990&amp;intsrc=news_ts_head">Survey - Linux use on mission-critical systems</a>
+</li>
+<li>
+Added
+<a href="http://lxer.com/module/newswire/view/77291/index.html">Danish cities demand more openness</a>
+</li>
+<li>
+Added
+<a href="http://blogs.zdnet.com/open-source/?p=837">
+	  &#8220;The war is over and Linux won&#8221; (Server war)</a>
+</li>
+<li>
+Added
+<a href="http://www.linux.com/article.pl?sid=06/12/04/1538214">
+Evergreen, an open source, enterprise-class library management
+developed by the Georgia Public Library Service</a>.
+</li>
+<li>
+Added reference to TCO savings on OSS/FS databases, from
+<a href="http://www.itnews.com.au/newsstory.aspx?CIaNID=42505&amp;src=site-marq">&#8220;Open source databases &#8216;60 percent cheaper&#8217;&#8221; article</a>
+</li>
+<li>
+Added info Firefox use which keeps growing. See
+<a href="http://marketshare.hitslink.com/report.aspx?qprid=3">
+http://marketshare.hitslink.com/report.aspx?qprid=3</a> and
+<a href="http://www.techweb.com/wire/security/193104314">
+http://www.techweb.com/wire/security/193104314</a>
+</li>
+<li>
+Added
+<a href="http://www.linux-watch.com/news/NS8445673704.html">
+reference to IDC survey</a>
+</li>
+<li>
+<a href="http://www.dwheeler.com/oss_fs_why.html#trusting-trust">
+Referenced &#8220;Trusting Trust&#8221; attack</a>.
+Here&#8217;s the text:
+	&#8220;An Air Force evaluation by Karger and Schell first publicly described
+	this very nasty computer attack, which Ken Thompson ably demonstrated
+	and described in his classic 1984 paper &#8220;Reflections on Trusting
+	Trust&#8221;. Thompson showed that because we use software to create other
+	software, if an attacker subverts the software-creating programs, no
+	amount of auditing any program can help you - the subverted programs
+	can hide whatever they want to! This has been called the
+	&#8220;uncounterable attack&#8221;, and some have said that it&#8217;s impossible to
+	secure computers simply because this attack is possible. Some have
+	even said that all those security audits of OSS/FS are worthless,
+	because subverted tools could insert attacks the auditors couldn&#8217;t
+	see. But it turns out that the trusting trust attack can be countered.
+	My 2005 paper Countering Trusting Trust through Diverse
+	Double-Compiling (DDC), published by ACSAC, shows how the
+	&#8220;uncounterable&#8221; trusting trust attack can be countered. But there&#8217;s a
+	catch: the DDC defense only works if you can get the source code for
+	your software creation tools, including the operating system,
+	compiler, and so on. That kind of information is typically only
+	available for OSS/FS programs! Thus, even in the case of the dangerous
+	&#8220;trusting trust&#8221; attack, OSS/FS has a security advantage.&#8221;
+
+</li>
+<li>
+Added a note about Symphony OS (innovative user interface).
+</li>
+<li>
+Added quote from Bellovin to history section.  OSS was the
+norm in many communities before the mid-1970s.
+</li>
+<li>
+Added
+<a href="http://www.onestat.com/html/aboutus_pressbox44-mozilla-firefox-has-slightly-increased.html">
+stats from onestat.com re: Firefox usage</a>
+</li>
+<li>
+Added
+<a href="http://levanta.com/linuxstudy/index.shtml">EMA study</a>
+</li>
+<li>
+Added <a href="http://news.yahoo.com/s/cmp/20060210/tc_cmp/179102616">
+Spyware stats, IE vs. Firefox, from University of Washington</a>.
+
+</li>
+<li>
+Added new reports on security flaw fixing time:
+<a href="http://blogs.washingtonpost.com/securityfix/2006/02/a_time_to_patch.html">
+http://blogs.washingtonpost.com/securityfix/2006/02/a_time_to_patch.html</a>
+and
+<a href="http://www.heinz.cmu.edu/%7Ertelang/disclosure_jan_06.pdf">
+http://www.heinz.cmu.edu/%7Ertelang/disclosure_jan_06.pdf</a>.
+
+</li>
+<li>
+Added
+<a href="http://flosspols.org/deliverables.php">
+	  &#8220;Deliverable D3: Results and policy paper from survey of
+	  government authorities&#8221;.</a>
+There&#8217;s lots of other good stuff there.
+</li>
+<li>
+Added reference to
+<a href="http://firstmonday.org/issues/issue10_10/nuvolari/">
+	  another paper on innovation</a>.
+
+</li>
+<li>
+Added reference to
+<a href="http://insight.zdnet.co.uk/software/0,39020463,39238437,00.htm">
+&#8220;Why open source projects are not publicised&#8221; by Ingrid Marson,
+ZDNet UK, November 25, 2005</a>.
+</li>
+</ol>
+</p>
+<p>
+As I mentioned earlier,
+I wish I&#8217;d used the term &#8220;FLOSS&#8221;
+(Free-Libre / Open Source Software) as my all-encompassing term in this paper.
+FLOSS is much easier to say than some of the alternatives, and
+the term &#8220;Free Software&#8221; is widely misunderstood as being &#8220;no cost&#8221;.
+However, I&#8217;ve used the term OSS/FS all over in the paper,
+and it&#8217;s awkward to change now
+(and people might not find the document they were looking for), so
+I haven&#8217;t changed it here.
+</p>
+<p>
+Enjoy!
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/04/12#oss-why-20070412">permanent link to this entry</a></p>
+<h1>Tue, 20 Mar 2007</h1>
+<p><a name="open-standards-security-audio"><font size="+2"><b>Audio for &#8220;Open Standards and Security&#8221; online</b></font></a></p><p></p>
+<p>
+Last year in Boston I gave a presentation titled
+&#8220;Open Standards and Security&#8221;</a>, explaining why
+open standards are needed for security;
+here is
+<a href="http://www.dwheeler.com/essays/open-standards-security.pdf">
+&#8220;Open Standards and Security&#8221; as a PDF</a>.
+You can also get it in
+<a href="http://www.dwheeler.com/essays/open-standards-security.odp">OpenDocument format</a>
+(for the OpenDocument version, make sure you
+<a href="http://www.dwheeler.com/#corefonts">have the fonts you need</a>).
+I
+<a href="http://www.dwheeler.com/blog/2006/04/12#open-standards-open-source">
+had earlier posted a blog entry about it</a>, and
+<a href="http://business.newsforge.com/business/06/04/05/2046210.shtml">
+Newsforge had some very nice things to say about my talk.</a>
+I used several stories in my talk, which the reporter called &#8220;parables&#8221;.
+I didn&#8217;t use that word, but I wish I had, because that&#8217;s exactly
+what those stories were.
+</p>
+<p>
+Many people never got to hear it, so I&#8217;ve finally made
+an audio version of it and posted it here in several formats:
+<a href="http://www.dwheeler.com/multimedia/open-standards-security.ogg">[OGG (Vorbis)]</a>,
+<a href="http://www.dwheeler.com/multimedia/open-standards-security.mp3">[MP3]</a>, and
+<a href="http://www.dwheeler.com/multimedia/open-standards-security.flac">[FLAC]</a>.
+Download and enjoy!
+You should be able to understand the talk just from listening to the
+audio, but if you listen to the audio while reading the slides, all the
+better!
+</p>
+<p>
+Of course, having to post multiple audio formats shows how immature the
+audio standards area is.
+While ISO has a standard (MP3),
+<a href="http://www.dwheeler.com/essays/opendocument-open.html">
+MP3 is not an open standard because it&#8217;s patent-encumbered</a>.
+I recommend using the Ogg Vorbis format instead - it&#8217;s the smallest file, and
+it has very good quality.
+Ogg Vorbis produces smaller files with better
+sound than MP3, so the only real reason to use MP3s is because your equipment
+can&#8217;t handle anything else.
+The FLAC format is lossless, and is useful for recoding later
+(it&#8217;s much smaller than a WAV or AIFF while still being lossless).
+</p>
+<p>
+The solution to this nonsense is not to have <i>no</i> standards.
+The solution is to either (1) get countries to stop permitting software patents
+(the best solution), or at least (2) get standards organizations to stop
+publishing closed standards like MP3 for software.
+I think the tide has already started turning for option 2.
+After all,
+when MP3 was created, many still thought that patents in IT standards
+were okay, and relatively few understood the problems that patents could cause.
+Fundamentally, of course, this made no sense; the whole point of a patent is to
+create temporary monopolies, while the whole point of an open standard is
+to enable competition (the opposite of monopolies).
+People have tried to make compromises that don&#8217;t really work, such
+as having so-called RAND policies.
+But I think these are clear failures; all royalty-bearing patents
+discriminate (for example, they prevent open source and
+no-cost implementations).
+The point of patents is to prevent competition, and thus they have
+no place in software standards.
+Now that software patents have been shown to be
+a &#8220;Wild West&#8221; where anyone can be sued for billions,
+the need for unencumbered standards should be quite clear.
+The W3C has already changed its policies to make it very hard to publish
+patent-encumbered standards, and the IETF has already thrown out several
+proposals specifically because they were encumbered by patents.
+</p>
+<p>
+One of the people at my talk made the claim that, &#8220;today, every successful
+open standard is implemented by FLOSS.&#8221; That should be easy to disprove &#8212; all
+I need is a counter-example. Except that counter-examples seem to be hard to
+find; I can&#8217;t find even one, and even if I eventually find one, this
+difficulty suggests that there&#8217;s something deeper going on.
+So as a result of thinking about this mystery, I wrote a new essay, titled
+<a href="http://www.dwheeler.com/essays/open-standards-open-source.html">
+Open Standards, Open Source</a>.
+It discusses how open standards aid free-libre /
+open source software (FLOSS) projects, how FLOSS aids open standards, and then
+examines this mystery. It appears that it is true &#8212; today, essentially every
+successful open standard really is implemented by FLOSS. I consider why that
+is, and what it means if this is predictive. In particular, this observation
+suggests that an open standard without a FLOSS implementation is probably too
+risky for users to require, and that developers of open standards should
+encourage the development of at least one FLOSS implementation. 
+The point of the &#8220;Open Standards and Security&#8221; talk was on open standards, not
+on FLOSS, but there&#8217;s much to be learned from their
+inter-relationships.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/security">/security</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/03/20#open-standards-security-audio">permanent link to this entry</a></p>
+<p><a name="oss-200703"><font size="+2"><b>Presentation and audio of &#8220;Open Source Software&#8221; online</b></font></a></p><p></p>
+<p>
+Earlier this month I gave a presentation about
+open source software (aka OSS, Free Software, or FLOSS)
+at a conference near Washington, DC.
+You can now download the
+<a href="http://www.dwheeler.com/essays/oss_200703.pdf">March 2007
+presentation &#8220;Open Source Software&#8221; in PDF format</a>; you can also get it in
+<a href="http://www.dwheeler.com/essays/oss_200703.odp">OpenDocument
+format</a>.
+For the OpenDocument version, make sure you
+<a href="http://www.dwheeler.com/#corefonts">have the fonts you need</a>.
+Those are just the slides; I&#8217;ve separately made the
+audio available in several formats:
+<a href="http://www.dwheeler.com/multimedia/oss_200703.ogg">[OGG (Vorbis)]</a>,
+<a href="http://www.dwheeler.com/multimedia/oss_200703.mp3">[MP3]</a>, and
+<a href="http://www.dwheeler.com/multimedia/oss_200703.flac">[FLAC]</a>.
+You should be able to understand the presentation just from the audio,
+but looking at the slides while listening to the audio is even better.
+For the audio,
+I recommend using the Ogg Vorbis format - it&#8217;s the smallest file, and it
+has very good quality.
+The FLAC format is lossless, and is useful for recoding later
+(it&#8217;s much smaller than WAV or AIFF while still not losing anything).
+The MP3 format is useful if your player can&#8217;t handle Ogg Vorbis yet
+(complain to your manufacturer!) - while MP3 is an ISO standard, MP3 isn&#8217;t
+an open standard because it&#8217;s patent-encumbered.
+</p>
+<p>
+The conference was titled
+&#8220;Open Source - Open Standards - Open Architecture&#8221;, and was put on
+by the non-profit
+<a href="http://afei.org">Association for Enterprise Integration (AFEI)</a>
+(a member of the <a href="http://ndia.org">NDIA</a> family of associations).
+A lot of people were particularly surprised to learn that
+essentially all open source software (FLOSS) are commercial
+off-the-shelf (COTS) software, a point I make in more detail in
+my essay
+<a href="http://www.dwheeler.com/essays/commercial-floss.html">&#8216;Commercial&#8217; is not the opposite of Free-Libre / Open Source Software (FLOSS)</a>.
+Basically, the U.S. government&#8217;s own laws (particularly Title 10 section 101) and regulations (particularly the Federal Acquisition Regulation)
+make it clear that nearly all open source software is
+commercial off-the-shelf (COTS).
+There are two kinds of COTS software products: proprietary software and
+open source software.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/03/20#oss-200703">permanent link to this entry</a></p>
+<h1>Mon, 05 Feb 2007</h1>
+<p><a name="ie-2007-bad"><font size="+2"><b>Internet Explorer 7: Still a security problem, keep using Firefox</b></font></a></p><p></p>
+<p>
+Microsoft&#8217;s Internet Explorer (IE) is a major security problem.
+<a href="http://blog.washingtonpost.com/securityfix/2007/01/internet_explorer_unsafe_for_2.html">
+The Washington Post found some horrific statistics</a> that justify
+this claim pretty well:
+&#8220;For a total 284 days in 2006 (or more than nine months out of the year), exploit code for known, unpatched critical flaws in pre-IE7 versions of the browser was publicly available on the Internet. Likewise, there were at least 98 days last year in which no software fixes from Microsoft were available to fix IE flaws that criminals were actively using to steal personal and financial data from users&#8230; In contrast, Internet Explorer&#8217;s closest competitor in terms of market share &#8212; Mozilla&#8217;s Firefox browser &#8212; experienced a single period lasting just nine days last year in which exploit code for a serious security hole was posted online before Mozilla shipped a patch to remedy the problem.&#8221;
+</a>
+</p>
+<p>
+Let&#8217;s sum that up: in 2006, IE was unsafe 78% (284/365) of the time - 27%
+(98/365) had known criminal use - compared to Firefox&#8217;s 2% (9/365).
+This is an improvement for IE; in 2004, it was unsafe 98% of the time,
+and 54% of the time there was known active exploitation of them.
+But Firefox is improving too; in 2004 it was unsafe 15% of the time (with
+0% known exploitation), and half of that time only affected Macintosh users.
+(<a href="http://www.dwheeler.com/blog/2005/08/06/#ie-horrific">I blogged
+on these Internet Explorer / Firefox security statistics in 2005</a>.)
+You really want to be using the safer product, and now we have two
+different years with the same result.
+But none of these studies considered IE version 7&#8230; so has it all changed?
+</p>
+<p>
+IE version 7 is finally out, and I&#8217;d like to think it&#8217;s better than IE 6.
+Indeed, I suspect IE 7 <i>is</i> better than its predecessor;
+Microsoft did try to improve IE security, and IE 6&#8217;s security
+was so bad that it was hard to get worse.
+But IE is not the only browser available, and
+early signs suggest that IE is still far behind Firefox.
+</p>
+<p>
+In particular,
+there are already signs that Microsoft still isn&#8217;t addressing vulnerabilities
+aggressively the way that the Mozilla/Firefox team have been doing for years.
+Why? Because recent &#8220;Full disclosure&#8221; and Bugtraq postings give room for worry.
+<a href="http://seclists.org/fulldisclosure/2007/Feb/0081.html">
+Michal Zalewski&#8217;s &#8220;Web 2.0 backdoors made easy with MSIE &amp; XMLHttpRequest&#8221;
+(3 Feb 2007)</a> noted that the XMLHttpRequest object (used by many
+so-called &#8220;web 2.0&#8221; applications) allows
+&#8220;client-side web scripts to send nearly arbitrary HTTP requests, and then
+freely analyze and manipulate the returned response, including HTTP
+headers.  This gives an unprecedented level of control over your browser to the
+author of a visited site. For this reason, to prevent various types of
+abuse, XMLHttpRequest is restricted to interacting only with the site from
+where the script originated, based on protocol, port, and host name
+observed.  Unfortunately, due to a programming error,
+Microsoft&#8217;s Msxml2.XMLHTTP ActiveX object that MSIE
+relies on allows you to bypass this restriction
+with the use of - BEHOLD - a highly sophisticated newline-and-tab
+technology.&#8221;
+(This last bit about being &#8220;highly sophisticated&#8221; is quite sarcastic;
+security problems with control characters like newline and tab are
+as old as computer security problems.)
+</p>
+<p>
+<a href="http://seclists.org/bugtraq/2007/Feb/0026.html">One poster found</a>
+a previous May 2006 article about this problem:
+<a href="http://www.securityfocus.com/archive/1/434931">
+&#8220;IE + some popular forward proxy servers = XSS, defacement (browser cache poisoning)&#8221;</a>.
+Indeed,
+<a href="http://seclists.org/bugtraq/2007/Feb/0045.html">
+the basic information goes back to
+September 2005</a>.
+(There are hints in January 2003, but to be fair few noticed its implications
+at the time.)
+</p>
+<p>
+Now it turns out that this kind of error is easy to make; even the
+Mozilla/Firefox people made this kind of error.
+In particular,
+this basic problem (differing in some details) was
+<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=297078#c12">
+identified and fixed in Mozilla in 2005 as bug 297078</a>.
+</p>
+<p>
+The problem in this case
+isn&#8217;t that the Microsoft people made an error, and the
+Mozilla/Firefox people didn&#8217;t.
+Certainly, there&#8217;s
+<a href="http://www.dwheeler.com/oss_fs_why.html#security">evidence</a>
+that Mozilla&#8217;s policy of releasing the source
+code for people to review, combined with worldwide development/review and
+a &#8220;bug bounty&#8221; to encourage additional review, really
+does produce good results.
+But in this case, both Microsoft and Mozilla made the error; what&#8217;s
+different is what happened next.
+Mozilla fixed it in 2005, the same year the issues had become clear,
+yet Microsoft still hasn&#8217;t fixed it in 2007.
+(And no, this particular defect isn&#8217;t included in the Washington Post
+study above; it sure wouldn&#8217;t improve IE&#8217;s statistics if they had.)
+</p>
+<p>
+If a supplier won&#8217;t quickly fix known security problems, that&#8217;s a really big
+warning sign.
+<a href="http://blog.washingtonpost.com/securityfix/2006/02/2005_patch_times_for_firefox_a.html">
+The Washington Post earlier found that Microsoft took far longer to
+fix a vulnerability than Mozilla</a>, and this latest report is consistent
+with that sad news.
+I do not understand why Microsoft hasn&#8217;t addressed this; hopefully this
+will turn out to be a false alarm (that seems unlikely) or they
+will fix it soon.
+</p>
+<p>
+The only way to really see which browser is more secure is examine its
+vulnerability pattern over time into the future - for example,
+does it have more vulnerabilities over time (of a certain criticality), and
+how fast are reported vulnerabilities repaired?
+But note a key issue:
+unless you throw away the entire program and start over from scratch, it&#8217;s
+difficult to turn an insecure program into a secure one.
+Thus, while past performance is no guarantee of future results, it&#8217;s
+a good way to bet.
+It appears that Microsoft still hasn&#8217;t fixed all the problems in IE 7 that were
+publicly known at least two years earlier (in some of the most
+widely publicized vulnerability discussion groups!).
+If that&#8217;s true, it&#8217;s a <i>really</i> bad sign&#8230; how can they have removed
+most vulnerabilities not publicly known, if they haven&#8217;t even addressed the
+ones already publicly known?
+</p>
+<p>
+I continue recommending that users switch to Firefox and <i>not</i> use IE
+for security reasons.
+And I highly recommend that web developers ensure that their systems conform
+to web standards so that users can choose and switch their browsers.
+These are only my personal opinions, but I think you can see why I
+think it makes sense.
+Even ignoring this particular issue, IE has a terrible track record.
+I&#8217;m glad that Microsoft is starting to take security seriously (they are
+at least saying the right things), and I&#8217;d delight
+in a race between suppliers to see who can produce the most secure software.
+But these recent reports reinforce the supposition that
+IE is still too dangerous to use safely.
+There&#8217;s nothing &#8220;user friendly&#8221; about a program that is easily subverted.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/security">/security</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/02/05#ie-2007-bad">permanent link to this entry</a></p>
+<h1>Tue, 16 Jan 2007</h1>
+<p><a name="flawfinder-1.27"><font size="+2"><b>Flawfinder version 1.27 released!</b></font></a></p><p></p>
+<p>
+I&#8217;ve released yet another new version of
+<a href="http://www.dwheeler.com/flawfinder">flawfinder</a> - now
+it&#8217;s version 1.27.
+Flawfinder is a simple program that examines C/C++ source code and
+reports on likely security flaws in the program, ranked by risk level.
+</p>
+<p>
+The big functional addition is that flawfinder can now
+examine <i>just the changes</i> in a program.
+If you&#8217;re modifying a big program, it can be overwhelming to view all
+of the warnings flawfinder can produce&#8230; but if you can look at only the
+ones relevant to the change <i>you</i> are making, it can be easier to handle.
+My thanks to Sebastien Tandel - he suggested the feature, I replied
+in a brief email describing how I thought it could be done, and
+<i>in the same day</i> he replied with code to implement it.
+Wow, that&#8217;s truly amazing.  His original patch only worked with Subversion;
+I modified it so that it also works with GNU diff.
+For this to work, you use the new &#8220;&#8212;patch&#8221; option and give flawfinder
+a patch file (in unified diff format) that describes the changes&#8230; and
+flawfinder will only report on the potential vulnerabilities on the
+changed lines (or the lines immediately above and below them).
+</p>
+<p>
+An administrative change is that
+<a href="https://sourceforge.net/projects/flawfinder/">
+flawfinder is now hosted on SourceForge.net</a>, with a mailing list
+and a Subversion repository for code changes.
+This should make it easier for people to discuss the program,
+submit changes, and generally keep track of things.
+And it also deals nicely with the &#8220;what happens if he&#8217;s hit by a bus&#8221;
+problem.
+</p>
+<p>
+You can view the
+<a href="http://www.dwheeler.com/flawfinder/ChangeLog">Flawfinder
+ChangeLog</a> for the details on the other changes.
+It deals more gracefully with unreadable files and when there are zero
+lines of code.
+Also, it now skips by default any directories beginning with &#8220;.&#8221;;
+this makes it work nicely with many SCM systems
+(use &#8220;&#8212;followdotdir&#8221; if you WANT it to enter such directories).
+My thanks to Steve Kemp, cmorgan, and others.
+</p>
+
+<p>
+For more info, or a copy,
+just go to my
+<a href="http://www.dwheeler.com/flawfinder">original flawfinder home page</a>
+or the new
+<a href="https://sourceforge.net/projects/flawfinder/">
+flawfinder page on SourceForge.net</a>.
+Enjoy!
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/security">/security</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/01/16#flawfinder-1.27">permanent link to this entry</a></p>
+<h1>Sun, 07 Jan 2007</h1>
+<p><a name="drm-nonsense-hddvd"><font size="+2"><b>DRM Nonsense, HD DVD, AACS, and BackupHDDVD - why &#8220;content protection&#8221; doesn&#8217;t</b></font></a></p><p></p>
+<p>
+Hollywood wants to prevent piracy - and that is understandable.
+But in their zeal it sometimes appears that some who create movies or music
+don&#8217;t care what privacy, security, legal rights,
+or laws of physics they try to violate.
+And that is a real problem.
+DRM proponents want to release digital information to people,
+yet make it impossible to copy them.
+Yet the whole point of digital processing is to enable perfect copies.
+<a href="http://www.defectivebydesign.org/">DRM (Digital Rights Management or
+Digital Restrictions Management) is truly &#8220;<i>defective
+by design</i>&#8221;</a>.
+As others have said, DRM is an attempt to change water so it&#8217;s not wet.
+</p>
+
+<p>
+The recent reports about HD DVD are showing the folly of DRM in general.
+HD DVD encrypts a movie, and then encrypts that movie key
+many different times on the DVD as well - once for each player.
+The theory here is that the movie industry could then revoke a player
+key by simply not including that key on future DVDs.
+I think the first time they try to actually do this, they&#8217;ll see the
+folly of it &#8212; it would mean that millions of customers would suddenly
+no longer have access to future movies through a device they purchased
+that they expected to work with them.
+Can anyone say &#8220;class action lawsuit&#8221;?  I knew you could!
+</p>
+
+<p>
+But it turns out that this idea has a fatal flaw technically, as shown by
+<a href="http://forum.doom9.org/showthread.php?t=119871">
+BackupHDDVD</a>
+(you can
+see the <a href="http://zavlakas.googlepages.com/BackupHDDVD.zip">code</a>,
+<a href="http://www.playfuls.com/news_05648_HD_DVDs_AACS_Protection_Bypassed_In_Only_8_Days.html">comments</a>,
+<a href="http://www.nytimes.com/2007/01/01/technology/01hack.html?ei=5088&amp;en=38ddb2918d77f8a4&amp;ex=1325307600&amp;partner=rssnyt&amp;emc=rss&amp;pagewanted=print">NY Times article</a>, and
+<a href="http://hardware.slashdot.org/article.pl?sid=06/12/28/0259244">
+Slashdot discussion</a>).
+The code itself is no big deal - it just implements the decryption protocol,
+which is publicly known anyway.
+But the interesting trick is that the released software
+requires the master decryption key for that specific movie,
+and the implementor is claiming that he has
+found a way to get this key from a player.
+To be fair, he hasn&#8217;t proven he can get such keys by actually sharing
+any real keys, but let&#8217;s presume that he is telling the truth; his
+described method for getting them is very plausible.
+Yet the implementor is <i>not</i> revealing the player that he got this from
+or the exact details of how he got them.
+</p>
+
+<p>
+That&#8217;s more clever than it first appears.
+The creators of the DRM scheme assumed that
+anyone who broke a player would reveal the player&#8217;s private key.
+But because BackupHDDVD&#8217;s creator
+doesn&#8217;t reveal that key, he never reveals the player
+he&#8217;s broken into.  Since the DRM scheme masters
+don&#8217;t know which player was broken into, their revocation scheme won&#8217;t work.
+Many other revocation schemes for media use the same basic approach,
+and so they would fall the same way.
+</p>
+
+<p>
+Some Blu-ray folks are claiming that this shows their scheme works better,
+because they can include additional crypto stuff on the media.
+But this shows that they don&#8217;t understand the nature of the problem;
+it&#8217;s not hard to implement the crypto interpreter, and since you wouldn&#8217;t
+know which player to revoke, you would give all the crypto interpreter
+information away too.  They&#8217;d just need to send around the decrypted
+decryptor&#8230; which would be trivially acquired.
+Once again, DRM is doing nothing to stop piracy, but it&#8217;s certainly
+interfering in legitimate use.
+Sorry, but water stays wet.
+</p>
+
+<p>
+I do not approve of piracy.
+I don&#8217;t approve of murder, either, yet I approve of
+the sale of steak knives and cleaning supplies&#8230; and would
+oppose trying to halt their sales.
+Certainly the <a href="http://www.cs.auckland.ac.nz/~pgut001/pubs/vista_cost.txt">costs to consumers of DRM measures</a> are considerable,
+yet they are actively against the interests of customers.. and they
+even fail to do the one thing they are supposed to do.
+DRM proponents are often laughingly referred to as the
+MAFIAA (Music And Film Industry Association of America), in part because
+their actions towards their own customers seem actively hostile.
+DRM seems to be primarily about preventing people from using in legitimate
+ways the products they&#8217;ve already purchased, and has nothing to do
+with actually preventing illegal activities.
+Why can&#8217;t I transfer that music or movie I bought to a new
+device I just bought?  Or to an old CD so I can play it
+on older equipment?  Why can&#8217;t I watch what I bought using
+GNU/Linux or BSD systems?
+Why can&#8217;t I use a $3000 display&#8217;s full resolution at all times
+for movies I have legitimately bought?
+Measures this extreme that create monopolies and inhibit legal activities
+are not a good thing, and are worse than the piracy that DRM measures
+are trying to prevent.
+</p>
+
+<p>
+What&#8217;s worse, the anti-consumer impacts of DRM don&#8217;t even inhibit piracy.
+The big piracy operations will
+just continue to make direct copies of the bits using specialized
+equipment, and DRM cannot affect that at all.
+Individuals can make recordings of the displays
+or sounds&#8230; again, DRM can&#8217;t really counteract that (there are anti-sync
+measures for video, but they are easily foiled).
+So DRM will fail against individuals, and against large-scale piracy, period.
+Since DRM tries to prevent many legitimate uses, it also encourages
+law-abiding citizens to break them&#8230; and so far they&#8217;ve all fallen,
+given that additional incentive.
+The fact that DRM is not even successful at doing what it&#8217;s supposed to
+do is just icing on the cake. Even if DRM worked, it is still
+worse than the problems it is trying to stop.
+</p>
+
+<p>
+DRM is the disease, not the cure.
+It&#8217;s time for content industries to take advantage of technology, instead of
+trying to halt the use of technology.
+Instead of DRM, they should sell non-DRMed content using standards that
+<i>everyone</i> can implement&#8230; and then they can sell their
+content to a very large unified market.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/security">/security</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/01/07#drm-nonsense-hddvd">permanent link to this entry</a></p>
+</body></html>

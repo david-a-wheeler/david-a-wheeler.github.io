@@ -1,0 +1,370 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Thu, 11 Oct 2007</h1>
+<p><a name="readable-sweet-lisp2"><font size="+2"><b>Readable s-expressions (sweet-expressions) for Lisp-like languages</b></font></a></p><p></p>
+<p>
+<a href="http://www.dwheeler.com/blog/2006/06/17/#readable-sweet-lisp">
+Back in 2006 I posted my basic ideas about &#8220;sweet-expressions&#8221;</a>.
+Here&#8217;s a basic recap, before I discuss what&#8217;s new.
+Lisp-based programming languages
+normally represent programs as <i>s-expressions</i>,
+where an operation and its parameters are surrounded by parentheses.
+The operation to be performed is identified first,
+and each parameter afterwards is
+separated by whitespace.  So the traditional &#8220;2+3&#8221; is written as
+&#8220;(+&nbsp;2&nbsp;3)&#8221; instead.
+This is regular, but most people find this hard to read.
+Here&#8217;s a longer example of an s-expression - notice the many parentheses
+and the lack of infix operations:
+<pre>
+ (defun factorial (n)
+   (if (&lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+</pre>
+</p>
+
+<p>
+Lisp-based systems are very good at symbol manipulation tasks,
+including program analysis.
+But many software developers avoid Lisp-based languages,
+even in cases where they would be a good tool to use, because
+most software developers find s-expressions really hard to read.
+I think I&#8217;ve found a better solution, which I call &#8220;sweet-expressions&#8221;.
+Here&#8217;s that same program be written using sweet-expressions:
+<pre>
+ defun factorial (n)         ; Parameters can be indented, but need not be
+   if (n &lt;= 1)               ; Supports infix, prefix, &amp; function &lt;=(n 1)
+       1                     ; This has no parameters, so it's an atom.
+       n * factorial(n - 1)  ; Function(...) notation supported
+</pre>
+</p>
+
+<p>
+Sweet-expressions add the following abilities:
+<ol>
+<li><b>Indentation</b>. Indentation may be used instead
+of parentheses to start and end
+expressions: any indented line is a parameter of its parent,
+later terms on a line are parameters of the first term,
+lists of lists are marked with GROUP, and
+a function call with 0 parameters is surrounded or followed by a pair of
+parentheses [e.g., (pi) and pi()].
+A &#8220;(&#8221; disables indentation until its matching &#8220;)&#8221;.
+Blank lines at the beginning of a new expression are ignored.
+A term that begins at the left edge and is immediately followed by newline
+is immediately executed, to make interactive use pleasant.
+<li><b>Name-ending</b>. Terms of the form &#8216;NAME(x y&#8230;)&#8217;, with no whitespace before
+&#8216;(&#8217;, are interpreted as &#8216;(NAME x y&#8230;)&#8217;;.
+Parameters are space-separated inside.
+If its content is an infix expression, it&#8217;s considered one parameter instead
+(so f(2 + 3) computes 2 + 3 and passes its result, 5, to f).
+<li><b>Infix</b>.  Optionally,
+expressions are automatically interpreted as infix
+if their second parameter is an infix operator
+(by matching an &#8220;infix operator&#8221; pattern of symbols),
+the first parameter is not an infix operator,
+and it has at least three parameters.
+Otherwise, expressions are interpreted as
+normal &#8220;function first&#8221; prefix notation.
+To disable infix interpretation, surround the second parameter with as(&#8230;).
+Infix expressions must have an odd number of parameters with the
+even ones being the same binary infix operator.
+You must separate each infix operator with whitespace on both sides.
+Precedence is not supported; just use parens
+(a lot more about that in a moment).
+Use the &#8220;name-ending&#8221; form for unary operations, e.g., -(x) for &#8220;negate x&#8221;.
+Thus &#8220;2 + (y * -(x))&#8221; is a valid expression, equivalent to (+ 2 (* y (- x))).
+&#8220;(2 + 3 + 4)&#8221; is fine too.
+Infix operators must match this pattern (and in Scheme cannot be =&gt;):
+<pre>
+    [+-\*/&lt;&gt;=&amp;\|\p{Sm}]{1-4}|\:
+</pre>
+</ol>
+</p>
+
+<p>
+For more information on sweet-expressions or on making
+s-expressions more readable in general, see my website page at
+<a href="http://www.dwheeler.com/readable">http://www.dwheeler.com/readable</a>.
+For example, I provide a demo sweet-expression reader in Scheme
+(under the MIT license), as well as an indenting pretty-printer in
+Common Lisp.
+In particular, you can
+<a href="http://www.dwheeler.com/readable/readable-s-expressions.html">
+see my lengthy paper about why sweet-expressions do what they do, and
+some plausible alternatives.</a>
+You can also download some other implementation code.
+I&#8217;ve also set up a
+<a href="http://sourceforge.net/projects/readable">
+SourceForge project named &#8220;readable&#8221;</a> to
+discuss options in making s-expressions more readable,
+and to distribute open source software to implement them
+(unimplemented ideas don&#8217;t go far!).
+</p>
+
+<p>
+Okay, but all of that was true in 2006 - what&#8217;s new?
+What&#8217;s new is a change of heart about precedence.
+I&#8217;ve been occasionally trying to figure out how to
+&#8220;flesh out&#8221; sweet-expressions with operator precedence, and I just
+kept hitting one annoying complication after another.
+Precedence is nearly universal among programming languages;
+they&#8217;re very useful, and only a few infix-supporting languages
+(such as Smalltalk) lack them.
+&#8220;Everyone&#8221; knows that 2+3*4 is 14, not 20, because of years of training
+in math classes that you multiply before you add.
+They&#8217;re also pretty easy to code (it&#8217;s an old solved problem).
+But I&#8217;ve discovered that
+in the typical use cases of a Lisp-like language&#8217;s expression reader,
+supporting precedence (in the general case)
+has some significant downsides that are irrelevant in other situations.
+Which is interesting, given how widespread they are elsewhere, so
+let&#8217;s see why that is.
+</p>
+
+<p>
+First, let&#8217;s talk about a big advantage to <i>not</i> supporting
+precedence in sweet-expressions:
+It makes the creation of every new list obvious in the text.
+That&#8217;s very valuable in a list processing language; the key advantage of
+list processing languages is that you can process programs like data, and
+data like programs, in a very fluid way, so having clear markers of new lists
+using parentheses and indentation is very valuable.
+</p>
+
+<p>
+Now let me note the downsides to supporting precedence
+in the specific cases of a Lisp-like language, which
+leads me to believe that it&#8217;s a bad idea for this particular use.
+Basically, adding precedence rules to a general-purpose list expression
+processor creates a slippery slope of complexity.
+There are two basic approaches to defining precedence: dynamic and static.
+<ul>
+<li><i>Dynamic:</i>
+You can trivially create commands that dynamically
+create new infix operators, as well as
+express their precedence and direction.
+Coding this is not a problem, and in fact there are several implementations
+of this in Lisp already out there.
+But using this kind of dynamism for s-expressions themselves
+gets hideously complicated in many uses of a Lisp-like language.
+In a Lisp-like language,
+objects often shift between being data and being code.
+Often you&#8217;re working at multiple levels and meta-levels of input -
+and you may not want their precedences to be the same.
+Yet trying to handle those different levels
+turns out to require very complex management of the reader routine&#8230; you
+have to keep passing to the various readers the various incompatible
+precedence states (ugh).
+Combining code from different sources can be a nightmare if
+they have different precedence values, too.
+In short, having precedences dynamically vary by meta-level
+creates complexities you just don&#8217;t want to deal with.
+</li>
+<li><i>Static:</i>
+All of the above suggests that dynamic control is painful; one
+solution would be a
+completely static, pre-canned set of precedence levels.
+That would eliminate passing state, at least.
+And indeed, this is what most programming languages do; you don&#8217;t get
+to reset the precedence of C operators
+(a few languages, like Prolog, are an exception here).
+Fine, but someone has to predefine that set.
+That turns out to be really hard; the meanings of various infix operators
+are <i>not</i> cast in stone, so it&#8217;s difficult to preset the precedence
+levels meaningfully (since you don&#8217;t know what the operators mean).
+That&#8217;s particularly true if, like me, you&#8217;re trying to define a single
+expression syntax that would work (more or less) on arbitrary
+Lisp-like languages.
+The one obvious case is that * and / have higher precedence than binary
++ and - basically everywhere.
+That particular rule <i>could</i> be built-in, but if that&#8217;s <i>all</i> you
+build in, there&#8217;s little evidence that it&#8217;s worth the trouble.
+This kind of odd exception (there&#8217;s no precedence, except for * and /
+over + and -)
+is unlikely to help development, and it&#8217;s yet another rule to remember.
+And if we&#8217;re going to have such a limited support for precedence anyway,
+why not completely forbid mixing the operators -
+the advantage there is that it would make the mapping between
+lists and their textual representation much clearer.
+</li>
+</ul>
+</p>
+
+<p>
+It&#8217;s easier to add precedence later, if that turns out to be important after
+more experimentation.
+But after the experimentation I&#8217;ve done so far,
+it appears that precedence simply isn&#8217;t worth it in this case.
+Precedence creates complexity in this case, and it
+hides where the lists begin/end.
+It&#8217;s not hard to work without it; you can even argue that (2 + (5 * 6)) 
+is actually clearer than (2 + 5 * 6).
+Precedence is great in many circumstances - I&#8217;d hate to lose it
+in other languages - but in this particular set of use cases,
+it seems to be more of a hurt than a help.
+</p>
+
+<p>
+Of course, you can write code in some Lisp dialect to implement a language that
+includes precedence.
+Many programs written in Lisp, including PVS and Maxima, do just that.
+But when you&#8217;re implementing another language, you know what the operators
+are, and you&#8217;re probably implementing other syntactic sugar too, so
+adding precedence is a non-problem.
+Also, if you&#8217;re really happy with s-expressions as they are, and just
+want precedence in a few places in your code, a simple macro to implement them
+(such as <a href="http://folk.uio.no/jornv/infpre/infpre.html">infpre</a>)
+works very well.
+But sweet-expressions are intended to be a universal representation
+in Lisp-like languages,
+just like S-expressions are, so their role is different.
+In that different role, precedence causes problems that don&#8217;t
+show up in most other uses.
+It think not supporting precedence turns
+out to be much better for this different role.
+</p>
+
+<p>
+Here are some more examples, this time in Scheme (another Lisp dialect):
+<table cellpadding="4">
+<tr>
+<th align="left">Sweet-expression</th>
+<th align="left">(Ugly) S-expression</th>
+</tr>
+<tr>
+<td align="left">
+<pre>
+define factorial(n)
+   if (n &lt;= 1)
+       1
+       n * factorial(n - 1)
+substring("Hello" (1 + 1) string-length("Hello"))
+define move-n-turn(angle)
+   tortoise-move(100)
+   tortoise-turn(angle)
+if (0 &lt;= 5 &lt;= 10)
+   display("True\n")
+   display("Uh oh\n")
+define int-products(x y)
+  if (x = y)
+    x
+    x * int-products((x + 1) y)
+int-products(3 5)
+(2 + 3 + (4 * 5) + 7.1)
+(2 + 3 + (4 / (5 * 6)))
+*(2 3 4 5)
+</pre>
+</td>
+<td align="left">
+<pre>
+(define (factorial n)
+   (if (&lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+(substring "Hello" (+ 1 1) (string-length "Hello"))
+(define (move-n-turn angle)
+   (tortoise-move 100)
+   (tortoise-turn angle))
+(if (&lt;= 0 5 10)
+   (display "True\n")
+   (display "Uh oh\n"))
+(define (int-products x y)
+  (if (= x y)
+      x
+      (* x (int-products (+ x 1) y))))
+(int-products 3 5)
+(+ 2 3 (* 4 5) 7.1)
+(+ 2 3 (/ 4 (* 5 6)))
+(* 2 3 4 5)
+</pre>
+</td>
+</tr>
+</table>
+</p>
+
+<p>
+So I&#8217;ve modified my demo program so that it supports infix operator
+chaining, such as (2 + 3 + 4).
+Since I no longer need to implement precedence, the addition of
+chaining means that I now have a working model of the whole idea,
+ready for experimentation.
+My demo isn&#8217;t ready for &#8220;serious use&#8221; in development yet;
+it has several known bugs and weaknesses.
+But it&#8217;s good enough for experimentation, to see if the basic idea is
+sensible - and I think it is.
+You can actually sit down and play with it, and see if it has merit.
+There are still some whitespace rules I&#8217;d like to fiddle with,
+to make both long files and interactive use as comfortable as possible,
+but these are at the edges of the definitions&#8230; not at its core.
+</p>
+
+<p>
+I&#8217;m suggesting the use of &amp;&amp; for &#8220;logical and&#8221;,
+and || for &#8220;logical or&#8221;.  These are common symbols in other languages,
+and using the same symbols aids readability.
+Now, in Common Lisp and some Scheme implementations, ||
+is &#8220;the symbol with 0-length name&#8221;.
+Oddly enough, this doesn&#8217;t seem to be a problem; Lisps can generally
+bind to the symbol with the 0-length name, and print it the same way, so
+it works perfectly well!
+In Scheme this is trivially done by running this:
+<pre>
+define(&amp;&amp; and)
+define(|| or)
+</pre>
+Then you can do this:
+<pre>
+(#t &amp;&amp; #t)
+if ((a &gt; b) || ((a * 2) &lt; (c + d + e))) ...
+</pre>
+Instead of the hideous s-expressions:
+<pre>
+(and #t #t)
+(if (or (&gt; a b) (&lt; (* a 2) (+ c d e))) ...)
+</pre>
+</p>
+
+<p>
+Here are some quotable quotes, by the way, showing that I&#8217;m not the
+only one who thinks there&#8217;s room for improvement:
+<ul>
+<li><i>I&#8217;ve used Lisp my whole programming life and
+I still don&#8217;t find prefix math expressions natural.</i>
+- <a href="http://paulgraham.com/popular.html">Paul Graham</a>
+</li>
+<li><i>I have more faith that you could convince the
+world to use esperanto than [to use] prefix notation.</i>
+- <a href="http://people.csail.mit.edu/gregs/ll1-discuss-archive-html/msg01571.html">Paul Prescod</a>
+</li>
+</ul>
+</p>
+
+<p>
+Lisp-based languages are all over the place.
+There are vast number of implementations of Common Lisp and Scheme.
+GNU guile is a Scheme implementation embedding into many other
+programs, for example.
+GNU emacs is a widely-used text editor, built on its own dialect of Lisp.
+AutoCAD has its own variant under the covers, too.
+Programs like PVS are implemented in Lisp, and interacting with it
+currently requires using s-expressions.
+It&#8217;d be great if all of these supported an alternative, simpler syntax.
+With sweet-expressions, typical s-expressions are legal too.
+So I think this is a widely-useful idea.
+</p>
+
+<p>
+So if you&#8217;re interested, take a look at
+<a href="http://www.dwheeler.com/readable">http://www.dwheeler.com/readable</a>.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/10/11#readable-sweet-lisp2">permanent link to this entry</a></p>
+</body></html>

@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Tue, 24 Jul 2018</h1>
+<p><a name="email-encryption"><font size="+2"><b>Email encryption is here! Use STARTTLS everywhere!</b></font></a></p><p></p>
+<p>
+Historically most email has been unencrypted, and that has a serious flaw:
+unencrypted email can be read and modified by anyone between
+the sender and final receiver.
+Tools to do &#8220;end-to-end&#8221; encryption of email
+(to prevent reading and/or modifying it)
+have been available for decades,
+but they are often hard to use by &#8220;normal&#8221; users.
+</p>
+
+<p>
+Thankfully, there&#8217;s been work to significantly improve email security.
+In particular, STARTTLS email encryption is now widely supported, and
+<a href="https://www.starttls-everywhere.org/">the
+Electronic Frontier Foundation &#8220;STARTTLS Everywhere&#8221; initiative</a>
+is working to get <i>everyone</i> to support STARTTLS in their
+email systems. Therefore:
+</p>
+
+<ul>
+<li><b>Organizations: support STARTTLS if you don&#8217;t already!</b>
+If you support STARTTLS, then
+<a href="https://www.starttls-everywhere.org">check your STARTTLS configuration,
+join the &#8220;STARTTLS Policy List&#8221;, and check that policy list before
+sending an email</a>.
+<li><b>Individuals:
+<a href="https://www.starttls-everywhere.org">see if your organization
+properly supports STARTTLS</a></b>. If they do not,
+bug your organization to get that fixed.
+</ul>
+
+<p>
+STARTTLS is not perfect, as I&#8217;ll discuss below.
+My point is that it&#8217;s <i>way</i> more secure
+than most email without it, because it improves security without
+requiring end-users to do anything.
+Below is additional information that I think you&#8217;ll find interesting.
+</p>
+
+<p>
+First, here&#8217;s how STARTTLS works.
+Email is transmitted by a series of &#8220;hops&#8221;;
+if the hop recipient supports STARTTLS, email is
+<i>automatically</i> encrypted on that hop as it
+goes through the infrastructure, <i>without</i> requiring
+email users to do anything special.
+That ease-of-use is a <i>big deal</i> - users normally do whatever is the
+default, so if the default is secure, then users will normally do
+the secure thing.
+</p>
+
+<p>
+<i>Lots</i> of organizations now support STARTTLS.
+Google reports that by 2018-07-24
+90% of its incoming email, and 90% of outgoing email, was
+encrypted using STARTTLS
+(&#8220;<a href="https://transparencyreport.google.com/safer-email/overview">Email encryption in transit</a>&#8221;).
+Many email services support STARTTLS, including
+<a href="https://www.starttls-everywhere.org/results/?gmail.com">Gmail</a>,
+<a href="https://www.starttls-everywhere.org/results/?yahoo.com">Yahoo.com</a>,
+<a href="https://www.starttls-everywhere.org/results/?outlook.com">Outlook.com</a>,
+and
+<a href="https://www.starttls-everywhere.org/results/?runbox.com">runbox.com</a>.
+(This includes the
+<a href="https://morningconsult.com/2017/06/21/poll-gmail-dominates-email-use/">top email services</a>.)
+Many other organizations support STARTTLS, including
+<a href="https://www.starttls-everywhere.org/results/?google.com">Google</a>,
+<a href="https://www.starttls-everywhere.org/results/?microsoft.com">Microsoft</a>,
+<a href="https://www.starttls-everywhere.org/results/?bankofamerica.com">Bank of America</a>,
+<a href="https://www.starttls-everywhere.org/results/?redcross.org">The American Red Cross</a>,
+<a href="https://www.starttls-everywhere.org/results/?salvationarmy.org">The Salvation Army</a>,
+<a href="https://www.starttls-everywhere.org/results/?sei.cmu.edu">The Software Engineering Institute (SEI)</a>,
+<a href="https://www.starttls-everywhere.org/results/?cmu.edu">Carnegie Mellon University (CMU)</a>,
+and
+<a href="https://starttls-everywhere.org/results/?berkeley.edu">University of California, Berkeley</a>.
+I give this list to show that there are many different kinds of organizations
+that support STARTTLS.
+The <a href="https://starttls-everywhere.org/policy-list/">STARTTLS
+Policy List</a> has an incomplete list of organizations
+known to be supporting STARTTLS.
+</p>
+
+<p>
+<a href="https://www.starttls-everywhere.org/">The
+Electronic Frontier Foundation &#8220;STARTTLS Everywhere&#8221; initiative</a>
+is an effort to get lagging organizations to support STARTTLS.
+As I noted earlier,
+you should use their tools to see if your organization properly supports
+STARTTLS on its incoming emails, and if not, complain to get that fixed.
+</p>
+
+<p>
+There are some historical problems that
+the STARTTLS Everywhere project is working to fix:
+</p>
+
+<ul>
+<li>Some people allow the absurdly old vulnerable protocols SSLv2 and SSLv3
+when using STARTTLS, instead of using the newer TLS protocols.
+TLS version 1.0 came out in January 1999, so there&#8217;s been plenty of
+time to transition away from SSLv2 and SSLv3.
+The STARTTLS Everywhere project expressly warns about that, and
+won&#8217;t give credit unless you&#8217;re using TLS.
+<li>Some sites with STARTTLS use invalid certificates.
+STARTTLS Everywhere tells you about that, and also explains some solutions
+so you can use valid certificates instead.
+<li>Historically active attackers can downgrade email encryption by
+stripping away the STARTTLS request, or can interpose nonsense certificates
+so that they receive the encrypted email instead.
+The STARTTLS Everywhere project
+has created a &#8220;STARTTLS Policy List&#8221; where supporting organizations
+can assert that they always use STARTTLS using a valid certificate.
+Organizations should join that list and check that list before they send email.
+Once they do, email transmissions cannot be downgraded and certificates
+cannot replaced, because senders will know to only use STARTTLS with valid
+certificates for those organizations.
+</ul>
+
+<p>
+STARTTLS is <i>not</i> an end-to-end encryption system.
+STARTTLS only encrypts while the email is being sent between systems (&#8220;hops&#8221;).
+That&#8217;s not all bad.
+For example, it means that receiving organizations can continue to
+examine the emails to check for viruses/malware, counter spam, and so on.
+But of course, there are downsides.
+</p>
+
+<p>
+STARTTLS is, in general, <i>not</i> as strong as an end-to-end
+encryption system (from the point-of-view of providing confidentiality
+and integrity).
+For example, receiving organizations (and anyone who subverts their
+email system) can see and modify the email.
+Users who do not trust their email service providers should <i>not</i>
+depend on STARTTLS; they <i>must</i> use end-to-end encryption.
+In general, end-to-end encryption is stronger,
+so we should still work to make end-to-end email encryption easier
+to use and deploy.
+But for various reasons it&#8217;s hard to deploy end-to-end email encryption,
+and we&#8217;ve spent decades trying.
+Also, STARTTLS works just fine <i>with</i> end-to-end encryption.
+</p>
+
+<p>
+Please indulge me: I think a small rant is appropriate here.
+There are some security specialists who think that only the perfect is
+acceptable.
+Nonsense! Requiring perfection is crazy.
+I think it is important, when creating and maintaining systems, to have
+an <i>engineering</i> mindset.
+In particular, you must always remember that
+that choices have trade-offs.
+It is not possible to have no risk; an asteroid might land
+on your head tomorrow.
+It is not reasonable to demand that systems be used regardless of their
+difficulty or expense; we all have limited time and money.
+Security issues are real, and we <i>do</i> need to address them,
+but time, money, and ease-of-use also matter greatly.
+</p>
+
+<p>
+Unlike most other systems,
+STARTTLS is completely automatic (end-users don&#8217;t have to do anything)
+once it is set up, it is not hard to set up,
+and it counters a large class of attacks.
+For almost all users, email encryption with STARTTLS
+is a major improvement over what they had before.
+Let&#8217;s keep working to deploy even better systems,
+but let&#8217;s take partial victories where we can get them.
+</p>
+<p>path: <a href="https://www.dwheeler.com/blog/security">/security</a> | <a href="https://www.dwheeler.com/blog">Current Weblog</a> | <a href="https://www.dwheeler.com/blog/2018/07/24#email-encryption">permanent link to this entry</a></p>
+</body></html>

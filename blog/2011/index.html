@@ -1,0 +1,1873 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Wed, 21 Dec 2011</h1>
+<p><a name="dod-app-sec-stig"><font size="+2"><b>U.S. Department of Defense Removes Open Source Software Roadblocks (AppDev STIG)</b></font></a></p><p></p>
+<p>The U.S. Department of Defense
+(DoD) has changed one of its key software development documents,
+making it <i>even clearer</i> that it&rsquo;s okay to use open source
+software (OSS) in the DoD.
+This is good news beyond the DoD; if the US DoD can widely accept OSS, then
+maybe other organizations (that <i>you</i> deal with) can too.</p>
+
+<p>That key document has the long title
+&ldquo;Application Security &amp; Development (AppDev) Security
+Technical Implementation Guide (STIG),&rdquo; aka the AppDev
+STIG.&nbsp;
+The AppDev STIG includes some guidelines for how to write secure software,
+and a checklist for use before you can deploy custom software in certain cases.
+In the past, many people thought that using OSS in the
+DoD required special permission, because they misunderstood some of
+DoD&rsquo;s policies, and this misunderstanding had crept into the
+AppDev STIG.&nbsp; The good news is that this has been fixed.
+</p>
+
+<p>Here&rsquo;s the basic background.</p>
+
+<p>Open source software (OSS) is software where
+anyone can read, modify, and redistribute the source code (its
+&ldquo;blueprints&rdquo;) in original or modified form.&nbsp; OSS
+is widely used and developed in industry; some popular OSS includes
+the Linux kernel (the basis of Google&rsquo;s Android), the Firefox
+web browser, and Apache (the world&rsquo;s most popular web
+server).&nbsp; You can get quantitative numbers about OSS at
+<a href=
+"http://www.dwheeler.com/oss_fs_why.html">http://www.dwheeler.com/oss_fs_why.html</a>.&nbsp;
+There is a lot of high-quality OSS, and OSS is often very
+inexpensive even when you include installation, training, and so on.</p>
+
+<p>Unfortunately, previous versions of the AppDev
+STIG were often interpreted as saying that using OSS required
+special permission.&nbsp; This document matters; DoD Directive
+(DoDD) 8500.01E requires that &ldquo;all IA and IA-enabled IT
+products incorporated into DoD information systems shall be
+configured in accordance with DoD-approved security configuration
+guidelines&rdquo; and tasks DISA to develop the STIGs.&nbsp;
+It&rsquo;s often difficult to get systems fielded unless they meet
+the STIGs.</p>
+
+<p>AppDev STIG version 3 revision 1 (an older
+version) said:</p>
+<blockquote>
+<p>
+(APP2090.1: CAT II) &ldquo;The Program Manager will obtain DAA
+acceptance of risk for all <b>open source</b>, public domain,
+shareware, freeware, and other software products/libraries with no
+warranty and no source code review capability, but are required for
+mission accomplishment.&rdquo;</p>
+<p>
+(APP2090.2: CAT II): &ldquo;The Designer will document for DAA
+approval all <b>open source,</b> public domain, shareware,
+freeware, and other software products/libraries with limited or no
+warranty<b><u>,</u></b> but are required for mission
+accomplishment.&rdquo;</p>
+</blockquote>
+
+<p>Many people interpreted this as saying that
+any use of OSS required special permission.&nbsp; But where would
+the Defense Information Systems Agency (DISA), the author of the
+AppDev STIG, get that idea?&nbsp; Well, it turns out that this is a
+common misunderstanding of DoD policy.&nbsp; DoD Instruction
+8500.2, February 6, 2003 has a control called &ldquo;DCPD-1 Public
+Domain Software Controls&rdquo; (<a href=
+"http://www.dtic.mil/whs/directives/corres/pdf/850002p.pdf">http://www.dtic.mil/whs/directives/corres/pdf/850002p.pdf</a>),
+which starts with this text:</p>
+<blockquote>
+<p class="Quotation">Binary or machine executable public domain
+software products and other software products with limited or no
+warranty such as those commonly known as freeware or shareware are
+not used in DoD information systems unless they are necessary for
+mission accomplishment and there are no alternative IT solutions
+available.</p>
+</blockquote>
+
+<p>A lot of people stopped reading there; they
+saw that &ldquo;freeware&rdquo; required special permission, and
+since OSS can often be downloaded for free, they presumed that all
+OSS was &ldquo;freeware.&rdquo;&nbsp; They should have kept
+reading, because it then goes on to make it clear that OSS is not
+freeware:</p>
+<blockquote>
+<p class="Quotation">Such products are assessed for information
+assurance impacts, and approved for use by the DAA. The assessment
+addresses the fact that such software products are difficult or
+impossible to review, repair, or extend, given that the Government
+does not have access to the original source code and there is no
+owner who could make such repairs on behalf of the Government&#8230;</p>
+</blockquote>
+<p>This latter part makes it clear that software
+only requires special treatment if the government cannot review,
+repair, or extend the software.&nbsp; If the government can do
+these things, there&rsquo;s no problem, and by definition OSS
+provides these rights.&nbsp; But a lot of people didn&rsquo;t
+understand this.</p>
+
+<p>This was such a common misunderstanding that
+in October 2009, the DoD CIO&rsquo;s memo &ldquo;Clarifying
+Guidance Regarding Open Source Software (OSS)&rdquo; specifically
+stated (in Attachment 2, 2c) that this was a misunderstanding
+(<a href=
+"http://dodcio.defense.gov/sites/oss/2009OSS.pdf">http://dodcio.defense.gov/sites/oss/2009OSS.pdf</a>).&nbsp;
+The DoD CIO later instructed DISA to update the AppDev STIG so this
+misunderstanding would be removed.</p>
+
+<p>The latest AppDev STIG (Version 3, Release 4)
+has just fixed this (<a href=
+"http://iase.disa.mil/stigs/app_security/app_sec/app_sec.html">http://iase.disa.mil/stigs/app_security/app_sec/app_sec.html</a>).&nbsp;
+The new STIG:</p>
+<ol>
+<li>Refers to the DoD OSS policy of 2009, instead
+of the old one.</li>
+<li>Has better definitions for software types,
+including &#8220;OSS&#8221; and &#8220;commercial software&#8221;.&nbsp; Its old
+definitions caused problems for OSS use; the &#8220;commercial software&#8221;
+definition was even inconsistent with US law, the
+Federal Acquisition Regulation (FAR), and the
+DoD FAR Supplement (DFARS).&nbsp; In particular,
+it makes it clear that most OSS is
+commercial software as defined by law and regulation.</li>
+<li>Makes it clear that special DAA approval is
+ONLY required if BOTH of the following are true:&nbsp; &#8220;(1) no
+source code to review, repair, and extend, and (2) limited or no
+warranty, but are required for mission accomplishment.&#8221;&nbsp; See
+checklist items (APP2090.1: CAT II) and (APP2090.2: CAT II).&nbsp;
+<b>This is the big change.</b></li>
+</ol>
+
+<p>Two related points:
+<ol>
+<li>
+Sadly, the AppDev STIG latest revision has a
+formatting glitch; all second-level headings aren&rsquo;t numbered
+in the body, with the result that the table-of-contents numbers
+don&rsquo;t match the body.&nbsp; Still, it has the updated
+technical content, and future versions will presumably fix the
+formatting.</li>
+<li>The wording of DoDI 8500.2&rsquo;s DCPD-1 has
+been confusing people for years (I hear that at least parts of NASA
+have also used this text,
+inheriting the same confusion).&nbsp; In the short term, the DoD
+CIO&rsquo;s formal clarification should help.&nbsp; In the longer
+term, there is an effort to switch the DoD to a single set of
+federal information assurance controls defined in NIST Special
+Publication 800-53.&nbsp; Its equivalent control, SA-6(1), has much
+clearer text.</li>
+</ol>
+</p>
+
+<p>But the editorial gaff in the AppDev STIG, and
+the work on improving the wording of controls long term, shouldn&#8217;t detract
+from the main point.</p>
+<p>The main point is:</p>
+<p><b><i>Open Source
+Software (OSS) is now much easier to use in the DoD</i></b>.</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/12/21#dod-app-sec-stig">permanent link to this entry</a></p>
+<h1>Sun, 06 Nov 2011</h1>
+<p><a name="open-source-award-2011"><font size="+2"><b>Open Source Award!</b></font></a></p><p></p>
+<p>
+I&#8217;ve learned that
+<a href="http://opensourceforamerica.org">Open Source for America (OSFA)</a>
+has awarded me a
+<a href="http://opensourceforamerica.org/2011/11/awards/">2011 Open Source Award - Individual Award</a>
+for my work to advocate consideration of
+&#8220;open source software in the US Department of Defense (DoD)&#8221;.
+They specifically point to my papers
+<a href="http://www.dwheeler.com/oss_fs_why.html"><i>Why Open Source Software / Free Software? Look at the Numbers!</i></a>
+and
+<a href="http://www.dwheeler.com/essays/commercial-floss.html"><i>Nearly all FLOSS is Commercial</i></a>.
+</p>
+<p>
+The winners of all the 2011 awards were:
+<ul>
+<li>Open Source Deployment in Government: (DHS) Science and Technology (S&amp;T) Directorate‘s Homeland Open Security Technology (HOST) program. (I&#8217;m involved in this, too.)</li>
+<li>Open Source Project: <a href="http://www.osgeo.org/">Open Source Geospatial Foundation (OSGeo)</a> for its OpenLayers web mapping project.</li>
+<li>Individual Awards: David A. Wheeler (me) and Melanie Chernoff</li>
+</ul>
+</p>
+<p>
+Thanks so much, OSFA!
+I&#8217;m honored.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/11/06#open-source-award-2011">permanent link to this entry</a></p>
+<h1>Tue, 04 Oct 2011</h1>
+<p><a name="open-document-1.2-out"><font size="+2"><b>Open Document Format 1.2 approved!</b></font></a></p><p></p>
+<p>
+Hooray!
+<a href="http://lists.oasis-open.org/archives/tc-announce/201109/msg00010.html">Open Document Format for Office Applications (ODF or OpenDocument) Version 1.2 has been approved as an OASIS Standard</a>.
+Finally, the world has a standard vendor-independent format for
+storing and exchanging ordinary office documents
+(particularly word processing documents, spreadsheets, and presentations)
+that you can edit.
+</p>
+<p>
+Historically, 
+people have only been able to exchange these documents if they
+use the same program, locking users into specific vendor products.
+In short, users often don&#8217;t really own the documents they create; they
+are often beholden to the developers of their tools.
+This is especially nasty for government documents; all governments have
+to choose <i>some</i> product, and whatever product they use implicitly
+forces their citizens to use the same product (whether they want to or not).
+Over time these documents can no longer be read, as products are upgraded
+or people change products, so this is also a disaster for archiving.
+We can read the Magna Carta more easily than some documents saved 30 years ago.
+Heck, we can read Sumerian writings more easily than some documents
+saved 30 years ago, and that is a scary thing.
+ODF provides us the possibility of actually exchanging documents,
+and reading archives, regardless of what program was used to create them.
+In short, people now have real freedom when they
+create and exchange normal office documents &mdash; they are no
+longer locked into a particular supplier or version of program.
+</p>
+<p>
+<a href="http://www.robweir.com/blog/2011/09/odf12-approved.html">Rob Weir has some of the highlights of version 1.2</a>, and he has also written
+<a href="http://www.robweir.com/blog/publications/IEEE-Weir.pdf">an
+overview of ODF</a>.
+</p>
+<p>
+For me, the highlight is OpenFormula.
+Previous versions of the specification could exchange spreadsheets, but
+did not standardize the format of recalculated formulas.
+I led the subcommittee in the ODF Technical Committee
+to nail down exactly how to recalculate formulas.
+The result: We now have a real spec.
+My sincere thanks to the many who helped make this possible.
+Feel free to see
+<a href="http://www.dwheeler.com/blog/2011/05/28/#openformula-success">
+my 2011-05-28 post about the success of OpenFormula</a>.
+</p>
+<p>
+I&#8217;m sure that there will continue to be refinements for years to come;
+that is normal for a standard.
+In some sense this is after the fact; like many good standards, it was
+developed through the cooperation of many of the implementors.
+It is already implemented, at least in part, in many places, and I expect
+even more completed implementations soon.
+</p>
+<p>
+The key, though, is that users can finally own the documents they create.
+That is a major step forward, for all of us.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/10/04#open-document-1.2-out">permanent link to this entry</a></p>
+<h1>Fri, 30 Sep 2011</h1>
+<p><a name="petition-no-software-patents"><font size="+2"><b>Petition the White House to cease issuing software patents</b></font></a></p><p></p>
+<p>
+I encourage all US citizens to sign
+<a href="https://wwws.whitehouse.gov/petition-tool/petition/direct-patent-office-cease-issuing-software-patents/vvNslSTq">this petition to the US White House
+to &#8220;direct the patent office to cease issuing software patents&#8221;</a>.
+I believe
+<a href="http://www.dwheeler.com/essays/software-patents.html">software
+patents impede innovation (instead of helping it), and they
+have become a threat to the US economy</a>.
+Many organizations involved in software
+are now spending lots of time fending off patent trolls,
+fighting patent lawsuits, or cannot safely solve problems
+due to patent thickets.
+The recently-passed
+&#8220;America Invents Act&#8221; (AIA) completely failed to deal with this
+fundamental problem.
+</p>
+<p>
+Signing a petition won&#8217;t immediately solve anything.
+That&#8217;s not how it works.
+But repeatedly making the government aware that there&#8217;s a real
+problem is a good first step to solving a problem.
+In the US,
+<a href="https://wwws.whitehouse.gov/petitions/#!/how-why/introduction">the
+right of the people to petition their government is guaranteed by
+the first amendment of the US Constitution</a>
+(&#8220;Congress shall make no law &#8230;. abridging&#8230; the right of the people
+peaceably to assemble, and to petition the Government
+for a redress of grievances&#8221;).</a>
+Everyone is affected today by software, and so far the government
+has not effectively dealt with the problem.
+Please use this opportunity to make the government aware of a real problem.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/09/30#petition-no-software-patents">permanent link to this entry</a></p>
+<h1>Fri, 16 Sep 2011</h1>
+<p><a name="ots-maintenance-strategies"><font size="+2"><b>Off-the-Shelf (OTS) Software Maintenance Strategies</b></font></a></p><p></p>
+<p>
+Off-the-shelf (OTS) software is simply software that is
+ready-made and available for use.
+Even when you need a custom system,
+building it from many OTS components has many advantages,
+which is why everyone does it.
+OTS works because you can save money and time, increase quality,
+and increase innovation through resource pooling.
+</p>
+
+<p>
+However, people can get easily confused by the many different ways that
+off-the-shelf (OTS) software can be maintained.
+Terminology varies, and there hasn&#8217;t been an obvious way
+to describe how these different approaches are related.
+In 2010 I chatted with several others
+about how to make this clearer, and then created a picture
+that I think clarifies things.
+My thanks to helpful critiques
+from Heather Burke and John Scott.
+So here&#8217;s the picture, followed by a discussion on what it means.
+</p>
+
+<p>
+<!-- Original 1052x616 -->
+<center>
+<img src="http://www.dwheeler.com/images/ots-maintenance-strategies.png" width="526" height="308">
+<br>
+<i>Off-the-Shelf (OTS) Maintenance Strategies</i>
+</center>
+</p>
+
+
+<p>
+If OTS software is commercial, it&#8217;s commercial OTS (COTS) software.
+<a href="http://www.dwheeler.com/essays/commercial-floss.html">By U.S. law</a>,
+any software is commercial if it is
+(1) sold, licensed, or leased to the public, and
+(2) has a non-governmental use.
+There are two kinds of COTS software:
+Open Source Software (OSS) and proprietary software.
+OSS, put briefly, is
+<a href="http://www.dwheeler.com/oss_fs_why.html">software whose licenses give
+users the freedom to run the program for any purpose,
+to study and modify the program, and to redistribute copies of
+either the original or modified program (without having to pay
+royalties to previous developers)</a>.
+<a href="http://www.dwheeler.com/essays/commercial-floss.html">Yes,
+<b>practically all OSS is commercial</b></a>.
+</p>
+
+<p>
+OTS can also be retained and maintained internally by an organization.
+For example, the U.S. government develops and maintains some software
+internally.
+In the U.S. government world, such software often called
+government OTS (GOTS).
+This figure shows things from the point of view of the U.S. government,
+but if you work with some other organization, you can think of this figure
+with your organization in the place of the U.S. government.
+(Maybe this should be called &#8220;internal off-the-shelf&#8221; or &#8220;IOTS&#8221; instead!)
+The idea here is that any organization can have
+software that it controls internally, and view as internal OTS software,
+as well as the COTS software that is available to the public.
+</p>
+
+<p>
+There are various reasons why the government should sometimes
+keep certain software in-house, e.g., because sole possession of the
+software gives the U.S. a distinct
+advantage over its adversaries.
+However, there is also considerable risk to the government
+if it tries to privately hold GOTS software within the
+government for too long.
+Technological advantage is usually fleeting. Often there is a
+commercially-developed item available to the public that begins
+to perform similar functions. As it matures, other organizations begin
+using this non-GOTS solution, potentially rendering the GOTS solution
+obsolete. Such cases often impose difficult decisions, as the government
+must determine if it will pay the heavy asymmetrical cost to switch,
+or if it will continue &#8220;as usual&#8221; with its now-obsolete GOTS systems
+(with high annual costs and limitations that may risk lives or missions).
+</p>
+
+<p>
+Either COTS or GOTS may be maintained by a single maintainer or by a
+community.  In community maintenance there is often a single organization
+who determines if proposals should be accepted, but the key here is
+that the work tends to be distributed among those affected.
+An Open GOTS (OGOTS) project is a GOTS project which uses
+multiple-organization collaborative development approaches
+to develop and maintain software, in a manner similar to OSS.
+Some people use the term &#8220;Government Open Source Software&#8221; (GOSS)
+instead of OGOTS (in particular,
+<a href="http://cio-nii.defense.gov/sites/oss/goss-govies_v1.7_29jun2011_released.pdf">GOSS for Govies</a> uses the term GOSS instead).
+</p>
+
+<p>
+GOTS (including OGOTS) is basically a special case of
+&#8220;gated software&#8221; with development inside a government.
+However, governments are bigger than most companies, and (in democracies)
+they are supposed to serve all of their citizenry, and those factors
+make them rather different than most other gated communities.
+Community development of proprietary software
+(&#8220;gated software&#8221;) outside governments
+is less common, but it can happen
+(historically some parts of Unix were developed this way).
+The term Open Technology Development (OTD) involves community development
+among government users (in the case of government developers),
+and thus it includes both OSS and OGOTS (aka GOSS).
+</p>
+
+<p>
+I should note that I have a broad view of maintenance.
+I&#8217;ve often said that there is only one program &mdash;
+&#8220;Hello, World&#8221; &mdash; and that the rest is maintenance.
+That&#8217;s overstated for effect, but I believe there is a
+<i>lot</i> of truth in that statement.
+</p>
+
+<p>
+This figure, and some of the text above, is in section 1.3 of the paper
+<a href="http://cio-nii.defense.gov/sites/oss/OTD-lessons-learned-military-signed.pdf">Open Technology Development (OTD): Lessons Learned & Best Practices for Military Software</a>
+(<a href="http://mil-oss.org/otd">also available via MIL-OSS</a>),
+which is released under the Creative Commons BY-SA license.
+If you&#8217;re interested in more, please see the paper!
+The figure and some of the text are also part of
+<a href="http://journal.thedacs.com/issue/56/175">
+&#8220;Software is a Renewable Military Resource&#8221;
+by John Scott, Dr. David A. Wheeler, Mark Lucas, and J.C. Herz,
+<i>Journal of Software Technology</i>, February 2011, Vol. 14, Number 1.
+</p>
+
+<p>
+I hope this figure makes it easier to understand the different
+approaches for maintaining off-the-shelf (OTS) software.
+</p>
+
+<!--
+Since this is based on company work, I requested and got approval
+from my company to post it.  The approval is recorded in the email
+Sent "Fri 9/16/2011 4:37 PM" by "Myers, Margaret E", subject:
+"RE: May I post a short excerpt from a publicly-released DoD document? (with attribution)"
+Which said:
+"You may post it."
+-->
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/09/16#ots-maintenance-strategies">permanent link to this entry</a></p>
+<h1>Sat, 10 Sep 2011</h1>
+<p><a name="ask-not-who-holds-copyrights"><font size="+2"><b>Ask not who holds the copyrights</b></font></a></p><p></p>
+<p>
+Asking
+&#8220;who has the copyright?&#8221; for
+<a href="intellectual-rights-not-intellectual-property.html">intellectual works</a>
+(like software, documents, and data) is almost always
+the <i><b>wrong</b></i> question to ask.
+Instead, ask &#8220;<i>what rights do I have (or can I get)?</i>&#8221; and
+&#8220;<i>do those rights let me do what I want to do?</i>&#8221;.
+In a vast number of situations, those are the right questions to ask instead.
+Even people who should know better can fall into this subtle trap!
+</p>
+
+<p>
+This became obvious to me when it was revealed that even the smart
+people at the Apache Software Foundation fell into this.
+In the recent
+<a href="https://wiki.apache.org/incubator/AccumuloProposal">Accumulo
+proposal</a>, there were unnecessary copyright hurdles because
+Apache was unnecessarily asking for a copyright transfer, instead of
+the necessary rights (in this case, there was no copyright to transfer!).
+</p>
+
+<p>
+So I&#8217;ve justed posted
+<i><a href="http://www.dwheeler.com/essays/ask-not-holds-copyright.html">Ask Not Who Holds the Copyright</a></i>,
+which I hope will clear this up.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/09/10#ask-not-who-holds-copyrights">permanent link to this entry</a></p>
+<h1>Sun, 04 Sep 2011</h1>
+<p><a name="mil-oss-2011"><font size="+2"><b>MIL-OSS 2011</b></font></a></p><p></p>
+<p>
+<img src="http://www.dwheeler.com/images/i-want-you-to-oss.png" align="right" width="150" height="202">
+I recently went to the <a href="http://mil-oss.org/">MIL-OSS</a>
+(&#8220;military open source software&#8221;)
+<a href="http://mil-oss.org/wg3-overview">2011 Working Group (WG) /
+Conference</a> in Atlanta, Georgia.
+Topics included the open prosthetics project,
+releasing government-funded software as OSS,
+replacing MATLAB with Python,
+the &#8220;<a href="http://opentechdossier.org/">Open Technology Dossier Protocol</a>&#8221; (OTDP),
+confining users using SELinux,
+an explanation of DoD policies on OSS,
+Charlie Schweik&#8217;s study on what makes a success OSS project,
+and more.
+Some people started developing a walkie-talkie Android app at the conference.
+Here&#8217;s a summary of the conference, if you&#8217;re curious.
+</p>
+<p>
+First, a few general comments.
+If this conference is any guide, it is slowly getting easier
+to get OSS into government (including military) systems.
+OSS is already used in many places, but it&#8217;s often
+&#8220;don&#8217;t ask, don&#8217;t tell&#8221;, and there are still
+lots of silly bureaucratic barriers that prevent the use of OSS
+where it <i>should</i> be used or at least considered.
+But there were many success stories, with
+slide titles like &#8220;how we succeeded&#8221;.
+</p>
+<p>
+Although the conference had serious purposes, it was all done in good humor.
+All participants got the MIL-OSS poster of Uncle Sam (saying
+&#8220;I want YOU to Open Source!&#8221;).
+The theme of the conference was
+the <a href="http://en.wikipedia.org/wiki/WarGames">WarGames</a>
+movie; the first finder for each of the WarGames Easter eggs
+would get a silly 80s-style prize (such as an Atari T-shirt).
+</p>
+<p>
+As the <a href="http://mil-oss.org/wg3-speakers-and-presentations">MIL-OSS 2011 presentations list</a> shows, I gave three talks:
+</p><ul>
+<li><i><a href="http://mil-oss.org/resources/mil-oss-wg3_releasing-oss-developed-government_david-a-wheeler.pdf">Publicly Releasing Open Source Software (OSS) Developed for the U.S. Government</a></i>.
+This presentation explained
+when the government or contractors
+can publicly release software, as open source software,
+if it was developed using U.S. government funds.
+This presentation summarized my paper
+<a href="http://journal.thedacs.com/issue/56/180">Publicly Releasing Open Source Software Developed for the U.S. Government</a>
+(also see <a href="http://mil-oss.org/resources/software-copyright-assertion-rights-quick-reference.pdf">Kane McLean&#8217;s one-page summary of this paper,
+the &#8220;OSS Releasability Quick Reference&#8221;</a>, which was given to every
+conference participant).
+I think this is an important topic.
+Billions of dollars go into developing software, yet most of
+the time, the taxpayers (who paid for it) don&#8217;t get the benefits.
+It turns out that this software often <i>can</i> be released; this is
+the decoder ring for these Byzantine rules.
+This can have incredible benefits.
+For example, the DoD funded the work that created the Internet,
+and then released as OSS an implementation of its key TCP/IP protocols.
+The Internet has mightily benefitted the DoD, in fact, it&#8217;s
+benefitted the whole world.
+(And yes, it had the required WarGames Easter egg.
+Slide 15 says &#8220;Talk to others who have experience with OSS&#8221; &#8212; the egg
+is in the supporting bullet, &#8220;Q: What is it doing? A: It&#8217;s learning!&#8221;)
+</li>
+<li><i><a href="http://mil-oss.org/resources/mil-oss-wg3_gpl-might-not-destroy-the-universe_david-a-wheeler.pdf">Why the GPL Might not Destroy the Universe</a></i>.
+This tongue-in-cheek talk tries to counter some of the silly,
+over-the-top fears about the GNU General Public License (GPL).
+I figure any presentation can&#8217;t be bad if it includes photos of Godzilla,
+flying saucers, zombies, and a poster saying &#8220;If you program
+open source, you&#8217;re programming COMMUNISM!&#8221;.
+</li>
+<li><i><a href="http://mil-oss.org/resources/mil-oss-wg3_host-lessons-learned_wheeler-dunn.pdf">HOST Lessons Learned</a></i> (with Tom Dunn).  This summarized interviews
+of various people on the roadblocks to using or developing open technology
+(including open source software) in the government.
+</li>
+</ul>
+<p></p>
+<p>
+The conference was complicated by the recent passing
+of Hurricane Irene.
+The area itself was fine, but some people had trouble flying in.
+The first day&#8217;s whole schedule was delayed so speakers
+could arrive (using rescheduled flights).
+That was probably the best thing to do in the circumstance &#8212;
+it was basically like a temporary time zone change &#8212;
+but it meant that one of my talks that day
+(<i>Why the GPL Might not Destroy the Universe</i>) was at 9:10pm.
+And I wasn&#8217;t even the last speaker.  Eeeek.
+Around 15 speakers had still not arrived when the conference arrived, but
+all but one managed to get there before they had to speak.
+</p>
+<p>
+Here are few notes on the talks:
+</p><ul>
+<li>Andy Henshaw (GTRI) spoke on &#8220;Replacing MATLAB: Python Tools for Scientists and Engineers&#8221;.  His basic point is that
+&#8220;Python is a good replacement for MATLAB in a lot of cases&#8221;.
+Although Python isn&#8217;t fast by itself, it&#8217;s often useful as a glue,
+with the intensive data-handling being done by hand-crafted libraries.
+He focused on (and discussed) the libraries
+<a href="http://www.scipy.org/NumPy_for_Matlab_Users">NumPy</a>,
+SciPy, matplotlib, and ipython.
+He also discussed differences between MATLAB and Python for MATLAB users.
+In Matlab, the basic type is a matrix, it uses 1-based indexing, &#8216;*&#8217;
+means matrix multiplication, and function calls use pass-by-value with
+lazy copy-on-write.
+In contrast, in Python with libraries like these,
+the basic type is a multidimensional array, it uses 0-based indexing,
+&#8216;*&#8217; means element-wise multiplication (use dot() for matrix multiplication
+or use the matrix class), and function calls use pass-by-reference.
+</li>
+<li>
+I learned interesting things about AdaCore
+(who make GNAT pro, SPARK Pro, and Code Peer).
+They don&#8217;t have a separate support organization &mdash; their engineers 
+provide support directly, since support is really what they sell.
+</li>
+<li>
+Maj Wilson/Kane McLean discussed changing culture.
+They argued that the mind has two independent decision-making functions
+that work simultaneously:
+the emotional mind and the rational mind.
+The emotional mind is like an elephant; it&#8217;s illogical and determined, 
+emphasizes getting stuff done, and has mental &#8220;muscle memory&#8221;.
+The rational mind is like a jockey; it&#8217;s logical and reasoned, 
+emphasizes organization but often can&#8217;t &#8220;get off the saddle&#8221;, and does 
+long-term / strategic planning.
+You need to convince both, so you should try to
+shrink the change, shape a clear path forward, and repeat what works.
+They believe that culture change in a big bureaucracy happens from both
+the top (the &#8220;clouds&#8221;) and the bottom (the &#8220;grass roots&#8221;);
+resistance often comes from the middle.
+The solution for change, then, is to &#8220;seed clouds&#8221;
+and &#8220;grow the grass&#8221;.
+</li>
+<li>
+The &#8220;<a href="http://opentechdossier.org/">Open Technology Dossier Protocol</a>&#8221; (OTDP)
+was pitched by Winston Messer and Nick Bollweg.
+Basically, they&#8217;d like every OSS project to put, on their web site,
+a small XML file that would let various search systems learn more about
+their project.
+That way, each project can update their own information.
+</li>
+<li>
+David Egts (Red Hat) explained &#8220;SELinux user confinement&#8221; -
+a new capability in RHEL 6 to easily confine users using SELinux.
+Just install the &#8220;policycoreutils-python&#8221; package, which includes the
+semanage tool that lets you control much more precisely what specific
+users may do.
+</li>
+<li>
+Alex S. Voultepsis explained how the intelligence community (IC)
+has built up an internal infrastructure with the tools that people want to
+use; in a vast number of cases, they use OSS to do this.
+For example, Intellipedia is implemented using MediaWiki, the same software
+that runs Wikipedia.
+</li>
+<li>
+Dan Risacher discussed the DoD Oct 16, 2009 memo on open source software.
+He noted that we have a &#8220;Government IP knot&#8221;: &#8220;Government rules are
+designed to enable a program manager to control their program, not to
+enable sharing it&#8221;.  A way to cut this knot is to make it clear that the
+software will be released as OSS; then everyone knows what the rules are.
+He wants to be a &#8220;developer advocate&#8221; - the DoD needs
+to be able to innovate faster than its opponents.</li>
+<li>
+John Kuniholm presented on the &#8220;Open Prosthetics Project&#8221;.
+He is missing part of an arm, and explained some of the complications of
+making prosthetics.
+A key need is really good open source CAD tools.
+That is a general problem, not unique to the military or government &#8212;
+currently the tools are hideously expensive, and until that changes, the
+promise of cheap 3D printers will be harder to realize.
+</li>
+<li>
+Charlie Schweik has been doing a lot of quantitative studies of
+OSS projects, to determine what separates successful projects
+from abandoned projects.
+He expects to have a book on soon on this topic!
+In the initiation stage, the key factors were: Leadership by doing, clear vision, and well-articulated goals.
+Other factors were Project marketing; project financing; knowledge continuity; being a multideveloper project.
+A really key factor, once a project is initiated, is gaining a developer
+(and then gaining more later).
+There are many conflicting claims, e.g., some say
+that smaller groups are better (Brooks), that larger groups
+are better (Linus&#8217; law), or that size doesn&#8217;t
+matter; his data shows that Linus&#8217; law is the correct one.
+Face-to-face communication doesn&#8217;t seem to be as important as it used to be,
+due to better communication technology.
+He&#8217;s gathered lots more info; I&#8217;m looking forward
+to seeing the whole thing.
+</li>
+<li>
+One great thing was that everyone was motivated to actually solve problems,
+immediately.
+There is already an official
+<a href="http://cio-nii.defense.gov/sites/oss/Open_Source_Software_%28OSS%29_FAQ.htm">DoD Open Source Software (OSS) Frequently-Asked Questions (FAQ)</a>,
+but there&#8217;s a need for a less-official FAQ, so during the conference
+a new
+<a href="http://mil-oss.org/learn-more/frequently-asked-questions-on-open-source-software-oss">MIL-OSS OSS FAQ</a> was created.
+On the last day there was a discussion between various software developers
+and military folks, particularly about military needs.
+A real problem in military situations &#8212;
+and disasters like hurricanes &#8212;
+is that centralized communications systems fail.
+Within a short time, people were suddenly developing an
+<a href="https://github.com/mil-oss/walkitalkie">OSS walkie-talkie
+application for Android and hosting it on github</a>.
+</li>
+</ul>
+<p></p>
+<p>
+Many discussions revolved around the problems of getting
+authentication/authorization working <i>without</i> passwords, in particular
+using the ID cards now widely used by nearly all western governments
+(such as DoD CAC cards).
+Although things can work sometimes,
+it&#8217;s incredibly painful to get them to work
+on any system (OSS or not), and they are fragile.
+Dmitri Pal (Red Hat)&#8217;s talk &#8220;CAC and Kerberos From Vision to Reality&#8221;
+discussed some of the problems and ways to possibly make it better.
+The OpenSSH developers are actively hostile to the X.509 standard that
+everyone uses for identity certificates; I agree with the OpenSSH folks
+that X.509 is clunky, but that is what everyone uses, and not supporting
+X.509 means that openssh is useless for them.
+Every card reader is incompatible with the others, so every time a new
+model comes out, drivers have to be written and it often doesn&#8217;t work anyway
+(compare that to USB keyboards, which &#8220;just work&#8221; every time even
+through KVM switches).
+I think some group needs to be formed, maybe a
+&#8220;Simple Authorization without passwords&#8221; group, with the goal of
+setting standards and building OSS components so that systems by default
+(maybe by installing one package) can trivially use PKI and other systems
+and have it &#8220;just work&#8221; every time.
+No matter that client, server (relying party), or third-party
+authenticator/authorization server is in use.
+<!--
+Possible members:
+Richard Burroughs, Gunnar Hellekson, Dmitri, Dan Risacher, me.
+-->
+</p>
+<p>
+If you&#8217;re interested in more of my personal thoughts about OSS and the
+U.S. Department of Defense (DoD), also see
+<a href="http://twit.tv/floss160">FLOSS Weekly #160, the
+interview of David A. Wheeler by Randal Schwartz and Simon Phipps</a>.
+Good general sites for more info are the
+<a href="http://mil-oss.org/">MIL-OSS website</a> and the
+<a href="http://cio-nii.defense.gov/sites/oss/">DoD CIO Free Open Source Software (FOSS) site</a>.
+</p>
+<p>
+There&#8217;s more to be done, but a lot is already happening.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/09/04#mil-oss-2011">permanent link to this entry</a></p>
+<h1>Wed, 03 Aug 2011</h1>
+<p><a name="gnome-3-shell-terrible-switching-to-xfce"><font size="+2"><b>GNOME 3 Shell is terrible, I am switching to XFCE</b></font></a></p><p></p>
+<p>
+I&#8217;m a long-time user of Fedora and GNOME.
+GNOME 2 has served me well over the years, so I was interested
+in what the GNOME people were cooking for GNOME 3.
+Fedora 15 comes with the new GNOME 3 shell; since
+change can sometimes be good, I&#8217;ve tried to give the new GNOME 3 shell
+a fair trial.
+</p>
+
+<p>
+But after giving GNOME 3 (especially GNOME shell) some time,
+I&#8217;ve decided that
+I <i>hate</i> the GNOME 3 shell as it&#8217;s currently implemented.
+It&#8217;s not just me;
+the list of people who have complaints about the GNOME 3 shell include
+<a href="https://plus.google.com/106327083461132854143/posts/SbnL3KaVRtM">Linus Torvalds</a>,
+<a href="http://www.dedoimedo.com/computers/gnome-3.html">Dedoimedo</a>
+(see also
+<a href="http://www.dedoimedo.com/computers/gnome-3-fallback.html">here</a>),
+<a href="http://k3rnel.net/2011/05/01/why-im-sick-and-tired-of-gnome-shell/">
+k3rnel.net (Juan “Nushio” Rodriguez)</a>,
+<a href="http://mso-chronicles.blogspot.com/2011/03/unhappy-with-gnome-3-just-ditch-it.html">Martin Sourada</a>,
+<a href="http://whatisgon.wordpress.com/2011/07/09/switching-from-gnome-3-to-xfce/">junger95</a>,
+and others.
+<a href="https://lwn.net/Articles/433409/">LWN noted the problems of
+GNOME 3 shell way back</a>.
+So many people are leaving GNOME 3, often moving to XFCE, that
+one person posted a poem titled
+<a href="http://inspirated.com/2011/05/11/gnome-3-unity-and-xfce-the-mass-exodus">&#8220;GNOME 3, Unity, and XFCE: The Mass Exodus&#8221;</a>.
+</p>
+
+<p>
+The GNOME 3 shell <i>is</i> beautiful. No doubt.
+But as far as I can tell, the developers
+concentrated on making it beautiful, cool and different, 
+but as a consequence made it far <i>less</i> useful and
+efficient for people.
+<a href="http://www.dedoimedo.com/computers/gnome-3-fallback.html">Dedoimedo
+summarizes GNOME 3.0 shell as,
+&#8220;While it&#8217;s a very pretty and comely interface,
+it struck me as counterproductive, designed with a change
+for the sake of change.&#8221; </a>
+In a different post
+<a href="http://www.dedoimedo.com/computers/gnome-3.html">Dedoimedo says,
+&#8220;Gnome 3 is a toy. A beautiful, aesthetic toy. But it is not a
+productivity item&#8230; I am not a child. My computer is not a toy. It&#8217;s a
+serious tool&#8230; Don&#8217;t mistake conservative for inefficient. I just want
+my efficiency.&#8221;.</a>
+</p>
+
+<p>
+Some developers have tried to fix its worst problems of GNOME 3 shell
+with extensions,
+and if GNOME developers work at it,
+I think they could change it into something useful.
+But most of these problems aren&#8217;t just maturity issues;
+GNOME 3 shell is broken by design.
+So I&#8217;m going to switch to XFCE so I can get work done, and
+perhaps try it again later if they&#8217;ve started to fix it.
+Thankfully, Fedora 15 makes it easy to switch to another desktop
+like XFCE, so I can keep on happily using Fedora.
+</p>
+
+<p>
+<b>So what&#8217;s wrong?</b>
+</p>
+
+<p>
+I&#8217;ve been trying to figure out why I hate GNOME 3 so much,
+and it comes down to two issues:
+(1) GNOME 3&#8217;s shell makes it much harder to do simple, common tasks,
+and (2) GNOME 3 shell often hides how to do tasks
+(it&#8217;s not &#8220;discoverable&#8221;).
+These are not just my opinions, lots of people say these kinds of things.
+<a href="http://k3rnel.net/2011/05/01/why-im-sick-and-tired-of-gnome-shell/">
+k3rnel.net says,
+&#8220;Gnome’s &#8216;Simplicity&#8217; is down right insulting to a computer enthusiast. It makes it impossible to do simple tasks that used to flow naturally, and it’s made dozens of bizarre &#8216;design decisions&#8217;, like hiding Power Off behind the &#8216;Alt&#8217; key.&#8221;</a>
+Let me give you examples of each of these issues.
+</p>
+
+<p>
+First of all, GNOME 3 (particularly its default GNOME shell)
+creates a lot of extra steps and work to do simple tasks that
+used to be simpler.
+To run a program whose name you don&#8217;t know, you have go to the far top
+left to the hot spot (or press &#8220;LOGO&#8221;),
+move your mouse to the hideously hard-to-place
+(and not obvious) &#8220;Applications&#8221; word slightly down the right, then mouse
+to the far right to choose a category, then mouse back to choose it.
+That&#8217;s absurd; the corners of the screen are especially easy to get to, and
+they fail to use that fact when choosing non-favorite applications.
+Remarkably, there doesn&#8217;t seem to be a quick way to simply show
+the list of (organized) applications you can start; there&#8217;s not even a
+keyboard shortcut for &#8220;LOGO Applications&#8221;.
+Eek.  This is a basic item; even Windows 95 was easier.
+Would it really have killed anyone to make moving to
+some other area (say, the bottom left corner) show the applications?
+And why are the categories on the far right, where they are least easy to
+get to and not where any other system puts them?
+(Yes, the favorites area lets you start some programs, but you have to
+find it the first time, and some of us use many programs.)
+Also, you can&#8217;t quickly alt-tab between arbitrary windows
+(Alt-tab only moves between apps, and the undiscoverable alt-` only moves
+between windows of the same app).
+GNOME shell makes it easy to do instant messaging,
+but it makes it harder to do everything else.
+Fail.
+</p>
+
+<p>
+GNOME 3&#8217;s capabilities are not discoverable, either.
+To log off or change system settings you click on your name &mdash;
+and that&#8217;s already non-obvious.
+But it gets worse.
+<a href="http://www.learnbydoingit.org/2011/06/fedora-15-tweaks/">
+To power off, you click on your name,
+then press the ALT key to display the power off option, then select it</a>.
+How the heck would a normal user find out about this?
+The only obvious way to power down the system
+is to log out, then power off from the front.
+If you know an application name, pressing LOGO (aka WINDOWS) and typing
+its name is actually a nice feature, but that is not discoverable either.
+If you want a new process or window
+(like a new terminal window or file manager window),
+you have to know press control when you select its icon to start a new process
+(for Terminal, you can also start it and press shift+control+N, but that
+is not true for all programs).
+The need to press control isn&#8217;t discoverable
+(it&#8217;s also a terrible default; if I press a program icon, I want a new one;
+if I wanted an existing one I&#8217;d select its window instead).
+Fail.
+</p>
+
+<p>
+There are some nice things about GNOME 3 shell.
+As I mentioned earlier, I like the ability to press LOGO
+start typing a program name
+(which you can then select) - that <i>is</i> nice.
+But even then, this is not discoverable; how would a user new to the
+interface know that they should press the LOGO button?
+This functionality is trivial to get in other desktop environments;
+I configured XFCE to provide the same functionality
+in less than a minute (in a way that is less pretty, but much easier
+for a human to use).
+</p>
+
+<p>
+The implementors seem to think that new is automatically better.
+Rediculous.
+I don&#8217;t use computers to have the newest fad interface, I use them
+to get things done (and for the pleasure of using them).
+I will accept changes, but they should be obvious improvements.
+Every change just for its own sake imposes relearning costs, especially
+for people like me who use many different computers and interfaces,
+and especially if they make common operations harder.
+Non-discoverability is especially nasty; people don&#8217;t want to read
+manuals for basic GUI interfaces, they want to get things done.
+</p>
+
+<p>
+I don&#8217;t think GNOME 3 is mature, either.
+For example, as of 2011-07-28,
+<a href="http://blog.fpmurphy.com/2011/03/customizing-the-gnome-3-shell.html">GNOME 3 does not support screensavers</a> &mdash; it just shows a blank screen
+after a timeout.
+But the previous GNOME 2 had screensavers.
+Heck, Windows 3.0 (of 1993) did better than that; it had screensavers,
+and I&#8217;m sure there were screensavers before then.
+</p>
+
+<p>
+I&#8217;ve tried to get used to it, because I wanted to give new ideas a chance.
+Different can be better!
+But so far, I&#8217;m not impressed.
+The code may be cleaner, and it may be pretty, but the user experience
+is currently lousy.
+</p>
+
+<p>
+If you&#8217;re stuck using the GNOME 3 Shell, you basically <i>must</i> read the
+<a href="http://live.gnome.org/GnomeShell/CheatSheet">GNOME shell
+cheat sheet</a>, because so much of what it does is un-intuitive,
+incompatible with everything else, and non-discoverable.
+Needing to read a manual to use a modern user interface is not a good sign.
+</p>
+
+<p>
+You could try switching to the GNOME 3 fallback mode, as discussed by
+<a href="http://www.dedoimedo.com/computers/gnome-3-fallback.html">Dedoimedo</a> and others.
+This turns on a more tradtional interface.
+<a href="http://dasublogbyprashanth.blogspot.com/2011/04/review-gnome-3.html">
+Several</a>
+<a href="http://www.rootninja.com/gnome-3-fallback-desktop-better-than-gnome-3-itself/">people</a> have declared that GNOME 3 fallback is better than
+GNOME shell itself.
+But I was not pleased; it&#8217;s not really well-supported,
+and it&#8217;s really not clear that this will be supported long term.
+</p>
+
+<p>
+You can also try various tweaks, configurations, and additional
+packages to make GNOME 3 shell more tolerable.
+If you&#8217;re stuck with GNOME 3 shell, install and use gnome-tweak-tool;
+that helps.
+You should also install the Fedora
+gnome-shell-extensions-alternative-status-menu package, which
+lets you see &#8220;Power off&#8221; as an option.
+</p>
+
+<p>
+But after trying all that, I decided that it&#8217;d be better to switch to another
+<a href="http://www.renewablepcs.com/about-linux/kde-gnome-or-xfce">more productive and mature desktop environment</a>.
+Obvious options are XFCE and KDE.
+</p>
+
+<p>
+XFCE is a lightweight desktop environment, and is
+what I&#8217;ve chosen to use instead of the default GNOME 3 shell.
+I found out later that
+<a href="http://mso-chronicles.blogspot.com/2011/02/keeping-up-with-fedora-15-and-xfce.html">other people have switched to XFCE after
+trying and hating GNOME 3&#8217;s shell</a>.
+XFCE doesn&#8217;t look as nice as GNOME 3, indeed, the GNOME 3 shell
+is really quite flashy by comparison.
+But the GNOME shell makes it hard for me to get anything done,
+and that&#8217;s more important.
+</p>
+
+<p>
+I expect that it wouldn&#8217;t be hard for the developers to make it better;
+hopefully the GNOME folks will work to improve it.
+If many of GNOME 3&#8217;s problems are fixed, then I&#8217;ll be happy
+to try it again.
+But I&#8217;m in no hurry; XFCE works just fine.
+</p>
+
+<p>
+I&#8217;m creating a new page on my website called
+<a href="http://www.dwheeler.com/essays/fedora-linux.html">Notes on Fedora</a> so that I can record &#8220;how to&#8221; stuff, in case that others
+find it useful.
+For example, I&#8217;ve recorded how to turn on some stuff in XFCE to make it
+prettier.
+Enjoy!
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/08/03#gnome-3-shell-terrible-switching-to-xfce">permanent link to this entry</a></p>
+<p><a name="conferences-2011"><font size="+2"><b>Upcoming FLOSS in Government Conferences for 2011</b></font></a></p><p></p>
+<p>
+If you&#8217;re interested in free/libre/open source software in government
+(particularly the U.S. federal government),
+there are two upcoming conferences you should consider.
+</p>
+<p>
+One is
+<a href="http://goscon.org/">Government Open Source Conference (GOSCON)
+2011</a> on August 23, 2011.
+It will be held at the Washington Convention Center, Washington, DC.
+</p>
+<p>
+The other is the
+<a href="http://mil-oss.org/wg3-overview">Military Open Source Software
+(MIL-OSS) WG3 conference</a> on August 30 - September 1, 2011.
+It will be held in Atlanta, Georgia.
+</p>
+<p>
+I&#8217;ll be speaking at both.  But don&#8217;t let that dissuade you :-).
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/08/03#conferences-2011">permanent link to this entry</a></p>
+<h1>Thu, 14 Jul 2011</h1>
+<p><a name="microsoft-linux-author"><font size="+2"><b>Microsoft, co-author of the Linux kernel</b></font></a></p><p></p>
+<p>
+Truth is often stranger than fiction.
+<a href="https://lwn.net/Articles/450891/">
+Microsoft was the fifth-largest corporate contributor
+to the Linux kernel version 3.0.0</a>,
+as measured by the number of changes to its previous release.
+Only Red Hat, Intel, Novell, and IBM had more contributions.
+Microsoft was #15 as measured by number of
+lines changed, which is smaller but is still an impressively large number.
+</p>
+<p>
+This work by Microsoft was to clean up
+the &#8220;Microsoft Hyper-V (HV) driver&#8221;
+so that the Microsoft driver would be included in the mainline Linux kernel.
+Microsoft originally submitted this set of code changes
+back in July 2009, but there were a lot of problems with it, and
+the Linux kernel developers insisted that it be fixed.
+<a href="http://www.networkworld.com/news/2009/091009-linux-chief-microsoft.html">The Linux community had a long list of issues
+with Microsoft&#8217;s code</a>,
+but the good news is that Microsoft worked to improve
+the quality of its code so that it could be accepted into the Linux kernel.
+Other developers helped Microsoft get their code up to par, too.
+(<a href="http://www.unixwiz.net/techtips/review-hv-patches.html">
+Steve Friedl has some comments about its early technical issues</a>.)
+There&#8217;s something rather amusing about watching Microsoft
+(a company that focuses on software development) being forced by
+the Linux community to improve the quality of Microsoft&#8217;s code.
+Anyone who thinks that FLOSS projects (which typically use widespread
+public peer review) always produce lower quality software
+than proprietary vendors just isn&#8217;t watching the real world
+(<a href="http://www.dwheeler.com/oss_fs_why.html">see my survey paper of
+quantitative FLOSS studies if you want more on that point</a>).
+Peer review often exposes problems, so that they can be fixed,
+and that is what happened here.
+</p>
+<p>
+Microsoft did not do this for the sheer thrill of it.
+Getting code into the mainline Linux kernel release,
+instead of just existing as a separate patch, is vitally important for
+an organization if they want people to <i>use</i> their software
+(if it needs to be part of the Linux kernel, as this did).
+A counter-example is that the
+<a href="http://www.h-online.com/open/features/Xen-lets-KVM-overtake-1262171.html">Xen developers let KVM zoom ahead of them,
+because the Xen developers failed to set a high priority on getting
+full support for Xen into the mainline Linux kernel</a>.
+As Thorsten Leemhuis at The H says,
+&#8220;There are many indications that the Xen developers should have put more
+effort into merging Xen support into the official kernel earlier. After
+all, while Xen was giving developers and distribution users a hard time
+with the old kernel, a new virtualisation star was rising on the open
+source horizon: KVM (Kernel-based Virtual Machine)&#8230;  In the beginning,
+KVM could not touch the functional scope and speed of Xen.
+But soon, open source developers, Linux distributors,
+and companies such as AMD, Intel
+and IBM became interested in KVM and contributed a number of improvements,
+so that KVM quickly caught up and even moved past Xen in some respects.&#8221;
+<a href="http://virtualization.sys-con.com/node/1900898">Xen may
+do well in the future</a>, but this is still a cautionary tale.
+</p>
+<p>
+This doesn&#8217;t mean that Microsoft is suddenly releasing
+all its programs as free/libre/open source software (FLOSS).
+Far from it.
+It is obvious to me that Microsoft is contributing this code
+for the same reason many companies contribute
+to the Linux kernel and other FLOSS software projects: Money.
+</p>
+<p>
+I think it is clear that
+Microsoft hopes that these changes to Linux will help
+Microsoft sell more Windows licenses.
+These changes enable Linux to run much better (e.g., more efficiently)
+on top of Microsoft Windows&#8217; hypervisor (Hyper-V).
+Without them, people who want to run Linux on top of a hypervisor are
+much more likely to use products other than Microsoft&#8217;s.
+Microsoft doesn&#8217;t want to be at a
+competitive disadvantage in this market,
+so to sell its product, it chose to contribute changes to the Linux kernel.
+With this change, Microsoft Windows becomes a more viable option
+as a host operating system, running Linux as a guest.
+</p>
+<p>
+Is this a big change?
+In some ways it is not.
+<a href="http://www.dwheeler.com/oss_fs_why.html#anti-microsoft">
+Microsoft has developed a number of FLOSS packages,
+such as WiX (for installing software on Windows), and it does
+all it can to encourage the development of FLOSS that run on Windows</a>.
+</p>
+<p>
+Still, it&#8217;s something of a change for Microsoft.
+<a href="http://www.theregister.co.uk/2001/06/02/ballmer_linux_is_a_cancer/">
+Microsoft CEO Steve Ballmer stated in 2001 that Linux and the
+GNU GPL license were &#8220;a cancer&#8221;</a>.
+This was in many ways an attack on FLOSS in general; the
+<a href="http://www.dwheeler.com/essays/gpl-compatible.html">GNU GPL
+is the most popular FLOSS license by far</a>, and a
+<a href="http://www.terrybollinger.com/index.html#dodfoss">MITRE report</a>
+found that the &#8220;GPL sufficiently dominates in DoD applications
+for a ban on GPL to closely approximate a full ban of all [FLOSS]&#8221;.
+This would have been disastrous for their customer, because MITRE found
+that FLOSS software
+&#8220;plays a far more critical role in the [Department of Defense]
+than has been generally recognized&#8221;.
+I think many other organizations would say the same.
+This is not even the first time Microsoft has gotten involved with
+the GPL.
+Microsoft sold Windows Services for Unix (SFU), which had GPL software,
+showing that even Microsoft understood that it was possible to make
+money while using the GPL license.
+But this more case is far more extreme; in this case Microsoft
+is actively helping a product (the Linux kernel) that it also competes with.
+I don&#8217;t expect Microsoft to keep contributing significantly to the
+Linux kernel, at least for a while, but that doesn&#8217;t matter;
+here we see that cash trumps ideology.
+More generally, this beautifully illustrates collaborative development:
+Anyone can choose to work on specific areas of a FLOSS program,
+for their own specific or selfish reasons,
+to co-produce works that help us all.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/07/14#microsoft-linux-author">permanent link to this entry</a></p>
+<h1>Mon, 04 Jul 2011</h1>
+<p><a name="us-government-balance-budget"><font size="+2"><b>U.S. government must balance its budget</b></font></a></p><p></p>
+<p>
+<!-- meta-markup: Markdown -->
+(This is a blog entry for U.S. citizens &mdash; everyone else can ignore it.)
+</p>
+
+<p>
+We Americans must <b>demand</b> that the U.S. government
+work to balance its budget over time.
+The U.S. government has a massive annual deficit, resulting
+in a massive national debt that is growing beyond all reasonable bounds.
+For example, in just
+<a href="http://en.wikipedia.org/wiki/United_States_federal_budget">Fiscal Year (FY) 2010</a>,
+about $3.4 trillion was spent, but only
+$2.1 trillion was received; that means that the U.S. government spent
+more than a trillion dollars more than it received.
+Every year that the government spends more than it receives it adds to the
+<a href="http://www.pgpf.org/Special-Topics/The-Federal-Budget-Primer.aspx">gross federal debt, which is now more than $13.6 trillion</a>.
+</p>
+
+<p>
+This is unsustainable.
+The fact that this is unsustainable is certainly not news. The
+<a href="http://www.gao.gov/cghome/d08446cg.pdf">U.S. Financial Condition and Fiscal Future Briefing (GAO, 2008)</a>
+says, bluntly, that the &#8220;Current Fiscal Policy Is Unsustainable&#8221;.
+<a href="http://www.fiscalcommission.gov/sites/fiscalcommission.gov/files/documents/TheMomentofTruth12_1_2010.pdf">
+&#8220;The Moment of Truth:
+Report of the National Commission on Fiscal Responsibility and Reform&#8221;</a>
+similarly says
+&#8220;Our nation is on an unsustainable fiscal path&#8221;.
+Many others have said the same.
+But even though it&#8217;s not news, it needs to be yelled from the rooftops.
+</p>
+
+<p>
+The fundamental problem is that too many Americans &mdash; aka &#8220;we the people&#8221; &mdash;
+have not (so far) been willing to face this unpleasant fact.
+<a href="http://transcripts.cnn.com/TRANSCRIPTS/1002/21/fzgps.01.html">Fareed Zakaria nicely put this in February 21, 2010</a>:
+&#8220; &#8230; in one sense, Washington is delivering to the American people exactly what they seem to want. In poll after poll, we find that the public is generally opposed to any new taxes, but we also discover that the public will immediately punish anyone who proposes spending cuts in any middle class program which are the ones where the money is in the federal budget.
+Now, there is only one way to square this circle short of magic, and that is to borrow money, and that is what we have done for decades now at the local, state and federal level &#8230;
+The lesson of the polls in the recent elections is that politicians will succeed if they pander to this public schizophrenia. So, the next time you accuse Washington of being irresponsible, save some of that blame for yourself and your friends&#8221;.
+</p>
+
+<p>
+But Americans must face the fact that we must balance the budget.
+And we must face it now.
+We must balance the budget the same way families balance
+their budgets &mdash; the government must raise income (taxes), lower
+expenditures (government spending), or both.
+Growth over time will not fix the problem.
+</p>
+
+<p>
+How we rellocate income and outgo so that they match
+needs to be a political process.
+Working out compromises is what the political
+process is supposed to be all about;
+nobody gets everything they want, but eventually some sort of rough
+set of priorities must be worked out for the resources available.
+Compromise is not a dirty word to describe the job of politics;
+it <b>is</b> the job.
+In reality, I think we will need to both raise revenue and decrease spending.
+I think we must raise taxes to some small degree,
+but we can&#8217;t raise taxes on the lower or middle
+class much; they don&#8217;t have the money.
+Also, we will not be able to solve this by taxing the rich out of the country.
+Which means that we <b>must</b> cut spending somehow.
+Just cutting defense spending won&#8217;t work;
+defense is only 20% of the entire budget.
+In contrast, the so-called entitlements &mdash; mainly
+medicare, medicaid, and social security &mdash; are 43% of the
+government costs and rapidly growing in cost.
+I think we are going to have to lower entitlement spending;
+that is undesirable, but we can&#8217;t keep providing services
+we can&#8217;t pay for.
+The alternative is to dramatically increase taxes to pay for them, and
+I do not think that will work.
+Raising the age before Social Security benefits can
+normally be received is to me an obvious baby step, but again,
+that alone will not solve the problem.
+It&#8217;s clearly possible to hammer out approaches to
+make this work, as long as the various camps are willing to work out
+a compromise.
+</p>
+
+<p>
+To get there, we need to specify and plan out the maximum debt that the
+U.S. will incur in each year, decreasing that each year
+(say, over a 10-year period).
+Then Congress (and the President) will need to work out, each year,
+how to meet that requirement.
+It doesn&#8217;t need to be any of the plans that have been put
+forward so far; there are lots of ways to do this.
+But unless we agree that we must live within our means, we will not
+be able to make the decisions necessary to do so.
+The U.S. is not a Greece, at least not now, but we must make decisions
+soon to prevent bad results.
+I am posting this on Independence Day; Americans have been willing to
+undergo lots of suffering to gain control over their destinies, and I
+think they are still able to do so today.
+</p>
+
+<p>
+In the short term (say a year),
+I suspect we will need to focus on short-term
+recovery rather than balancing the budget.
+And we must <b>not</b> default.
+But we must set the plans in motion to stop the runaway deficit,
+and get that budget balanced.
+The only way to get there is for the citizenry to demand it stop,
+before far worse things happen.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/07/04#us-government-balance-budget">permanent link to this entry</a></p>
+<h1>Sat, 28 May 2011</h1>
+<p><a name="openformula-success"><font size="+2"><b>OpenFormula Success!</b></font></a></p><p></p>
+<p>After years of work, the world is making a step forward to
+letting authors own and control their own documents,
+instead of having them controlled by office document software vendors.</p>
+<p>Historically, every office document suite has stored data in its own
+incompatible format, locking users into that suite and inhibiting competition.
+This lack of a
+<a href="http://www.digistan.org/open-standard:definition">free and open</a>
+office document format also makes a lie out of archiving;
+storing the bits is irrelevant because formats change over time
+in undocumented ways, with the result that later programs
+often cannot read older files (we can still read
+the Magna Carta, but some powerpoint files I created only 15 years ago
+cannot be read by current versions of Microsoft Office).
+Governments in particular should not have their documents beholden to
+<em>any</em> supplier; important government documents should
+be available to future generations.</p>
+<p>Thankfully, the
+<a href="http://www.oasis-open.org/apps/org/workgroup/office/">OASIS
+Open Document Format for Office Applications (OpenDocument)
+Technical Committee (TC)</a> is wrapping up its update of the
+OpenDocument standard, and I think they are about to complete
+the new version 1.2.
+This standard lets people store and exchange editable office documents
+so they edited by programs made by different suppliers.
+This will enable real competition, and enable future generations to
+read the materials we develop today.
+The TC has already approved OpenDocument v1.2 as a Committee Specification,
+and at this point I think the odds are excellent that it will get through
+the rest of the process and become formally approved.</p>
+<p>One of the big improvements, from my point of view, is that the
+TC has <em>successfully</em> defined how to store and exchange recalculated
+formulas in office documents.  That was my goal for joining the TC years
+ago, and
+I&#8217;m delighted to have played a part in this update.
+Since it looks like it&#8217;s on its way to success, I plan to step
+down as
+chair of the OASIS Office formula subcommittee and to leave the TC.
+I am very grateful to everyone who helped &mdash; <b>thank you</b>.
+For those who aren&#8217;t familiar with the story of the formula
+subcommittee, please let me give a brief background.</p>
+<p>Years ago I was delighted to see a standard way to store office documents
+and exchange them between different suppliers&#8217; products: OASIS Open
+Document Format for Office Applications (OpenDocument).  People around the
+world create office documents, so this is a standard the world <em>really</em>
+needed!!  However, I was deeply troubled when I discovered that this
+specification did not include a standard way to exchange recalculated
+formulas, such as those used in spreadsheets.  I thought this was an
+important weakness in the specification.  So I talked to others to
+see what could be done, and started work that might fill this void,
+including recruiting people to help.</p>
+<p>I am <em>delighted</em> to report that we now have a specification for formulas:
+OpenFormula, part 2 of the current draft of the OpenDocument standard.
+Now the world has a standard, developed by multiple suppliers,
+that lets people store office documents for future generations and
+exchange office documents between different suppliers&#8217; products,
+that includes recalculated formulas.  And it&#8217;s not just a spec;
+people are already implementing it (which is good; only implemented
+specs have value).  There are still some procedural steps, but I have
+high hopes that at this point we are essentially done.</p>
+<p>This work was <em>not</em> done by just me, of course, or even primarily by me.
+A <em>vast</em> number of people worked directly and behind the scenes to
+make it happen.   I cannot possibly list them all.  I <em>can</em>, however,
+express my great gratitude to them.  Thank you, thank you, thank you.
+You &mdash; and there are many of you &mdash; have made this a success.
+Again, thank you so very much.</p>
+<p>The reason I joined the OASIS technical committee (TC) was to help create
+this formula specification and turn it into a reality.  Making a <em>real</em>
+standard, one agreed on by multiple parties, takes a lot of work.
+We developers of the formula specification
+discussed details such as what 0 to the 0 power should mean, date
+basis systems, unit systems, and many other details like that, because
+addressing detailed issues is necessary to create a <em>good</em> standard.
+We had to nail down evaluation order and determine that a light-year is
+the distance light travels in <em>exactly</em> 365.25 days.  And so on.  We got
+a <em>lot</em> of participation by various spreadsheet suppliers; implementers
+even changed their implementations to conform with the draft spec as it
+was being developed!  This work took time, but the point was to create
+a specification people would actually <em>use</em>, not just put on a shelf,
+and that made the extra time worth it.
+If you are interested in learning more, feel free to listen to
+<a href="http://opendocument.xml.org/resource/the-odf-podcast-004-david-a-wheeler-on-openformula">The ODF Podcast 004: David A. Wheeler on OpenFormula (an interview of me by Rob Weir)</a>.
+</p>
+<p>Now, finally, that work appears to be done.   As I noted, there are a few
+procedural steps before the current specification becomes an official
+standard; change is always possible.  Also, I&#8217;m sure there will
+be clarifications and additions over time, as with any standard in use.
+But at this point, I think my goal has been accomplished, and I am
+grateful.</p>
+<p>So, I think now is a good time for me to make a graceful exit from the TC.
+After all, my goal has been accomplished. So, I intend to step down as
+subcommittee chair of the formula subcommittee <em>and</em> to leave the TC.
+Technically there are still some procedural steps and there&#8217;s
+a potential for issues; if there&#8217;s a need for me help to wrap
+up something, I&#8217;ll do so.  But I think things are concluding,
+so it&#8217;s a good time to say so.</p>
+<p>I think the effort to specify spreadsheet formulas has been a great
+success.  We got a lot accomplished.  Most importantly, we got something
+important accomplished for the world. Thank you, everyone who helped.</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/05/28#openformula-success">permanent link to this entry</a></p>
+<h1>Sun, 10 Apr 2011</h1>
+<p><a name="innovations-update-2011"><font size="+2"><b>Innovations update</b></font></a></p><p></p>
+<p>
+I&#8217;ve made various updates to my list of
+<a href="http://www.dwheeler.com/innovation/innovation.html">
+The Most Important Software Innovations</a>.
+I&#8217;ve added Distributed Version Control System (DVCS);
+these are all over now in the form of git, Mercurial (hg),
+Bazaar, Monotone, and so on, but
+these were influenced by the earlier BitKeeper, which was
+in turn influenced by the earlier Teamware (developed by Sun starting in 1991).
+As is often the case, &#8220;new&#8221; innovations are actually much older
+than people realize.
+I also added <i>make</i>, originally developed in 1977, and
+quicksort, developed in 1960-1961 by C.A.R. (Tony) Hoare.
+I&#8217;ve also improved lots of material that was already there,
+such as a better description of the history of
+the remote procedure call (RPC).
+</p>
+<p>
+So please enjoy
+<a href="http://www.dwheeler.com/innovation/innovation.html">
+The Most Important Software Innovations</a>!
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/04/10#innovations-update-2011">permanent link to this entry</a></p>
+<h1>Wed, 06 Apr 2011</h1>
+<p><a name="open-source-software-bridges"><font size="+2"><b>Comparing Free/Libre/Open Source Software (FLOSS) with Charles River Bridge vs. Warren Bridge</b></font></a></p><p></p>
+<p>
+I&#8217;ve been reading over an old court case and thinking about how it
+relates to the issue of government releasing free / libre /
+open source software (FLOSS).
+The case is
+<a href="http://en.wikipedia.org/wiki/Charles_River_Bridge_v._Warren_Bridge">Charles River Bridge v. Warren Bridge, 36 U.S. 420</a>, including the
+final U.S. Supreme Court decision
+(<a href="http://books.google.com/books?id=ZHoYAAAAIAAJ&pg=PA832&lpg=PA832&dq=court+case+government+built+toll+bridge+compete&source=bl&ots=yLgk4mANea&sig=ifdpF4aQyJu1V0XAs5GpyJ4Ccxk&hl=en&ei=LL-cTfHhO8ucgQe3qZz_Bg&sa=X&oi=book_result&ct=result&resnum=2&sqi=2&ved=0CB4Q6AEwAQ#v=onepage&q&f=false">United States Supreme Court reports, Vol. 9 (PDF page 773 on)</a>).
+This is <i>old</i>; the decision was rendered in 1837.
+But I think it has interesting ramifications for today.
+</p>
+<p>
+Any lawyer will correctly tell you that you must not look at one
+court decision to answer a specific question.
+And any lawyer will tell you that the details matter; a case with
+different facts may have a different ruling.
+Fine.  I&#8217;m not a lawyer anyway, and I am not trying to
+create a formal legal opinion (this is a blog, not a legal opinion!).
+But still, it&#8217;s useful to look at these pivotal cases 
+and try to think about their wider implications.
+I think we should <i>all</i> think about what&#8217;s good (or not good)
+for our communities, and how we should help our governments enable that;
+that is <i>not</i> a domain exclusive to lawyers.
+</p>
+<p>
+So, what was this case all about?
+Wikipedia has a nice summary.
+Basically, in 1785 the Charles River Bridge Company was granted a
+charter to construct a bridge over the Charles River between Boston and
+Charleston.
+The bridge owners got quite wealthy from the bridge tolls, but the
+public was not so happy with having to keep paying and paying
+for such a key service.
+So Massachusetts allowed another company to build another bridge,
+the Warren bridge, next to the original Charles River bridge.
+What&#8217;s more, this second agreement stipulated that
+the Warren bridge would, after a certain time,
+be turned over to the state and be free for the public to use.
+The Charles River bridge owners were enraged &mdash; they
+knew that a free-to-use bridge would eliminate their profits.
+So they sued.
+</p>
+<p>
+As noted in Wikipedia,
+the majority decision (read by Taney) was that
+any charter contract should be interpreted as narrowly as possible.
+Since the Charles River Bridge contract did not explicitly guarantee
+exclusive rights, the Supreme Court held that they didn&#8217;t get exclusive rights.
+The Supreme Court
+also determined that, in general, public grants should be interpreted
+closely and if there is ever any uncertainty in a contract, the decision
+made should be one to better the public.
+Taney said, &#8220;While the rights
+of private property are sacredly guarded, we must not forget that the
+community also have rights, and that the happiness and well-being of
+every citizen depends on their faithful preservation.&#8221;
+In his remarks,
+Taney also explored what the negative effects on the country would be if
+the Court had sided with the Charles River Bridge Company.
+He stated that
+had that been the decision of the Court, transportation would be affected
+around the whole country.
+Taney made the point that with the rise of
+technology, canals and railroads had started to take away business from
+highways, and if charters granted monopolies to corporations, then these
+sorts of transportation improvements would not be able to flourish.
+If this were the case then, Taney said, the country would &#8220;be thrown back
+to the improvements of the last century, and obliged to stand still.&#8221;
+</p>
+<p>
+So how does this relate to FLOSS and government?
+Well first, let me set the stage, by pulling in a different strand of thought.
+The U.S. government pays to develop a lot of software.
+I think that in general, when &#8220;we the people&#8221; pay for software,
+then &#8220;we the people&#8221; should get it.
+The idea of paying for some software to be developed, and then giving
+long monopoly rights to a single company, seems to fly in the face of this.
+It doesn&#8217;t make sense from a cost viewpoint; when there&#8217;s a single
+monopoly supplier, the costs go up because there&#8217;s no effective competition!
+Some software shouldn&#8217;t be released to the public at all, but that is
+what classification and export controls are supposed to deal with.
+I&#8217;m sure there are exceptions, but currently we assume that when
+&#8220;we the people&#8221; pay to develop software, then &#8220;we the people&#8221; do
+<i>not</i> get the software, and that is absurd.
+If someone wants to have exclusive rights to some software, then he should
+spend all his time and money to develop it.
+</p>
+<p>
+A fair retort to my argument is,
+&#8220;But does the government have the right to take an action that might
+put reduce the profits of a business, or put it out of business?&#8221;
+In particular,
+if the government paid to develop software, can the government
+release that software as FLOSS
+if a private company sells equivalent proprietary software?
+After all, that private company would suddenly find itself
+competing with a less-expensive or free product!
+</p>
+<p>
+Examining all relevant legal cases about this topic
+(releasing FLOSS when there is an existing proprietary product)
+would be daunting; I don&#8217;t pretend to have done that analysis.
+(If someone <i>has</i> done it, please tell me!)
+However, I think
+<a href="http://en.wikipedia.org/wiki/Charles_River_Bridge_v._Warren_Bridge">Charles River Bridge v. Warren Bridge</a>
+can at least shed some light and is interesting to think about.
+After all, this is a major Supreme Court decision,
+so the ruling should be able to help us think about the issue
+of the government
+enabling a free service that competes with an existing business.
+In this case, the government
+knowingly created a competing free service,
+and as a result an existing business would no longer be able to make money
+from something it did have rights to.
+There were a lot of people who had bought stock in the first company,
+for a lot of money, and those stock holders
+expected to reap massive returns from their
+monopoly on an important local service.
+There were also a lot of ordinary citizens who were unhappy about this
+local monopoly, and wanted to get rid of the monopoly.
+There is another interesting similarity between the bridge case
+and the release of FLOSS: the government did
+<i>not</i> try to take away the existing bridge, instead, they enabled the
+re-development of a competing bridge.
+While it&#8217;s not the last word, this case about bridges
+can (I think) help us think about whether governments can release FLOSS
+if there&#8217;s already a proprietary program that does the same thing.
+</p>
+<p>
+I would certainly agree that governments shouldn&#8217;t perform an
+action with the sole or primary purpose of putting a company out of business.
+But when governments release FLOSS they usually are <i>not</i> trying
+to put a proprietary company out of business as their primary purpose.
+In the case of Charles River Bridge vs. Warren Bridge,
+the government took action not because it wanted to put a company out of
+business, but because it wanted to help the public
+(in this case, by reducing use costs for key infrastructure).
+At least in this case, the Supreme Court
+clearly decided that a government can do something even
+if it hurts the profitability of some business.
+If they had ruled otherwise, government would be completely hamstrung;
+almost all government actions help someone and harm someone else.
+The point <i>should</i> be that the government should be trying to aid the
+community as a whole.
+</p>
+<p>
+I think a reasonable take-away message from this case is that government
+should focus on the rights, happiness, and well-being of the community
+as a whole, even if some specific group would make less money &mdash;
+and that helping the community may involve making some goods or
+services (like FLOSS!) available at no cost.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/04/06#open-source-software-bridges">permanent link to this entry</a></p>
+<p><a name="floss-weekly-dod"><font size="+2"><b>FLOSS Weekly: FLOSS in the DoD</b></font></a></p><p></p>
+<p>
+<a href="http://twit.tv/floss160">FLOSS Weekly #160</a>
+is out, and it features me!
+It&#8217;s an interview of me by Randal Schwartz and Simon Phipps
+about free/libre/open source software (FLOSS) and the
+U.S. Department of Defense (DoD).
+The DoD uses and releases FLOSS, and it has a recent
+policy about FLOSS that I think is pretty good.
+If you&#8217;re interested in this topic, take a look!
+</p>
+<p>
+If you&#8217;re interested in this topic, you might also be interested in:
+<ol>
+<li>
+<a href="http://cio-nii.defense.gov/sites/oss/">DoD information on open source software</a>.  In particular, look at the
+DoD OSS policy (&#8220;Clarifying Guidance Regarding Open Source Software (OSS)&#8221;, Memorandum by David M. Wennergren, 16 October 2009), the
+DoD OSS FAQ, and
+the paper &#8220;Use of Free and Open-Source Software (FOSS) in the U.S. DoD&#8221; (MITRE 2003).
+</li>
+
+<li>
+<a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56">
+DACS Software Tech News issue on &#8220;DoD and Open Source Software&#8221;</a>.
+See especially my essay,
+<a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56&article_id=180">
+&#8220;Publicly Releasing Open Source Software Developed for the U.S. Government&#8221;</a>
+</li>
+<li>
+<a href="http://www.dwheeler.com/">David A. Wheeler&#8217;s personal website</a>
+(yes, that&#8217;s my website).
+You might be especially interested in
+<a href="http://www.dwheeler.com/oss_fs_why.html">
+&#8220;Why Open Source Software / Free Software (OSS/FS)? Look at the Numbers!&#8221;</a>
+(a huge collection of FLOSS statistics),
+<a href="http://www.dwheeler.com/essays/commercial-floss.html"> &#8220;FLOSS is commercial software&#8221; </a>,
+<a href="http://www.dwheeler.com/essays/gpl-compatible.html"> &#8220;Make Your Open Source Software GPL-Compatible. Or Else&#8221; </a>
+(Why you should pick a GPL-compatible license),
+<a href="http://www.dwheeler.com/sloc/">
+&#8220;More than a Gigabuck: Estimating GNU/Linux&#8217;s size&#8221; </a>,
+<a href="http://www.dwheeler.com/oss_fs_eval.html">
+&#8220;How to Evaluate OSS/FS Programs&#8221;
+</a>,
+<a href="http://www.dwheeler.com/secure-programs/">
+&#8220;Secure Programming for Linux and Unix HOWTO&#8221;
+</a>
+(information on creating secure software),
+and
+<a href="http://www.dwheeler.com/trusting-trust">
+&#8220;Fully Countering Trusting Trust through Diverse Double-Compiling (DDC)&#8221;
+</a>
+(on countering the &#8220;Trusting Trust&#8221; attack).
+</li>
+</ol>
+</p>
+<p>
+So take a look at
+<a href="http://twit.tv/floss160">FLOSS Weekly #160</a>, and enjoy.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/04/06#floss-weekly-dod">permanent link to this entry</a></p>
+<h1>Tue, 01 Mar 2011</h1>
+<p><a name="intellectual-rights-not-intellectual-property"><font size="+2"><b>Intellectual Rights, not Intellectual Property</b></font></a></p><p></p>
+<p>
+I think the phrase &#8220;intellectual property&#8221;
+is a misleading and dangerous phrase.
+Our entire economy is moving towards being a
+&#8220;knowledge economy&#8221;, but the term
+&#8220;intellectual property&#8221; misleads people into exactly
+the wrong understanding.
+Instead, use terms such as &#8220;intellectual rights&#8221;.
+</p>
+
+<p>
+Not convinced?  Not sure what I mean?
+Take a look at
+<a href="http://www.dwheeler.com/essays/intellectual-rights-not-intellectual-property.html">Intellectual Rights, not Intellectual Property</a>.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/03/01#intellectual-rights-not-intellectual-property">permanent link to this entry</a></p>
+<p><a name="government-releasing-oss"><font size="+2"><b>U.S. Government Rules for Releasing Open Source Software (OSS)</b></font></a></p><p></p>
+<p>
+A
+<a href="http://www.dwheeler.com/blog/2011/02/24/">previous blog article</a>
+announced that the
+<a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56">January 2011 issue of the &#8220;DACS Software Tech News&#8221; (Volume 14 Number 1)</a> is finally available.
+It was available in PDF form,
+but a few articles weren&#8217;t available in HTML form.
+Since that time the rest of the articles have been released as HTML (yay!).
+</p>
+<p>
+In particular, my article
+<a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56&amp;article_id=180">&#8220;Publicly Releasing Open Source Software Developed for the U.S. Government&#8221;</a>
+is finally available in HTML (it has a complicated table, which is probably
+why it took a while to release as HTML).
+That article summarizes
+&#8220;when the U.S. federal
+government or its contractors may publicly release, as
+open source software (OSS), software developed with
+government funds&#8221;.
+Even if you don&#8217;t work for the government or its contractors,
+you may still want this information, because you may want software
+that they&#8217;ve developed.
+All too often the government and its contractors don&#8217;t know
+what they can do (or not do).. so if you want them to release software
+as OSS, so you may need this information
+to help them determine if they can release it as OSS.
+But if you need the information in this article, you
+<i>really</i> need it, and I think a lot of people need it.
+That article is the result of a lot of work, and
+I thought it&#8217;d be useful to give some background about this article.
+</p>
+<p>
+But first &mdash; why bother?
+This is important because
+the U.S. federal government and its contractors
+spend billions of dollars developing and maintaining software.
+I believe that often these could be more efficiently developed and
+maintained by releasing the software as open source software (OSS)
+and doing collaborative development.
+Besides, if &#8220;we the people&#8221; paid to have software
+developed, shouldn&#8217;t &#8220;we the people&#8221; get it?
+Currently, when &#8220;we the people&#8221; pay to develop software,
+we normally <i>don&#8217;t</i> get it, and that is senseless.
+It&#8217;s especially horrific in the research world.
+Often the government
+pays to develop software as part of research,
+but instead of releasing that software to everyone who paid for it
+(the taxpayers),
+it&#8217;s given exclusively to one organization.
+As a result, different researchers must constantly re-develop
+software to do further research.
+I think this absurd research strategy is starting to threaten
+U.S. competitiveness.
+</p>
+<p>
+There <i>are</i> many people interested in releasing software as OSS,
+both in the government and in its contractors.
+But over the years many of them have told me that they
+couldn&#8217;t figure out what the legal rules were.
+For example, when I gave a
+<a href="http://www.dwheeler.com/oss-dod-webinar2008.html">webinar about open source software back in 2008</a>,
+I was asked
+<a href="http://www.dwheeler.com/essays/dod-oss-qa.html">a lot of questions</a>
+about when the government or contractors could release software as OSS.
+When I heard these questions, I figured that it&#8217;d be
+easy to answer &mdash; just read the contracts.
+But that&#8217;s not simple at all.
+A typical U.S. federal government contract is actually a huge document;
+just <i>finding</i> the relevant text is hard if you&#8217;re
+not an expert
+(you have to look for the
+&#8220;data rights&#8221; sections in particular).
+Once you find it,
+it&#8217;s hard to understand what the text means, even
+if you&#8217;re a lawyer&#8230; and most of the people who need to understand
+this are <i>not</i> lawyers.
+</p>
+<p>
+So I began polling one lawyer after another, asking them to explain things.
+I then refined my summaries, and went on to others saying,
+&#8220;this is my understanding &mdash; do I have it right?&#8221;
+One thing that became clear right away is that
+there are a lot of sub-specialties in law.
+In particular,
+lawyers who understood the Department of Defense (DoD) contracting
+rules often
+didn&#8217;t know the rules for the rest of the federal government, and
+vice versa.
+My thanks to all the lawyers who helped clarify things, including
+those in CENDI!
+Some lawyers honestly didn&#8217;t know,
+even if they specialized in intellectual rights, which just
+goes to show how complicated this is.
+</p>
+<p>
+I then summarized this into a set of slides, but they were
+still complicated.
+<a href="http://onepeople.org/about">Gunnar Hellekson</a>
+said that he liked the information I had gathered,
+but he thought my presentation was too complicated (he was right).
+Gunnar then tried to create a graph that simplified things, and showed it to me.
+I thought his graph was also too complicated, and in many cases wrong.
+Also, his graph made it hard to see how the different circumstances were
+the same and how they were different.
+But his work clearly showed a need to simplify things.
+</p>
+<p>
+Gunnar and I then chatted during the August 2010
+<a href="http://mil-oss.org/">Mil-OSS</a>
+conference in Arlington, VA, about how to make this simpler.
+The primary complication is that the copyright-related rights
+were hard to explain.
+So I decided to turn this into a big &#8220;if.. then&#8230;&#8221; table,
+where the conditions were on the left, and the &#8220;then&#8221;
+(what government and contractors are allowed to do) on the right.
+Gunnar gave me few more comments, and I then showed an early draft at the
+Mil-OSS unconference (where 30 people saw it and gave feedback on it).
+It was a complicated 2-page table to create, but it&#8217;s
+really easy to use, and that&#8217;s what matters.
+What I presented wasn&#8217;t &#8220;new information&#8221; &mdash;
+in theory this was already public information &mdash; but making information
+<i>understandable</i> is really important too.
+</p>
+<p>
+I give this tale to show that this material, like many materials,
+was developed in a collaborative way, just like most open source software.
+I wrote the actual text itself, which is why my name is on it, but
+I received and responded to a lot of collaborative comments,
+and I thank everyone who gave me feedback.
+It&#8217;s not formal legal advice.
+But it&#8217;s impossible to follow the law or contracts if you don&#8217;t
+have a basic understanding of them;
+my hope is that it gives non-lawyers (and some lawyers) an
+understanding of the basics.
+</p>
+<p>
+As I gathered this information,
+I was surprised to learn how often the government and/or contractors
+<i>can</i> release OSS when the government pays for software development.
+Often, the biggest problem with OSS release today
+is that the government and contractors
+simply don&#8217;t know what they <i>can</i> do.
+Of course, even if the government or contractors <i>can</i> do
+something, and know it, that doesn&#8217;t mean they&#8217;ll do it.
+Sometimes they <i>shouldn&#8217;t</i> release software as OSS, for example,
+software that gives a weapon system special capabilities over others&#8217;
+should probably not be released as OSS.
+But often software doesn&#8217;t give an organization a special capability.
+Instead, all too often there are perverse incentives, encouraging
+government and contractors to do things that are
+not in society&#8217;s interest.
+But even if there are perverse incentives,
+the first step towards fixing them is to
+learn what the <i>current</i> rules are.
+The article helps government employees and contractors
+figure those out in many cases, and that&#8217;s useful too.
+Even if you have a special case not well covered in the article,
+it&#8217;s still useful to understand the &#8220;normal case&#8221;.
+Besides, if you want to change the system,
+typically you must first know where it is now.
+</p>
+<p>
+If you read the article you&#8217;ll notice
+that I intentionally use the term &#8220;intellectual rights&#8221;,
+not &#8220;intellectual property&#8221;.
+I think the phrase &#8220;intellectual property&#8221;
+is a misleading and dangerous phrase; see my essay
+<a href="http://www.dwheeler.com/essays/intellectual-rights-not-intellectual-property.html">Intellectual Rights, not Intellectual Property</a>
+for more information.
+(I&#8217;ll post separately about that topic.)
+</p>
+<p>
+So anyway, please take a look at
+<a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56&amp;article_id=180">&#8220;Publicly Releasing Open Source Software Developed for the U.S. Government&#8221;</a>
+or the
+<a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56">January 2011 issue of the &#8220;DACS Software Tech News&#8221; (Volume 14 Number 1)</a>
+and enjoy!
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/03/01#government-releasing-oss">permanent link to this entry</a></p>
+<h1>Thu, 24 Feb 2011</h1>
+<p><a name="dacs-software-tech-news-open-source-software"><font size="+2"><b>DACS Software Tech News: Open Source Software</b></font></a></p><p></p>
+<p>
+The
+<a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56">January 2011 issue of the &#8220;DACS Software Tech News&#8221; (Volume 14 Number 1)</a> is finally available!
+The entire issue is dedicated to covering the relationship of the
+U.S. Department of Defense (DoD) and open source software (OSS).
+If you&#8217;re interested in the DoD and software,
+the U.S. government and software,
+or open source software, you really need to look at this.
+Even if you&#8217;re not a U.S. citizen, you&#8217;re probably influenced by
+the decisions of the U.S. government
+(it spends a lot of money on software!), and the experiences and lessons it
+learns are probably useful in many other places.
+You have to register (sorry!), but it&#8217;s well worth it.
+</p>
+<p>
+I wrote or co-wrote several of the articles, so please let me point out
+a couple of interesting points in them.
+</p>
+<p>
+&#8220;Software is a Renewable Military Resource&#8221; 
+notes that it&#8217;s possible for projects inside the government to
+use collaborative development approaches, even if the software
+isn&#8217;t released to the public;
+we call these &#8220;Open Government Off-the-shelf&#8221; (OGOTS)
+projects.
+Another term used for these projects is
+Government Off-the-Shelf (GOSS);
+people I respect use the term &#8220;GOSS&#8221;, but
+I worry that the GOSS term is confusing (GOSS isn&#8217;t OSS,
+because GOSS projects don&#8217;t allow arbitrary use and redistribution).
+In the DoD, a related term is &#8220;Open Technology Development&#8221; (OTD),
+which describes a community-based development process, be it
+OGOTS or OSS with community-based maintenance.
+The article has a nice little graphic that I think makes this
+pretty clear.
+</p>
+<p>
+My article
+&#8220;Open Source Software Is Commercial&#8221;
+won&#8217;t surprise anyone who&#8217;s seen my already-posted article
+<a href="http://www.dwheeler.com/essays/commercial-floss.html">Free-Libre / Open Source Software (FLOSS) is Commercial Software</a>.
+Basically, OSS is commercial software.
+Anyone who says nonsense phrases like &#8220;commercial or open source software&#8221;
+probably doesn&#8217;t understand open source software,
+and is unlikely to make good decisions about software.
+This new article focuses more on the formal legal definitions.
+</p>
+<p>
+My article
+&#8220;Publicly Releasing Open Source Software Developed for the U.S. Government&#8221;
+summarizes
+&#8220;when the U.S. federal
+government or its contractors may publicly release, as
+open source software (OSS), software developed with
+government funds&#8221;.
+If you ever interact with the U.S. federal government or its
+contractors in software issues, make sure they get a copy of this article.
+It&#8217;s easy to say &#8220;follow the rules&#8221; and &#8220;obey the contract&#8221;
+but it&#8217;s often impossible to find out what the rules
+and contracts <i>actually say</i>.
+Even many lawyers didn&#8217;t know the information in this article,
+and this is the kind of information that many <i>non-lawyers</i> need to know.
+All too often the government and its contractors should be releasing
+software as OSS, but don&#8217;t know that they have the right to do so.
+It&#8217;s taken me years to pull together this information.
+The article gives 5 basic questions that you need to answer.
+One of those questions &mdash;
+&#8220;Do you have the necessary copyright-related rights?&#8221; &mdash;
+has a supporting table that I&#8217;m really happy with.
+That table manages to take a lot of complicated legal
+mumbo jumbo and turn it into something that can be actually understood.
+One point this article brings home is that using the term
+&#8220;intellectual property&#8221; is grossly misleading;
+in government contracting (and in many other circumstances)
+it usually doesn&#8217;t matter who holds the copyright;
+what matters is who has what rights.
+Anyway, if you need this information, you need this article.
+</p>
+<p>
+Anyway, here&#8217;s the full list of articles in this issue:
+<ul>
+<li><a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56&article_id=174">&#8220;Tech Views&#8221; BY John Dingman, Editor</a></li>
+<li><a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56&article_id=175">&#8220;Software is a Renewable Military Resource&#8221; By John Scott, Dr. David A. Wheeler, Mark Lucas, and J.C. Herz</a></li>
+<li><a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56&article_id=176">&#8220;Military Open Source Community Growing&#8221; By Kane McLean, BRTRC Technology Research Corporation</a></li>
+<li><a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56&article_id=177">&#8220;Evaluating Open Source Software&#8221; By Matthew Kennedy</a></li>
+<li><a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56&article_id=151">&#8220;Open Source Software Is Commercial&#8221; By Dr. David A. Wheeler</a></li>
+<li><a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56&article_id=178">&#8220;Implementing Open Standards in Open Source&#8221; By Lawrence Rosen</a></li>
+<li>
+<a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56">&#8220;Running Open Technology Development Projects&#8221; By John Scott, Dr. David A. Wheeler, Mark Lucas, and J.C. Herz</a> (no separate link)</li>
+<li>
+<a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56">&#8220;Publicly Releasing Open Source Software Developed for the U.S. Government&#8221; By Dr. David A. Wheeler</a> (no separate link)</li>
+</ul>
+</p>
+<p>
+So please, take a look at
+<a href="https://softwaretechnews.thedacs.com/stn_view.php?stn_id=56">January 2011 issue of the &#8220;DACS Software Tech News&#8221; (Volume 14 Number 1)</a>.
+<p>
+Full disclosure: I&#8217;m on the DACS Software Tech News board
+(as a volunteer; nobody pays me).
+But the issue is good anyway :-).
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2011/02/24#dacs-software-tech-news-open-source-software">permanent link to this entry</a></p>
+</body></html>

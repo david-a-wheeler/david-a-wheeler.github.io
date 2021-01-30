@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<!-- name="generator" content="blosxom/2.0" -->
+
+<rss version="2.0">
+  <channel>
+    <title>David A. Wheeler's Blog   </title>
+    <link>http://www.dwheeler.com/blog</link>
+    <description>David A. Wheeler's weblog.</description>
+    <language>en</language>
+
+  <item>
+    <title>Autonumbering supported in Firefox 1.5!</title>
+    <link>http://www.dwheeler.com/blog/2006/06/02#firefox-autonumbering</link>
+    <pubDate>Fri, 02 Jun 2006 21:31 GMT</pubDate>
+    <!-- date: 2006-06-02 -->
+    <description>
+&lt;p&gt;
+Here&amp;#8217;s another reason to use Firefox as your web browser, besides the fact that
+&lt;a href=&quot;http://www.dwheeler.com/blog/2005/08/06/#ie-horrific&quot;&gt;Firefox has
+a better security record&lt;/a&gt; and that Firefox has
+&lt;a href=&quot;http://news.com.com/Microsoft+yielding+to+IE+standards+pressure/2100-1032_3-5620988.html&quot;&gt;better
+support for web standards in general.&lt;/a&gt;
+Firefox 1.5 has added autonumbering support, and sites like mine are
+starting to use it.
+If you&amp;#8217;re using a non-compliant web browser,
+like the current version of Internet Explorer,
+you&amp;#8217;re missing out.
+But let&amp;#8217;s back up a bit to the basics: HTML.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;a href=&quot;http://www.w3.org/MarkUp/&quot;&gt;HTML&lt;/a&gt; has been a
+spectacularly successful standard for sharing
+information - web pages around the world use it.
+I write a lot of my papers directly in HTML, because it&amp;#8217;s easy,
+using HTML makes them easily accessible to everyone, and it&amp;#8217;s a
+&lt;a href=&quot;http://www.dwheeler.com/essays/opendocument-open.html&quot;&gt;
+completely open standard&lt;/a&gt;.
+&lt;/p&gt;
+&lt;p&gt;
+But HTML has several weaknesses if you&amp;#8217;re writing long or
+technical reports.
+One especially important one is automatic numbering of headers:
+the original HTML specification can&amp;#8217;t do it.
+When you&amp;#8217;re reading a long report, it can be hard to keep track of
+where you are, so having every heading numbered (such as
+&amp;#8220;section 2.4.3&amp;#8221;) is &lt;i&gt;really&lt;/i&gt; helpful.
+This can be solved by having programs directly insert the heading numbers
+numbers into the HTML text, but that&amp;#8217;s a messy and kludgy solution.
+It&amp;#8217;d be much
+better if browsers automatically added numbered headings where appropriate,
+so that the HTML file itself is simple and clean.
+&lt;/p&gt;
+&lt;p&gt;
+The W3C (the standards group in charge of HTML and related
+standards) agreed that automatic numbering was important,
+and included support for automatic numbering in the
+&lt;a href=&quot;http://www.w3.org/Style/CSS/&quot;&gt;
+Cascading Style Sheets (CSS) standard&lt;/a&gt; way back in 1998.
+CSS is an important support standard for HTML, so that should have been it&amp;#8230;
+but it wasn&amp;#8217;t.
+Both Netscape and Microsoft decided to not fully implement the standard,
+nor try to fix the standard so that they &lt;i&gt;would&lt;/i&gt; implement it.
+Soon afterwards Microsoft gained dominant market share, and then
+let their browser stagnate (why bother improving it, since there was
+no competition?).
+It looked like we, the users, would never get basic
+capabilities in HTML like auto-numbering.
+&lt;/p&gt;
+&lt;p&gt;
+I&amp;#8217;m happy to report that
+&lt;a href=&quot;http://www.spreadfirefox.com/?q=affiliates&amp;amp;id=31988&amp;amp;t=60&quot;&gt;
+Firefox 1.5 has added support for auto-numbering&lt;/a&gt; headings and
+other constructs too.
+So I&amp;#8217;ve modified my
+&lt;a href=&quot;http://www.dwheeler.com/essays/paper.css&quot;&gt;CSS file for
+papers and essays&lt;/a&gt; so it auto-number headings;
+I&amp;#8217;ve released my CSS file under the MIT/X license, so anyone else can use it.
+If you develop web content you may want to look
+at examples like mine for a reason, because&amp;#8230;
+&lt;/p&gt;
+&lt;p&gt;
+It turns out that the story is more complicated.
+In the process of implementing auto-numbering,
+the Firefox developers found a serious problem with the CSS specification.
+Oops!
+The &lt;a href=&quot;https://bugzilla.mozilla.org/show_bug.cgi?id=3247&quot;&gt;
+Mozilla Firefox bug #3247&lt;/a&gt; and
+&lt;a href=&quot;http://www.davidflanagan.com/blog/2005_08.html#000075&quot;&gt;
+David Flanagan&amp;#8217;s blog&lt;/a&gt; discuss this further.
+The Firefox developers talked with the W3C, and the W3C ended up creating
+&amp;#8220;CSS 2.1&amp;#8221;, an updated/patched version of the CSS2 standard
+that is in the process of being formally released.
+&lt;/p&gt;
+&lt;p&gt;
+What this means is that the examples for autonumbering
+in the &amp;#8220;official&amp;#8221; original CSS2 standard won&amp;#8217;t actually work!
+Instead, you need to follow a slightly different approach as defined
+in the patched CSS2.1 specification.
+&lt;blockquote&gt;
+&lt;b&gt;Technical stuff:&lt;/b&gt;
+The basic problem involves scoping issues.
+To solve it, the counter-reset property &lt;i&gt;must&lt;/i&gt; be in the
+main heading names (like h1, h2, etc.), and &lt;i&gt;not&lt;/i&gt; in the
+&amp;#8220;before&amp;#8221; sections (like h1:before, h2:before, etc.) - in spite of
+all the examples in the original CSS2 spec.
+You can put counter-increment in either place, though the spec
+puts them in the :before sections so I have too.
+&lt;!-- Here's the W3C example.  I don't think it matters; I think
+     what matters is the location of the counter-reset.
+H1:before {
+    content: &quot;Chapter &quot; counter(chapter) &quot;. &quot;;
+    counter-increment: chapter;  /* Add 1 to chapter */
+}
+H1 {
+    counter-reset: section;      /* Set section to 0 */
+}
+The latest examples in CSS2.1 working draft of 11 April 2006
+move the counter-reset property to main heading names, but keep the
+counter-increment property in the &quot;:before&quot; sections.
+--&gt;
+&lt;/blockquote&gt;
+&lt;/p&gt;
+&lt;p&gt;
+Now people have yet another reason to upgrade to Firefox.
+Firefox has had better standards support for some time;
+there are now many sites that won&amp;#8217;t display properly
+(or as well) if your browser doesn&amp;#8217;t support the standards well.
+But here is a clear and functionally important difference.
+&lt;/p&gt;
+&lt;p&gt;
+I&amp;#8217;m a big believer in standards, but they can only help users if
+they are implemented, and they will only be implemented if
+users demand standards compliance.
+I think that the more people switch to standards-compliant browsers,
+and the more that sites use standards (to encourage people to switch),
+the more pressure it will bring on the other browser makers to catch up.
+And that would be great for all computer users.
+&lt;/p&gt;
+&lt;p&gt;
+More broadly, this is also a good example of why it&amp;#8217;s important to have
+implementations try out standards before they are frozen;
+they help avoid mistakes like this.
+Today,
+&lt;a href=&quot;http://www.dwheeler.com/essays/open-standards-open-source.html&quot;&gt;
+essentially every successful open standard is implemented by
+free-libre/open source software (FLOSS)&lt;/a&gt; - this makes sure that the
+standard is implementable, helps all understand what the standard
+means, and also helps other developers understand at least one way
+to implement it.
+This doesn&amp;#8217;t mean standards aren&amp;#8217;t important; standards are vital!
+And this also shows that when a mistake is made by a standards body,
+life is not over;
+standards bodies can work with implementors to fix problems.
+In fact, this
+shows that the best standards are those created from an
+interplay between standards developers and implementors, where
+standards are then made official after actual implementation experience.
+&lt;/p&gt;
+</description>
+   </item>
+  </channel>
+</rss>

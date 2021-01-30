@@ -1,0 +1,175 @@
+<?xml version="1.0"?>
+<!-- name="generator" content="blosxom/2.0" -->
+
+<rss version="2.0">
+  <channel>
+    <title>David A. Wheeler's Blog   </title>
+    <link>http://www.dwheeler.com/blog</link>
+    <description>David A. Wheeler's weblog.</description>
+    <language>en</language>
+
+  <item>
+    <title>Unsigned characters: The cheapest secure programming measure?</title>
+    <link>http://www.dwheeler.com/blog/2006/03/28#unsigned-char</link>
+    <pubDate>Tue, 28 Mar 2006 21:39 GMT</pubDate>
+    <!-- date: 2006-03-28 -->
+    <description>
+&lt;p&gt;
+Practically every computer language has &amp;#8220;gotchas&amp;#8221; &amp;#8212; constructs or combinations
+of constructs that software developers are likely to use incorrectly.
+Sadly, the C and C++ languages have an
+unusually large number of gotchas, and many of these gotchas tend to
+lead directly to dangerous security vulnerabilities.
+This forest of dangerous gotchas tends to make developing
+secure software in C or C++ more difficult than it needs to be.
+Still, C and C++ are two of the most widely-used languages in the world;
+there are many reasons people still choose them for new development, and
+there&amp;#8217;s a lot of pre-existing code in those languages that is not going to be
+rewritten any time soon.
+So if you&amp;#8217;re a software developer,
+it&amp;#8217;s still a very good idea to learn how to develop secure
+software in C or C++&amp;#8230; because you&amp;#8217;ll probably need to do it.
+&lt;/p&gt;
+&lt;p&gt;
+Which brings me to the &amp;#8220;-funsigned-char&amp;#8221; compiler option of gcc,
+one of the cheapest
+secure programming available to developers using C or C++
+(similar options are available for many other C and C++ compilers).
+If you&amp;#8217;re writing secure programs in C or C++, you should use
+the &amp;#8220;-funsigned-char&amp;#8221; option of gcc (and its equivalent in other
+compilers) to help you write secure software.
+What is it, and what&amp;#8217;s it for?
+Funny you should ask&amp;#8230; here&amp;#8217;s an answer!
+&lt;/p&gt;
+&lt;p&gt;
+Let&amp;#8217;s start with the technical basics.
+The C programming language includes the &amp;#8220;char&amp;#8221; type, which is
+usually used to store an 8-bit character.
+Many internationalized programs encode text using UTF-8, so a user-visible
+character be stored in a sequence of &amp;#8220;char&amp;#8221; values.
+but even in internationalized programs
+text is often stored in a &amp;#8220;char&amp;#8221; type.
+&lt;!-- Let's skip wide char, WCHAR... it's complicated and out of scope. --&gt;
+&lt;/p&gt;
+&lt;p&gt;
+The C standard specifically says that char CAN be signed OR unsigned.
+(Don&amp;#8217;t believe me? Go look at
+ISO/IEC 9899:1999, section 6.2.5, paragraph 15, second sentence.
+So there.)
+On many platforms (such as typical Linux distributions),
+the char type is signed.
+The problem is that software developers often &lt;i&gt;incorrectly&lt;/i&gt; think
+that the char type is unsigned, or don&amp;#8217;t understand the ramifications
+of signed characters.
+This misunderstanding is becoming &lt;i&gt;more&lt;/i&gt; common over time, because
+many other C-like languages (like Java and C#) define their &amp;#8220;char&amp;#8221; type
+to be essentially unsigned or in a way that it wouldn&amp;#8217;t matter.
+What&amp;#8217;s worse,
+this misunderstanding can lead directly to security vulnerabilities.
+&lt;/p&gt;
+&lt;p&gt;
+All sorts of &amp;#8220;weird&amp;#8221; things can happen on systems with signed characters.
+For example, the character 0xFF will match as being &amp;#8220;equal&amp;#8221; to the integer -1,
+due to C/C++&amp;#8217;s widening rules.
+And this can create security flaws in a hurry, because -1 is a common
+&amp;#8220;sentinel&amp;#8221; value that many developers presume &amp;#8220;can&amp;#8217;t happen&amp;#8221; in a char.
+A well-known security flaw in Sendmail was caused by exactly this problem
+(see &lt;a href=&quot;http://www.kb.cert.org/vuls/id/897604&quot;&gt;US-CERT #897604&lt;/a&gt; and
+&lt;a href=&quot;http://www.securityfocus.com/archive/1/316773/2003-03-28/2003-04-03/0&quot;&gt;
+this posting by Michal Zalewski&lt;/a&gt;
+for more information).
+&lt;/p&gt;
+
+&lt;p&gt;
+Now, you could solve this by always using the
+unambiguous type &amp;#8220;unsigned char&amp;#8221; if that&amp;#8217;s what you intended,
+and strictly speaking that&amp;#8217;s what you should do.
+However, it&amp;#8217;s very painful to change existing code to do this.
+And since many pre-existing
+libraries expect &amp;#8220;pointer to char&amp;#8221;, you can end up with
+tons of useless warning messages when you do that.
+&lt;/p&gt;
+
+&lt;p&gt;
+So what&amp;#8217;s a &lt;i&gt;simple&lt;/i&gt; solution here?
+A simple answer is to force the compiler to &lt;i&gt;always&lt;/i&gt;
+make &amp;#8220;char&amp;#8221; an UNSIGNED char.
+A portable program should work when a char is unsigned,
+so this shouldn&amp;#8217;t require any changes to that code.
+Since programmers often make the assumption, let&amp;#8217;s
+make their assumption correct.
+In the widely-popular gcc compiler, this is done with the &amp;#8220;-funsigned-char&amp;#8221;
+option; many other C and C++ compilers have similar options.
+What&amp;#8217;s neat is that you don&amp;#8217;t have to modify a line of source code;
+you can just slip this option into your build system
+(e.g., add this option to your makefile).
+This is typically very trivial to do; typically you can just modify (or
+set) the CFLAGS variable to add this option, and then recompile.
+&lt;/p&gt;
+
+&lt;p&gt;
+I also have more controversial advice.
+Here it is: If you develop C or C++ compilers, or you&amp;#8217;re a distributor
+who distributes a C/C++ compiler&amp;#8230; &lt;i&gt;make char unsigned by default
+on all platforms&lt;/i&gt;.
+And if you&amp;#8217;re a customer, demand that from your vendor.
+This is just like similar efforts going on in operating system sales
+to users;
+today operating system vendors are changing their systems so that they
+are &amp;#8220;secure by default&amp;#8221;.
+At one time many vendors&amp;#8217; operating systems were delivered with all
+sorts of &amp;#8220;convenient&amp;#8221; options that made them easy to attack&amp;#8230; but
+getting subverted all the time turned out to be rather inconvenient to users.
+In the same way, development tools&amp;#8217; defaults should try to prevent
+defects, or create an environment where defects are less likely.
+Signed characters are basically a vulnerability waiting to happen,
+portable programs shouldn&amp;#8217;t depend on a particular choice, and non-portable
+software can turn on the &amp;#8220;less secure&amp;#8221; option when necessary.
+I doubt this advice will be taken, but I can suggest it!
+&lt;/p&gt;
+
+&lt;p&gt;
+Turning this option on does not save the universe; most vulnerabilities
+will &lt;i&gt;not&lt;/i&gt; be caught by turning on this little option.
+In fact, by itself this is a &lt;i&gt;very&lt;/i&gt; weak measure, simply because
+by itself this doesn&amp;#8217;t counter most vulnerabilities.
+You need to know much more to write secure software;
+to learn more, &lt;a href=&quot;http://www.dwheeler.com/secure-programs&quot;&gt;see
+my free book on writing secure programs for Linux and Unix&lt;/a&gt;.
+But stick with me;
+I think this is a small example of a much larger concept, which
+I&amp;#8217;ll call &lt;i&gt;no sharp edges&lt;/i&gt;.
+Chain saws are powerful &amp;#8212; and dangerous &amp;#8212; but no one puts
+scissor blades next to the chain saw&amp;#8217;s handle.
+We try to make sure that &amp;#8220;obvious&amp;#8221; ways of using tools are not
+dangerous, even if the tool itself can do dangerous things.
+Yet the &amp;#8220;obvious&amp;#8221; ways to use many languages turn out to lead directly
+to security vulnerabilities, and that needs to change.
+You can&amp;#8217;t prevent all misuse &amp;#8212; a chain saw can be always be misused &amp;#8212;
+but you can at least make languages easy to use correctly
+and likely to do only what was intended (and nothing else).
+&lt;/p&gt;
+&lt;p&gt;
+We need to design languages, and select tools and tool options, to
+reduce the likelihood of a developer error becoming a security vulnerability.
+By combining
+compiler warning flags (like -Wall), defaults that are likely to avoid
+dangerous mistakes (like -funsigned-char),
+NoExec stacks, and many other approaches, we can
+greatly reduce the likelihood of a mistake
+turning into a security vulnerability.
+The most important security measure you can take in developing secure
+software is to &lt;i&gt;be paranoid&lt;/i&gt; &amp;#8212; and I still recommend paranoia.
+Still, it&amp;#8217;s hard to be perfect all the time.
+Currently, a vast proportion of security vulnerabilities come from relatively
+trivial implementation errors, ones that are easy to miss.
+By combining a large number of approaches, each of which counter
+a specific common mistake,
+we can get rid of a vast number of today&amp;#8217;s vulnerabilities.
+And getting rid of a vast number of today&amp;#8217;s vulnerabilities is
+a very good idea.
+&lt;/p&gt;
+</description>
+   </item>
+  </channel>
+</rss>

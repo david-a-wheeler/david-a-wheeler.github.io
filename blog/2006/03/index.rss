@@ -1,0 +1,414 @@
+<?xml version="1.0"?>
+<!-- name="generator" content="blosxom/2.0" -->
+
+<rss version="2.0">
+  <channel>
+    <title>David A. Wheeler's Blog   </title>
+    <link>http://www.dwheeler.com/blog</link>
+    <description>David A. Wheeler's weblog.</description>
+    <language>en</language>
+
+  <item>
+    <title>Two new presentations: &amp;#8220;Open Source Software and Software Assurance&amp;#8221; and &amp;#8220;Open Standards and Security&amp;#8221;</title>
+    <link>http://www.dwheeler.com/blog/2006/03/30#open-standards-security</link>
+    <pubDate>Thu, 30 Mar 2006 19:28 GMT</pubDate>
+    <!-- date: 2006-03-30 -->
+    <description>
+&lt;p&gt;
+I&amp;#8217;ve put two presentations on my website you might find of interest.
+&lt;/p&gt;
+&lt;p&gt;
+The first one is
+&lt;a href=&quot;http://www.dwheeler.com/essays/oss_software_assurance.pdf&quot;&gt;
+Open Source Software and Software Assurance&lt;/a&gt;.
+Here I talk about Free-Libre / Open Source Software (FLOSS) and its
+relationship to software assurance and security.
+It has lots of actual statistics, and a discussion on review.
+I also deal with the chestnut &amp;#8220;can&amp;#8217;t just anyone insert malicious code
+into OSS?&amp;#8221; &amp;#8212; many questioners don&amp;#8217;t realize that attackers can change
+proprietary software too (attackers generally don&amp;#8217;t worry
+about legal niceties); the issue is the user&amp;#8217;s supply chain.
+I gave this presentation at FOSE 2006 in Washington, DC, and I&amp;#8217;ve
+given variations of this presentation many times before.
+&lt;/p&gt;
+&lt;p&gt;
+The second presentation is
+&lt;a href=&quot;http://www.dwheeler.com/essays/open-standards-security.pdf&quot;&gt;
+&amp;#8220;Open Standards and Security&amp;#8221;&lt;/a&gt;.
+Here I focus on the role of open standards in security, which turns out
+to be fundamental.
+&lt;/p&gt;
+&lt;p&gt;
+I&amp;#8217;ll be giving the &amp;#8220;Open Standards and Security&amp;#8221; presentation at the
+&lt;a href=&quot;http://www.linuxworldexpo.com/live/12/events/12BOS06A/conference/tracksessions//QMONYA04PWRU&quot;&gt;
+&amp;#8220;LinuxWorld Government Day: Implementing Open Standards&amp;#8221; track&lt;/a&gt;,
+April 4, 2006, in Boston, Massachusetts.
+I&amp;#8217;ll speak at 12:45, so come hear the presentation&amp;#8230; you&amp;#8217;ll miss much
+if you only read the slides.
+&lt;/p&gt;
+</description>
+   </item>
+  <item>
+    <title>Unsigned characters: The cheapest secure programming measure?</title>
+    <link>http://www.dwheeler.com/blog/2006/03/28#unsigned-char</link>
+    <pubDate>Tue, 28 Mar 2006 21:39 GMT</pubDate>
+    <!-- date: 2006-03-28 -->
+    <description>
+&lt;p&gt;
+Practically every computer language has &amp;#8220;gotchas&amp;#8221; &amp;#8212; constructs or combinations
+of constructs that software developers are likely to use incorrectly.
+Sadly, the C and C++ languages have an
+unusually large number of gotchas, and many of these gotchas tend to
+lead directly to dangerous security vulnerabilities.
+This forest of dangerous gotchas tends to make developing
+secure software in C or C++ more difficult than it needs to be.
+Still, C and C++ are two of the most widely-used languages in the world;
+there are many reasons people still choose them for new development, and
+there&amp;#8217;s a lot of pre-existing code in those languages that is not going to be
+rewritten any time soon.
+So if you&amp;#8217;re a software developer,
+it&amp;#8217;s still a very good idea to learn how to develop secure
+software in C or C++&amp;#8230; because you&amp;#8217;ll probably need to do it.
+&lt;/p&gt;
+&lt;p&gt;
+Which brings me to the &amp;#8220;-funsigned-char&amp;#8221; compiler option of gcc,
+one of the cheapest
+secure programming available to developers using C or C++
+(similar options are available for many other C and C++ compilers).
+If you&amp;#8217;re writing secure programs in C or C++, you should use
+the &amp;#8220;-funsigned-char&amp;#8221; option of gcc (and its equivalent in other
+compilers) to help you write secure software.
+What is it, and what&amp;#8217;s it for?
+Funny you should ask&amp;#8230; here&amp;#8217;s an answer!
+&lt;/p&gt;
+&lt;p&gt;
+Let&amp;#8217;s start with the technical basics.
+The C programming language includes the &amp;#8220;char&amp;#8221; type, which is
+usually used to store an 8-bit character.
+Many internationalized programs encode text using UTF-8, so a user-visible
+character be stored in a sequence of &amp;#8220;char&amp;#8221; values.
+but even in internationalized programs
+text is often stored in a &amp;#8220;char&amp;#8221; type.
+&lt;!-- Let's skip wide char, WCHAR... it's complicated and out of scope. --&gt;
+&lt;/p&gt;
+&lt;p&gt;
+The C standard specifically says that char CAN be signed OR unsigned.
+(Don&amp;#8217;t believe me? Go look at
+ISO/IEC 9899:1999, section 6.2.5, paragraph 15, second sentence.
+So there.)
+On many platforms (such as typical Linux distributions),
+the char type is signed.
+The problem is that software developers often &lt;i&gt;incorrectly&lt;/i&gt; think
+that the char type is unsigned, or don&amp;#8217;t understand the ramifications
+of signed characters.
+This misunderstanding is becoming &lt;i&gt;more&lt;/i&gt; common over time, because
+many other C-like languages (like Java and C#) define their &amp;#8220;char&amp;#8221; type
+to be essentially unsigned or in a way that it wouldn&amp;#8217;t matter.
+What&amp;#8217;s worse,
+this misunderstanding can lead directly to security vulnerabilities.
+&lt;/p&gt;
+&lt;p&gt;
+All sorts of &amp;#8220;weird&amp;#8221; things can happen on systems with signed characters.
+For example, the character 0xFF will match as being &amp;#8220;equal&amp;#8221; to the integer -1,
+due to C/C++&amp;#8217;s widening rules.
+And this can create security flaws in a hurry, because -1 is a common
+&amp;#8220;sentinel&amp;#8221; value that many developers presume &amp;#8220;can&amp;#8217;t happen&amp;#8221; in a char.
+A well-known security flaw in Sendmail was caused by exactly this problem
+(see &lt;a href=&quot;http://www.kb.cert.org/vuls/id/897604&quot;&gt;US-CERT #897604&lt;/a&gt; and
+&lt;a href=&quot;http://www.securityfocus.com/archive/1/316773/2003-03-28/2003-04-03/0&quot;&gt;
+this posting by Michal Zalewski&lt;/a&gt;
+for more information).
+&lt;/p&gt;
+
+&lt;p&gt;
+Now, you could solve this by always using the
+unambiguous type &amp;#8220;unsigned char&amp;#8221; if that&amp;#8217;s what you intended,
+and strictly speaking that&amp;#8217;s what you should do.
+However, it&amp;#8217;s very painful to change existing code to do this.
+And since many pre-existing
+libraries expect &amp;#8220;pointer to char&amp;#8221;, you can end up with
+tons of useless warning messages when you do that.
+&lt;/p&gt;
+
+&lt;p&gt;
+So what&amp;#8217;s a &lt;i&gt;simple&lt;/i&gt; solution here?
+A simple answer is to force the compiler to &lt;i&gt;always&lt;/i&gt;
+make &amp;#8220;char&amp;#8221; an UNSIGNED char.
+A portable program should work when a char is unsigned,
+so this shouldn&amp;#8217;t require any changes to that code.
+Since programmers often make the assumption, let&amp;#8217;s
+make their assumption correct.
+In the widely-popular gcc compiler, this is done with the &amp;#8220;-funsigned-char&amp;#8221;
+option; many other C and C++ compilers have similar options.
+What&amp;#8217;s neat is that you don&amp;#8217;t have to modify a line of source code;
+you can just slip this option into your build system
+(e.g., add this option to your makefile).
+This is typically very trivial to do; typically you can just modify (or
+set) the CFLAGS variable to add this option, and then recompile.
+&lt;/p&gt;
+
+&lt;p&gt;
+I also have more controversial advice.
+Here it is: If you develop C or C++ compilers, or you&amp;#8217;re a distributor
+who distributes a C/C++ compiler&amp;#8230; &lt;i&gt;make char unsigned by default
+on all platforms&lt;/i&gt;.
+And if you&amp;#8217;re a customer, demand that from your vendor.
+This is just like similar efforts going on in operating system sales
+to users;
+today operating system vendors are changing their systems so that they
+are &amp;#8220;secure by default&amp;#8221;.
+At one time many vendors&amp;#8217; operating systems were delivered with all
+sorts of &amp;#8220;convenient&amp;#8221; options that made them easy to attack&amp;#8230; but
+getting subverted all the time turned out to be rather inconvenient to users.
+In the same way, development tools&amp;#8217; defaults should try to prevent
+defects, or create an environment where defects are less likely.
+Signed characters are basically a vulnerability waiting to happen,
+portable programs shouldn&amp;#8217;t depend on a particular choice, and non-portable
+software can turn on the &amp;#8220;less secure&amp;#8221; option when necessary.
+I doubt this advice will be taken, but I can suggest it!
+&lt;/p&gt;
+
+&lt;p&gt;
+Turning this option on does not save the universe; most vulnerabilities
+will &lt;i&gt;not&lt;/i&gt; be caught by turning on this little option.
+In fact, by itself this is a &lt;i&gt;very&lt;/i&gt; weak measure, simply because
+by itself this doesn&amp;#8217;t counter most vulnerabilities.
+You need to know much more to write secure software;
+to learn more, &lt;a href=&quot;http://www.dwheeler.com/secure-programs&quot;&gt;see
+my free book on writing secure programs for Linux and Unix&lt;/a&gt;.
+But stick with me;
+I think this is a small example of a much larger concept, which
+I&amp;#8217;ll call &lt;i&gt;no sharp edges&lt;/i&gt;.
+Chain saws are powerful &amp;#8212; and dangerous &amp;#8212; but no one puts
+scissor blades next to the chain saw&amp;#8217;s handle.
+We try to make sure that &amp;#8220;obvious&amp;#8221; ways of using tools are not
+dangerous, even if the tool itself can do dangerous things.
+Yet the &amp;#8220;obvious&amp;#8221; ways to use many languages turn out to lead directly
+to security vulnerabilities, and that needs to change.
+You can&amp;#8217;t prevent all misuse &amp;#8212; a chain saw can be always be misused &amp;#8212;
+but you can at least make languages easy to use correctly
+and likely to do only what was intended (and nothing else).
+&lt;/p&gt;
+&lt;p&gt;
+We need to design languages, and select tools and tool options, to
+reduce the likelihood of a developer error becoming a security vulnerability.
+By combining
+compiler warning flags (like -Wall), defaults that are likely to avoid
+dangerous mistakes (like -funsigned-char),
+NoExec stacks, and many other approaches, we can
+greatly reduce the likelihood of a mistake
+turning into a security vulnerability.
+The most important security measure you can take in developing secure
+software is to &lt;i&gt;be paranoid&lt;/i&gt; &amp;#8212; and I still recommend paranoia.
+Still, it&amp;#8217;s hard to be perfect all the time.
+Currently, a vast proportion of security vulnerabilities come from relatively
+trivial implementation errors, ones that are easy to miss.
+By combining a large number of approaches, each of which counter
+a specific common mistake,
+we can get rid of a vast number of today&amp;#8217;s vulnerabilities.
+And getting rid of a vast number of today&amp;#8217;s vulnerabilities is
+a very good idea.
+&lt;/p&gt;
+</description>
+   </item>
+  <item>
+    <title>Random Quotes and Code - Why You Need a Community</title>
+    <link>http://www.dwheeler.com/blog/2006/03/12#random-quotes-and-code</link>
+    <pubDate>Sun, 12 Mar 2006 18:27 GMT</pubDate>
+    <!-- date: 2006-03-12 -->
+    <description>
+&lt;p&gt;
+You need a community, not just some dump of posted code,
+if you want good open source software.
+I can demonstrate this through my
+trivial hunt for &amp;#8220;random quote&amp;#8221; code&amp;#8230; so let me tell you my story.
+&lt;/p&gt;
+
+&lt;p&gt;
+I recently decided that I&amp;#8217;d like the front page of my website to
+show a randomly-selected quote.
+For security reasons, I avoid using dynamically-run code on my own site,
+so I needed to use Javascript (ECMAscript) to do this.
+Easy enough, I thought&amp;#8230; I&amp;#8217;ll just use Google to find a program that did this,
+and I searched on &amp;#8220;random quotation Javascript&amp;#8221;.
+&lt;/p&gt;
+
+&lt;p&gt;
+But what I found was that a lot of people don&amp;#8217;t seem to care about
+long-term maintenance, &lt;i&gt;or&lt;/i&gt; correctness.
+&lt;a href=&quot;http://www.codelifter.com/main/javascript/randomquote.shtml&quot;&gt;
+Codelifter&amp;#8217;s sample code by etLux&lt;/a&gt; does the job, but also shows the
+problem.  The code has a lot of statements like this:
+&lt;pre&gt;
+ Quotation[0] = &quot;Time is of the essence! Comb your hair.&quot;;
+ Quotation[1] = &quot;Sanity is a golden apple with no shoelaces.&quot;;
+ ...
+&lt;/pre&gt;
+Does this work? Sure, but it&amp;#8217;s &lt;i&gt;terrible&lt;/i&gt; for maintenance.
+Now you have to write extra code, unnecessarily maintain index numbers,
+and if you want to delete a quote in the middle, you have to renumber things.
+Even for tiny tasks like this, maintenance matters over time.
+I&amp;#8217;m going to use this for my personal website, which I plan to have
+for decades; life is too short to fight hard-to-maintain code over a long time.
+&lt;/p&gt;
+&lt;p&gt;
+Even worse, this and many other examples did a lousy job of
+picking a random quote.
+Many sample programs picked the random quote using this kind of code
+(where Q is the number of quotes):
+&lt;pre&gt;
+ var whichQuotation=Math.round(Math.random()*(Q-1));
+&lt;/pre&gt;
+This actually doesn&amp;#8217;t choose the values with equal probability.
+To see why, walk through the logic if there are only 3 quotes.
+Math.random returns a value between 0 and 1 (not including 1); if there
+are 3 quotes, Math.random()*(Q-1) produces a floating point
+value between 0 and 2 (not including 2).
+Rounding a value between 0 and 0.5 (not including 0.5) produces 0, between 0.5
+and 1.5 (not including 1.5) produces 1, and between 1.5 and 2 produces 2&amp;#8230;.
+which means that the middle quote is &lt;i&gt;far&lt;/i&gt; more likely to be selected
+(it will be selected 50% of the time, instead of the correct 33%).
+The &amp;#8220;round&amp;#8221; operation is the wrong operator in this case!
+&lt;/p&gt;
+&lt;p&gt;
+I&amp;#8217;m not really interested in picking on the author of this
+code sample; LOTS of different sample codes do exactly the wrong thing.
+&lt;/p&gt;
+&lt;p&gt;
+The problem seems to be that once some code snippet gets posted,
+in many places there&amp;#8217;s no mechanism to discuss the code or to propose
+an improvement.
+In other words, there&amp;#8217;s no community.
+I noticed these problems immediately in several samples I saw, yet
+there was no obvious way for me to do anything about it.
+&lt;/p&gt;
+&lt;p&gt;
+In the end, I ended up writing my own code. For your amusement,
+here it is.
+Perhaps there needs to be a &amp;#8220;trivial SourceForge&amp;#8221; for taking tiny
+fragments like this and allowing community improvement.
+&lt;/p&gt;
+
+&lt;p&gt;
+First, I put this in the head section of my HTML:
+&lt;/p&gt;
+
+&lt;pre&gt;
+&amp;lt;script language=&quot;JavaScript&quot;&gt;
+ // Code by David A. Wheeler; this trivial ECMAscript is public domain:
+  var quotations = new Array(
+    &quot;Quote1&quot;,
+    &quot;Quote2&quot;,
+    &quot;Quote3&quot;
+  );
+ var my_pick = Math.floor(quotations.length*Math.random());
+ var random_quote = &quot;Your random quote: &amp;lt;i&gt;&quot; + quotations[my_pick] + &quot;&amp;lt;/i&gt;&quot;;
+&amp;lt;/script&gt;
+&lt;/pre&gt;
+
+&lt;p&gt;
+I then put this in the body section of my HTML:
+&lt;/p&gt;
+
+&lt;pre&gt;
+&amp;lt;script language=&quot;JavaScript&quot;&gt;
+ document.write(random_quote)
+&amp;lt;/script&gt;
+&lt;/pre&gt;
+
+&lt;p&gt;
+I intentionally didn&amp;#8217;t include some defensive measures against bad
+software libraries.
+Unfortunately, many software libraries are terrible, and that certainly
+includes many random number generators.
+For example, Math.random() isn&amp;#8217;t supposed to return 1, only values less
+than that&amp;#8230; but returning an (incorrect) 1 isn&amp;#8217;t an unknown defect,
+and that would cause an out-of-bounds error.
+Also, many implementations of random() are notoriously bad; they
+often have trivially tiny cycles, or fail even trivial randomness tests.
+I would put defensive measures in software designed to be highly
+reliable or secure (for example, I might re-implement the random function
+to be sure I got a reasonable one).
+But in this case, I thought it&amp;#8217;d be better to just rely on the libraries&amp;#8230;
+if the results are terrible, then users might complain to the library
+implementors.  And if the library implementors fix their implementations,
+it helps &lt;i&gt;everyone&lt;/i&gt;.
+&lt;/p&gt;
+
+&lt;p&gt;
+I donate the above snippet to the public domain. It&amp;#8217;s not clear
+at all that it can be copyrighted, actually; it&amp;#8217;s far too trivial.
+But it&amp;#8217;s still useful to have such snippets, and I hope that someone will
+organize a community for sharing and maintaining trivial snippets like this.
+&lt;/p&gt;
+</description>
+   </item>
+  <item>
+    <title>In memorium: William Alson (&amp;#8220;Al&amp;#8221;) Wheeler</title>
+    <link>http://www.dwheeler.com/blog/2006/03/12#al-wheeler</link>
+    <pubDate>Sun, 12 Mar 2006 18:23 GMT</pubDate>
+    <!-- date: 2006-03-12 -->
+    <description>
+&lt;p&gt;
+&lt;img src=&quot;http://www.dwheeler.com/images/al_wheeler.jpg&quot; width=&quot;334&quot; height=&quot;398&quot; align=&quot;right&quot; alt=&quot;Picture of William Alson (Al) Wheeler&quot; /&gt;
+William Alson (&amp;#8220;Al&amp;#8221;) Wheeler (2 March 1916 – 28 February 2006)
+was my grandfather and a wonderful, godly man.
+He recently went to be with the Lord, and I will miss him very much
+until my time comes.
+Many of my own traits (love of music, math, science fiction, science,
+and learning in general) are easily traced back to him.
+He loved jokes and humor; he laughed often, and his eyes often twinkled.
+&lt;/p&gt;
+
+&lt;p&gt;
+He demonstrated his extraordinary character throughout his life;
+a few anecdotes will have to suffice.
+His love of learning was extraordinary; in his 80s he started
+learning koine Greek, and near the time of his death
+he was reading the 984-page &amp;#8220;Chaos and Fractals: New Frontiers of Science&amp;#8221;
+(a book full of mathematical concepts).
+He dedicated his life to serving others; he was a music minister for
+over 45 years.
+He prayed, and prayed often, for his family and friends.
+When he last moved to Pennsylvania, he donated his mechanic&amp;#8217;s tools to
+the Smithsonian, which had been hunting for the kind of tools he had.
+And even in death he served others; rather than having his body be buried,
+he donated his body for medical research.
+I am honored that I can count myself as one of his grandchildren.
+He did not leave riches behind; he left behind something much greater.
+&lt;/p&gt;
+
+&lt;p&gt;
+Below is a short biography of his life, as printed at his memorial service
+on March 4, 2006.
+May we all strive to have such a positive biography.
+&amp;#8220;Children&amp;#8217;s children are a crown to the aged,
+and parents are the pride of their children.&amp;#8221;
+(Proverbs 17:6, (NIV)) (New International Version)
+&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;
+Al was born in the small town of Pottsville, PA. He grew up in Oxford, PA and graduated in 1933 from Oxford High School. He worked a couple years with the Wheeler and Sautelle and then the Wheeler and Almond Circuses. In 1935 he moved to Reading, PA, and entered the Wyomissing Polytechnic Institute to become a machinist. He met his future wife, Mary Clouse, in 1938 at a YWCA sponsored dance. It was during this time that Al taught himself to play tennis and the clarinet. He came from a musical family and had begun singing with the Choral Society in Reading. He began working at the Textile Machineworks in Wyomissing, but found a job in early 1940 with the Federal Government at the Naval Gun Factory in Washington, DC. He married Mary in June 1940. While living in southeast Washington, they had three children: Bill, Ray and Joyce. In 1946, after a few interim jobs, he began working for the Bureau of Standards followed by the Naval Research Laboratory. He moved to the Bureau of Naval Weapons in 1957. He moved his family to Maryland in 1958. In 1962 he made his last career move to the Naval Air Systems Command and retired from there in 1974. Throughout this time he should have received a chauffeur’s license since he performed that duty extensively. Mary went home to be with the Lord in 1996. In 1999 he moved to Perkiomenville, PA to live with his daughter, son-in-law Phil, and grandson Bryan.
+&lt;/p&gt;
+
+&lt;p&gt;
+After moving to Washington the war initially kept him out of church activities. Mary had started attending Fountain Memorial Baptist Church. After the war, Al started attending also. They professed Christ as Lord and Savior and were baptized together. In 1950, Al started directing the Junior Choir, grades 4 thru 6. In 1953 he became the Music Director at Fountain Memorial and spent the next 45 years directing music in 6 different churches. He loved his music and his collection of choir music, mini orchestral scores, records, reel-to-reel tapes, cassette tapes, and CDs attest to it. His primary instrument was the clarinet, but he had obtained and played saxophone, flute, and trombone and, at one point, two synthesizers.
+&lt;/p&gt;
+
+&lt;p&gt;
+Although work and family responsibilities cut down on his tennis activities, he never gave them up completely. After retirement he taught tennis part time for the Maryland Department of Recreation and was regularly playing with his friends until moving back to PA in 1999.
+&lt;/p&gt;
+
+&lt;p&gt;
+He loved science fiction and one of his favorite pastimes was solving the “Word Power” article in the Reader’s Digest. He rarely missed those words.
+&lt;/p&gt;
+
+&lt;p&gt;
+Al had a wonderful life and was adored by all his family. He is survived by three children, five grandchildren, and 7 great-grandchildren.
+&lt;/p&gt;
+</description>
+   </item>
+  </channel>
+</rss>

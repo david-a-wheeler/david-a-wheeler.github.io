@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Thu, 06 Dec 2007</h1>
+<p><a name="readable-sweet-lisp3"><font size="+2"><b>Readable s-expressions (sweet-expressions) draft 0.2 for Lisp-like languages</b></font></a></p><p></p>
+<p>
+<a href="http://www.dwheeler.com/blog/2006/06/17/#readable-sweet-lisp">
+Back in 2006 I posted my basic ideas about &#8220;sweet-expressions&#8221;</a>.
+Lisp-based programming languages
+normally represent programs as <i>s-expressions</i>, and though they are
+regular, most people find them hard to read.
+I hope to create an alternative to s-expressions that have their
+advantages, and not their disadvantages.
+You can see more at my
+<a href="http://www.dwheeler.com/readable">readable Lisp</a> page.
+I&#8217;ve gotten lots of feedback, based on both my prototype of the idea,
+as well as on the mailing list discussing it.
+</p>
+
+<p>
+I&#8217;ve just posted a
+<a href="http://www.dwheeler.com/readable/version02.html">a draft of
+version 0.2 of sweet-expressions</a>.
+This takes that feedback into account, in particular, it&#8217;s now
+<i>much</i> more backwards-compatible.
+There&#8217;s still a big question about whether or not infix should be a default;
+see the page for more details.
+</p>
+
+<p>
+Here are the improvements over version 0.1:
+<ol>
+<li>This version is <i>much</i> more compatible with existing Lisp code.
+The big change is that
+an unprefixed &#8220;(&#8221; immediately calls the underlying s-expression reader.
+This way, people can quietly replace their readers with a sweet-reader,
+without harming most existing code.
+In fact, many implementations could quietly switch to a sweet-reader and
+users might not notice until they use the new features.
+Instead of using (&#8230;), this uses {..} and [&#8230;] for grouping expressions
+without disabling sweet-expressions.
+</li>
+<li>It can work more cleanly with
+macros that provide infix precedence (for those who want precedence rules).
+</li>
+<li>It extends version 0.1&#8217;s &#8220;name-prefixing&#8221; into &#8220;term-prefixing&#8221;.
+This is not only more general, it also makes certain kinds of functional
+programming much more pleasant.
+</li>
+<li>It adds syntax for the common case of accessing maps
+(such as indexed or associative arrays) - now a[j] is translated into
+(bracketaccess a j).
+</li>
+<li>Infix default supports arbitrarily-spelled infix operators, and it
+automatically accepts &#8220;and&#8221; and &#8220;or&#8221;.
+</li>
+</ol>
+</p>
+
+<p>
+Here&#8217;s an example of (ugly) s-expressions:
+<pre>
+ (defun factorial (n)
+   (if (&lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+</pre>
+</p>
+
+<p>
+Here&#8217;s sweet-expressions version 0.1:
+<pre>
+ defun factorial (n)
+   if (n &lt;= 1)
+       1
+       n * factorial(n - 1)
+</pre>
+</p>
+
+<p>
+Here is sweet-expressions version 0.2 (draft), with infix default
+(it figures out when you have an infix operation from the spelling of the
+operation):
+<pre>
+ defun factorial (n)
+   if {n &lt;= 1}
+       1
+       n * factorial(n - 1)
+</pre>
+</p>
+
+<p>
+Here is sweet-expressions version 0.2 (draft), with infix non-default
+(you <i>must</i> surround every infix operator with {&#8230;}):
+<pre>
+ defun factorial (n)
+   if {n &lt;= 1}
+       1
+       {n * factorial{n - 1}}
+</pre>
+</p>
+
+<p>
+I&#8217;m still taking comments.
+If you&#8217;re interested, take a look at
+<a href="http://www.dwheeler.com/readable">http://www.dwheeler.com/readable</a>.
+And if you&#8217;re really interested, please
+<a href="https://lists.sourceforge.net/lists/listinfo/readable-discuss">
+join the readable-discuss mailing list</a>.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2007/12/06#readable-sweet-lisp3">permanent link to this entry</a></p>
+</body></html>

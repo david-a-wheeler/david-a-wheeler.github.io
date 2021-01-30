@@ -1,0 +1,211 @@
+<?xml version="1.0"?>
+<!-- name="generator" content="blosxom/2.0" -->
+
+<rss version="2.0">
+  <channel>
+    <title>David A. Wheeler's Blog   </title>
+    <link>http://www.dwheeler.com/blog</link>
+    <description>David A. Wheeler's weblog.</description>
+    <language>en</language>
+
+  <item>
+    <title>Random Quotes and Code - Why You Need a Community</title>
+    <link>http://www.dwheeler.com/blog/2006/03/12#random-quotes-and-code</link>
+    <pubDate>Sun, 12 Mar 2006 18:27 GMT</pubDate>
+    <!-- date: 2006-03-12 -->
+    <description>
+&lt;p&gt;
+You need a community, not just some dump of posted code,
+if you want good open source software.
+I can demonstrate this through my
+trivial hunt for &amp;#8220;random quote&amp;#8221; code&amp;#8230; so let me tell you my story.
+&lt;/p&gt;
+
+&lt;p&gt;
+I recently decided that I&amp;#8217;d like the front page of my website to
+show a randomly-selected quote.
+For security reasons, I avoid using dynamically-run code on my own site,
+so I needed to use Javascript (ECMAscript) to do this.
+Easy enough, I thought&amp;#8230; I&amp;#8217;ll just use Google to find a program that did this,
+and I searched on &amp;#8220;random quotation Javascript&amp;#8221;.
+&lt;/p&gt;
+
+&lt;p&gt;
+But what I found was that a lot of people don&amp;#8217;t seem to care about
+long-term maintenance, &lt;i&gt;or&lt;/i&gt; correctness.
+&lt;a href=&quot;http://www.codelifter.com/main/javascript/randomquote.shtml&quot;&gt;
+Codelifter&amp;#8217;s sample code by etLux&lt;/a&gt; does the job, but also shows the
+problem.  The code has a lot of statements like this:
+&lt;pre&gt;
+ Quotation[0] = &quot;Time is of the essence! Comb your hair.&quot;;
+ Quotation[1] = &quot;Sanity is a golden apple with no shoelaces.&quot;;
+ ...
+&lt;/pre&gt;
+Does this work? Sure, but it&amp;#8217;s &lt;i&gt;terrible&lt;/i&gt; for maintenance.
+Now you have to write extra code, unnecessarily maintain index numbers,
+and if you want to delete a quote in the middle, you have to renumber things.
+Even for tiny tasks like this, maintenance matters over time.
+I&amp;#8217;m going to use this for my personal website, which I plan to have
+for decades; life is too short to fight hard-to-maintain code over a long time.
+&lt;/p&gt;
+&lt;p&gt;
+Even worse, this and many other examples did a lousy job of
+picking a random quote.
+Many sample programs picked the random quote using this kind of code
+(where Q is the number of quotes):
+&lt;pre&gt;
+ var whichQuotation=Math.round(Math.random()*(Q-1));
+&lt;/pre&gt;
+This actually doesn&amp;#8217;t choose the values with equal probability.
+To see why, walk through the logic if there are only 3 quotes.
+Math.random returns a value between 0 and 1 (not including 1); if there
+are 3 quotes, Math.random()*(Q-1) produces a floating point
+value between 0 and 2 (not including 2).
+Rounding a value between 0 and 0.5 (not including 0.5) produces 0, between 0.5
+and 1.5 (not including 1.5) produces 1, and between 1.5 and 2 produces 2&amp;#8230;.
+which means that the middle quote is &lt;i&gt;far&lt;/i&gt; more likely to be selected
+(it will be selected 50% of the time, instead of the correct 33%).
+The &amp;#8220;round&amp;#8221; operation is the wrong operator in this case!
+&lt;/p&gt;
+&lt;p&gt;
+I&amp;#8217;m not really interested in picking on the author of this
+code sample; LOTS of different sample codes do exactly the wrong thing.
+&lt;/p&gt;
+&lt;p&gt;
+The problem seems to be that once some code snippet gets posted,
+in many places there&amp;#8217;s no mechanism to discuss the code or to propose
+an improvement.
+In other words, there&amp;#8217;s no community.
+I noticed these problems immediately in several samples I saw, yet
+there was no obvious way for me to do anything about it.
+&lt;/p&gt;
+&lt;p&gt;
+In the end, I ended up writing my own code. For your amusement,
+here it is.
+Perhaps there needs to be a &amp;#8220;trivial SourceForge&amp;#8221; for taking tiny
+fragments like this and allowing community improvement.
+&lt;/p&gt;
+
+&lt;p&gt;
+First, I put this in the head section of my HTML:
+&lt;/p&gt;
+
+&lt;pre&gt;
+&amp;lt;script language=&quot;JavaScript&quot;&gt;
+ // Code by David A. Wheeler; this trivial ECMAscript is public domain:
+  var quotations = new Array(
+    &quot;Quote1&quot;,
+    &quot;Quote2&quot;,
+    &quot;Quote3&quot;
+  );
+ var my_pick = Math.floor(quotations.length*Math.random());
+ var random_quote = &quot;Your random quote: &amp;lt;i&gt;&quot; + quotations[my_pick] + &quot;&amp;lt;/i&gt;&quot;;
+&amp;lt;/script&gt;
+&lt;/pre&gt;
+
+&lt;p&gt;
+I then put this in the body section of my HTML:
+&lt;/p&gt;
+
+&lt;pre&gt;
+&amp;lt;script language=&quot;JavaScript&quot;&gt;
+ document.write(random_quote)
+&amp;lt;/script&gt;
+&lt;/pre&gt;
+
+&lt;p&gt;
+I intentionally didn&amp;#8217;t include some defensive measures against bad
+software libraries.
+Unfortunately, many software libraries are terrible, and that certainly
+includes many random number generators.
+For example, Math.random() isn&amp;#8217;t supposed to return 1, only values less
+than that&amp;#8230; but returning an (incorrect) 1 isn&amp;#8217;t an unknown defect,
+and that would cause an out-of-bounds error.
+Also, many implementations of random() are notoriously bad; they
+often have trivially tiny cycles, or fail even trivial randomness tests.
+I would put defensive measures in software designed to be highly
+reliable or secure (for example, I might re-implement the random function
+to be sure I got a reasonable one).
+But in this case, I thought it&amp;#8217;d be better to just rely on the libraries&amp;#8230;
+if the results are terrible, then users might complain to the library
+implementors.  And if the library implementors fix their implementations,
+it helps &lt;i&gt;everyone&lt;/i&gt;.
+&lt;/p&gt;
+
+&lt;p&gt;
+I donate the above snippet to the public domain. It&amp;#8217;s not clear
+at all that it can be copyrighted, actually; it&amp;#8217;s far too trivial.
+But it&amp;#8217;s still useful to have such snippets, and I hope that someone will
+organize a community for sharing and maintaining trivial snippets like this.
+&lt;/p&gt;
+</description>
+   </item>
+  <item>
+    <title>In memorium: William Alson (&amp;#8220;Al&amp;#8221;) Wheeler</title>
+    <link>http://www.dwheeler.com/blog/2006/03/12#al-wheeler</link>
+    <pubDate>Sun, 12 Mar 2006 18:23 GMT</pubDate>
+    <!-- date: 2006-03-12 -->
+    <description>
+&lt;p&gt;
+&lt;img src=&quot;http://www.dwheeler.com/images/al_wheeler.jpg&quot; width=&quot;334&quot; height=&quot;398&quot; align=&quot;right&quot; alt=&quot;Picture of William Alson (Al) Wheeler&quot; /&gt;
+William Alson (&amp;#8220;Al&amp;#8221;) Wheeler (2 March 1916 – 28 February 2006)
+was my grandfather and a wonderful, godly man.
+He recently went to be with the Lord, and I will miss him very much
+until my time comes.
+Many of my own traits (love of music, math, science fiction, science,
+and learning in general) are easily traced back to him.
+He loved jokes and humor; he laughed often, and his eyes often twinkled.
+&lt;/p&gt;
+
+&lt;p&gt;
+He demonstrated his extraordinary character throughout his life;
+a few anecdotes will have to suffice.
+His love of learning was extraordinary; in his 80s he started
+learning koine Greek, and near the time of his death
+he was reading the 984-page &amp;#8220;Chaos and Fractals: New Frontiers of Science&amp;#8221;
+(a book full of mathematical concepts).
+He dedicated his life to serving others; he was a music minister for
+over 45 years.
+He prayed, and prayed often, for his family and friends.
+When he last moved to Pennsylvania, he donated his mechanic&amp;#8217;s tools to
+the Smithsonian, which had been hunting for the kind of tools he had.
+And even in death he served others; rather than having his body be buried,
+he donated his body for medical research.
+I am honored that I can count myself as one of his grandchildren.
+He did not leave riches behind; he left behind something much greater.
+&lt;/p&gt;
+
+&lt;p&gt;
+Below is a short biography of his life, as printed at his memorial service
+on March 4, 2006.
+May we all strive to have such a positive biography.
+&amp;#8220;Children&amp;#8217;s children are a crown to the aged,
+and parents are the pride of their children.&amp;#8221;
+(Proverbs 17:6, (NIV)) (New International Version)
+&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;
+Al was born in the small town of Pottsville, PA. He grew up in Oxford, PA and graduated in 1933 from Oxford High School. He worked a couple years with the Wheeler and Sautelle and then the Wheeler and Almond Circuses. In 1935 he moved to Reading, PA, and entered the Wyomissing Polytechnic Institute to become a machinist. He met his future wife, Mary Clouse, in 1938 at a YWCA sponsored dance. It was during this time that Al taught himself to play tennis and the clarinet. He came from a musical family and had begun singing with the Choral Society in Reading. He began working at the Textile Machineworks in Wyomissing, but found a job in early 1940 with the Federal Government at the Naval Gun Factory in Washington, DC. He married Mary in June 1940. While living in southeast Washington, they had three children: Bill, Ray and Joyce. In 1946, after a few interim jobs, he began working for the Bureau of Standards followed by the Naval Research Laboratory. He moved to the Bureau of Naval Weapons in 1957. He moved his family to Maryland in 1958. In 1962 he made his last career move to the Naval Air Systems Command and retired from there in 1974. Throughout this time he should have received a chauffeur’s license since he performed that duty extensively. Mary went home to be with the Lord in 1996. In 1999 he moved to Perkiomenville, PA to live with his daughter, son-in-law Phil, and grandson Bryan.
+&lt;/p&gt;
+
+&lt;p&gt;
+After moving to Washington the war initially kept him out of church activities. Mary had started attending Fountain Memorial Baptist Church. After the war, Al started attending also. They professed Christ as Lord and Savior and were baptized together. In 1950, Al started directing the Junior Choir, grades 4 thru 6. In 1953 he became the Music Director at Fountain Memorial and spent the next 45 years directing music in 6 different churches. He loved his music and his collection of choir music, mini orchestral scores, records, reel-to-reel tapes, cassette tapes, and CDs attest to it. His primary instrument was the clarinet, but he had obtained and played saxophone, flute, and trombone and, at one point, two synthesizers.
+&lt;/p&gt;
+
+&lt;p&gt;
+Although work and family responsibilities cut down on his tennis activities, he never gave them up completely. After retirement he taught tennis part time for the Maryland Department of Recreation and was regularly playing with his friends until moving back to PA in 1999.
+&lt;/p&gt;
+
+&lt;p&gt;
+He loved science fiction and one of his favorite pastimes was solving the “Word Power” article in the Reader’s Digest. He rarely missed those words.
+&lt;/p&gt;
+
+&lt;p&gt;
+Al had a wonderful life and was adored by all his family. He is survived by three children, five grandchildren, and 7 great-grandchildren.
+&lt;/p&gt;
+</description>
+   </item>
+  </channel>
+</rss>

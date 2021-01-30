@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!-- name="generator" content="blosxom/2.0" -->
+
+<rss version="2.0">
+  <channel>
+    <title>David A. Wheeler's Blog   </title>
+    <link>http://www.dwheeler.com/blog</link>
+    <description>David A. Wheeler's weblog.</description>
+    <language>en</language>
+
+  <item>
+    <title>Solved: Why is ESC so big?</title>
+    <link>http://www.dwheeler.com/blog/2008/10/23#why-is-esc-big</link>
+    <pubDate>Thu, 23 Oct 2008 18:40 GMT</pubDate>
+    <!-- date: 2008-10-23 -->
+    <description>
+&lt;p&gt;
+In my post
+&lt;a href=&quot;http://www.dwheeler.com/blog/2008/10/22/#development-cost-linux-2008&quot;&gt;
+Estimating the Total Development Cost of a Linux Distribution&lt;/a&gt;,
+I noted that one of Fedora 9&amp;#8217;s largest components was
+Enterprise Security Client (ESC), and wondered why
+ESC would be so big.
+After all, a security client should be small - not large.
+&lt;/p&gt;
+&lt;p&gt;
+I just got the answer from Rahul Sundaram of the Fedora project,
+who asked internally.
+It turns out that ESC currently includes its own copy of
+&lt;a href=&quot;https://developer.mozilla.org/en/XULRunner&quot;&gt;XULRunner&lt;/a&gt;.
+XULRunner essentially provides a library and infrastructure for running
+&amp;#8220;XUL+XPCOM&amp;#8221; applications such as Firefox, Thunderbird, and ESC.
+You can
+&lt;a href=&quot;http://www.redhat.com/docs/manuals/cert-system/7.3/html/Enterprise_Security_Client_Guide/Enterprise_Security_Client_Configuration-Enterprise_Security_Client_File_Locations.html&quot;&gt;confirm this using the on-line ESC documentation&lt;/a&gt;.
+This is clearly not optimal; as I noted in a previous blog entry,
+&lt;a href=&quot;http://www.dwheeler.com/blog/2008/09/19/#use-system-libraries&quot;&gt;
+developers should use system libraries, and not create their own local
+copies&lt;/a&gt;.
+Rahul says that the
+&amp;#8220;the developers are currently working on making it use the system
+copy[,] which should drop down the size considerably&amp;#8221;.
+&lt;/p&gt;
+&lt;p&gt;
+So ESC isn&amp;#8217;t really that big - it&amp;#8217;s just that ESC creates its own
+local copy of a massive infrastructure.
+This is obviously not great for security,
+since there&amp;#8217;s a higher risk that bugs fixed in the real XULRunner
+would not be fixed in ESC&amp;#8217;s local copy.
+But this appears to be a temporary issue; once Fedora&amp;#8217;s version of
+ESC switches to the system XULRunner, the problem will disappear.
+&lt;/p&gt;
+&lt;p&gt;
+By the way, if you&amp;#8217;re interested in the whole &amp;#8220;measuring Linux&amp;#8217;s size&amp;#8221; thing,
+you should definitely take a look at the past measurements of Debian.
+&lt;a href=&quot;http://www.dwheeler.com/sloc/&quot;&gt;My page on counting Source
+Lines of Code (SLOC)&lt;/a&gt; includes links and summaries of that work.
+It&amp;#8217;s neat stuff!
+My thanks to
+Jesús M. González-Barahona, Miguel A. Ortuño Pérez, Pedro de las Heras Quirós,
+José Centeno González, Vicente Matellán Olivera,
+Juan-José Amor-Iglesias, Gregorio Robles-Martínez, and Israel Herráiz-Tabernero
+for doing that.
+&lt;/p&gt;
+</description>
+   </item>
+  </channel>
+</rss>

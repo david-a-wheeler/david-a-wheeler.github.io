@@ -1,0 +1,254 @@
+<?xml version="1.0"?>
+<!-- name="generator" content="blosxom/2.0" -->
+
+<rss version="2.0">
+  <channel>
+    <title>David A. Wheeler's Blog   </title>
+    <link>http://www.dwheeler.com/blog</link>
+    <description>David A. Wheeler's weblog.</description>
+    <language>en</language>
+
+  <item>
+    <title>Readable s-expressions and sweet-expressions: Getting the infix fix and fewer parentheses in Lisp-like languages</title>
+    <link>http://www.dwheeler.com/blog/2006/06/17#readable-sweet-lisp</link>
+    <pubDate>Sat, 17 Jun 2006 23:10 GMT</pubDate>
+    <!-- date: 2006-06-17 -->
+    <description>
+&lt;p&gt;
+Lisp-based programming languages
+normally represent programs as &lt;i&gt;s-expressions&lt;/i&gt;,
+where an operation and its parameters are surrounded by parentheses.
+The operation to be performed is identified first,
+and each parameter afterwards is
+separated by whitespace.  So the traditional &amp;#8220;2+3&amp;#8221; is written as
+&amp;#8220;(+&amp;nbsp;2&amp;nbsp;3)&amp;#8221; instead.
+This is regular, but most people find this hard to read.
+Here&amp;#8217;s a longer example of an s-expression - notice the many parentheses
+and the lack of infix operations:
+&lt;pre&gt;
+ (defun factorial (n)
+   (if (&amp;lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+&lt;/pre&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+I think there&amp;#8217;s a small resurging interest in Lisp-based systems, because Lisp
+is still very good at &amp;#8220;programs that manipulate programs&amp;#8221;.
+The major branches of Lisp (Common Lisp, Scheme, and Emacs Lisp) have
+not disappeared, after all.
+And I recently encountered a very cool and very new language in development,
+&lt;a href=&quot;http://www.coyotos.org/docs/bitc/spec.html&quot;&gt;BitC&lt;/a&gt;.
+This language was created to write low-level programs
+(e.g., operating system kernels and real-time programs)
+that are easy to mathematically &lt;i&gt;prove&lt;/i&gt; correct.
+I learned about this very cool idea while writing my paper
+&lt;a href=&quot;http://www.dwheeler.com/essays/high-assurance-floss.html&quot;&gt;
+High Assurance (for Security or Safety) and
+Free-Libre / Open Source Software (FLOSS)&amp;#8230; with Lots on Formal Methods&lt;/a&gt;.
+BitC combines ideas from Scheme, ML, and C, but it&amp;#8217;s represented using
+s-expressions because it&amp;#8217;s easy to manipulate program fragments that way.
+I don&amp;#8217;t know how well it&amp;#8217;ll succeed, but it has a good chance;
+if nothing else, I don&amp;#8217;t know of &lt;i&gt;anyone&lt;/i&gt; who&amp;#8217;s tried this particular
+approach.
+The program-prover
+&lt;a href=&quot;http://www.cs.utexas.edu/users/moore/acl2/&quot;&gt;ACL2&lt;/a&gt; uses
+Common Lisp as a basis, for the same reason: program-manipulating programs
+are easy.
+The FSF backs guile (a Scheme dialect) as their recommended
+tool for scripting; guile gives lots of power in a small package.
+&lt;/p&gt;
+
+&lt;p&gt;
+But many software developers avoid Lisp-based languages,
+even in cases where they would be a good tool to use, because
+most software developers find s-expressions really hard to read.
+S-expressions are very regular&amp;#8230; but so is a Turing machine.
+They don&amp;#8217;t call it
+&amp;#8216;Lots of Irritating Superfluous Parentheses&amp;#8217; for nothing.
+Even if you can read it, most developers have to work with others.
+Some people like s-expressions as they are - and if so, fine!
+But many others are not satisfied with the status quo.
+Lots of people have tried to create easier-to-read versions, but
+they generally tend to lose the advantages of s-expressions
+(such as powerful macro and quoting capabilities).
+Can something be done to make it easy to create easier-to-read
+code for Lisp-like languages - without spoiling their advantages?
+&lt;/p&gt;
+
+&lt;p&gt;
+I think something can be done, and
+I hope to spur a discussion about various options.
+To get that started, I&amp;#8217;ve developed my own approach, &amp;#8220;sweet-expressions&amp;#8221;,
+which I think is actually a plausible solution.
+&lt;/p&gt;
+
+&lt;p&gt;
+A sweet-expression reader will accept the traditional s-expressions
+(except for some pathological cases),
+but it also supports various extensions that make it easier to read.
+Sweet-expressions are automatically translated into s-expressions, so
+they lose no power.
+Here&amp;#8217;s how that same program above could be written using sweet-expressions:
+&lt;pre&gt;
+ defun factorial (n)         ; Parameters can be indented, but need not be
+   if (n &amp;lt;= 1)               ; Supports infix, prefix, &amp;amp; function &amp;lt;=(n 1)
+       1                     ; This has no parameters, so it's an atom.
+       n * factorial(n - 1)  ; Function(...) notation supported
+&lt;/pre&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+Sweet-expressions add the following abilities:
+&lt;ol&gt;
+&lt;li&gt;&lt;b&gt;Indentation&lt;/b&gt;. Indentation may be used instead
+of parentheses to start and end
+expressions: any indented line is a parameter of its parent,
+later terms on a line are parameters of the first term,
+lists of lists are marked with GROUP, and
+a function call with 0 parameters is surrounded or followed by a pair of
+parentheses [e.g., (pi) and pi()].
+A &amp;#8220;(&amp;#8221; disables indentation until its matching &amp;#8220;)&amp;#8221;.
+Blank lines at the beginning of a new expression are ignored.
+A term that begins at the left edge and is immediately followed by newline
+is immediately executed, to make interactive use pleasant.
+&lt;li&gt;&lt;b&gt;Name-ending&lt;/b&gt;. Terms of the form &amp;#8216;NAME(x y&amp;#8230;)&amp;#8217;, with no whitespace before
+&amp;#8216;(&amp;#8217;, are interpreted as &amp;#8216;(NAME x y&amp;#8230;)&amp;#8217;;.
+Parameters are space-separated inside.
+If its content is an infix expression, it&amp;#8217;s considered one parameter instead
+(so f(2 + 3) passes the its parameter, 5, to f).
+&lt;li&gt;&lt;b&gt;Infix&lt;/b&gt;.  Optionally,
+expressions are automatically interpreted as infix
+if their second parameter is an infix operator
+(by matching an &amp;#8220;infix operator&amp;#8221; pattern of symbols),
+the first parameter is not an infix operator,
+and it has at least three parameters.
+Otherwise, expressions are interpreted as
+normal &amp;#8220;function first&amp;#8221; prefix notation.
+To disable infix interpretation, surround the second parameter with as(&amp;#8230;).
+Infix expressions must have an odd number of parameters with the
+even ones being binary infix operators.
+You must separate each infix operator with whitespace on both sides;
+precedence is supported.
+Use the &amp;#8220;name-ending&amp;#8221; form for unary operations, e.g., -(x) for &amp;#8220;negate x&amp;#8221;.
+Thus &amp;#8220;2 + y * -(x)&amp;#8221; is a valid expression, equivalent to (+ 2 (* y (- x))).
+Infix operators must match this pattern (and in Scheme cannot be =&amp;gt;):
+&lt;pre&gt;
+    [+-\*/&amp;lt;&amp;gt;=&amp;amp;\|\p{Sm}]{1-4}|\:
+&lt;/pre&gt;
+&lt;/ol&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+I call this combination &amp;#8220;sweet-expressions&amp;#8221;,
+because by adding syntactic sugar (which are essentially abbreviations),
+I hope to create a sweeter result.
+&lt;/p&gt;
+
+&lt;p&gt;
+For more information on sweet-expressions or on making
+s-expressions more readable in general, see my website page at
+&lt;a href=&quot;http://www.dwheeler.com/readable&quot;&gt;http://www.dwheeler.com/readable&lt;/a&gt;.
+For example, I provide a sweet-expression reader in Scheme
+(under the MIT license), as well as an indenting pretty-printer in
+Common Lisp.
+In particular, you can
+&lt;a href=&quot;http://www.dwheeler.com/readable/readable-s-expressions.html&quot;&gt;
+see my lengthy paper about why sweet-expressions do what they do, and
+some plausible alternatives.&lt;/a&gt;
+You can also download some other implementation code.
+&lt;/p&gt;
+
+&lt;p&gt;
+I&amp;#8217;ve set up a
+&lt;a href=&quot;http://sourceforge.net/projects/readable&quot;&gt;
+SourceForge project named &amp;#8220;readable&amp;#8221;&lt;/a&gt; to
+discuss options in making s-expressions more readable,
+and to distribute open source software to implement them
+(unimplemented ideas don&amp;#8217;t go far!).
+I will probably need to work on other things for a while, but
+since I had this idea, I thought it&amp;#8217;d be a good idea to
+write the idea and a quick sample demo of it, so that others could
+build on top of it.
+There hasn&amp;#8217;t a single place for people to discuss how to make
+s-expressions more readable.. so now there is one.
+There are a lot of smart people out there; giving like-minded parties
+a place to discuss them is likely to produce something good.
+If you&amp;#8217;re interested in this topic, please visit/join!
+&lt;/p&gt;
+</description>
+   </item>
+  <item>
+    <title>Learning from the Masters</title>
+    <link>http://www.dwheeler.com/blog/2006/06/17#learning-masters</link>
+    <pubDate>Sat, 17 Jun 2006 08:53 GMT</pubDate>
+    <!-- date: 2006-06-17 -->
+    <description>
+&lt;p&gt;
+If you want to learn something, study what the masters do.
+To me that seems obvious, and yet many don&amp;#8217;t do it.
+Perhaps we simply forget.
+So let me inspire you with a few examples&amp;#8230;
+&lt;/p&gt;
+&lt;p&gt;
+I just got an advance copy of David Shenk&amp;#8217;s
+&amp;#8220;The Immortal Game: A history of chess&amp;#8221; - and I&amp;#8217;m referenced in it!
+Which is an odd thing; I don&amp;#8217;t normally think of myself
+as a chess commentator.
+But I do like the game of chess, and one of my key approaches to
+getting better is simple: Study the games of good players.
+I&amp;#8217;ve even posted a few of the games with my comments on my web site,
+including The Game of the Century
+(&lt;a href=&quot;http://www.dwheeler.com/misc/game_of_the_century.pgn&quot;&gt;PGN&lt;/a&gt;/&lt;a href=&quot;http://www.dwheeler.com/misc/game_of_the_century.txt&quot;&gt;Text&lt;/a&gt;),
+The Immortal Game (&lt;a href=&quot;http://www.dwheeler.com/misc/immortal.pgn&quot;&gt;PGN&lt;/a&gt;/&lt;a href=&quot;http://www.dwheeler.com/misc/immortal.txt&quot;&gt;Text&lt;/a&gt;),
+The Evergreen Game (&lt;a href=&quot;http://www.dwheeler.com/misc/evergreen.pgn&quot;&gt;PGN&lt;/a&gt;/&lt;a href=&quot;http://www.dwheeler.com/misc/evergreen.txt&quot;&gt;Text&lt;/a&gt;),
+and
+Deep Blue - Kasparov, 1996, Game 1 (&lt;a href=&quot;http://www.dwheeler.com/misc/deepblue-kasparov.pgn&quot;&gt;PGN&lt;/a&gt;/&lt;a href=&quot;http://www.dwheeler.com/misc/deepblue-kasparov.txt&quot;&gt;Text&lt;/a&gt;).
+It&amp;#8217;s my Byrne/Fischer writeup that was referenced in Shenk&amp;#8217;s book.
+But I didn&amp;#8217;t create that stuff for a book, originally.
+I can&amp;#8217;t play like these great players can,
+but I get better by studying what they do.
+In short, I&amp;#8217;ve found that I must study the work of the masters.
+&lt;/p&gt;
+&lt;p&gt;
+There are many children&amp;#8217;s educational philosophies that have, at least in part,
+the notion of studying good examples as part of education.
+Ruth Beechick&amp;#8217;s &amp;#8220;natural method&amp;#8221; for teaching writing emphasizes starting
+by copying and studying examples of great writing. She even notes
+Jack London and Benjamin Franklin started by studying works they admired.
+Learning begins by studying the work of the masters.
+&lt;/p&gt;
+&lt;p&gt;
+I often write about
+&lt;a href=&quot;http://www.dwheeler.com/oss_fs_why.html&quot;&gt;
+free-libre/open source software (FLOSS)&lt;/a&gt;.
+In part, I do because it&amp;#8217;s one amazingly interesting development.
+But there are other reasons, too.
+Some developers of FLOSS programs are the best in the business -
+you can learn a lot by seeing what they do.
+In short, one important advantage of FLOSS is that it is now possible for
+software developers to study the work of the masters.
+&lt;/p&gt;
+&lt;p&gt;
+I recently wrote the article
+&lt;a href=&quot;http://www.dwheeler.com/essays/high-assurance-floss.html&quot;&gt;
+High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)&amp;#8230; with Lots on Formal Methods (aka high confidence or high integrity)&lt;/a&gt;
+(I gave it the long title to help people find it).
+Here, I note the many tools to &lt;i&gt;create&lt;/i&gt; high assurance software -
+but there are precious few FLOSS examples of high assurance software.
+True, there are very few examples of high assurance software, period,
+but where are the high assurance software components that people can study
+and modify without legal encumberances?
+(If you know of more,
+&lt;a href=&quot;http://www.dwheeler.com/contactme.html&quot;&gt;contact me&lt;/a&gt;.)
+That worries me; how are we supposed to educate people how to create
+high assurance software, if students never see it?
+People do not wake up one morning and discover that they are an expert.
+They must learn, and books about a topic are not enough.
+They must study the work of the masters.
+&lt;/p&gt;
+</description>
+   </item>
+  </channel>
+</rss>

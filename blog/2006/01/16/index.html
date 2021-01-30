@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Mon, 16 Jan 2006</h1>
+<p><a name="python-typechecking"><font size="+2"><b>Python Typechecking: The Typecheck module</b></font></a></p><p></p>
+<p>
+About a year ago I started creating a Python library to support
+better typechecking in <a href="http://python.org/">Python</a>.
+Python is a fun language, but errors often hide <i>far</i> longer than
+they would in other languages, making debugging more necessary and
+painful than it needs to be.
+A trivial typo in a field setting cannot be caught by Python, for example,
+and type errors are never caught until an attempt is made to USE the value&#8230;
+which may be far, far later in the program.
+I really miss the ability of other languages to automatically check
+types, so that mistakes can be identified more directly.
+But I never got around to finishing my typechecking module for
+Python - there were just too many other things to do.
+Which is just as well, because someone else has done a better job.
+</p>
+<p>
+<a href="http://oakwinter.com/code/typecheck/">Typecheck</a>
+is a type-checking module for Python
+by Collin Winter and Iain Lowe; it
+&#8220;provides run-time typechecking facilities for Python
+functions, methods and generators.&#8221;
+Their typecheck module provides many more useful capabilities than my
+<a href="http://www.dwheeler.com/typecheck/typecheck.py">early
+typecheck module</a>.
+In particular, they handle variable-length parameter lists and other
+goodies.
+These capabilities, like the assert statement, make it much easier to
+detect problems early&#8230; and the earlier you can detect problems, the
+easier it is to figure out why the problem happened.
+</p>
+<p>
+The biggest trouble with the current verison of typecheck is
+that it isn&#8217;t easy to specify the <i>right</i> types.
+Since Python hasn&#8217;t had typechecking before, it doesn&#8217;t have
+built-in names for the types that you actually want to check against.
+For example, conceptually int (integer), long (arbitrarily long integer),
+and float are all subclasses of another type named &#8220;Number&#8221;&#8230; but
+there isn&#8217;t actually a type named Number to compare against (or
+inherit from, or implement as an interface).
+The same is true for &#8220;Sequence&#8221;&#8230; the Python documentation is full
+of discussions about Sequence, but these are merely conceptual, not
+something actually in the language itself.
+Even in cases where there <i>is</i> a type, such as &#8220;basestring&#8221; meaning
+&#8220;any string-like type&#8221;, is a type not known about by many Python
+developers.
+</p>
+<p>
+Typechecking only works when people actually specify the right types,
+of course.
+If you are too restrictive (&#8220;I want only &#8216;int&#8217;&#8221; when any number will do),
+then typechecking is a problem not a help.
+Hopefully the typecheck implementors
+will find a way to define the types that people need.
+In my mind, what&#8217;s needed is a way to define an Interface (a list of
+required methods) that has an efficient implementation
+(e.g., it&#8217;s a singleton that caches the types that match).
+Then they can define critical types using the Interface type.
+</p>
+<p>
+I look forward to using the typecheck module, once they add enough
+type definitions to use it well!
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2006/01/16#python-typechecking">permanent link to this entry</a></p>
+</body></html>

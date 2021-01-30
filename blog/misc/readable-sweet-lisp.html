@@ -1,0 +1,176 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Sat, 17 Jun 2006</h1>
+<p><a name="readable-sweet-lisp"><font size="+2"><b>Readable s-expressions and sweet-expressions: Getting the infix fix and fewer parentheses in Lisp-like languages</b></font></a></p><p></p>
+<p>
+Lisp-based programming languages
+normally represent programs as <i>s-expressions</i>,
+where an operation and its parameters are surrounded by parentheses.
+The operation to be performed is identified first,
+and each parameter afterwards is
+separated by whitespace.  So the traditional &#8220;2+3&#8221; is written as
+&#8220;(+&nbsp;2&nbsp;3)&#8221; instead.
+This is regular, but most people find this hard to read.
+Here&#8217;s a longer example of an s-expression - notice the many parentheses
+and the lack of infix operations:
+<pre>
+ (defun factorial (n)
+   (if (&lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+</pre>
+</p>
+
+<p>
+I think there&#8217;s a small resurging interest in Lisp-based systems, because Lisp
+is still very good at &#8220;programs that manipulate programs&#8221;.
+The major branches of Lisp (Common Lisp, Scheme, and Emacs Lisp) have
+not disappeared, after all.
+And I recently encountered a very cool and very new language in development,
+<a href="http://www.coyotos.org/docs/bitc/spec.html">BitC</a>.
+This language was created to write low-level programs
+(e.g., operating system kernels and real-time programs)
+that are easy to mathematically <i>prove</i> correct.
+I learned about this very cool idea while writing my paper
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and
+Free-Libre / Open Source Software (FLOSS)&#8230; with Lots on Formal Methods</a>.
+BitC combines ideas from Scheme, ML, and C, but it&#8217;s represented using
+s-expressions because it&#8217;s easy to manipulate program fragments that way.
+I don&#8217;t know how well it&#8217;ll succeed, but it has a good chance;
+if nothing else, I don&#8217;t know of <i>anyone</i> who&#8217;s tried this particular
+approach.
+The program-prover
+<a href="http://www.cs.utexas.edu/users/moore/acl2/">ACL2</a> uses
+Common Lisp as a basis, for the same reason: program-manipulating programs
+are easy.
+The FSF backs guile (a Scheme dialect) as their recommended
+tool for scripting; guile gives lots of power in a small package.
+</p>
+
+<p>
+But many software developers avoid Lisp-based languages,
+even in cases where they would be a good tool to use, because
+most software developers find s-expressions really hard to read.
+S-expressions are very regular&#8230; but so is a Turing machine.
+They don&#8217;t call it
+&#8216;Lots of Irritating Superfluous Parentheses&#8217; for nothing.
+Even if you can read it, most developers have to work with others.
+Some people like s-expressions as they are - and if so, fine!
+But many others are not satisfied with the status quo.
+Lots of people have tried to create easier-to-read versions, but
+they generally tend to lose the advantages of s-expressions
+(such as powerful macro and quoting capabilities).
+Can something be done to make it easy to create easier-to-read
+code for Lisp-like languages - without spoiling their advantages?
+</p>
+
+<p>
+I think something can be done, and
+I hope to spur a discussion about various options.
+To get that started, I&#8217;ve developed my own approach, &#8220;sweet-expressions&#8221;,
+which I think is actually a plausible solution.
+</p>
+
+<p>
+A sweet-expression reader will accept the traditional s-expressions
+(except for some pathological cases),
+but it also supports various extensions that make it easier to read.
+Sweet-expressions are automatically translated into s-expressions, so
+they lose no power.
+Here&#8217;s how that same program above could be written using sweet-expressions:
+<pre>
+ defun factorial (n)         ; Parameters can be indented, but need not be
+   if (n &lt;= 1)               ; Supports infix, prefix, &amp; function &lt;=(n 1)
+       1                     ; This has no parameters, so it's an atom.
+       n * factorial(n - 1)  ; Function(...) notation supported
+</pre>
+</p>
+
+<p>
+Sweet-expressions add the following abilities:
+<ol>
+<li><b>Indentation</b>. Indentation may be used instead
+of parentheses to start and end
+expressions: any indented line is a parameter of its parent,
+later terms on a line are parameters of the first term,
+lists of lists are marked with GROUP, and
+a function call with 0 parameters is surrounded or followed by a pair of
+parentheses [e.g., (pi) and pi()].
+A &#8220;(&#8221; disables indentation until its matching &#8220;)&#8221;.
+Blank lines at the beginning of a new expression are ignored.
+A term that begins at the left edge and is immediately followed by newline
+is immediately executed, to make interactive use pleasant.
+<li><b>Name-ending</b>. Terms of the form &#8216;NAME(x y&#8230;)&#8217;, with no whitespace before
+&#8216;(&#8217;, are interpreted as &#8216;(NAME x y&#8230;)&#8217;;.
+Parameters are space-separated inside.
+If its content is an infix expression, it&#8217;s considered one parameter instead
+(so f(2 + 3) passes the its parameter, 5, to f).
+<li><b>Infix</b>.  Optionally,
+expressions are automatically interpreted as infix
+if their second parameter is an infix operator
+(by matching an &#8220;infix operator&#8221; pattern of symbols),
+the first parameter is not an infix operator,
+and it has at least three parameters.
+Otherwise, expressions are interpreted as
+normal &#8220;function first&#8221; prefix notation.
+To disable infix interpretation, surround the second parameter with as(&#8230;).
+Infix expressions must have an odd number of parameters with the
+even ones being binary infix operators.
+You must separate each infix operator with whitespace on both sides;
+precedence is supported.
+Use the &#8220;name-ending&#8221; form for unary operations, e.g., -(x) for &#8220;negate x&#8221;.
+Thus &#8220;2 + y * -(x)&#8221; is a valid expression, equivalent to (+ 2 (* y (- x))).
+Infix operators must match this pattern (and in Scheme cannot be =&gt;):
+<pre>
+    [+-\*/&lt;&gt;=&amp;\|\p{Sm}]{1-4}|\:
+</pre>
+</ol>
+</p>
+
+<p>
+I call this combination &#8220;sweet-expressions&#8221;,
+because by adding syntactic sugar (which are essentially abbreviations),
+I hope to create a sweeter result.
+</p>
+
+<p>
+For more information on sweet-expressions or on making
+s-expressions more readable in general, see my website page at
+<a href="http://www.dwheeler.com/readable">http://www.dwheeler.com/readable</a>.
+For example, I provide a sweet-expression reader in Scheme
+(under the MIT license), as well as an indenting pretty-printer in
+Common Lisp.
+In particular, you can
+<a href="http://www.dwheeler.com/readable/readable-s-expressions.html">
+see my lengthy paper about why sweet-expressions do what they do, and
+some plausible alternatives.</a>
+You can also download some other implementation code.
+</p>
+
+<p>
+I&#8217;ve set up a
+<a href="http://sourceforge.net/projects/readable">
+SourceForge project named &#8220;readable&#8221;</a> to
+discuss options in making s-expressions more readable,
+and to distribute open source software to implement them
+(unimplemented ideas don&#8217;t go far!).
+I will probably need to work on other things for a while, but
+since I had this idea, I thought it&#8217;d be a good idea to
+write the idea and a quick sample demo of it, so that others could
+build on top of it.
+There hasn&#8217;t a single place for people to discuss how to make
+s-expressions more readable.. so now there is one.
+There are a lot of smart people out there; giving like-minded parties
+a place to discuss them is likely to produce something good.
+If you&#8217;re interested in this topic, please visit/join!
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2006/06/17#readable-sweet-lisp">permanent link to this entry</a></p>
+</body></html>

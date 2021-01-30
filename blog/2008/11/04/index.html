@@ -1,0 +1,347 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Tue, 04 Nov 2008</h1>
+<p><a name="automated-code-reviews-security"><font size="+2"><b>Kudos and Kritiques: &#8216;Automated Code Review Tools for Security&#8217; - and OSS</b></font></a></p><p></p>
+<p>
+The article
+<a href="http://www.cigital.com/papers/download/dec08-static-software-gem.pdf">
+&#8220;Automated Code Review Tools for Security&#8221; (by Gary McGraw)</a>
+has just been released to the web.
+Officially, it will be published in <i>IEEE Computer</i>&#8217;s
+December 2008 edition (though increasingly this kind of reference feels
+like an anachronism!).
+The article is basically a brief introduction to automated code review.
+Here are a few kudos and kritiques (sic) of it, including a long
+discussion about the meaning of &#8220;open source software&#8221; (OSS) that I think is
+important to add.
+</p>
+<p>
+First, a few kudos.
+The most important thing about this article is that it exists at all.
+I believe that software developers need to increasingly use
+static analysis tools to find security vulnerabilities,
+and articles like this are needed to get the word out.
+Yes, the current automated review tools for security have all sorts of problems.
+These tools typically have many
+false positives (reports that aren&#8217;t really vulnerabilities),
+they have many false negatives (they fail to report vulnerabilities
+they should), they are sometimes
+difficult to use, and their results are sometimes difficult to understand.
+But static analysis tools are still necessary.
+Software is getting larger, not smaller, because people keep increasing
+their expectations for software functionality.
+Security is becoming more important to software, not less, as more
+critical functions depend on the software and most attackers focus on them.
+Manual review is often too costly to apply (especially on
+pre-existing software and in proprietary development),
+and even when done it can miss &#8216;obvious&#8217; problems.
+So in spite of current static analysis
+tools&#8217; problems, the rising size and development speed
+of software will force many developers to use static analysis tools.
+There isn&#8217;t much of a practical alternative - so let&#8217;s face that!
+Some organizations (such as
+<a href="http://www.safecode.org/">Safecode.org</a>) don&#8217;t adequately
+emphasize this need for static analysis tools,
+so I&#8217;m glad to see the need for static analysis tools
+is being emphasized here and elsewhere.
+</p>
+<p>
+I&#8217;m especially glad for some of the points he makes.
+He notes that &#8220;security is not yet a standard part of the security
+curriculum&#8221;, and that &#8220;most programming languages were not
+designed with security in mind.. [leading to] common and often
+exploited vulnerabilities.&#8221;
+Absolutely true, and I&#8217;m glad he notes it.
+</p>
+<p>
+There are a number of issues and details the article doesn&#8217;t cover.
+For example, he mentions that &#8220;major vendors in this space include
+<a href="http://www.coverity.com">Coverity</a>,
+<a href="http://www.fortify.com">Fortify</a>, and
+<a href="http://www.ouncelabs.com">Ounce Labs</a>&#8221;;
+I would have also included
+<a href="http://www.klockwork.com">Klocwork</a> (for
+<a href="http://www.klockwork.com/products/insight.asp">Insight</a>),
+and I would have also noted at least the open source software program
+<a href="http://www.splint.org">splint</a>.
+(Proprietary tools can analyze and improve OSS programs, by the way;
+<a href="http://scan.coverity.com/">Coverity&#8217;s &#8216;open source quality&#8217;</a>,
+and
+<a href="https://opensource.fortify.com">Fortify&#8217;s &#8216;Java open review&#8217;</a>
+projects specifically work to review many OSS programs.)
+But since this is a simple introductory article, he has to omit much,
+so such omissions are understandable.
+I believe the article&#8217;s main point was to explain briefly what static
+analysis tools were, to encourage people to look into them;
+from that vantage point, it does the job.
+If you already understand these tools, you already know what&#8217;s
+in the article;
+this is an article for people who are <i>not</i> familiar with them.
+</p>
+<p>
+Now, a few kritiques. (The standard spelling is &#8220;critiques&#8221;, but I
+can&#8217;t resist using a funny spelling to match &#8220;kudos&#8221;.)
+First, the article conflates &#8220;static analysis&#8221; with &#8220;source code analysis&#8221;,
+a problem also noted on
+<a href="http://lambda-the-ultimate.org/node/3072">Lambda the ultimate</a>.
+The text says &#8220;static analysis tools - also called source code analyzers&#8221; -
+but this is not true.
+There are two kinds of static analysis tools:
+(1) Source analysis tools, and (2) binary/bytecode analysis tools.
+There are already several static analysis tools that work on
+binary or bytecode, and I expect to see more in the future.
+Later in the text he notes that binary analysis is possible &#8220;theoretically&#8221;,
+but it&#8217;s not theoretical - people do that, right now.
+Yes, it&#8217;s true that source code analysis is more mature/common,
+but don&#8217;t ignore binary analysis.
+Binary analysis can be useful; sometimes you don&#8217;t have the source code,
+and even when you do, it can be very useful to directly analyze the binary
+(because it&#8217;s the binary, not the source, that is actually run).
+It&#8217;s unfortunate that this key distinction was muddied.
+So, be aware that &#8220;static analysis tools&#8221; covers the analysis of both
+source and binary/byte code - and there are advantages of analyzing each.
+</p>
+<p>
+Second, McGraw says that this is a &#8220;relatively young&#8221; discipline.
+That&#8217;s sort-of correct in a broad sense, but it&#8217;s more complicated than that,
+and it&#8217;s too bad that was glossed over.
+The basic principles of secure software development are actually
+quite old; one key paper was
+<a href="http://web.mit.edu/Saltzer/www/publications/protection/">
+Saltzer and Schroeder&#8217;s 1975 paper</a> which identified key
+design principles for security.
+Unfortunately, while security experts often knew how to develop
+secure software, they tended to not write that information in a form that
+ordinary application software developers could use.
+To the best of my knowledge, my book
+<a href="http://www.dwheeler.com/secure-programs/">Secure Programming for Linux and Unix HOWTO</a> (1999-2003)
+was the <i>first</i> book for software developers
+(not attackers or security specialists) on how to develop
+application software that can resist attack.
+And unfortunately, this information is still not taught in high school
+(when many software developers learn how to write software),
+nor is it taught in most undergraduate schools.
+</p>
+<p>
+Third, I would like to correct an error in the article:
+<b>ITS4 has never been released as open source</b>, even
+though the article claims it was.
+The article claims that &#8220;When we released ITS4 as an open source tool,
+our hope was that the world would participate in helping to
+gather and improve the rule set.  Although more than 15,000 people
+downloaded ITS4 in its first year, we never received even one rule to add
+to its knowledge base&#8221;.
+Is it really true, that open source software doesn&#8217;t get significant help?
+Well, we need to know what &#8220;open source&#8221; means.
+</p>
+<p>
+What is &#8220;open source software&#8221;?
+It&#8217;s easy to show that the Open Source Initiative (OSI)&#8217;s
+<a href="http://www.opensource.org/docs/osd">Open Source Definition</a>,
+or the Free Software Foundation&#8217;s simpler
+<a href="http://www.gnu.org/philosophy/free-sw.html">Free
+Software Definition</a>, are the usual meanings
+for the term &#8220;open source software&#8221;.
+Just search for &#8220;open source software&#8221; on Google - after all, a Google
+search will rank how many people point to the site with that term,
+and how trusted they are.
+The top ten sites for this term
+include SourceForge, the Open Source Initiative (including their definition),
+the Open Source Software Institute, and (surprise!) me
+(due to my paper <a href="http://www.dwheeler.com/oss_fs_why.html">Why Open Source Software / Free Software (OSS/FS, FLOSS, or FOSS)? Look at the Numbers!</a>).
+The top sites tend to agree on the definition of &#8220;open source software&#8221;, e.g.,
+SourceForge specifically requires that licenses meet the OSI&#8217;s
+open source definition.
+I tend to use the Free Software Definition, because it&#8217;s simpler, but
+I would also argue that any open source software license would need
+to meet <i>both</i> definitions to be generally acceptable.
+Other major sites that are universally acknowledged as
+supporting open source software all agree on this basic definition.
+For example, the
+<a href="http://www.debian.org/social_contract">Debian
+Free Software Guidelines</a>
+were the basis of the Open Source Definition, and
+<a href="http://fedoraproject.org/wiki/Licensing">Fedora&#8217;s licensing</a> and
+<a href="http://fedoraproject.org/wiki/Packaging/LicensingGuidelines">licensing guidelines</a> reference both OSI and FSF
+(and make clear that open source software must be licensed
+in a way that lets anyone use them).
+<a href="http://code.google.com/hosting/">Google Code</a>
+accepts only a limited number of licenses, all of which meet these criteria.
+The
+<a href="http://iase.disa.mil/policy-guidance/oss-in-dodmemo.pdf">
+U.S. Department of Defense&#8217;s 2003 policy latter, &#8220;Open Source Software
+in the DoD&#8221;</a> essentially uses the Free Software Definition to define the
+term; it says open source software
+&#8220;provides everyone the rights to use, modify, and
+redistribute the source code of the software&#8221;.
+In short, the phrase &#8220;open source software&#8221; has a widely-accepted
+and specific meaning.
+</p>
+<p>
+So let&#8217;s look at ITS4&#8217;s license.
+As of November 3, 2008, the
+<a href="http://www.cigital.com/its4/download.php">ITS4 download site</a>&#8217;s
+license hasn&#8217;t changed from its original Feb 17, 2000 license.
+It turns out that the ITS4 license clearly <b>forbids</b> many commercial uses.
+In fact, their license is clearly labelled a &#8220;NON-COMMERCIAL LICENSE&#8221;,
+and it states that Cigital has &#8220;exclusive licensing rights
+for the technology for commercial purposes.&#8221;
+That&#8217;s a tip-off that there is a problem; as I&#8217;ve explained elsewhere,
+<a href="http://www.dwheeler.com/essays/commercial-floss.html">open source
+software is commercial software</a>.
+License section 1(b) says
+&#8220;You may not use the program for commercial purposes under some circumstances.  Primarily, the program must not be sold commercially as a separate product, as part of a bigger product or project, or used in third party work-for-hire situations&#8230;  Companies are permitted to use this program as long as it is not used for revenue-generating purposes&#8230;.&#8221;.
+In section 2,
+&#8220;(a) Distribution of the Program or any work based on the Program by a commercial organization to any third party is prohibited if any payment is made in connection with such distribution, whether directly&#8230; or indirectly&#8230;&#8221;.
+Cigital has a legal right to release software in just about
+any way it wants to; that&#8217;s not what I&#8217;m trying to point out.
+What I&#8217;m trying to make clear is that
+there are significant limitations on use and distribution of ITS4, due
+to its license.
+</p>
+<p>
+This means that ITS4 is clearly <b>not</b> open source software.
+The
+<a href="http://www.opensource.org/docs/osd">Open Source Definition</a>
+requires that an open source software license have
+(#5) No Discrimination Against Persons or Groups, and
+(#6) No Discrimination Against Fields of Endeavor.
+The detailed text for #6 even says:
+&#8220;The license must not restrict anyone from making use of the program in a specific field of endeavor. For example, it may not restrict the program from being used in a business, or from being used for genetic research.&#8221;
+Similarly, the
+<a href="http://www.gnu.org/philosophy/free-sw.html">
+Free Software Definition</a>
+requires the &#8220;freedom to run the program, for any purpose&#8221; (freedom 0).
+ITS4 might be described as a &#8220;source available&#8221;, &#8220;shared source&#8221;, or
+&#8220;open box&#8221; program - but it&#8217;s not open source.
+<a href="http://www.dwheeler.com/essays/commercial-floss.html">Real open source software licenses permit arbitrary commercial use</a>;
+they are designed to <i>include</i> commercial users, not exclude them.
+</p>
+<p>
+It&#8217;s <b>absurd to complain</b>
+that &#8220;no one helped this open source project&#8221;
+<b>when the project was never an open source project</b>.
+Indeed, even if you release software with an OSS license, there
+is no guarantee that you&#8217;ll get support (through collaboration).
+No one is <i>obligated</i> to collaborate with you if you release OSS -
+you have to convince others that they should collaborate.
+And conversely, you have every legal right to <b>not</b> release
+under an OSS license.
+But OSS licenses are typically designed to encourage collaboration;
+having a license that is <b>not</b> an OSS license unsurprisingly
+discourages such collaboration.
+As I point out in my essay
+<a href="http://www.dwheeler.com/essays/gpl-compatible.html">&#8220;Make Your Open Source Software GPL-Compatible. Or Else&#8221;</a>, if you want OSS collaboration
+you really need to pick from one of the few standard GPL-compatible licenses,
+for reasons I explain further in that essay.
+</p>
+<p>
+This matters.
+My tool <a href="http://www.dwheeler.com/flawfinder">flawfinder</a>
+does a similar task to ITS4, but it is
+open source software (released under
+the world&#8217;s most popular OSS license, the GPL).
+And I <b>did</b> get a lot of collaborative help in developing flawfinder,
+as you can tell from the
+<a href="http://www.dwheeler.com/flawfinder/ChangeLog">Flawfinder ChangeLog</a>.
+Thus, it <b>is</b> possible to have OSS projects that
+analyze programs and receive many contributions.
+Here&#8217;s a partial list of flawfinder contributors:
+Jon Nelson,
+Marius Tomaschewski,
+Dave Aitel,
+Adam Lazur,
+Agustin.Lopez,
+Andrew Dalgleish,
+Joerg Beyer,
+Jose Pedro Oliveira,
+Jukka A. Ukkonen,
+Scott Renfro,
+Sascha Nitsch,
+Sebastien Tandel,
+Steve Kemp (lead of the Debian Security Auditing Project),
+Jared Robinson,
+Stefan Kost,
+and
+Mike Ruscher.
+That&#8217;s at least 17 people co-developing the software!
+Not all of these contributors added to the vulnerability database,
+but I know that at least Dave Aitel and Jaren Robinson added new rules,
+Stefan Kost suggested specific new rules
+(though I don&#8217;t think he wrote the code for it),
+and that Agustin Lopez and Christian Biere
+caused changes in the vulnerability database&#8217;s reporting information.
+There may have been more; in a collaborative process, it&#8217;s sometimes difficult
+to fully give credit to everyone who deserves it, and I
+don&#8217;t have time to go through all of the records to determine the minutia.
+It&#8217;d be a mistake to think that only database improvements matter, anyway;
+other user-contributed improvements were useful!
+These include changes that enabled
+analysis of patch files
+(so you can limit reporting to the lines that have changed),
+made the reports clearer, packaged the software (for easy installation),
+and fixed various bugs.
+</p>
+<p>
+Obviously, releasing under a true OSS license helped <i>immensely</i> in
+getting contributions - especially if ITS4 is our point of comparison.
+For example, since flawfinder is an OSS program, it was easily incorporated
+into a variety of OSS Linux distributions, making it easier to use.
+I also suspect that
+some of the people most interested in using this kind of
+program were people paid to evaluate programs - but many of these uses
+were forbidden by the default ITS4 license.
+</p>
+<p>
+In short, a non-OSS program didn&#8217;t have much collaborative help, while
+a similar OSS program got <i>lots</i> of collaborative help&#8230; and
+<b>that</b> is an important lesson.
+There is a difference between &#8220;really being open source software&#8221; and
+&#8220;sort of openish but not really&#8221;.
+If you look at ITS4 version 1.1.1, its CHANGES file does list a few external
+contributions, but they are primarily trivial tweaks or
+portability changes (to get it to work at all).
+McGraw himself admits that ITS4 didn&#8217;t get any new
+new rules in its first year.
+In contrast, OSS flawfinder added user-created rules
+within 6 months of its initial release, and over time the OSS program
+had lots of functionality provided by other co-developers.
+I don&#8217;t want McGraw&#8217;s incorrect comment about &#8220;open source&#8221;
+go unchallenged, when there&#8217;s an important lesson to be learned instead.
+</p>
+<p>
+That said, my thanks to McGraw for noting flawfinder (and RATS), as
+well as ITS4.
+Indeed, my thanks to John Viega, McGraw, and others for developing ITS4
+and the corresponding ACSAC paper - I think ITS4 was an important
+step in getting people to use and develop static analysis tools for security.
+I also agree with McGraw that deeper analysis of programs is the
+way of the future.
+Tools that focus on simple lexical analysis (like ITS4, flawfinder, and RATS)
+have their uses, but there is much that they cannot do, which is why
+tool developers are now focusing on deeper analysis approaches.
+Static analysis tools that examine a program in more detail
+(like <a href="http://www.splint.org">splint</a>)
+can do much that simple tools (based on lexical analysis) cannot.
+</p>
+<p>
+Most importantly, McGraw and I agree on the conclusion:
+&#8220;Static analysis for security should be applied regularly as part
+of any modern software development process.&#8221;
+We need to get that word out to where software is really developed.
+Static analysis not the <i>only</i> thing that people need to do, but it&#8217;s
+an important part.
+Yes, static analysis tools aren&#8217;t perfect.
+But static analysis tools can significantly help
+develop software that has real security.
+<!-- My thanks to Marty Stytz, who reviewed this commentary for me. -->
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/oss">/oss</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2008/11/04#automated-code-reviews-security">permanent link to this entry</a></p>
+</body></html>

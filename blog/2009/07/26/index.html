@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Sun, 26 Jul 2009</h1>
+<p><a name="limiting-filenames-simplifies-things"><font size="+2"><b>Limiting Unix/Linux/POSIX filenames simplifies things: Lowercasing filenames</b></font></a></p><p></p>
+<p>
+My essay
+<a href="http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html">
+<i>Fixing Unix/Linux/POSIX Filenames:
+Control Characters (such as Newline), Leading Dashes, and Other Problems</i></a>
+argues that adding some limitations on legal Unix/Linux/POSIX filenames
+would be an improvement.
+In particular, a few minor limitations (which most people assume anyway)
+would eliminate certain kinds of bugs, some of which end up
+being security vulnerabilities.
+Forbidding crazy things (like control characters in filenames)
+simplifies creating programs that work all the time.
+</p>
+<p>
+Here&#8217;s a little example of this.
+I wanted to convert all the filenames inside a directory tree
+to all lowercase letters.
+I didn&#8217;t want to lose any files without checking on them first,
+so I wanted it to ask before doing a rename in a way that would
+eliminate a file (i.e., I wanted to use <tt>mv&nbsp;-i</tt>).
+I didn&#8217;t find such a program built into my distro, so I wrote
+a short script to do it
+(which is just as well, because it makes a nice simple example).
+I wanted it to be portable, since I might need it again later.
+</p>
+<p>
+So how do we write this?
+A simple glob like &#8220;*&#8221; won&#8217;t work, because it needs to
+recursively descend through a tree of directories, and simple globs
+will skip hidden filesystem objects too (and I want to include them).
+I could write a more complex glob that included hidden files and directories,
+and recursed down through subdirectories, but the naive way of recursing
+down subdirectories can have many problems (e.g., it could get stuck
+in endless loops created by symbolic links).
+If we need to handle a tree recursively, there&#8217;s a better
+tool designed for the purpose &mdash; <tt>find</tt>.
+</p>
+<p>
+Unfortunately, an ordinary
+<tt>find&nbsp;.</tt>
+has an interesting problem &mdash;
+it will pick the upper-level names first,
+and if we rename the upper-level names first, find will fail when
+it tries to enter them (since they will no longer exist).
+No problem &mdash; if we are manipulating the tree structure
+(including renames), we can use the <tt>-depth</tt> option of find, which
+will process each directory&#8217;s contents
+before the directory itself.
+We can then rename just the basename of what find returns, so
+we won&#8217;t change anything before find descends into it.
+</p>
+<p>
+Now, if we could assume that newlines and tabs cannot be in filenames, 
+as recommended in
+<a href="http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html">
+<i>Fixing Unix/Linux/POSIX Filenames&#8230;</i></a>, then
+we can do a simple <tt>for</tt> loop around the results of find.
+My
+<a href="http://www.dwheeler.com/misc/mklowercase">shell script
+<tt>mklowercase</tt> renames filenames to lowercase letters recursively</a>.
+Here is its essence:
+</p>
+<pre>
+  #!/bin/sh
+  # mklowercase - change all filenames to lowercase recursively from "." down.
+  # Will prompt if there's an existing file of that name (mv -i)
+  # Presumes that filenames don't include newline or tab.
+
+  set -eu
+  IFS=`printf '\n\t'`
+  
+  for file in `find . -depth` ; do
+    [ "." = "$file" ] &amp;&amp; continue                  # Skip "." entry.
+    dir=`dirname "$file"`
+    base=`basename "$file"`
+    oldname="$dir/$base"
+    newbase=`printf "%s" "$base" | tr A-Z a-z`
+    newname="$dir/$newbase"
+    if [ "$oldname" != "$newname" ] ; then
+      mv -i "$file" "$newname"
+    fi
+  done
+</pre>
+<p>
+This script skips &#8220;.&#8221;, which is not strictly necessary,
+but I thought it would be a good idea to point out that you may need to skip
+&#8220;.&#8221; sometimes.
+</p>
+<p>
+Yes, this <i>could</i> be modified to handle literally all
+possible Unix/Linux/POSIX filenames, but those modifications make
+it more complicated and uglier.
+One approach would be to use one program to use <tt>find&#8230;-exec</tt>, which
+then invokes another script to do the renaming.
+But then you have to maintain two scripts, and keep them in sync.
+You could embed the command into find, but then the find command
+becomes hideously complicated.
+</p>
+<p>
+Another solution to handling all filenames would be to change the loop to:
+</p>
+<pre>
+  find . -depth -print0 |
+  while IFS="" read -r -d '' file ; do ...
+</pre>
+<p>
+However, this requires non-standard GNU extensions to find (-print0)
+and bash (read -d),
+as well as being uglier and more complicated.  Also, if &#8220;mv&#8221; is implemented
+as required by the Single Unix Standard, then the &#8220;mv -i&#8221;
+will fail badly if it tries to rename a file into an existing name.
+That&#8217;s because when it tries to get an answer, it will send a prompt to
+stderr, but it will expect a RESPONSE from stdin&#8230; and yet, stdin
+is where it gets the list of filenames!!
+</p>
+<p>
+And it&#8217;s all silly anyway.
+If you put newlines in filenames, <i>lots</i> of scripts fail.
+It&#8217;s simply too much of a pain to deal with them &#8220;correctly&#8221;.
+Which is the point of
+<a href="http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html">
+<i>Fixing Unix/Linux/POSIX Filenames</i></a> &mdash;
+adding some limitations on legal Unix/Linux/POSIX filenames
+would be an improvement.
+At the least, by default let&#8217;s forbid control characters
+(so simple &#8220;find&#8221; and filename display is safe),
+forbid leading dash characters (so simple globbing is safe),
+require that all filenames be UTF-8
+(so displaying filenames always works), and perhaps
+forbid trailing spaces
+(since these are dangerously misleading to end-users).
+I would like to see kernels build in the mechanisms to
+forbid certain kinds of filenames, so that administrators can
+then specify the specific &#8220;bad filename&#8221; policy they
+would like to use.
+</p>
+<p>
+So please take a look at:
+<a href="http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html">
+<i>Fixing Unix/Linux/POSIX Filenames:
+Control Characters (such as Newline), Leading Dashes,
+and Other Problems</i></a>.
+I&#8217;ve made a few recent additions, thanks to some interesting
+comments people have sent, but the basic message is the same.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/security">/security</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2009/07/26#limiting-filenames-simplifies-things">permanent link to this entry</a></p>
+</body></html>

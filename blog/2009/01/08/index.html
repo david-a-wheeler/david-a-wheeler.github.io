@@ -1,0 +1,241 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Thu, 08 Jan 2009</h1>
+<p><a name="update-website-with-rsync"><font size="+2"><b>Updating cheap websites with rsync+ssh</b></font></a></p><p></p>
+<p>
+I&#8217;ve figured out how to run and update cheap, simple websites using
+rsync and ssh and Linux.
+I thought I&#8217;d share that info here, in case you want to copy my approach.
+</p>
+
+<p>
+My site (<a href="http://www.dwheeler.com">www.dwheeler.com</a>)
+is an intentionally simple website.
+It&#8217;s simply a bunch of directories with static files;
+those files may contain Javascript and animated GIF, but site visitors
+aren&#8217;t supposed to cause them to change.
+Programs to manage my site (other than the web server) are run
+<i>before</i> the files are sent to the server.
+Most of today&#8217;s sites can&#8217;t be run this way&#8230; but when you can do this,
+the site is much easier to secure and manage.
+It&#8217;s also really efficient (and thus fast).
+Even if you can&#8217;t run a <i>whole</i> site this way, if you can run a
+big part of it this way, you can save yourself a lot of security,
+management, and performance problems.
+</p>
+
+<p>
+This means that I can make arbitrary changes to a local copy of the website,
+and then use rsync+ssh to upload just those changes.
+<a href="http://samba.anu.edu.au/rsync/">rsync</a> is a <i>wonderful</i>
+program, originally created by Andrew Tridgell, that can copy a
+directory tree to and from remote directory trees, but only send the
+changes.
+The result is that rsync is a great bandwidth-saver.
+</p>
+
+<p>
+This approach is easy to secure, too.
+Rsync uses ssh to create the connection, so
+people can&#8217;t normally snoop on the transfer, and redirecting DNS will
+be immediately noticed.
+If the website is compromised, just reset it and re-send a copy;
+as long as you retain a local copy, no data can be permanently lost.
+I&#8217;ve been doing this for years, and been happy with this approach.
+</p>
+
+<p>
+On a full-capability hosting service, using rsync this is easy.  Just
+install rsync on the remote system (typically using yum or apt-get), and run:
+<pre>
+ rsync -a LOCALDIR REMOTENAME@REMOTESITE:REMOTEDIR
+</pre>
+</p>
+
+<p>
+Unfortunately, at least some of the cheap hosting services available today
+don&#8217;t make this quite so easy.
+The cheapest hosting services are &#8220;shared&#8221; sites that share
+resources between many users without using full operating system or
+hardware virtualization.
+I&#8217;ve been looking at a lot of the cheap Linux web hosting services
+like these such as WebhostGIANT, Hostmonster, Hostgator, and Bluehost.
+It appears that at least some
+of these hosting companies improve their security by greatly limiting
+the access granted to you via the ssh/shell interface.
+I know that
+<a href="http://www.webhostgiant.com/">WebhostGIANT</a> is an example,
+but I believe there are many such examples.
+So, even if you have ssh access on a Linux system,
+you may only get a few commands you can run like &#8220;mv&#8221; and &#8220;cp&#8221;
+(and <i>not</i> &#8220;tar&#8221; or &#8220;rsync&#8221;).
+You could always ask the hosting company
+to install programs, but they&#8217;re often reluctant to add new ones.
+But&#8230; it turns out that you <i>can</i> use rsync and other such services,
+without asking them to install anything, at least in some cases.
+I&#8217;m looking for new hosting providers, and realized
+(1) I can still use this approach without asking them to install anything, but
+(2) it requires some technical &#8220;magic&#8221; that others might not know.
+So, here&#8217;s how to do this, in case this information/example helps others.
+</p>
+
+<p>
+<b>Warning:</b> Complicated technical info ahead.
+</p>
+
+<p>
+I needed to install some executables, and rather than recompiling my
+own, I grabbed pre-compiled executables.
+To do this, I found out the Linux distribution used by the hosting service
+(in the case of WebhostGIANT, it&#8217;s CentOS 5, so all my examples
+will be RPM-based).
+On my local Fedora
+Linux machine I downloaded the DVD &#8220;.iso&#8221; image of that distro,
+and did a &#8220;loopback mount&#8221; as root so that I could directly view its contents:
+<pre>
+ cd /var/www     # Or wherever you want to put the ISO.
+ wget ...mirror location.../CentOS-5.2-i386-bin-DVD.iso
+ mkdir /mnt/centos-5.2
+ mount CentOS-5.2-i386-bin-DVD.iso /mnt/centos-5.2 -o loop
+ # Get ready to extract some stuff from the ISO.
+ cd
+ mkdir mytemp
+ cd mytemp
+</pre>
+</p>
+
+<p>
+Now let&#8217;s say I want the program &#8220;nice&#8221;.
+On a CentOS or Fedora machine you can determine the package that &#8220;nice&#8221; is
+in using this command:
+<pre>
+ rpm -qif `which nice`
+</pre>
+Which will show that nice is in the &#8220;coreutils&#8221; package.
+You can extract &#8220;nice&#8221; from its package by doing this:
+<pre>
+ rpm2cpio /mnt/centos-5.2/CentOS/coreutils-5.97-14.el5.i386.rpm | \
+   cpio --extract --make-directories
+</pre>
+Now you can copy it to your remote site.  Presuming that you
+want the program to go into the remote directory &#8220;/private/&#8221;,
+you can do this:
+<pre>
+ scp -p ./usr/bin/rsync MY_USERID@MY_REMOTE_SITE:/private/
+</pre>
+</p>
+
+<p>
+Now you can run /private/nice, and it works as you&#8217;d expect.
+But what about rsync?
+Well, when you try to do this with rsync and run it,
+it will complain with an error message.
+The error message says that rsync can&#8217;t find another library (libpopt
+in this case).
+The issue is that and cheap web hosting services often don&#8217;t provide a lot of
+libraries, and they won&#8217;t let you install new libraries in the &#8220;normal&#8221; places.
+Are we out of luck?  Not at all!
+We <i>could</i> just recompile the program statically, so that the library
+is embedded in the file, but we don&#8217;t even have to do <i>that</i>.
+We just need to upload the needed library to a different place,
+and tell the remote site where to find the library.
+It turns out that the program &#8220;/lib/ld-linux.so&#8221; has an option called
+&#8220;&#8212;library-path&#8221; that is specially designed for this purpose.
+ld-linux.so is the loader (the &#8220;program for running programs&#8221;),
+which you don&#8217;t normally invoke directly, but if you need to
+add library paths, it&#8217;s a reasonable way to do it.
+(Another way is to use LD_LIBRARY_PATH, but that requires that the
+string be interpreted by a shell, which doesn&#8217;t always happen.)
+So, here&#8217;s what I did (more or less).
+</p>
+
+<p>
+First, I extracted the rsync program and necessary
+library (popt) on the local system, and
+copied them to the remote system (to &#8220;/private&#8221;, again):
+<pre>
+ rpm2cpio /mnt/centos-5.2/CentOS/rsync-2.6.8-3.1.i386.rpm | \
+   cpio --extract --make-directories
+ # rsync requires popt:
+ rpm2cpio /mnt/centos-5.2/CentOS/popt-1.10.2-48.el5.i386.rpm | \
+   cpio --extract --make-directories
+ scp -p ./usr/bin/rsync ./usr/lib/libpopt.so.0.0.0 \
+        MY_USERID@MY_REMOTE_SITE:/private/
+</pre>
+Then, I logged into the remote system using ssh, and added
+symbolic links as required by the normal Unix/Linux library conventions:
+<pre>
+ ssh MY_USERID@MY_REMOTE_SITE
+ cd /private
+ ln -s libpopt.so.0.0.0 libpopt.so 
+ ln -s libpopt.so.0.0.0 libpopt.so.0
+</pre>
+</p>
+
+<p>
+Now we&#8217;re ready to use rsync!
+The trick is to tell the local rsync where the remote rsync is, using
+&#8220;&#8212;rsync-path&#8221;. That option&#8217;s contents must invoke ld-linux.so to tell
+the remote system where the additional library path (for libopt) is.
+So here&#8217;s an example, which copies files from the directory
+LOCAL_HTTPD to the directory REMOTE_HTTPDIR:
+<pre>
+rsync -a \
+ --rsync-path="/lib/ld-linux.so.2 --library-path /private /private/rsync" \
+ LOCAL_HTTPDIR REMOTENAME@REMOTESITE:REMOTE_HTTPDIR
+</pre>
+</p>
+
+<p>
+There are a few ways we can make this nicer for everyday production use.
+If the remote server is a cheap shared system, we want to be very
+kind on its CPU and bandwidth use (or we&#8217;ll get thrown off it!).
+The &#8220;nice&#8221; command (installed by the steps above) will reduce CPU use
+on the remote web server when running rsync.
+There are several rsync options that can help, too.
+The &#8220;&#8212;bwlimit=KBPS&#8221; option will limit the bandwidth used.
+The &#8220;&#8212;fuzzy&#8221; option will reduce bandwidth use if there&#8217;s a similar
+file already on the remote side.
+The &#8220;&#8212;delete&#8221; option is probably a good idea; this means that files
+deleted locally are also deleted remotely.
+I also suggest &#8220;&#8212;update&#8221; (this will avoid updating remote files if they
+have a newer timestamp) and &#8220;&#8212;progress&#8221; (so you can see what&#8217;s happening).
+Rsync is able to copy hard links (using &#8220;-H&#8221;), but that takes more
+CPU power; I suggest using symbolic links and then not invoking that option.
+You can enable compression too, but that&#8217;s a trade-off; compression will
+decrease bandwidth but increase CPU use.
+So our final command looks like this:
+<pre>
+rsync -a --bwlimit=100 --fuzzy --delete --update --progress \
+ --rsync-path="/private/nice /lib/ld-linux.so.2 --library-path /private /private/rsync" \
+ LOCAL_HTTPDIR REMOTENAME@REMOTESITE:REMOTE_HTTPDIR
+</pre>
+</p>
+
+<p>
+Voila!
+Store that script in some easily-run place.
+Now you can easily update your website locally and
+push it to the actual webserver, even on a cheap hosting service,
+with very little bandwidth and CPU use.
+That&#8217;s a win-win for everyone.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/misc">/misc</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2009/01/08#update-website-with-rsync">permanent link to this entry</a></p>
+<p><a name="moving"><font size="+2"><b>Moving hosting service at end of January 2009</b></font></a></p><p></p>
+<p>
+I will be moving to a new hosting service at the end of January 2009.
+(I haven&#8217;t determined which hosting service yet.)
+In theory, there should be very little downtime, but it&#8217;s possible
+the site will be off for a little while.
+But if that happens, it will be very temporary - I&#8217;ll
+get the site back up as soon as I can.
+</p>
+<p>path: <a href="http://www.dwheeler.com/blog/website">/website</a> | <a href="http://www.dwheeler.com/blog">Current Weblog</a> | <a href="http://www.dwheeler.com/blog/2009/01/08#moving">permanent link to this entry</a></p>
+</body></html>

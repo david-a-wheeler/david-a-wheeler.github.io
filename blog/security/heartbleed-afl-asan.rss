@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- name="generator" content="blosxom/2.0" -->
+
+<rss version="2.0">
+  <channel>
+    <title>David A. Wheeler's Blog   </title>
+    <link>http://www.dwheeler.com/blog</link>
+    <description>David A. Wheeler's weblog.</description>
+    <language>en</language>
+
+  <item>
+    <title>Heartbleed found with american fuzzy lop (afl) and Address Sanitizer (ASan)</title>
+    <link>http://www.dwheeler.com/blog/2015/04/07#heartbleed-afl-asan</link>
+    <pubDate>Tue, 07 Apr 2015 16:53 GMT</pubDate>
+    <!-- date: 2015-04-07 -->
+    <description>
+&lt;p&gt;
+Big news in security vulnerability research:
+&lt;a href=&quot;https://blog.hboeck.de/archives/868-How-Heartbleed-couldve-been-found.html&quot;&gt;Hanno Böck found Heartbleed using american fuzzy lop (afl)
+and Address Sanitizer (ASan)&lt;/a&gt; - and in only 6 hours of execution time.
+&lt;/p&gt;
+&lt;p&gt;
+This means that software developers should seriously consider using
+a more-advanced fuzzer, such as
+&lt;a href=&quot;http://lcamtuf.coredump.cx/afl/&quot;&gt;american fuzzy lop (afl)&lt;/a&gt;,
+along with
+&lt;a href=&quot;https://code.google.com/p/address-sanitizer/&quot;&gt;Address Sanitizer (ASan)&lt;/a&gt;
+(an option in both the LLVM/clang and gcc compilers),
+whenever you write in C, C++, Objective-C, or in other
+circumstances that are not memory-safe.
+In particular, seriously consider doing
+this if your program is exposed to the internet or
+it processes data sent via the internet
+(practically all programs meet this criteria nowadays).
+I had speculated that this combination could have found Heartbleed in
+&lt;a href=&quot;/essays/heartbleed.html&quot;&gt;my essay on Heartbleed&lt;/a&gt;,
+but this confirmation is really important.
+Here I will summarize what&amp;#8217;s going on
+(using the capitalization conventions
+of the various tool developers).
+&lt;/p&gt;
+&lt;p&gt;
+The
+&lt;a href=&quot;http://lcamtuf.coredump.cx/afl/&quot;&gt;american fuzzy lop (afl)&lt;/a&gt;
+program created by Michal Zalewski is a surprisingly effective fuzzer.
+A fuzzer is simply a tool that sends lots of semi-random inputs into a program
+and to detect gross problems (typically a crash).
+Fuzzers do not know what the exact correct answers are,
+but because they do not, they can try out more inputs than systems that
+know the exact correct answers.
+But afl is smarter than most fuzzers; instead of just sending random inputs,
+afl tracks which branches are taken in a program.
+Even more interestingly, afl even tracks how often different branches
+are taken when running a program (that is &lt;i&gt;especially&lt;/i&gt; unusual).
+Then, when afl creates new inputs, it prefers to create them
+based on inputs that have produced different counts on at least some branches.
+This evolutionary approach, using both branch coverage and the
+&lt;i&gt;number of times&lt;/i&gt; a branch is used, is remarkably effective.
+Simple dumb random fuzzers can only perform relatively shallow tests;
+getting any depth has required more complex approaches such as
+detailed descriptions of the
+required format (the approach used by
+so-called &amp;#8220;smart&amp;#8221; fuzzers) and/or
+white-box constraint solving (such as
+&lt;a href=&quot;http://esec-lab.sogeti.com/pages/Fuzzgrind&quot;&gt;fuzzgrind&lt;/a&gt;
+or Microsoft&amp;#8217;s SAGE).
+It&amp;#8217;s not at all clear that afl eliminates the value of these other
+fuzzing approaches; I can see combining their approaches.
+However, afl is clearly getting far better results than
+simple dumb fuzzers that just send random values.
+Indeed, the afl of today is getting remarkably deep coverage for a fuzzer.
+For example, the post
+&lt;a href=&quot;http://lcamtuf.blogspot.com/2014/11/pulling-jpegs-out-of-thin-air.html&quot;&gt;Pulling JPEGs out of thin air&lt;/a&gt; shows how afl was able to
+start with only the text &amp;#8220;hello&amp;#8221; (a hideously bad starting point)
+and still automatically figure out how to create valid JPEG files.
+&lt;/p&gt;
+&lt;p&gt;
+However, while afl is really good at creating inputs, it can only
+detect problems if they lead to a crash; vulnerabilities like
+Heartbleed do not normally cause a crash.
+That&amp;#8217;s where Address Sanitizer (ASan) comes in.
+Address Sanitizer turns many memory access errors, including nearly
+all out-of-bounds accesses, double-free, and use-after-free, into
+a crash.
+ASan was originally created by
+Konstantin Serebryany, Derek Bruening, Alexander Potapenko, and Dmitry Vyukov.
+ASan is amazing all by itself, and the combination is even better.
+The fuzzer afl is good at creating inputs, and ASan is good
+at turning problems into something that afl can detect.
+Both are available at no cost as
+Free/ libre/ open source software (FLOSS),
+so anyone can try them out, see how they work, and even make improvements.
+&lt;/p&gt;
+&lt;p&gt;
+Normally afl can only fuzz file inputs, but Heartbleed could only be
+triggered by network access.
+This is no big deal; Hanno describes in his article how to wrap up
+network programs so they can be fuzzed by file fuzzers.
+&lt;/p&gt;
+&lt;p&gt;
+Sometimes afl and ASan do not work well together today on 64-bit systems.
+This has to do with some technical limitations involving memory use;
+on 64-bit systems ASan reserves (but does not use) a lot of memory.
+This is not necessarily a killer;
+in many cases you can use them together anyway (as Hanno did).
+More importantly, this problem is about to go away.
+Recently I co-authored (along with Sam Hakim) a tool we call
+afl-limit-memory; it uses Linux cgroups to eliminate the problem so
+that you can always combine afl and ASan (at least on Linux).
+We have already submitted the code to the afl project leader,
+and we hope it will become part of afl soon.
+So this is already a disappearing problem.
+&lt;/p&gt;
+&lt;p&gt;
+There are lots of interesting related resources.
+If you want to learn about fuzzing more generally,
+some books
+you might want to read are
+&lt;a href=&quot;http://www.amazon.com/gp/product/0321446119/ref=as_li_tl?ie=UTF8&amp;camp=1789&amp;creative=9325&amp;creativeASIN=0321446119&amp;linkCode=as2&amp;tag=davawhesperho-20&amp;linkId=FXMNBVAG5BVBKXQF&quot;&gt;&lt;i&gt;Fuzzing: Brute Force Vulnerability Discovery&lt;/i&gt; by Sutton, Greene, and Amini&lt;/a&gt;&lt;img src=&quot;http://ir-na.amazon-adsystem.com/e/ir?t=davawhesperho-20&amp;l=as2&amp;o=1&amp;a=0321446119&quot; width=&quot;1&quot; height=&quot;1&quot; border=&quot;0&quot; alt=&quot;&quot; style=&quot;border:none !important; margin:0px !important;&quot; /&gt;
+and
+&lt;a href=&quot;http://www.amazon.com/gp/product/1596932147/ref=as_li_tl?ie=UTF8&amp;camp=1789&amp;creative=9325&amp;creativeASIN=1596932147&amp;linkCode=as2&amp;tag=davawhesperho-20&amp;linkId=ZWWDLP2TYGCZUDLU&quot;&gt;&lt;i&gt;Fuzzing for Software Security Testing and Quality Assurance&lt;/i&gt; (Artech House Information Security and Privacy) by Takanen, DeMott, and Miller&lt;/a&gt;&lt;img src=&quot;http://ir-na.amazon-adsystem.com/e/ir?t=davawhesperho-20&amp;l=as2&amp;o=1&amp;a=1596932147&quot; width=&quot;1&quot; height=&quot;1&quot; border=&quot;0&quot; alt=&quot;&quot; style=&quot;border:none !important; margin:0px !important;&quot; /&gt;.
+My
+&lt;a href=&quot;http://www.dwheeler.com/secure-class/&quot;&gt;class materials for
+secure software design and programming, #9 (analysis tools)&lt;/a&gt;,
+also cover fuzzing (and are freely available).
+&lt;a href=&quot;https://fuzzing-project.org/&quot;&gt;The Fuzzing Project&lt;/a&gt;
+led by Hanno is an effort to encourate the use of fuzzing to
+improving the state of free software security, and includes some tutorials
+on how to do it.
+The paper
+&lt;a href=&quot;http://research.google.com/pubs/pub37752.html&quot;&gt;AddressSanitizer: A Fast Address Sanity Checker&lt;/a&gt;
+is an excellent explanation of how ASan works.
+My essay
+&lt;a href=&quot;/essays/heartbleed.html&quot;&gt;How to Prevent the next Heartbleed&lt;/a&gt;
+discusses many different approaches that would, or would not,
+have detected Heartbleed.
+&lt;/p&gt;
+&lt;p&gt;
+I do not think that fuzzers (or any dynamic technique) completely
+replace static analysis approaches such as source code weakness analyzers.
+Various tools, including dynamic tools like fuzzers and static tools
+like source code weakness analyzers,
+are valuable complements for finding vulnerabilities
+before the attackers do.
+&lt;/p&gt;
+</description>
+   </item>
+  </channel>
+</rss>

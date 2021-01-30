@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Sat, 09 Feb 2019</h1>
+<p><a name="railroader"><font size="+2"><b>Railroader: Security static analysis tool for Ruby on Rails (Brakeman fork)</b></font></a></p><p></p>
+<p>
+I&#8217;ve kicked off the <a href="https://railroader.org/">Railroader</a>
+project to maintain a security static analysis tool for
+<a href="https://rubyonrails.org/">Ruby on Rails</a>
+that is
+<a href="https://opensource.org/osd-annotated"
+>open source software</a>.
+If you are developing with Ruby on Rails, please consider using
+<a href="https://railroader.org/">Railroader</a>.
+We would also really love contributions, so please contribute!
+</p>
+
+<p>
+A security static analysis tool (analyzer) examines software
+to help you identify vulnerabilities (without running the possibly-vulnerable
+program).
+This helps you find and fix vulnerabilities <i>before</i> you field
+your web application.
+Ruby on Rails is a popular framework for developing web applications;
+<a href="https://www.netguru.com/blog/top-10-sites-built-with-ruby-on-rails"
+>sites that use Rails include
+GitHub, Airbnb, Bloomberg, Soundcloud, Groupon, Indiegogo,
+Kickstarter, Scribd, MyFitnessPal, Shopify, Urban Dictionary, Twitch.tv</a>,
+<a href="https://about.gitlab.com/2018/10/29/why-we-use-rails-to-build-gitlab/"
+>GitLab</a>,
+and the
+<a href="https://github.com/coreinfrastructure/best-practices-badge"
+>Core Infrastructure Initiative (CII) Best Practices Badge</a>.
+</p>
+
+<p>
+In the past the obvious tool for this purpose was
+<a href="https://brakemanscanner.org/"
+>Brakeman</a>.
+However,
+<a href="https://brakemanscanner.org/blog/2018/06/28/brakeman-has-been-acquired-by-synopsys/index.html"
+>Brakeman has switched to the
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 Public License
+(CC-BY-NC-SA-4.0)</a>.
+This is not an
+<a href="https://opensource.org/osd-annotated"
+>open source software license</a>
+since it cannot be used commercially
+(an OSS license cannot discriminate against a field of endeavor).
+Similarly, it is not a
+<a href="https://www.gnu.org/philosophy/free-sw.en.html">free software
+license</a> (since you cannot run the program as you wish / for any purpose).
+You can verify this by looking at the <a
+href="https://brakemanscanner.org/blog/2019/01/17/brakeman-4-dot-4-dot-0-released"
+>Brakeman 4.4.0 release announcement</a>, the
+<a href="https://spdx.org/licenses/">SPDX license list</a>,
+<a href="https://wiki.debian.org/DFSGLicenses#Creative_Commons_Attribution-Non_Commercial-Share_Alike_.28CC-by-nc-sa.29"
+>Debian&#8217;s &#8220;The Debian Free Software Guidelines (DFSG)
+and Software Licenses&#8221;</a>,
+<a href="https://www.gnu.org/licenses/license-list#CC-BY-NC"
+>Various Licenses and Comments about Them (Free Software Foundation)</a>,
+and
+<a href="https://fedoraproject.org/wiki/Licensing:Main#Bad_Licenses_3"
+>Fedora&#8217;s Licensing:Main (Bad Licenses list)</a>.
+Railroader conitinues using the original licenses:
+MIT for code and CC-BY-3.0 for the website.
+MIT, of course, is a very well-known and widely-used
+open source software license.
+</p>
+
+<p>
+If you are currently using Brakeman,
+<b>do not update to Brakeman version 4.4.0 or later</b> until you
+<b>first talk with your lawyer</b>.
+At the very least, if you plan to use newer versions of Brakeman,
+check their new license <i>carefully</i> to make sure that there
+is no possibility of a legal issue.
+This license change was part of a purchase of Brakeman by Synopsys.
+Synopsys is a big company, and they definitely
+have the resources to sue people who don&#8217;t obey their legal terms.
+Even if they didn&#8217;t, it is not okay to use software
+when you don&#8217;t have the right to do so.
+Either make sure that you have no legal issues&#8230; or just switch
+to Railroader, where nothing has changed.
+</p>
+
+<p>
+Unfortunately,
+it is really easy to &#8220;just upgrade to the latest release&#8221;
+of Brakeman
+without realizing that this is a <i>major</i> license change.
+I suspect a lot of people will just automatically download and run
+the latest version, and have no idea that this is happening.
+I only noticed because I routinely use software license checkers
+(<tt>license_finder</tt> in my case) so that I immediately notice
+license changes in a newer version.
+I strongly recommend adding static source code analyzers <i>and</i>
+license checkers as part of your continuous integration (CI).
+</p>
+
+<p>
+We assume that &#8220;Brakeman&#8221; is now a trademarked by Synopsys, Inc,
+so we&#8217;ve tried to rename everything so that the projects
+are clearly distinct. If we&#8217;ve missed something,
+please let us know and we&#8217;ll fix it. The term &#8220;Railroader&#8221; is a
+play on the word Rails, but it is obviously a completely different word.
+Railroader shares a common code base historically with Brakeman,
+and that&#8217;s important to explain, but they are not the same projects and
+we are expressly trying to not infringe on any Brakeman trademark.
+It&#8217;s obviously legal to copy and modify materials licensed under the
+MIT and CC-BY-3.0 licenses
+(that&#8217;s the purpose of these licenses), so we believe there is no
+legal problem.
+</p>
+
+<p>
+I think I have a reasonable background for starting this project.
+I created and maintain <a href="https://dwheeler.com/flawfinder"
+>flawfinder</a>, a security static analysis tool for C/C++,
+since 2001.
+I literally wrote the book on developing secure software; see my book
+<a href="https://dwheeler.com/secure-programs/"
+><i>Secure Programming HOWTO</i></a>.
+I even <a href="https://dwheeler.com/secure-class/"
+>teach a graduate class at George Mason Univerity (GMU) on
+how to develop secure software</a>.
+For an example of how I approach securing software
+in an affordable way, see my video
+<a href="https://www.youtube.com/watch?v=5a5D4d6hcEY"
+><i>How to Develop Secure Applications: The BadgeApp Example</i></a>
+(2017-09-18) or the related document
+<a href="https://github.com/coreinfrastructure/best-practices-badge/blob/master/doc/security.md"
+>BadgeApp Security: Its Assurance Case</a>.
+I have also long analyzed software licenses, e.g., see
+<a href="https://dwheeler.com/essays/floss-license-slide.html"
+>The Free-Libre / Open Source Software (FLOSS) License Slide</a>,
+<a href="https://dwheeler.com/essays/commercial-floss.html"
+>Free-Libre / Open Source Software (FLOSS) is Commercial Software</a>, and
+<a href="https://www.csiac.org/journal-article/publicly-releasing-open-source-software-developed-for-the-u-s-government/"
+>Publicly Releasing Open Source Software Developed for the U.S. Government</a>.
+</p>
+
+<p>
+While Railroader is a project fork, we hope that this is not a hosttile fork.
+We will not accept software licensed only under CC-BY-NC-SA-4.0, since
+that is not an OSS license. But we&#8217;ll gladly accept good contributions
+from anyone if they are released under the original OSS licenses
+(MIT for software, CC-BY-3.0 for website content).
+If the Brakeman project wants to cooperate in some way, we&#8217;d love to
+talk! We are all united in our desire to squash out vulnerabilities
+before they are deployed. In addition, we&#8217;re grateful for all the work
+that the Brakeman community has done.
+</p>
+
+<p>
+So, again:
+If you are developing with Ruby on Rails, please consider using
+<a href="https://railroader.org/">Railroader</a>.
+We would also really love contributions, so please contribute!
+</p>
+<p>path: <a href="https://www.dwheeler.com/blog/oss">/oss</a> | <a href="https://www.dwheeler.com/blog">Current Weblog</a> | <a href="https://www.dwheeler.com/blog/2019/02/09#railroader">permanent link to this entry</a></p>
+</body></html>

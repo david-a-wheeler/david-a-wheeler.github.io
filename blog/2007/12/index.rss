@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<!-- name="generator" content="blosxom/2.0" -->
+
+<rss version="2.0">
+  <channel>
+    <title>David A. Wheeler's Blog   </title>
+    <link>http://www.dwheeler.com/blog</link>
+    <description>David A. Wheeler's weblog.</description>
+    <language>en</language>
+
+  <item>
+    <title>Readable s-expressions (sweet-expressions) draft 0.2 for Lisp-like languages</title>
+    <link>http://www.dwheeler.com/blog/2007/12/06#readable-sweet-lisp3</link>
+    <pubDate>Thu, 06 Dec 2007 22:39 GMT</pubDate>
+    <!-- date: 2007-12-06 -->
+    <description>
+&lt;p&gt;
+&lt;a href=&quot;http://www.dwheeler.com/blog/2006/06/17/#readable-sweet-lisp&quot;&gt;
+Back in 2006 I posted my basic ideas about &amp;#8220;sweet-expressions&amp;#8221;&lt;/a&gt;.
+Lisp-based programming languages
+normally represent programs as &lt;i&gt;s-expressions&lt;/i&gt;, and though they are
+regular, most people find them hard to read.
+I hope to create an alternative to s-expressions that have their
+advantages, and not their disadvantages.
+You can see more at my
+&lt;a href=&quot;http://www.dwheeler.com/readable&quot;&gt;readable Lisp&lt;/a&gt; page.
+I&amp;#8217;ve gotten lots of feedback, based on both my prototype of the idea,
+as well as on the mailing list discussing it.
+&lt;/p&gt;
+
+&lt;p&gt;
+I&amp;#8217;ve just posted a
+&lt;a href=&quot;http://www.dwheeler.com/readable/version02.html&quot;&gt;a draft of
+version 0.2 of sweet-expressions&lt;/a&gt;.
+This takes that feedback into account, in particular, it&amp;#8217;s now
+&lt;i&gt;much&lt;/i&gt; more backwards-compatible.
+There&amp;#8217;s still a big question about whether or not infix should be a default;
+see the page for more details.
+&lt;/p&gt;
+
+&lt;p&gt;
+Here are the improvements over version 0.1:
+&lt;ol&gt;
+&lt;li&gt;This version is &lt;i&gt;much&lt;/i&gt; more compatible with existing Lisp code.
+The big change is that
+an unprefixed &amp;#8220;(&amp;#8221; immediately calls the underlying s-expression reader.
+This way, people can quietly replace their readers with a sweet-reader,
+without harming most existing code.
+In fact, many implementations could quietly switch to a sweet-reader and
+users might not notice until they use the new features.
+Instead of using (&amp;#8230;), this uses {..} and [&amp;#8230;] for grouping expressions
+without disabling sweet-expressions.
+&lt;/li&gt;
+&lt;li&gt;It can work more cleanly with
+macros that provide infix precedence (for those who want precedence rules).
+&lt;/li&gt;
+&lt;li&gt;It extends version 0.1&amp;#8217;s &amp;#8220;name-prefixing&amp;#8221; into &amp;#8220;term-prefixing&amp;#8221;.
+This is not only more general, it also makes certain kinds of functional
+programming much more pleasant.
+&lt;/li&gt;
+&lt;li&gt;It adds syntax for the common case of accessing maps
+(such as indexed or associative arrays) - now a[j] is translated into
+(bracketaccess a j).
+&lt;/li&gt;
+&lt;li&gt;Infix default supports arbitrarily-spelled infix operators, and it
+automatically accepts &amp;#8220;and&amp;#8221; and &amp;#8220;or&amp;#8221;.
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+Here&amp;#8217;s an example of (ugly) s-expressions:
+&lt;pre&gt;
+ (defun factorial (n)
+   (if (&amp;lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+&lt;/pre&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+Here&amp;#8217;s sweet-expressions version 0.1:
+&lt;pre&gt;
+ defun factorial (n)
+   if (n &amp;lt;= 1)
+       1
+       n * factorial(n - 1)
+&lt;/pre&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+Here is sweet-expressions version 0.2 (draft), with infix default
+(it figures out when you have an infix operation from the spelling of the
+operation):
+&lt;pre&gt;
+ defun factorial (n)
+   if {n &amp;lt;= 1}
+       1
+       n * factorial(n - 1)
+&lt;/pre&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+Here is sweet-expressions version 0.2 (draft), with infix non-default
+(you &lt;i&gt;must&lt;/i&gt; surround every infix operator with {&amp;#8230;}):
+&lt;pre&gt;
+ defun factorial (n)
+   if {n &amp;lt;= 1}
+       1
+       {n * factorial{n - 1}}
+&lt;/pre&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+I&amp;#8217;m still taking comments.
+If you&amp;#8217;re interested, take a look at
+&lt;a href=&quot;http://www.dwheeler.com/readable&quot;&gt;http://www.dwheeler.com/readable&lt;/a&gt;.
+And if you&amp;#8217;re really interested, please
+&lt;a href=&quot;https://lists.sourceforge.net/lists/listinfo/readable-discuss&quot;&gt;
+join the readable-discuss mailing list&lt;/a&gt;.
+&lt;/p&gt;
+</description>
+   </item>
+  </channel>
+</rss>

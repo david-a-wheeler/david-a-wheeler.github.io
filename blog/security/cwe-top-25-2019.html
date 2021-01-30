@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.dwheeler.com/blog/index.rss"></link>
+<title>David A. Wheeler's Blog   </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+</head>
+<body>
+<h1 style="margin-left: auto; margin-right: auto; width: 50%;">David A. Wheeler's Blog</h1><p>  </p><p></p><h1>Tue, 17 Sep 2019</h1>
+<p><a name="cwe-top-25-2019"><font size="+2"><b>CWE Top 25 for 2019</b></font></a></p><p></p>
+<p>
+In case you weren’t aware of it,
+there is now a
+<a href="https://cwe.mitre.org/top25/archive/2019/2019_cwe_top25.html"
+>2019 version of the CWE Top 25 list</a>.
+This list attempts to rank what are the most important kinds
+of software vulnerabilities
+(what they call &#8220;weaknesses&#8221;).
+</p>
+
+<p>
+Their new approach is to directly use
+the National Vulnerability Database (NVD) to score
+various kinds of vulnerabilities.
+There are a number of limitations with this approach,
+and they discuss many of them in the cited page.
+</p>
+
+<p>
+Their approach does have some oddnesses, for example,
+their #1 worst problem
+(CWE-119, Improper restriction of operations within the bounds of
+a memory buffer) is itself the parent of items #5 (CWE-125, out-of-bounds read)
+and #12 (CWE-787, out-of-bounds write).
+</p>
+
+<p>
+Another oddity: they rank Cross-Site Request Forgery (CSRF) quite high (#9).
+CSRF doesn&#8217;t even appear in the
+<a href="https://www.owasp.org/index.php/Category:OWASP_Top_Ten_Project"
+>2017 (latest) OWASP Top 10 list</a>, even though the
+OWASP top 10 list focuses on websites (where CSRF can occur).
+I think this happens because the CWE folks are
+using a large dataset from 2017-2018, where there are still a large
+number of CSRF vulnerabilities.
+But the impact of those remaining vulnerabilities has been going down,
+due to changes to frameworks, standards, and web browsers.
+Most sites use a pre-existing frameworks, and frameworks have been
+increasingly adding on-by-default CSRF countermeasures.
+The &#8220;SameSite&#8221; cookie attribute that provides an easy countermeasure
+against CSRF was implemented in most browsers around 2016-2018
+(depending on the browser),
+but having it take effect required that websites make changes,
+and during that 2017-2018 timeframe websites
+were only starting to deploy those changes.
+As of late 2019 several browsers are in the
+process of switching their SameSite defaults so that they
+counter CSRF by default, <i>without</i> requiring sites to do anything.
+(In particular, see the announcement for
+<a href="https://www.chromestatus.com/feature/5088147346030592"
+>Chrome</a>
+and the change log for
+<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1551798"
+>Mozilla Firefox</a>.)
+These changes to the SameSite defaults
+implement the security improvements proposed in
+<a href="https://tools.ietf.org/html/draft-west-cookie-incrementalism-00"
+>Incrementally Better Cookies</a> by M. West in May 2019.
+This change in the security default could not have been realistically done
+before 2019 because of a
+<a href="https://bugs.webkit.org/show_bug.cgi?id=198181">bug
+in the Apple Safari browser that was only fixed in 2019</a>.
+As more browsers self-protect against CSRF by default,
+without requiring sites or developers to do anything,
+CSRF vulnerabilities will become dramatically less likely.
+This once again shows the power of defaults;
+systems should be designed to be secure by default whenever possible,
+because normally people simply accept the defaults.
+</p>
+
+<p>
+That said, having a top 25 list based on quantitative analysis is probably
+for the best long-term, and the results appear to be (mostly)
+very reasonable.
+I&#8217;m glad to see it!
+</p>
+<p>path: <a href="https://www.dwheeler.com/blog/security">/security</a> | <a href="https://www.dwheeler.com/blog">Current Weblog</a> | <a href="https://www.dwheeler.com/blog/2019/09/17#cwe-top-25-2019">permanent link to this entry</a></p>
+</body></html>
