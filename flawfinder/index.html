@@ -1,0 +1,1109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Flawfinder Home Page</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="David A. Wheeler's Page for Flawfinder">
+<meta name="keywords" content="security, flawfinder, ITS4, vulnerabilities, vulnerability, source code, scan, scanner, hit, C, C++, Python, David, Wheeler, David A. Wheeler">
+
+</head>
+<body bgcolor="#FFFFFF">
+<center><h1><font color="#339900">Flawfinder</font></h1></center>
+<p>
+This is the main web site for <i>flawfinder</i>, a simple program that examines
+C/C++ source code and reports possible security weaknesses (&#8220;flaws&#8221;)
+sorted by risk level.
+It&#8217;s very useful for quickly finding and removing at least some
+potential security problems <i>before</i> a program is widely released
+to the public.
+It is free for anyone to use and is available as
+<a href="#license">open source software (OSS)</a>.
+See <a href="#how_work">&#8220;how does Flawfinder work?&#8221;</a>,
+below, for more information on how it works.
+Others have had success with flawfinder; see
+<a href="#testimonials">testimonials</a> and
+<a href="#reviews">reviews/papers</a> for more.
+You can skip ahead to
+<a href="#documentation">documentation</a> if you want more detail.
+<p>
+Flawfinder is specifically designed to be easy to install and use.
+You can install Python and use pip as follows:
+<pre>
+    pip install flawfinder
+</pre>
+After installing it, at a command line just type:
+<pre>
+    flawfinder <i>directory_with_source_code</i>
+</pre>
+<p>
+You can also use a
+<a href="#prepackaged">pre-packaged version of flawfinder</a>
+(it's widely available), or
+<a href="#downloading">download and install it yourself</a>.
+Flawfinder works on Unix-like systems (it&#8217;s been tested on GNU/Linux),
+and on Windows by using Cygwin.
+It requires Python 2.7 or Python 3 to run.
+<p>
+Please take a look at
+<a href="#othertools">other static analysis tools for security</a>, too.
+One reason I wrote flawfinder was to encourage using static analysis tools
+to find security vulnerabilities.
+<b>No</b> one tool solves all problems, but tools can be a very useful aid
+in developing secure software.
+It's generally better to use many tools, and the <i>worst</i> situation
+is to use <i>no</i> tools.
+<p>
+Below you can see
+<a href="#badges">badges</a>,
+<a href="#sample_output">sample output</a>,
+<a href="#license">license</a>,
+<a href="#testimonials">testimonials</a>,
+<a href="#documentation">documentation</a>,
+<a href="#prepackaged">using a pre-packaged version of flawfinder</a>,
+<a href="#downloading">downloading and installing</a>,
+<a href="#joining">joining the flawfinder community</a>,
+<a href="#speed">speed</a>,
+<a href="#how_work">how does Flawfinder Work?</a>,
+<a href="#reviewing_patches">reviewing patches</a>,
+<a href="#fool-with-tool">a fool with a tool is still a fool</a>,
+<a href="#hit_density">hit density (hits/KSLOC)</a>,
+<a href="#rats">flawfinder and RATS</a>,
+<a href="#reviews">reviews/papers</a>,
+and
+<a href="#othertools">other static analysis tools for security</a>.
+
+<p>
+<h1 id="badges">Badges</h1>
+<p>
+<a href="http://cwe.mitre.org"><img width="100" height="54" src="cwe-compatible.jpg"></a>
+<a href="https://bestpractices.coreinfrastructure.org/projects/323"><img src="https://bestpractices.coreinfrastructure.org/projects/323/badge"></a>
+<p>
+Flawfinder is officially
+<a href="http://cwe.mitre.org/">Common Weakness Enumeration (CWE)-compatible</a>
+and has
+earned the
+<a href="https://bestpractices.coreinfrastructure.org/projects/323">CII
+Best Practices "passing" badge</a>.
+
+<p>
+<h1 id="sample_output">Sample Output</h1>
+<p>
+If you&#8217;re curious what the results look like,
+here are some sample outputs:
+<ol>
+<!-- I created these for Paolo D.:
+<li>
+<a href="flawfinder.png">A screenshot asking for a simple text report,
+examining all code in a directory (recursively) and reporting only
+the riskiest potential vulnerabilities</a>.
+<li>
+<a href="flawfinder2.png">A screenshot of the command to generate
+HTML (web) output for all code in a directory, recursively.</a>
+Notice how simple this command is.
+<li>
+<a href="flawfinder3.png">A screenshot of the generated HTML output,
+as displayed by the Mozilla web browser</a>.
+The HTML display is "prettier".
+Note that you can use any web browser to display or print the HTML results.
+-->
+<li>
+<a href="correct-results.txt">The actual text output (when allowing all potential vulnerabilities to be displayed)</a>
+<li>
+<a href="correct-results.html">The actual HTML output, with context information</a>.
+This output uses the &#8220;--context&#8221; option; the text of the risky line
+is included in the output, which some people find useful.
+Note that you can use your own web browser to display the results!
+<li>
+<a href="correct-results.csv">Comma-separated Value (CSV) output</a>
+(useful when integrating with other tools).
+</ol>
+All of these results came from analyzing
+<a href="test.c">this test C program</a>.
+
+<!--
+<p>
+The test code intentionally includes a large number of security
+problems, both to test flawfinder and show what it can find;
+hopefully the code you&#8217;re analyzing won&#8217;t have quite so many
+high-risk vulnerabilities!
+-->
+
+
+<p>
+<h1 id="license">License</h1>
+<p>
+Flawfinder is released under the General Public License (GPL) version 2
+or later,
+and thus is open source software
+(as <a href="http://www.opensource.org/docs/definition_plain.html">defined
+by the Open Source
+Definition</a>) and Free Software (as
+<a href="http://www.gnu.org/philosophy/free-sw.html">defined by the
+Free Software Foundation&#8217;s GNU project</a>).
+Its SPDX license expression is "GPL-2.0+".
+Feel free to see
+<a href="http://www.dwheeler.com/oss_fs_refs.html">
+Open Source Software / Free Software (OSS/FS) References</a>
+or
+<a href="http://www.dwheeler.com/oss_fs_why.html">Why OSS/FS? Look at
+the Numbers!</a> for more information about OSS/FS.
+You can use it to analyze any software; it does not need to be
+free / libre / open source software (FLOSS).
+
+<h1 id="testimonials">Testimonials</h1>
+<p>
+Others have found it useful.
+Here are few testimonials that it&#8217;s received over time:
+<ol>
+<li>
+"Flawfinder is an exceptional source-scanning tool that programmers can depend
+on to find the most common security problems with C programs. It is fast, and
+the reporting features are detailed and user-friendly. Installing and using
+Flawfinder was also relatively simple...
+Flawfinder would be recommended as the first of many stages in reviewing
+simple to complex applications." -
+<a href="https://www.sans.org/reading-room/whitepapers/securecode/secure-software-development-code-analysis-tools-389"><i>Secure Software Development and Code Analysis Tools</i>,
+Thien La, SANS Institute</a>
+<!-- September 30th, 2002 -->
+<li>
+I just sent tons of C/C++ source
+through flawfinder 1.0.
+Thanks for the tool, it found several places that I have now fixed.
+- Joerg Beyer
+<li>
+Thank you for flawfinder! It has helped me in many ways over the
+last year, for which I am truly [grateful]!
+- Elfyn McBratney
+<!-- beu, at gnu.org  -->
+<li>
+The other day I was about to clean some old code. After receiving 17K
+lines of mixed C/C++ I realized that running some kind of
+source code analyser would be a good idea.
+I downloaded a whole bunch&#8217;of&#8217;em (tm), but the <i>only</i> tool that
+just plain worked on the first run was Flawfinder. 
+Easy to use, no hazzles with strange parameters or configfiles!
+Instead of learning new software I could concentrate on what I wanted,
+namely to get down&#8217;n&#8217;dirty with the code. Thanks!
+- Jon Bj&#246;rkeb&#228;ck, developer, Sweden
+<li>
+<a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=250432">
+flawfinder is a good tool for finding potential security issues</a>, and I&#8217;ve been happily using it for a few months now.
+- Steve Kemp, Debian Security Audit Project, 2004-05-22
+<li>
+I would like to thank you for this awesome piece of software. We are using
+it in our project Scribus (scribus.net) for a few days. It&#8217;s very helpful
+for us.  cheers! - Petr Vanek, developer, 2005-12-10
+<li>
+thanx for this great tool. It&#8217;s working da*n good. I&#8217;m
+using it against wireshark [previously named ethereal] and it
+is really useful to track potential misuse of C functions. -
+Sebastien Tandel, developer, 2007-01-10 <!-- sebastien at tandel dot be -->
+<li>
+&#8220;Hurra FlawFinder !
+FlawFinder is the greatest software of the World.
+We are fans ! With FlawFinder we never have buffer overflow...
+With FlawFinder we always find FlawFlaw to make 300 000 getinfos in 300
+seconds !
+FlawFinder is the Kikipédia of the day.&#8221;
+- Christophe JUILLET, 2008-10-08
+<!-- christophe.juillet, at, edfgdf.fr -->
+<li>&#8220;flawfinder is fast and stable&#8221; - cameronhansen (2012-10-28)
+<li>&#8220;works great&#8221; - nicolascook (2013-02-14)
+<li>&#8220;Great tool&#8221; - jonahbishop (2013-01-20)
+<li>
+I just installed the 0.21 version of Flawfinder.
+I tried a few different code checking tools and it&#8217;s by
+far the friendliest to use.  - Darryl Luff
+</ol>
+
+
+<h1 id="documentation">Documentation</h1>
+<p>
+Flawfinder comes with a simple manual describing how to use it.
+If you&#8217;re not sure you want to take the plunge to
+install the program, you can just look at
+the documentation first, which discusses how to use it and
+how it supports the CWE.
+The documentation is available in the following formats:
+<ul>
+<li>
+<a href="flawfinder.pdf">PDF</a>
+<li>
+<a href="flawfinder.ps">Postscript</a>
+</ul>
+
+<p>
+<h1 id="prepackaged">Using a pre-packaged version of flawfinder</h1>
+<p>
+Many Unix-like systems have a package already available to them,
+including Fedora, Debian, and Ubuntu.
+Debian and Ubuntu users can install flawfinder using
+<tt>apt-get install flawfinder</tt> (as usual);
+Fedora users can use <tt>yum install flawfinder</tt>.
+Cygwin also includes flawfinder.
+It&#8217;s also available in many other distributions.
+Flawfinder is available via FreeBSD&#8217;s Ports system
+(see
+<a href="http://www.freebsd.org/cgi/ports.cgi?query=flawfinder&amp;stype=name">
+this FreeBSD ports query for flawfinder</a>
+and 
+<a href="http://www.freebsd.org/cgi/cvsweb.cgi/ports/security/flawfinder/">
+flawfinder info for security-related ports</a>).
+<a href="http://www.openbsd.org/cgi-bin/cvsweb/ports/devel/flawfinder/">
+OpenBSD includes flawfinder in its &#8220;ports&#8221;</a>.
+NetBSD users can simply use NetBSD&#8217;s pkgsrc to install flawfinder
+(my thanks to Thomas Klausner for doing the 
+flawfinder NetBSD packaging).
+The <a href="http://fink.sourceforge.net">Fink</a> project,
+which packages FLOSS for Darwin and Mac OS X, has a
+<a href="http://fink.sourceforge.net/pdb/package.php/flawfinder">Fink
+flawfinder package</a>, so users of those systems may find that an easy way to
+get flawfinder.
+
+<p>
+<h1 id="downloading">Downloading and Installing</h1>
+<p>
+If there&#8217;s no package available to you, or it&#8217;s old,
+you can download and install flawfinder directly.
+The current version of flawfinder is 2.0.15.
+If you want to see how it&#8217;s changed, view its
+<a href="ChangeLog">ChangeLog</a>.
+You can even go look at the 
+<a href="flawfinder">flawfinder source code</a> directly.
+We assume you have a Unix-like system such as a Linux-based system.
+If you use Windows, the recommended way is to
+install Cygwin first, and install it on top of Cygwin.
+However, it has been reported to work on Windows directly.
+<p>
+First, download it.
+You can get the
+<a href="flawfinder-2.0.15.tar.gz">current released version flawfinder in .tar.gz (tarball) format)</a> here.
+You can also get flawfinder by
+<a href="https://sourceforge.net/projects/flawfinder/">visiting the
+SourceForge flawfinder project page</a>, in particular its
+<a href="https://sourceforge.net/projects/flawfinder/files/">Files section</a>.
+You <i>definitely</i> need to go to the SourceForge project
+site if you want to get on the mailing list,
+submit a bug report or feature request, or see/get the latest drafts.
+
+<p>
+On Unix-like systems, you install it in the usual manner.
+First, uncompress the file and become root to install:
+<pre>
+  tar xvzf flawfinder-*.tar.gz
+  cd flawfinder-*
+</pre>
+Then install.  Typically you would do this (omit "sudo" if you are root):
+<pre>
+  sudo make prefix=/usr install
+</pre>
+You can override these defaults using standard GNU conventions.
+If you omit the "prefix=/usr" statement, it will store in the default
+directory /usr/local.  You can set bindir and mandir to set their
+specific locations.
+Cygwin systems (for Microsoft Windows) need to set
+&#8220;PYTHONEXT=.py&#8221; in the make command, like this:
+<pre>
+  sudo make PYTHONEXT=.py install
+</pre>
+<p>
+<a href="INSTALL.txt">See the installation instructions for more information</a>.
+
+<p>
+Roy Ben Yosef reports that the
+the simplest way to run Flawfinder under windows is using Python directly.
+Install Python 2 (version 2.7).
+and run the flawfinder script (on the command line).
+For example:<br>
+<tt>C:\Python27\Python.exe flawfinder –H --savehitlist=ReportFolder\hitReport.hit C:\MySourcesFolder</tt>
+<br>
+In the above example you can Inspect the results (hit file and html report) in the ReportFolder.
+
+<p>
+<h1 id="joining">Joining the flawfinder community</h1>
+<p>
+<a href="http://sourceforge.net/projects/flawfinder/">Flawfinder is now
+hosted on SourceForge</a>.
+You can discuss how to use or improve the tool on its
+mailing list, and you can see the latest drafts on the Subversion
+version control system.
+<p>
+If you have a general question or issue, use the mailing list.
+If you have a specific bug, especially if you have a patch, use git
+or the issue tracker.
+
+<h1 id="speed">Speed</h1>
+Flawfinder is written in
+Python, to simplify the task of writing and extending it.
+Python code is not as fast as C code, but for the task I believe it&#8217;s
+just fine.
+Flawfinder version 1.31 averaged an analysis speed of 45,126 lines/second
+when it examined the Linux kernel version 3.16 (released 2014-08-03)
+on a Intel Core2 Duo CPU E8400 @ 3.00GHz
+(each CPU running at 2GHz) running Fedora Linux version 20.
+That is because it examined 17,135,214 lines in 36,859 files
+in approximately 379.72 seconds (less than 6.5 minutes).
+The physical Source Lines of Code (SLOC) was lower: 12,237,248.
+The Linux kernel is not the best test case for this tool, since
+flawfinder is designed for examining application code (not kernels),
+but it is a great test for showing that flawfinder can examine larger programs
+in a relatively short time.
+In another test,
+Flawfinder 1.28 averaged 24,475 lines/second on a 2.8GHz laptop and Cygwin;
+Cygwin on Windows tends to be much slower than Linux, but
+even on Cygwin flawfinder has a reasonable speed.
+Flawfinder 1.20 and later normally report their speed
+(in analyzed lines/second) if you&#8217;re curious.
+The speed reported begins when the program starts running, not including
+the fixed Python start-up time.
+<!-- Older data:
+Lines analyzed = 3018 in 0.62 seconds (24475 lines/second)
+
+Flawfinder version 0.12 on a 400Mhz Pentium II system
+analyzed 51055 lines in 39.7 seconds, resulting in an average of
+1285 analyzed lines/second.
+
+Running stock Linux 2.2.16-22 (Red Hat 7) (794.62 bogomips).
+Running flawfinder across a subset of Linux kernel code
+(51055 lines as determined by ``wc -l'') takes 39.7 seconds of real
+(wall clock) time.
+Using python 1.5.2-27.
+-->
+
+
+
+<h1 id="how_work">How does Flawfinder Work?</h1>
+<p>
+Flawfinder is <i>not</i> a sophisticated tool.
+It is an intentionally simple tool, but people have found it useful.
+<p>
+Flawfinder works by using a built-in database of C/C++
+functions with well-known problems, such as
+buffer overflow risks (e.g., strcpy(), strcat(), gets(), sprintf(),
+and the scanf() family),
+format string problems ([v][f]printf(), [v]snprintf(), and syslog()),
+race conditions (such as access(), chown(), chgrp(), chmod(),
+tmpfile(), tmpnam(), tempnam(), and mktemp()),
+potential shell metacharacter dangers
+(most of the exec() family, system(), popen()),
+and poor random number acquisition (such as random()).
+The good thing is that you don&#8217;t have to create this database -
+it comes with the tool.
+<p>
+Flawfinder then takes the source code text, and matches the source code
+text against those names, while ignoring
+text inside comments and strings (except for flawfinder directives).
+Flawfinder also knows about gettext (a common library for internationalized
+programs), and will treat constant strings
+passed through gettext as though they were constant strings; this reduces
+the number of false hits in internationalized programs.
+<p>
+Flawfinder produces a list of &#8220;hits&#8221; (potential security flaws),
+sorted by risk; by default the riskiest hits are shown first.
+This risk level depends not only on the function, but on the values of the
+parameters of the function.
+For example, constant strings are often less risky than fully variable
+strings in many contexts.
+In some cases, flawfinder may be able to determine that the
+construct isn&#8217;t risky at all, reducing false positives.
+<p>
+Flawfinder gives better information - and better prioritization -
+than simply running &#8220;grep&#8221; on the source code.
+After all, it knows to ignore comments and the insides of strings, and
+it will also examine parameters to estimate risk levels.
+Nevertheless, flawfinder is fundamentally a naive program; it
+doesn&#8217;t even know about the data types of function parameters,
+and it certainly doesn&#8217;t do control flow or data flow analysis
+(see the references below to other tools, like
+<a href="http://splint.org">SPLINT</a>, which do deeper analysis).
+I know how to do that, but doing that is far more work; sometimes
+all you need is a simple tool.
+Also, because it&#8217;s simple, it doesn&#8217;t get as confused by macro definitions
+and other oddities that more sophisticated tools have trouble with.
+Flawfinder can analyze software that you can't build; in some cases
+it can analyze files you can't even locally compile.
+<p>
+Not every hit is actually a security vulnerability, 
+and not every security vulnerability is necessarily found.
+<p>
+As noted above, flawfinder doesn&#8217;t really understand the semantics
+of the code at all - it primarily does simple text pattern matching
+(ignoring comments and strings).
+Again, it doesn't do data flow or control flow analysis at all.
+Nevertheless, flawfinder can be a very useful aid in finding and removing
+security vulnerabilities.
+<p>
+The documentation points out various security issues when using the tool.
+In general, you should analyze a <i>copy</i> of the source code
+you&#8217;re evaluating.
+Also, do <i>not</i> load or diff hitlists from untrusted sources.
+Hitlists are implemented using Python&#8217;s pickle facility,
+which is not intended for untrusted input.
+
+<h1 id="reviewing_patches">Reviewing patches</h1>
+<!-- This section first publicly Posted 2007-01-10. -->
+Sometimes you don&#8217;t want to review an <i>entire</i> program - you
+only want to review the set of <i>changes</i> that were made to a program.
+If the changes are well-localized (e.g., to a particular section of a file),
+this is trivial to do by hand, but it&#8217;s harder otherwise.
+Flawfinder 1.27 added automated support so that you can review only
+the changes in a program.
+<p>
+First, create a &#8220;unified diff&#8221; file comparing the
+older version to the current version
+(using git diff, GNU diff with the -u option, or Subversion&#8217;s diff).
+Then run flawfinder on the <i>newer</i>
+version, and give it the --patch (-P) option pointing to that unified diff.
+<p>
+This works because flawfinder will do its job, but it will
+only report hits that relate to lines that changed in the unified diff
+(the patch file).
+Flawfinder will read the unified diff file, which tells flawfinder
+what files changed and what lines in those files were changed.
+More specifically, it uses &#8220;Index:&#8221; or &#8220;+++&#8221; lines to determine the
+files that changed, it uses the line numbers in &#8220;@@&#8221; regions
+to get the chunk line number ranges, and it then uses the
+initial +, -, and space after that to determine which lines really changed.
+<p>
+One challenge is statements that span lines; a statement might start on
+one line, yet have a change that adds a vulnerability in a later line, and
+depending on how the vulnerability is reported it might get chopped off.
+Currently flawfinder handles this by showing vulnerabilities that
+are reported one line before or after any changed line - which seems
+to be a reasonable compromise.
+<p>
+Note that the problem with this approach is that it won&#8217;t notice if you
+<i>remove</i> code that <i>enforces</i> security requirements.
+Flawfinder doesn&#8217;t have that kind of knowledge anyway, so that&#8217;s not a big
+deal in this case.
+
+<h1 id="fool-with-tool">A Fool with a Tool is still a Fool</h1>
+Any static analysis tool, such as Flawfinder,
+is merely a tool.
+No tool can substitute for human thought!
+In short, &#8220;<i>a fool with a tool is still a fool</i>&#8221;.
+It&#8217;s a mistake to think that analysis tools (like flawfinder)
+are a substitute for security training and knowledge.
+Developers - please read documents like
+<a href="http://www.dwheeler.com/secure-programs">my Secure Programming book</a>
+so you&#8217;ll understand the vulnerabilities that the tool is trying to find!
+Organizations - please make sure your developers understand how to
+develop secure software (including learning about
+the common mistakes past developers have made),
+<i>before</i> having them develop software or use static analysis tools.
+
+<p>
+An example of horrific tool misuse is disabling
+vulnerability reports without (1) fixing the vulnerability, or
+(2) ensuring that it is <i>not</i> a vulnerability.
+It&#8217;s publicly known that RealNetworks did this with flawfinder;
+I suspect others have misused tools this way.
+I don&#8217;t mean to beat on RealNetworks particularly,
+but it&#8217;s important to apply lessons learned from others,
+and unlike many projects, the details of their
+vulnerable source code are publicly available
+(and I applaud them for that!).
+As noted in
+<a href="http://archive.cert.uni-stuttgart.de/vulnwatch/2005/03/msg00000.html">
+iDEFENSE Security Advisory 03.01.05 on RealNetworks RealPlayer</a>
+(CVE-2005-0455),
+a security vulnerability was in this pair of lines:
+<pre>
+   char tmp[256]; /* Flawfinder: ignore */
+   strcpy(tmp, pScreenSize); /* Flawfinder: ignore */
+</pre>
+<p>
+This means that flawfinder <i>did</i> find this vulnerability, but
+instead fixing it, someone added the &#8220;ignore&#8221; directive to the code
+so that flawfinder would stop reporting the vulnerability.
+But an &#8220;ignore&#8221; directive simply stops flawfinder from <i>reporting</i>
+the vulnerability - it doesn&#8217;t <i>fix</i> the vulnerability!
+The <i>intended use</i> of this directive is to add it once a reviewer
+determined that it was definitely a false positive, but in this case
+the tool was reporting a real vulnerability.
+The same thing happened again in
+<a href="http://labs.idefense.com/intelligence/vulnerabilities/display.php?id=250">iDefense Security Advisory 06.23.05</a>, aka
+CVE-2005-1766, where the vulnerable line was:
+<pre>
+   sprintf(pTmp,  /* Flawfinder: ignore */
+</pre>
+And a third vulnerability with the same issue was reported still later in
+<a href="http://www.securityfocus.com/archive/1/472295/30/0/threaded">
+iDefense Security Advisory 06.26.07,
+RealNetworks RealPlayer/HelixPlayer SMIL wallclock Stack Overflow
+Vulnerability</a>,
+aka CVE-2007-3410,
+where the vulnerable line was:
+<pre>
+   strncpy(buf, pos, len); /* Flawfinder: ignore */
+</pre>
+
+<p>
+This is <i>not</i> to say that RealNetworks is a fool or set of fools.
+Indeed, I believe many organizations,
+not just RealNetworks, have misused tools this way.
+My thanks to RealNetworks for publicly admitting their mistake -
+it allows others to learn from their mistake!
+My specific point is that you can&#8217;t just add comments with &#8220;ignore&#8221; directives
+and expect that the software is suddenly more secure.
+Do not add &#8220;ignore&#8221; directives until you are certain
+that the report is a false positive.
+More generally, developers need to understand what they're trying to do
+(learn the basics of developing secure software), and then tools can help
+them achieve their goals.
+
+<p>
+This kind of problem can easily happen in organizations that say
+&#8220;run scanning tools until there are no more warnings&#8221; but don&#8217;t
+later review the changes that were made to eliminate the warnings.
+If warnings are eliminated because code is changed to eliminate
+vulnerabilities, that&#8217;s great!
+General-purpose tools scanning like flawfinder will have false positive
+reports, though; it&#8217;s easy to create a tool without false positives, but
+they&#8217;ll do that by failing to report many possible vulnerabilities (some of
+which will really <i>be</i> vulnerabilities).
+The obvious answer if you want a broader tool
+is to allow developers to examine the code, and
+if they can truly justify that it&#8217;s a false positive, document <i>why</i>
+it is a false positive (say in a comment near the report) and then add
+a &#8220;Flawfinder: ignore&#8221; directive.
+But you need to really justify that the report is a false positive; just
+adding an &#8220;ignore&#8221; directive doesn&#8217;t fix anything!
+Sometimes it&#8217;s easier to fix a problem that may or may not be
+a vulnerability, instead of ensuring that
+it&#8217;s a false positive - the 
+<a href="http://www.openbsd.org/security.html#process">
+OpenBSD developers have been doing this
+successfully for years</a>, since if complicated code isn&#8217;t an exploitable
+vulnerability yet, a tiny change can often turn such fragile code
+into a vulnerability.
+
+<p>
+If you&#8217;re in an organization using a scanning tool like this, make sure
+you review every change caused by a vulnerability report.
+Every change should be either (1) truly fixed or (2)
+correctly and completely justified as a false positive.
+I think organizations should require any such justification to be in
+comments next to the &#8220;ignore&#8221; directive.
+If the justification isn&#8217;t complete, don&#8217;t mark it with an &#8220;ignore&#8221; directive.
+And before developers even start writing code, get them trained on
+how to write secure code and what the common mistakes are;
+this material is <i>not</i> typically covered in university classes or
+even on the job.
+
+<p>
+The &#8220;ignore&#8221; directives are a very useful mechanism - once you <i>have</i>
+done the analysis, having to re-do the analysis for no reason could
+use up so much time that it would
+prevent you from resolving <i>real</i> vulnerabilities.
+Indeed, many people wouldn&#8217;t use source scanning tools at all if they
+couldn&#8217;t insert &#8220;ignore&#8221; directives when they are done.
+The result would be code with vulnerabilities that 
+<i>would</i> be found by such tools.
+But any mechanism can be misused, and clearly this one has been.
+
+<p>
+Flawfinder does include a weapon against useless &#8220;ignore&#8221; directives - the --neverignore (-n) option.  This option is the &#8220;ignore the ignores&#8221;
+option - any &#8220;ignore&#8221; directives are ignored.
+But in the end, you still need to fix vulnerabilities or ensure
+that reported vulnerabilities aren&#8217;t really vulnerabilities at all.
+
+
+<!--
+
+    * To: <bugtraq@xxxxxxxxxxxxxxxxx>, <vulnwatch@xxxxxxxxxxxxx>
+    * Subject: [VulnWatch] iDEFENSE Security Advisory 03.01.05: RealNetworks RealPlayer .smil Buffer Overflow Vulnerability
+    * From: "Michael Sutton" <msutton@xxxxxxxxxxxx>
+    * Date: Tue, 1 Mar 2005 16:17:45 -0500
+    * Delivered-to: mailing list vulnwatch@xxxxxxxxxxxxx
+    * Delivered-to: moderator for vulnwatch@xxxxxxxxxxxxx
+    * List-help: <mailto:vulnwatch-help@vulnwatch.org>
+    * List-post: <mailto:vulnwatch@vulnwatch.org>
+    * List-subscribe: <mailto:vulnwatch-subscribe@vulnwatch.org>
+    * List-unsubscribe: <mailto:vulnwatch-unsubscribe@vulnwatch.org>
+    * Mailing-list: contact vulnwatch-help@xxxxxxxxxxxxx; run by ezmlm
+    * Thread-index: AcUepC7/ddyNxeWoSxyrREKnvrqJMw==
+    * Thread-topic: iDEFENSE Security Advisory 03.01.05: RealNetworks RealPlayer .smil Buffer Overflow Vulnerability
+
+RealNetworks RealPlayer .smil Buffer Overflow Vulnerability
+
+iDEFENSE Security Advisory 03.01.05
+www.idefense.com/application/poi/display?id=209&type=vulnerabilities
+March 1, 2005
+
+I. BACKGROUND
+
+RealPlayer is an application for playing various media formats,
+developed by RealNetworks Inc. For more information, visit
+http://www.real.com/.
+
+II. DESCRIPTION
+
+Remote exploitation of a stack-based buffer overflow vulnerability in
+the The Synchronized Multimedia Integration Language (smil) file format
+parser within various versions of RealNetworks Inc.'s RealPlayer could
+allow attackers to execute arbitrary code.
+
+The vulnerability specifically exists due to an unbounded string copying
+operation. The vulnerable code is shown below:
+
+datatype/smil/renderer/smil1/smlparse.cpp
+CSmil1Parser::testAttributeFailed(SMIL1Node* pNode)
+line 2878
+***
+     if(HXR_OK == rc)
+        {
+            UINT32 ulScreenHeight = 0;
+            UINT32 ulScreenWidth = 0;
+
+            const char* pScreenSize = (const char*)pBuf->GetBuffer();
+            // format is screen-height "X" screen-width
+            char tmp[256]; /* Flawfinder: ignore */
+            strcpy(tmp, pScreenSize); /* Flawfinder: ignore */
+***
+
+
+The pBuf object's datapointer (which is what GetBuffer uses internally)
+is pointing at the screen-size attribute in the user-supplied smil file.
+This allows a fixed stack buffer to be overwritten with user-supplied
+data. An attacker could use this stack overwrite to manipulate a saved
+return address or Structured Exception Handler, allowing for arbitrary
+code execution.
+
+In order to trigger this vulnerability, one would need an otherwise
+valid .smil file with the following line added in an appropriate
+section: <text src="1024_768.en.txt" region="size" system-screen-
+size="LONGSTRINGX768">
+
+Note that "LONGSTRING" should be more than 256 bytes in order to cause
+stack corruption.
+
+III. ANALYSIS
+
+Exploitation allows for arbitrary code execution as the user who opened
+the .smil file.
+
+Exploitation requires an attacker to craft a malicious .smil and
+convince a user to open it. An attacker could also force a web browser
+to refresh and automatically load the .smil file from a normal web page
+under the attacker's control. In default installations of RealPlayer
+under Windows, Internet Explorer will not prompt the user for an action
+when encountering a .smil file. It will open it without delay, thus
+allowing a more effective method of exploitation.
+
+IV. DETECTION
+
+iDEFENSE Labs has confirmed that Real Networks Inc.'s RealPlayer 10.5
+(6.0.12.1056) on Windows and RealPlayer 10 (10.0.1.436) on Linux are
+vulnerable.
+
+The vendor has reported that the following products are vulnerable on
+the following platforms:
+
+Windows:
+	RealPlayer 10.5 (6.0.12.1056 and below)
+	RealPlayer 10
+	RealOne Player V2
+	RealOne Player V1
+	RealPlayer 8
+	RealPlayer Enterprise
+
+Mac
+	RealPlayer 10 (10.0.0.325 and below)
+	RealOne Player
+
+Linux
+	RealPlayer 10
+	Helix Player
+
+V. WORKAROUND
+
+There are no known workarounds for this vulnerability. Although .smil
+files can be disassociated from RealPlayer, it is still possible to
+cause these files to load with RealPlayer using other methods. One such
+method is loading the file via one of the many ActiveX Controls that
+RealPlayer contains. Any effective workaround would prevent RealPlayer
+from functioning.
+
+VI. VENDOR RESPONSE
+
+A vendor advisory for this issue is available at:
+
+   http://service.real.com/help/faq/security/050224_player
+
+VII. CVE INFORMATION
+
+The Common Vulnerabilities and Exposures (CVE) project has assigned the
+names CAN-2005-0455 to these issues. This is a candidate for inclusion
+in the CVE list (http://cve.mitre.org), which standardizes names for
+security problems.
+
+VIII. DISCLOSURE TIMELINE
+
+01/14/2005  Initial vendor notification
+01/19/2005  Initial vendor response
+03/01/2005  Coordinated public disclosure
+
+IX. CREDIT
+
+The discoverer of this vulnerability wishes to remain anonymous.
+
+Get paid for vulnerability research
+http://www.idefense.com/poi/teams/vcp.jsp
+
+Free tools, research and upcoming events
+http://labs.idefense.com
+
+X. LEGAL NOTICES
+
+Copyright (c) 2005 iDEFENSE, Inc.
+
+Permission is granted for the redistribution of this alert
+electronically. It may not be edited in any way without the express
+written consent of iDEFENSE. If you wish to reprint the whole or any
+part of this alert in any other medium other than electronically, please
+email customerservice@xxxxxxxxxxxx for permission.
+
+Disclaimer: The information in the advisory is believed to be accurate
+at the time of publishing based on currently available information. Use
+of the information constitutes acceptance for use in an AS IS condition.
+There are no warranties with regard to this information. Neither the
+author nor the publisher accepts any liability for any direct, indirect,
+or consequential loss or damage arising from use of, or reliance on,
+this information.
+
+-->
+
+<p>
+Another problem is that if a tool tells you there&#8217;s a problem,
+<a href="http://www.links.org/?p=327">
+never fix a bug you don&#8217;t understand</a>.
+For example, the Debian folks ran a tool that found a purported problem
+in OpenSSL; it wasn&#8217;t really a problem, and their
+<a href="http://www.debian.org/security/2008/dsa-1571">
+fix actually <i>created</i> a security problem.</a>
+
+<p>
+More generally,
+I am <i>not</i> of the opinion that analysis tools are always 
+&#8220;better&#8221; than any other method for creating secure software.
+I don&#8217;t really believe in a silver 
+bullet, but if I had to pick one, &#8220;developer education&#8221; would be my 
+silver bullet, not analysis tools.  Again, a &#8220;fool with a tool is 
+still a fool&#8221;.  I believe that when you need secure software,
+you need to use a <i>set</i>
+of methods, including education, languages/tools where vulnerabilities are less
+likely, good designs (e.g., ones with limited privilege),
+human review, fuzz testing, and so on;
+a source scanning tool is just a part of it.
+<a href="http://www.darkreading.com/document.asp?doc_id=146053">Gary McGraw
+similarly notes that simply passing a scanning tool does not
+mean perfect security</a>, e.g., tools can&#8217;t normally find
+&#8220;didn&#8217;t ask for authorization when it should have&#8221;.
+
+<p>
+That said, I think tools that search source or binaries
+for vulnerabilities usually need to 
+be part of the answer if you&#8217;re trying to create
+secure software in today&#8217;s world.
+Customers/users are generally unwilling to reduce the amount of
+functionality they want to something we can easily prove correct,
+and formally proving 
+programs correct has not scaled well yet (though I commend the work to 
+overcome this).   No programming language can prevent all
+vulnerabilities from being written in the first place, even though selecting
+the right programming language can be helpful.
+Human review is <i>great</i>, but it&#8217;s costly in 
+many circumstances and it often misses things that tools can pick up. 
+Execution testing (like fuzz testing) only checks a miniscule part of
+the input space.
+So we often end up needing source or binary
+scanning tools as part of the process, even though 
+current tools have a HUGE list of problems.... because NOT using them is 
+often worse. Other methods may find the vulnerability, but other methods 
+typically don&#8217;t scale well.
+
+<p>
+Oh, a quick aside: “A fool with a tool is still a fool” is not a new
+phrase.
+I did a little research on its history; as best as I can determine,
+it is a quote attributed to Ron Weinstein, an eminent academic
+pathologist, in
+<a href="https://www.atsjournals.org/toc/arrd/139/5">The
+American Review of Respiratory Disease (1989)
+Vol. 139. p. 1280, "Perestroika, Fashion, and the Universal Glue" by
+William M. Thurlbeck</a>.
+
+<h1 id="hit_density">Hit Density (Hits/KSLOC)</h1>
+One of the metrics that flawfinder reports is hit density, that is,
+hits per thousand lines of source code.
+In some unpublished work, I and someone else found that hit density
+is a helpful relative indicator of the likelihood of security vulnerabilities
+in various products.
+We examined some open source software, such as Sendmail and Postfix,
+and determined the hit density of each; the ones with higher hit density
+tended to be the ones with the worse security record in the future.
+And that&#8217;s even if none or few of the reported hits were clearly
+security vulnerabilities.
+<p>
+When you think about it, that makes sense.
+If a program has a high hit density, it suggests that its developers
+often use very dangerous constructs that are hard to use correctly and
+often lead to vulnerabilities.
+Even if the hits <i>themselves</i> aren&#8217;t vulnerabilities,
+developers who repeatedly use dangerous constructs will sooner or later
+make the final mistake and allow a vulnerability.
+It&#8217;s like a high-wire act --
+even talented people will eventually fall if they walk on it long enough.
+<p>
+This appeared to break down on very small programs (less than 10K);
+a program <i>much</i> smaller than its competition might have a larger
+hit density yet still be secure.
+I speculate that because density is a fraction, when a program is
+<i>much</i> smaller than its rivals, density is dramatically forced up
+(because size is in the denominator).
+Yet programs that are made dramatically smaller are much easier to
+evaluate directly, so direct review is more likely to counter
+vulnerabilities in this case.
+
+<h1 id="rats">Flawfinder and RATS</h1>
+Unbenownst to me, while I was developing flawfinder,
+Secure Software Solutions simultaneously developed
+<!-- a href="http://www.securesw.com/download_rats.htm">RATS</a> -->
+<a href="http://www.fortifysoftware.com/security-resources/rats.jsp">RATS</a>,
+which is also a GPL&#8217;ed source code scanner using a similar approach.
+We agreed to release our programs simultaneously (on May 21, 2001),
+and we agreed to mention each other&#8217;s programs in our announcements
+(you can even see the original
+<a href="announcement">flawfinder announcement</a>).
+Now that we&#8217;ve both released our code, we hoped
+to coordinate in the future so that
+there will be a single &#8220;best of breed&#8221; source code scanner that is
+open source / free software.
+This has never happened, and it's not likely to in the near term.
+<p>
+Until the time where we&#8217;ve figured out how to merge these
+dissimilar projects, I recommend that distributions and
+software development websites include <i>both</i> programs
+(and others as well!).
+Each has advantages that the other doesn&#8217;t.
+For example, at the time of this writing Flawfinder is easier to use -
+just give flawfinder a directory name, and flawfinder will
+enter the directory recursively,
+figure out what needs analyzing, and analyze it.
+Other advantages of flawfinder are that it can handle
+internationalized programs (it knows about special calls like gettext(),
+unlike RATS), flawfinder
+can report column numbers (as well as line numbers) of hits, and
+flawfinder can produce HTML-formatted results.
+The automated recursion and HTML formatted results make flawfinder
+especially nice for source code hosting systems.
+The flawfinder database includes a number of entries not in RATS, so
+flawfinder will find things RATS won&#8217;t.
+In contrast, RATS can handle other programming languages and runs faster.
+Both projects are essentially automated advisors, and having <i>two</i>
+advisors look at your program is likely to be better than
+using only one (it&#8217;s somewhat analogous to having two people review
+your code for security).
+
+<h1 id="reviews">Reviews/Papers</h1>
+<p>
+Many have reviewed flawfinder or mentioned flawfinder in articles,
+as well as related tools.
+Examples include:
+<ol>
+<li>
+<a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.59.2429">
+&#8220;Code Injection in C and C++ : A Survey of Vulnerabilities and Countermeasures&#8221;
+</a>
+by Yves Younan, Wouter Joosen, and Frank Piessens
+(Report CW386, July 2004,
+Department of Computer Science, K.U.Leuven)
+is a comprehensive survey of <i>many</i> different ways to counter
+vulnerabilities.
+Its abstract says,
+&#8221;
+... This report documents possible vulnerabilities in C and C++ applications
+that could lead to situations that allow for code injection
+and describes the techniques generally used by attackers to exploit them.
+A fairly large number of defense techniques have been described
+in literature. An important goal of this report is to give a comprehensive
+survey of all available preventive and defensive countermeasures
+that either attempt to eliminate specific vulnerabilities entirely or
+attempt to combat their exploitation.
+Finally, the report presents a synthesis of this survey that allows
+the reader to weigh the advantages and disadvantages of using a
+specific countermeasure as opposed to using another more easily.&#8221;
+They list a wide variety of countermeasures and describe their
+pros and cons.
+For example,
+They state that flawfinder, as well as RATS and ITS4,
+all have the advantages of &#8220;very low&#8221; comparitive cost
+and &#8220;very low&#8221; memory cost, and that all can find vulnerabilities
+in the categories
+V1 (Stack-based buffer overflow),
+V2 (Heap-based buffer overflow), and
+V4 (Format string vulnerabilities).
+All have the applicability limitations
+A1 (Source code required) and
+A10 (Only protects libc string manipulation functions).
+All have the protection limitation
+P17 (False negatives are possible).
+<!--
+In all cases they focus on T2 (Prevention: The vulnerability is prevented),
+and in all cases they perform R6, A problem is reported.
+-->
+That&#8217;s a fair description of the strengths and weaknesses of flawfinder
+and similar tools.
+
+<li>
+<a href="http://www.linuxjournal.com//article.php?sid=5673"><i>Source Code Scanners for Better Code</i></a>
+in Linux Journal discusses Flawfinder, RATS, and ITS4.
+The review noted that the version of flawfinder they used
+had a weakness - it didn&#8217;t automatically report static character buffers.
+That weakness has since been corrected;
+flawfinder as of version 1.20 can also report static character buffers
+<li><a href="http://www.linuxdevcenter.com/pub/a/linux/2001/05/29/insecurities.html">Clean Up Your Code with Flawfinder</a> was one of the
+first announcements by others about Flawfinder
+<li><a href="http://www.isecurelabs.com/news/39">Flawfinder 1.22, le chasseur de failles</a>
+<li>the UC Davis <a href="http://seclab.cs.ucdavis.edu/projects/testing"> Reducing Software Security Risk through an Integrated Approach</a> project (see the
+<a href="http://seclab.cs.ucdavis.edu/projects/testing/tools/flawfinder.html">
+flawfinder entry</a>)
+<li>&#8220;Apparently insecure, analysis of Windows 2000, Linux and OpenBSD sourcecode&#8221; (in German), iX 04/04, p. 14.
+This is noted in the
+<a href="http://www.openbsd.org/press.html">OpenBSD press area for
+March, 2004,</a> which states that:
+<blockquote>
+A small article describing the results of examining Windows 2000, Linux and OpenBSD source code using Flawfinder. &#8220;OpenBSD is ahead, Flawfinder finds a surprisingly small number of potentially dangerous constructs. The source code audit by the OpenBSD team seems to pay out. Additionally, OpenBSD uses the secure strlcpy/strlcat by Todd C. Miller instead of strcpy etc.&#8221;
+</blockquote>
+<li>
+<a href="http://www.ida.liu.se/~johwi/research_publications/paper_nordsec2002_john_wilander.pdf">
+&#8220;A Comparison of Publicly Available Tools for Static Intrusion Prevention&#8221;</a>.
+You might also want to see
+<a href="http://www.ida.liu.se/~johwi/research_publications/paper_ndss2003_john_wilander.pdf">&#8221;A Comparison of Publicly Available Tools for Dynamic Buffer Overflow Prevention&#8221;</a>)
+<li>
+<a href="http://www.cs.berkeley.edu/~pbwell/papers/saswifi.pdf">
+&#8220;A Comparison of Static Analysis and Fault Injection
+Techniques for Developing Robust System Services&#8221; by
+Pete Broadwell and Emil Ong</a>,
+Technical Report, Computer Science Division,
+University of California, Berkeley, May 2002,
+used static source code analysis (like flawfinder) and
+software fault injection against some commonly-used applications.
+They used some static tools
+(like ITS4, Warnbuf, and Stumoch)
+and some dynamic tools (like Fuzz Lite and FIG).
+As with many other papers, they found that static tools found many false
+positives, but that &#8220;When the tool did find an error however,
+they were extremely useful.&#8221;
+This paper also has references to many other papers.
+<li>
+Methods for the prevention, detection and removal of
+software security vulnerabilities
+by Jay-Evan J. Tevis and John A. Hamilton
+(Auburn University, Auburn, Alabama).
+This was published in the
+Proceedings of the 42nd annual Southeast regional conference,
+Huntsville, Alabama, 2004
+(Pages: 197 - 202).
+ISBN 1-58113-870-9/04/04.
+The ACM digital library has a copy.
+<li>
+<a href="http://www.wirex.com/~crispin/opensource_security_survey.pdf">
+Software Security for Open-Source Systems
+by Crispin Cowan</a>
+(IEEE Security and Privacy, 2003)
+briefly reviews various auditing (static and dynamic)
+and vulnerability mitigation tools.
+<li>
+&#8220;Characterizing the &#8216;Security Vulnerability Likelihood&#8217; of
+Software Functions&#8221;
+by DaCosta, Dahn, Mancoridis, and Prevelakis
+gives evidence that most vulnerabilities are clustered near
+inputs, a plausible hypothesis.
+Note that flawfinder includes the ability to highlight input functions,
+because I expected that myself.
+<li>
+"Flawfinder is an exceptional source-scanning tool..." is stated in
+<a href="https://www.sans.org/reading-room/whitepapers/securecode/secure-software-development-code-analysis-tools-389"><i>Secure Software Development and Code Analysis Tools</i>,
+Thien La, SANS Institute, September 30, 2002</a>.
+<li>
+The presentation
+<a href="http://monkey.org/~jose/presentations/czech-rubicon02.d/">
+Lexical analysis in source code scanning</a>
+by Jose Nazariol (Uninet Infosec 2002), 20 April, 2002,
+discusses his prototype tool, Czech,
+which uses techniques similar to flawfinder.
+In it, he says &#8220;source code analysis using lexical analysis techniques
+is worthwhile for development. However, it can only assist the developer,
+not replace a manual audit&#8221; (true enough!)
+<li>
+The paper
+<a href="http://www.cigital.com/papers/download/bsi5-static.pdf">
+Static Analysis for Security</a> by
+Gary McGraw (Cigital) and Brian Chess of Fortify Software
+gives an overview of static analysis tools (like flawfinder).
+This is the fifth article in the
+<a href="http://www.computer.org/security/">
+IEEE Security &amp; Privacy magazine</a> series called
+&#8220;Building Security In.&#8221;
+<li>
+<a href="http://www.cs.virginia.edu/csnews/show.php?artID=257">
+Will code check tools yield worm-proof software?</a>
+by Robert Lemos (CNET News.com), dated May 26, 2004,
+describes gives an overview of static analysis tools for
+a somewhat lay audience.
+</ol>
+
+<p>
+<a href="http://www.daemonkitty.net/lurene/papers/Audit.pdf">
+Practical Code Auditing by Lurene Grenier</a>
+(December 13, 2002) briefly discusses simple approaches that
+can be performed for manual auditing
+(she works on the OpenBSD project).
+It does note that you can &#8220;grep&#8221; for certain kinds of problems;
+flawfinder is essentially a smart grep that already knows what to
+look for, so it could easily fit into process at those points.
+The paper also specifically notes some of the things that are hard
+to grep for (which are the kinds of things that flawfinder would miss).
+
+<p>
+<a href="http://www.amazon.com/gp/product/0321424778?ie=UTF8&tag=davawhesperho-20&linkCode=as2&camp=1789&creative=9325&creativeASIN=0321424778">Secure Programming with Static Analysis (Addison-Wesley Software Security Series)</a><img src="http://www.assoc-amazon.com/e/ir?t=davawhesperho-20&l=as2&o=1&a=0321424778" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />
+by Brian Chess and Jacob West discusses static analysis tools
+in great detail.
+
+<p>
+Of course, there are many programs that analyze programs, particularly
+those that work like &#8220;lint&#8221;.
+There is a set of papers about the
+<a href="http://metacomp.stanford.edu/">Stanford checker</a> which you
+may find interesting.
+
+
+<h1 id="othertools">Other static analysis tools for security</h1>
+
+<p>
+For more information about other static analysis tools for security,
+see
+<a href="http://www.dwheeler.com/essays/static-analysis-tools.html">Static analysis tools for security</a>
+
+<p>
+<hr>
+<p>
+You might want to look at my
+<a href="http://www.dwheeler.com/secure-programs">Secure Programming HOWTO
+web page</a>, or some of my other writings such as
+<a href="http://www.dwheeler.com/essays/open-standards-security.pdf">
+Open Standards and Security</a>,
+<a href="http://www.dwheeler.com/essays/oss_software_assurance.pdf">
+Open Source Software and Software Assurance (Security)</a>,
+and
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)</a>.
+
+<p>
+You can also view
+<a href="http://www.dwheeler.com">my home page</a>.
+</body>
+</html>

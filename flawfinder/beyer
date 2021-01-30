@@ -1,0 +1,66 @@
+From Joerg Beyer <job, at, webde-ag.de>
+
+Detect no input files:
+
+
+--- flawfinder_orig     Wed Jul  3 09:56:34 2002
++++ flawfinder  Wed Jul  3 10:25:49 2002
+@@ -1216,10 +1216,15 @@
+    if loadhitlist:
+      f = open(loadhitlist)
+      hitlist = pickle.load(f)
+    else:
+-    for f in sys.argv[1:]:
++    files = sys.argv[1:]
++    if not files:
++        print "*** no input files"
++        return None
++    for f in files:
+        process_dir_or_file(f)
++    return 1
+
+  def show_final_results():
+    global hitlist
+    count = 0
+@@ -1275,11 +1280,14 @@
+  def flawfind():
+    process_options()
+    display_header()
+    initialize_ruleset()
+-  process_files()
+-  show_final_results()
+-  save_if_desired()
++  if process_files():
++      show_final_results()
++      save_if_desired()
+
+
+Detect control-C:
+
+
+--- flawfinder_orig     Wed Jul  3 09:56:34 2002
++++ flawfinder  Wed Jul  3 09:58:37 2002
+@@ -1281,5 +1281,8 @@
+   save_if_desired()
+
+ if __name__ == '__main__':
+-  flawfind()
++  try:
++    flawfind()
++  except KeyboardInterrupt:
++    print "*** Flawfinder interrupted"
+
+job@lxdev70b:~/dev/flawfinder-1.01 > diff -u4 flawfinder_orig flawfinder
+--- flawfinder_orig     Wed Jul  3 09:56:34 2002
++++ flawfinder  Wed Jul  3 09:58:37 2002
+@@ -1280,6 +1280,9 @@
+   show_final_results()
+   save_if_desired()
+
+ if __name__ == '__main__':
+-  flawfind()
++  try:
++    flawfind()
++  except KeyboardInterrupt:
++    print "*** Flawfinder interrupted"
+

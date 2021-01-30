@@ -1,0 +1,43 @@
+Flawfinder version 1.20, (C) 2001-2002 David A. Wheeler.
+Number of dangerous functions in C/C++ ruleset: 125
+Examining test.c
+test.c:32  [5] (buffer) gets: does not check for buffer overflows. Use fgets() instead. 
+test.c:56  [5] (buffer) strncat: easily used incorrectly; doesn't always \0-terminate or check for invalid pointers. Risk is high; the length parameter appears to be a constant, instead of computing the number of characters left.
+test.c:57  [5] (buffer) _tcsncat: easily used incorrectly; doesn't always \0-terminate or check for invalid pointers. Risk is high; the length parameter appears to be a constant, instead of computing the number of characters left.
+test.c:60  [5] (buffer) MultiByteToWideChar: Requires maximum length in CHARACTERS, not bytes. Risk is high, it appears that the size is given as bytes, but the function requires size as characters.
+test.c:62  [5] (buffer) MultiByteToWideChar: Requires maximum length in CHARACTERS, not bytes. Risk is high, it appears that the size is given as bytes, but the function requires size as characters.
+test.c:73  [5] (misc) SetSecurityDescriptorDacl: Never create NULL ACLs; an attacker can set it to Everyone (Deny All Access), which would even forbid administrator access. 
+test.c:73  [5] (misc) SetSecurityDescriptorDacl: Never create NULL ACLs; an attacker can set it to Everyone (Deny All Access), which would even forbid administrator access. 
+test.c:17  [4] (buffer) strcpy: does not check for buffer overflows when copying to destination. Consider using strncpy or strlcpy (warning, strncpy is easily misused). 
+test.c:20  [4] (buffer) sprintf: does not check for buffer overflows. Use snprintf or vsnprintf. 
+test.c:21  [4] (buffer) sprintf: does not check for buffer overflows. Use snprintf or vsnprintf. 
+test.c:22  [4] (format) sprintf: Potential format string problem. Make format string constant. 
+test.c:23  [4] (format) printf: if format strings can be influenced by an attacker, they can be exploited. Use a constant for the format specification. 
+test.c:25  [4] (buffer) scanf: the scanf() family's %s operation, without a limit specification, permits buffer overflows. Specify a limit to %s, or use a different input function. 
+test.c:27  [4] (buffer) scanf: the scanf() family's %s operation, without a limit specification, permits buffer overflows. Specify a limit to %s, or use a different input function. 
+test.c:38  [4] (format) syslog: if syslog's format strings can be influenced by an attacker, they can be exploited. Use a constant format string for syslog. 
+test.c:49  [4] (buffer) _mbscpy: does not check for buffer overflows when copying to destination. Consider using a function version that stops copying at the end of the buffer. 
+test.c:52  [4] (buffer) lstrcat: does not check for buffer overflows when concatenating to destination. 
+test.c:75  [3] (shell) CreateProcess: this causes a new process to execute and is difficult to use safely. Specify the application path in the first argument, NOT as part of the second, or embedded spaces could allow an attacker to force a different program to run. 
+test.c:75  [3] (shell) CreateProcess: this causes a new process to execute and is difficult to use safely. Specify the application path in the first argument, NOT as part of the second, or embedded spaces could allow an attacker to force a different program to run. 
+test.c:81  [3] (buffer) getopt_long: some older implementations do not protect against internal buffer overflows . Check implementation on installation, or limit the size of all string inputs. 
+test.c:16  [2] (buffer) strcpy: does not check for buffer overflows when copying to destination. Consider using strncpy or strlcpy (warning, strncpy is easily misused). Risk is low because the source is a constant string.
+test.c:19  [2] (buffer) sprintf: does not check for buffer overflows. Use snprintf or vsnprintf. Risk is low because the source has a constant maximum length.
+test.c:45  [2] (buffer) char: Statically-sized arrays can be overflowed. Perform bounds checking, use functions that limit length, or ensure that the size is larger than the maximum possible length. 
+test.c:46  [2] (buffer) char: Statically-sized arrays can be overflowed. Perform bounds checking, use functions that limit length, or ensure that the size is larger than the maximum possible length. 
+test.c:50  [2] (buffer) memcpy: does not check for buffer overflows when copying to destination. Make sure destination can always hold the source data. 
+test.c:51  [2] (buffer) CopyMemory: does not check for buffer overflows when copying to destination. Make sure destination can always hold the source data. 
+test.c:15  [1] (buffer) strcpy: does not check for buffer overflows when copying to destination. Consider using strncpy or strlcpy (warning, strncpy is easily misused). Risk is low because the source is a constant character.
+test.c:18  [1] (buffer) sprintf: does not check for buffer overflows. Use snprintf or vsnprintf. Risk is low because the source is a constant character.
+test.c:26  [1] (buffer) scanf: it's unclear if the %s limit in the format string is small enough. Check that the limit is sufficiently small, or use a different input function. 
+test.c:53  [1] (buffer) strncpy: easily used incorrectly; doesn't always \0-terminate or check for invalid pointers. 
+test.c:54  [1] (buffer) _tcsncpy: easily used incorrectly; doesn't always \0-terminate or check for invalid pointers. 
+test.c:55  [1] (buffer) strncat: easily used incorrectly; doesn't always \0-terminate or check for invalid pointers. 
+test.c:58  [1] (buffer) strlen: does not handle strings that are not \0-terminated (it could cause a crash if unprotected). 
+test.c:64  [1] (buffer) MultiByteToWideChar: Requires maximum length in CHARACTERS, not bytes. Risk is very low, the length appears to be in characters not bytes.
+test.c:66  [1] (buffer) MultiByteToWideChar: Requires maximum length in CHARACTERS, not bytes. Risk is very low, the length appears to be in characters not bytes.
+Number of hits = 35
+Number of Lines Analyzed = 84
+2 hit(s) suppressed; use --neverignore to show them.
+Not every hit is necessarily a security vulnerability.
+There may be other security vulnerabilities; review your code!
