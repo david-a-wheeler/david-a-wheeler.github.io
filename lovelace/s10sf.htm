@@ -1,0 +1,130 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 10.3 - Handling Exceptions</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 10.3 - Handling Exceptions</FONT></H1>
+As we've noted many times, if an exception is raised and isn't handled
+the program stops.
+To handle exceptions you must define, reasonably enough, an
+<EM>exception handler</EM>.
+<P>
+When an exception is raised (by the raise statement) Ada will abandon
+what it was doing and look for a matching exception handler
+in the sequence of statements where the exception was raised.
+A sequence of statements is the set of statements between the
+keywords "begin" and "end".
+If Ada doesn't find a match, it returns from the current subprogram
+(cleaning up along the way) and tries to find a matching exception handler
+in the caller (from where it was called).
+If it doesn't find one there, it exits that subprogram
+(cleaning up along the way) and tries yet again.
+Ada keeps repeating this process until it finds a matching exception handler
+or until it exits the program.
+<P>
+An exception handler is defined just before the "end" statement
+that matches a "begin" statement.
+<P>
+For example, here's a procedure that "Open"s a file
+if it can, and if the file doesn't exist it "Create"s it.
+<P>
+<PRE>
+  procedure Open_Or_Create(File : in out File_Type;
+                           Mode : File_Mode; Name : String) is
+  begin
+    -- Try to open the file. This will raise Name_Error if
+    -- it doesn't exist.
+    Open(File, Mode, Name);
+  exception
+    when Name_Error =&gt;
+      Create(File, Mode, Name);
+  end Open_Or_Create;
+</PRE>
+<P>
+Here's a simplified <A HREF="bnf.htm">BNF</A> of an exception handler:
+<P>
+<PRE>
+  exception_handler ::= exception_choice { "|"  exception_choice } "=&gt;"
+                        sequence_of_statements
+  exception_choice  ::= exception_name | "others"
+</PRE>
+<P>
+The keyword "others" means all exceptions not explicitly listed
+in this exception handler; thus, you can handle all exceptions if you want to.
+<P>
+Inside an exception handler you can do any kind of processing you wish.
+If, after processing, you find you need to raise the same exception to
+a higher level, you can use the "raise" statement without the
+name of an exception.
+A raise statement without a named exception <EM>re-raises</EM> the
+exception being handled.
+Raise statements can only re-raise exceptions inside an exception handler.
+<P>
+You can pass information along with an exception,
+and there is a predefined package of exception-related operations.
+We won't go into that now, but if you're 
+interested, you can examine
+<A HREF="http://www.adahome.com/rm95/rm9x-toc-11.html">section 11
+of the Ada RM, which discusses exceptions</A>.
+<!-- No quiz question -->
+<P>
+<HR>
+<P>
+There is no quiz question for this section.
+<P>
+<IMG SRC="pright.gif" ALT="" HEIGHT="14" WIDTH="33">
+<A HREF="s11s1.htm">
+<FONT SIZE="+1"><STRONG>You may go to the next section.</STRONG></FONT></A>
+<P>
+<HR>
+You may also:
+<P>
+
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s10s2.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="lesson10.htm">
+<IMG SRC="barrowr.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to the outline of lesson 10</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s10sf.htm">http://www.adahome.com/Tutorials/Lovelace/s10sf.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

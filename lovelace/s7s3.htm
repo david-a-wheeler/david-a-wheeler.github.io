@@ -1,0 +1,161 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 7.3 - Dynamic Dispatching (Polymorphism) in Ada</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 7.3 - Dynamic Dispatching (Polymorphism) in Ada</FONT></H1>
+Ada 95 also includes the concept of a <EM>class</EM>.
+For each tagged type T there is an associated type T'Class;
+this type comprises the union of all types in the tree of derived types
+rooted at T.
+For example, in the previous example, Rectangle'Class is a class
+that includes the types Rectangle and Square;
+Figure'Class is a class that includes the types
+Circle, Rectangle, and Square.
+<P>
+Note that Ada 95 has a more specific meaning for ``class'' than
+some other object-oriented programming languages (such as C++).
+In C++, the term <EM>class</EM> may mean either
+``a specific type'' or ``the set of a specific types and all types
+that inherit from it, directly and indirectly.''
+Ada 95 uses different terms for these different concepts.
+<P>
+A subprogram can define one or more parameters as a type of the
+form T'Class.
+Any type T, or any of its descendents, is acceptable for a parameter
+of type T'Class.
+You can pass that parameter on to any other subprogram that expects the
+same T'Class without a problem.
+But what happens if that subprogram that accepted something of T'Class
+then tries to call some other subprogram that
+requires a specific type?
+The answer is <EM>dynamic dispatching</EM>.
+<P>
+Dynamic dispatching is simply the process of determining at run-time
+exactly which routine to call, and then calling it.
+How can Ada figure that out?
+The answer is that every value that is a tagged type
+includes an invisible "tag" that tells Ada the actual type.
+This tag is used to figure out which routine to call.
+Because of the compilation rules Ada imposes, Ada can
+guarantee that dynamic dispatching will always find a subprogram to call.
+<P>
+Again, this is easier shown than explained.
+Let's say that we want to create a subprogram
+that takes in any kind of Figure.
+The subprogram is to print
+out the phrase "Area =" and then call the correct Area
+subprogram for any type of figure.
+Here's an example of how to do that:
+<P>
+<PRE>
+ procedure Print_Area(F : in Figure'Class) is
+ begin
+   Put("Area = ");
+   Put( Area(F) );  -- Call the correct area-computing routine for F
+                    -- and then print its result.
+   New_Line;
+ end Print_Area;
+</PRE>
+<P>
+When the Ada program reaches the <EM>Area(F)</EM> statement,
+it will note that the current type is a <EM>Class</EM> type and
+that Area takes only a specific type.
+Therefore Ada <EM>dispatch</EM>
+to the correct Area operation depending on the specific type of the input
+value F.
+<P>
+Only subprograms defined in the same package as the tagged type can
+be dispatched.
+These subprograms are formally called <EM>primitive subprograms</EM>.
+Primitive subprograms should generally be defined immediately after
+the type is defined.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+In the following package:
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+ package Critters is
+   type Monster is tagged
+      record
+        Size_In_Meters : Integer;
+      end record;
+   type Dragon is new Monster with null record;
+   type Red_Dragon is new Dragon with null record;
+   type Person is tagged
+      record
+        Age : Integer;
+      end record;
+ end Critters;
+</PRE>
+<P>
+<P>
+How many different types does Monster'Class include in
+package Critters?
+<OL>
+<LI><A HREF="s7s3r1.htm">1</A>
+<LI><A HREF="s7s3r2.htm">2</A>
+<LI><A HREF="s7s3r3.htm">3</A>
+<LI><A HREF="s7s3r4.htm">4</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s7s2.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s7s4.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson7.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 7 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s7s3.htm">http://www.adahome.com/Tutorials/Lovelace/s7s3.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

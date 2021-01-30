@@ -1,0 +1,185 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 18.1 - Example Program Small (Introduction)</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 18.1 - Example Program Small (Introduction)</FONT></H1>
+
+Now that you've seen various parts of the Ada 95 programming language,
+it's time to create a program more than a few lines long.
+This program will use many of the different Ada capabilities at one time,
+so you can see how they work together.
+I can't walk you through every detail of every decision, but I'll try to
+carry you through the highlights.
+<P>
+
+The program we'll create is a small text adventure game.
+This program will simulate a small world, describing the current
+situation to the user.
+The user can then type in commands (like "look" and "get key")
+to make things happen.
+First we will implement "look" and "quit" commands;
+we will then add "get object" and "drop object" commands;
+and then we'll add
+"go <EM>direction</EM>" (north, south, etc.) commands.
+We'll want to be flexible so we can easily add other commands (like "open")
+and have different operations do different things (for example, perhaps
+you can get some objects but not others).
+<P>
+
+Given those simple requirements, what should the basic program design be?
+Let's try to break it down into logical groupings.
+An adventure game involves manipulating different things, of
+different but related types, performing possibly different actions when given
+the same commands.
+It sounds like an object-oriented approach would be appropriate
+for this kind of problem, so we'll probably have a set of different object
+type definitions.  We'll figure out how to define them in a moment, but we'll
+probably need to define a "root" type of all these different things, since
+they'll probably share many of the same operations.
+For the moment, let's assume that we'll define a package called "Things"
+that defines the root tagged type called Thing:
+<P>
+<PRE>
+ package Things is
+   type Thing is tagged ...; -- We'll figure this out later.
+   type Thing_Access is access all Thing'Class; -- Usual OO definition.
+   -- Operations to be determined ...
+ end Things;
+</PRE>
+<P>
+
+We also need to take a line of text and attempt to execute it.
+We might want that functionality for other reasons (for example, perhaps
+objects can have lines of text that are executed, or perhaps monsters
+can accept commands), so let's separate
+that capability into a separate package rather than incorporating
+it inside package Things.
+So let's make a package called "Parser" and a procedure inside it called
+"Execute"; Execute will take one parameter (a line of text), parse that
+line, and execute it:
+<PRE>
+ package Parser is
+  procedure Execute(Command : in Unbounded_String);
+ end Parser;
+</PRE>
+<P>
+
+Finally, we'll need to kick off this whole program, so we'll create
+a main procedure that gets everything going.
+In general, it's good for main procedures to be relatively small;
+in this case the main procedure will run a simple loop -
+wait for input, and then send that input to Execute to execute the command.
+Let's call the main procedure (and thus the program) "Small", since it's
+a small text adventure game:
+<PRE>
+ procedure Small is
+ begin
+  -- Repetitively get a command, then send it to Parser.Execute.
+ end Small;
+</PRE>
+<P>
+
+We already have another package called "Ustrings" that provides a routine
+to read a text line into an Unbounded_String; that will be
+useful for implementing procedure Small.
+<P>
+
+But wait - how will the main procedure know when "quit" has been commanded?
+There might be other reasons a player would stop the game (for example,
+if the player is "killed"). Probably Execute should return a Boolean
+value, which says whether or not more commands should be accepted.
+So we'll go back to Execute and change it to:
+<PRE>
+  procedure Execute(Command : in Unbounded_String; Quit : out Boolean);
+</PRE>
+<P>
+
+This particular change is only one example of many changes - I actually
+restructured this example several times as I was designing it.
+This is <EM>normal</EM>. You should try to break the system down, and
+then carefully examine the design to repair omissions in the
+interface between components.
+You should also strive to have a general structure so that changes
+you can anticipate can be easily handled.
+<P>
+
+Note that we're <EM>only</EM> worrying about the major design components
+and making sure their interfaces are sufficient for the job.
+In Ada, that means that you generally define the package
+declarations (specifications) <EM>first</EM>, and then once you think
+you've got them (basically) right you then implement the bodies.
+You'll notice that I haven't written any bodies yet - why bother, since I'm
+still working on the program's basic structure?
+You'll find that implementing bodies is easy if the specifications are right.
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+How many program units have we broken this problem into so far?
+<OL>
+<LI><A HREF="s18s1r1.htm">1</A>
+<LI><A HREF="s18s1r2.htm">2</A>
+<LI><A HREF="s18s1r3.htm">3</A>
+<LI><A HREF="s18s1r4.htm">4</A>
+<LI><A HREF="s18s1r5.htm">5</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s17sf.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s18s2.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson18.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 18 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s18s1.htm">http://www.adahome.com/Tutorials/Lovelace/s18s1.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

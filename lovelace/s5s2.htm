@@ -1,0 +1,130 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 5.2 - Case Statements</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 5.2 - Case Statements</FONT></H1>
+Sometimes you want to execute one of many different sequences of statements,
+based on the value of a single expression.
+You can do this by using a set of "elsif" clauses, but most languages
+(including Ada) provide a simpler way to do this.
+<P>
+Ada's mechanism is a <EM>case statement</EM>.
+A case statement computes the value of an expression, and then compares
+it to lists of values to determine what to execute next.
+Here's an example:
+<P>
+<PRE>
+  case A is                      -- Execute something depending on A's value:
+    when 1          =&gt; Fly;      -- if A=1, execute Fly.
+    when 3 .. 10    =&gt; Put(A);   -- if A is 3 through 10, put it to the screen.
+    when 11 | 14    =&gt; null;     -- if A is 11 or 14, do nothing.
+    when 2 | 20..30 =&gt; Swim;     -- if A is 2 or 20 through 30, execute Swim.
+    when others     =&gt; Complain; -- if A is anything else, execute Complain.
+  end case;
+</PRE>
+<P>
+Note that after each "when" is a list of one or more possible values.
+A "when others" clause matches anything that hasn't matched anything else.
+A case statement chooses one and only one alternative; the alternatives
+must be exhaustive (cover all possible cases) and exclusive
+(you can't have two "when 5 =&gt;" clauses).
+An Ada compiler will detect missing or duplicate cases at compile-time.
+<P>
+
+Here's the full <A HREF="bnf.htm">BNF</A> for the case statement:
+<PRE>
+case_statement ::=
+  "case" expression "is"
+      case_statement_alternative
+     {case_statement_alternative}
+  "end case;"
+
+case_statement_alternative ::=
+   "when" discrete_choice_list "=&gt;" sequence_of_statements
+
+discrete_choice_list ::= discrete_choice { | discrete_choice }
+
+discrete_choice ::= expression | discrete_range | "others"
+</PRE>
+<P>
+
+The Ada case statement is functionally identical to
+C's "switch" statement.
+Unlike C, Ada supports ranges of values and does not
+require a "break" statement at the end of each sequence (a common C error).
+<P>
+
+Case statements are useful, but a large number of case statements
+may indicate that you should be using a more object-oriented approach.
+Ada's object-oriented features will be discussed in a later lesson.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+In the sample case statement above, if A contained 12, what
+would be executed?
+<OL>
+<LI><A HREF="s5s2r1.htm">Fly.</A>
+<LI><A HREF="s5s2r2.htm">Put(A).</A>
+<LI><A HREF="s5s2r3.htm">null (do nothing).</A>
+<LI><A HREF="s5s2r4.htm">Swim.</A>
+<LI><A HREF="s5s2r5.htm">Complain.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s5s1.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s5s3.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson5.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 5 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s5s2.htm">http://www.adahome.com/Tutorials/Lovelace/s5s2.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2005 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

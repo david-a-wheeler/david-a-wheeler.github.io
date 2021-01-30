@@ -1,0 +1,151 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 9.2 - Line and File Endings</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 9.2 - Line and File Endings</FONT></H1>
+Package Text_IO models text files as a sequence of text lines;
+each text line has zero or more characters in it.
+Different operating systems have different ways to indicate
+the end of a line and the end of a file,
+so Text_IO detects them using the local operating system's conventions.
+<P>
+The following subprograms help deal with
+end of line and end of file:
+<DL>
+<DT>Procedure New_Line
+<DD>
+New_Line ends the current line and starts a new line.
+It takes an optional parameter indicating how many new lines to create
+(the default is one).
+You can also specify the file to output this new line to
+(the default is Current_Output).
+<DT>Procedure Skip_Line
+<DD>
+Skip_Line is the counterpart of New_Line;
+it gets ready to read the line after the current line,
+discarding any text on the current line that hasn't been read.
+<DT>Function End_Of_Line
+<DD>
+End_Of_Line returns True if the input is at the end of the line (else it
+returns False).
+<DT>Function End_Of_File
+<DD>
+End_Of_File returns True if the input is at the end of the file (else it
+returns False).
+<DT>Function Line
+<DD>
+Line reports the current line number of the file you're reading or writing
+(the first line is number 1).
+This is useful if you're processing some input data and you've suddenly
+found an input problem.
+</DL>
+<P>
+As with the Get and Put operations, put a File_Type as the first parameter
+with these routines
+if you want to work with a given file, or you'll use the default
+Current_Input and Current_Output.
+For example, if you're reading from Startup_File (a variable
+of type File_Type), you can check for the end of the file by checking
+"End_Of_File(Startup_File)".
+<P>
+These subprograms are quite useful without being passed any parameters.
+Note that in Ada, if you call a subprogram but don't want to pass it any
+parameters, don't include the parentheses() after the name of the subprogram
+(this is a slightly different syntax than in C and C++).
+<P>
+Here's another demo program, one that only prints ``long'' lines.
+This demo program illustrates a very common Ada idiom - using
+``while (not End_Of_File)'', which processes an entire input file.
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+
+with Ada.Strings.Unbounded, Text_IO, Ustrings;
+use  Ada.Strings.Unbounded, Text_IO, Ustrings;
+
+procedure Put_Long is
+  -- Print "long" text lines
+  Input : Unbounded_String;
+begin
+  while (not End_Of_File) loop
+    Get_Line(Input);
+    if Length(Input) &gt; 10 then
+      Put_Line(Input);
+    end if;
+  end loop;
+end Put_Long;
+
+</PRE>
+<P>
+<P>
+
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+If you want to discard the rest of
+a line of input, what subprogram would you use?
+<OL>
+<LI><A HREF="s9s2r1.htm">New_Line</A>
+<LI><A HREF="s9s2r2.htm">Skip_Line</A>
+<LI><A HREF="s9s2r3.htm">End_Of_Line</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s9s1.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s9s3.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson9.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 9 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s9s2.htm">http://www.adahome.com/Tutorials/Lovelace/s9s2.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

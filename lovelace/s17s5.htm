@@ -1,0 +1,225 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 17.5 - Software Inspections/ Reading Bugs Out</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 17.5 - Software Inspections/ Reading Bugs Out</FONT></H1>
+While Ada can prevent a number of software defects,
+no language can remove them all.
+One approach to increasing software quality, and reducing development
+cost and development time, is called <EM>software inspection</EM>.
+A software inspection is a rigorous review of a product by a small group of
+peers for the purpose of detecting defects.
+The work products reviewed are small - for code, up to about 250 lines would
+be considered in one inspection.
+<P>
+<CENTER><IMG ALIGN=right SRC="inspect.gif" ALT="Inspection Process" WIDTH=263 HEIGHT=294></CENTER>
+In an inspection,
+each person ("inspector") is given a role during the initial planning stage,
+such as "moderator" (the moderator
+controls the inspection and is not the author).
+After an optional overview of the product given by the author,
+each inspector prepares by
+carefully reading the product so they completely understand it
+(this generally takes 1-4 hours).
+The inspectors then meet together for no more than
+two hours to detect defects together (the list is recorded for later use).
+Optionally, they may meet afterwards for a "third hour" to discuss
+possible improvements and other things not related to detecting defects.
+The author then goes off to fix ("rework") the defects.
+After the author is done, the moderator checks to make sure the fixes are
+okay and a reinspection may occur if necessary.
+Occasionally a "causal analysis" process should occur to determine common
+defects, their causes, and how to eliminate those causes.
+<P>
+Obviously, this is a pretty rigorous process.
+The amazing thing is that many people have documented that
+inspections actually reduced their total time and cost, as well as increased
+the resulting quality, because inspections can reduce the cost
+of errors and rework.
+Inspections aren't technically glitzy, but
+results are usually more important than glitz.
+<P>
+One good way to find more about inspections is to buy my
+book on inspections (how's that for a plug?).
+It's titled
+<A HREF="biblio.htm#wheeler1996"><EM>Software Inspection:
+An Industry Best Practice</EM>, by
+David A. Wheeler, Bill Brykczynski, and Reg Meeson [Wheeler 1996]</A>;
+it's published by IEEE.
+Many papers are available on inspections; one oft-referenced paper is by
+<A HREF="biblio.htm#fagan1986">Michael Fagan [1986]</A>.
+Some information on inspections is available on-line; of particular
+note is the <A HREF="http://www.ics.hawaii.edu/~johnson/FTR/">WWW
+Formal Technical Review Archive</A>
+and the
+<A HREF="http://www.ics.hawaii.edu/~siro/">Software
+Inspection and Review Organization (SIRO) home page</A>.
+<P>
+<H2>Ada and Reading Out Bugs</H2>
+<P>
+If you're part of an inspection of Ada code,
+or simply reading your own code looking
+for likely defects, it can help to know what are the "more common" errors
+of Ada programmers.
+In an inspection such a list is called a "checklist".
+Unfortunately, I'm not aware of any publically-distributable empirical
+data to support any specific Ada checklist.
+However, based on anecdotal information
+(such as John B. Goodenough's list of common Ada programming errors),
+<!-- "A Sample of Ada Programming Errors", John B. Goodenough, -->
+<!-- Wang Institute of Graduate Studies, Tyng Road, Tyngsboro, MA 01879 -->
+<!-- The only version I've found is dated March 6, 1986 Interim Draft -->
+<!-- and I got it via the Internet through machines that no longer exist. -->
+I've come up with the following checklist which you can use as a starting
+point.
+I strongly encourage you to update this checklist to your situation
+as you gain experience in determining common defects in your own code.
+<P>
+<B>Ada Checklist - Look For:</B>
+<P>
+<OL>
+
+<LI><I>Reading Uninitialized variables</I>.  Ada compilers often detect these,
+but <EM>not</EM> always. Access values are always initialized to null, and
+when creating your own types you can cause them to have initial values.
+However, for other types a variable that's not specifically given an
+initial value might have an arbitrary set of "garbage" bits set, and trying
+to use this "garbage" data later might cause problems.
+When declaring variables, it's often a good idea to give them a starting
+value where that makes sense.
+There's been much discussion on whether Ada should even permit
+uninitialized variables; the rationale permitting them is that
+unnecessary initializing can cause a performance hit.
+The safety and security annex adds pragma Normalize_Scalars, which sets
+uninitialized values to out-of-range values where possible (this makes
+it easier to detect uninitialized values).
+
+<LI><I>Off-by-one boundary conditions</I> (for loop conditions, array indexing,
+and comparisons). This is the error of having almost
+the right boundary. For example, did you use &lt; when you meant &lt;=?
+Check all your comparisons and loop boundaries.
+Ada will raise a run-time exception
+if you attempt to access out-of-bounds array element,
+which helps in certain circumstances but not in all cases.
+
+<LI><I>Access type (pointer) and storage management errors</I>
+(especially boundary conditions like null lists).
+Trying hiding access (pointer) values so only a small portion of your
+program has to deal with them, use initialization/finalization
+operations to manage your storage, and make sure you can handle "empty"
+cases where you should.
+
+<LI><I>Incorrect return values handling</I>.
+For example, if a function returns a range, make sure every value in the
+range will be handled appropriately by your program.
+
+<LI><I>Incorrect special condition handling</I>.  Have you handled all cases?
+If you're reading from a sensor, do you deal with bogus sensor values?
+Do you handle all appropriate exceptions?
+
+<LI><I>Incorrect array bound handling</I>.
+An array's lower bound is not always one, so use 'First, 'Last,
+'Length, and 'Range when you're passed an array.
+For example, passed strings may be slices, so the first element of
+a String might not have the index value 1.
+Do not assume that 'First and 'Last are equal for different parameters
+or that they're the same as the base type,
+and use S'Length (not S'Last) to find the length.
+
+<LI><I>Instantiated unconstrained arrays</I>. Arrays with large array
+indices (like Integer or Positive), or records containing them, must
+have their bounds set; few computers can have "Integer'Max" array elements.
+
+<LI><I>Missing "reverse" keyword in a backward "for" loop</I>.  You should say:
+<BR>
+<PRE>
+    for I in reverse 1..5
+</PRE>
+
+<LI><I>Tasks exposed to unexpected exceptions</I>.
+If a task does not catch exceptions the task will terminate on one.
+
+<LI><I>Invalid fairness assumptions in tasking</I>.
+Some tasking operations are not guaranteed to be "fair". For example,
+in a selective wait with several open alternatives, Ada is free to pick
+between any of them each time; it need not pick between them "fairly".
+</OL>
+<!-- Too complicated to explain: -->
+<!-- * When a generic library unit is instantiated inside a library -->
+<!-- unit or secondary unit, a pragma Elaborate should be used to ensure -->
+<!-- the generic unit body is elaborated before the instantiation. -->
+<!-- * Check uses of 'Val carefully if you use a -->
+<!--    representation specification; -->
+<!--    'Val doesn't return the -->
+<!--    representation specification value, but the position number. -->
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+What is the purpose of an inspection meeting?
+<OL>
+<LI><A HREF="s17s5r1.htm">Learn about a program and discuss possible improvements.</A>
+<LI><A HREF="s17s5r2.htm">Detect defects.</A>
+<LI><A HREF="s17s5r3.htm">Fix defects.</A>
+<LI><A HREF="s17s5r4.htm">Spend endless hours in useless meetings.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s17s4.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s17sf.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson17.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 17 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s17s5.htm">http://www.adahome.com/Tutorials/Lovelace/s17s5.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

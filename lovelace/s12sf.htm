@@ -1,0 +1,240 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 12.7 - Access Variables: Putting It All Together</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 12.7 - Access Variables: Putting It All Together</FONT></H1>
+At this point you've seen a lot of different capabilities.
+You've seen information on access values,
+and in previous lessons you saw information on controlled types and generics.
+The question is, how does this all work together?
+<P>
+To help you see how these different capabilities can work together, I've
+built a sample package combining these different ideas.
+You don't need to understand every little nuance at this time, though
+I've given you enough information to do so.
+Concentrate on understanding the big picture the first time you
+read this.
+<P>
+The sample package I've developed is a generic stack package,
+similar to the example we saw in the section on generics.
+Now, however, we can use access types to implement an unbounded stack -
+we no longer need to be limited to any particular size.
+We will want to permit users to assign stacks to other stacks,
+so we will use "Ada.Finalization" and implement type Stack as a
+child of type Controlled so we can control how assignment
+and finalization occurs
+(we discussed type Controlled in the
+<A HREF="s7sf.htm">last section of lesson 7</A>).
+<P>
+We will have push and pop operations as before.
+Let's add an "Empty" operation to erase the contents of a stack, and a
+boolean function "Is_Empty" that will return True
+if there's no data in the stack.
+We'll also add an "=" operation that will return True if two stacks are equal
+(two stacks are equal if they have the same length and contain equal
+data in the same order).
+<P>
+I recommend that you always consider adding a "swap" operation to reusable
+data types
+<A HREF="biblio.htm#wheeler1992">[Wheeler 1992]</A>;
+note that swap operation can be implemented very efficiently
+using access types.
+A "Length" operation is also defined so you can find how many items are
+in the stack.  Note there's a new type, "Natural".
+Natural is a predefined subtype of Integer that starts at zero.
+Since we can't have a negative number of objects on a stack, it's
+more appropriate to return a Natural than to return an Integer.
+<P>
+When you're implementing an unbounded type you should almost always
+override the default Adjust and Finalize procedures - if you don't
+you're probably doing something wrong.
+If we didn't override Adjust, an assignment would cause two
+"different" stacks to point to the same data nodes.
+As a result, any later finalizing we did would affect other stacks, even
+if they shouldn't.
+If we didn't override Finalize, we wouldn't Free the data nodes that we should.
+<P>
+Given all that, here is a generic package specification for Generic_Stack:
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+  with Ada.Finalization; use Ada.Finalization;
+
+  generic
+    type Item is private;  -- This is the data type to be stacked.
+
+  package Generic_Stack is
+    -- This implements a simple generic stack of Items.
+    -- (C) 1996 David A. Wheeler.
+
+    type Stack is new Controlled with private;
+     -- Stack type. Assignment copies the contents of one Stack into another,
+     -- and might copy each Item in the Stack.
+     -- You can inherit from Stack and overload its controlled operations.
+    type Stack_Access is access all Stack'Class;
+     -- standard access type.
+    function "="(Left : in Stack; Right : in Stack) return Boolean;
+     -- Stacks are equal if lengths equal and each item in order is equal.
+    procedure Swap(Left : in out Stack; Right : in out Stack);
+     -- Swap the contents of the two stacks.
+
+    procedure Push(S : in out Stack; I : in  Item);
+    procedure Pop (S : in out Stack; I : out Item);
+     -- Pop raises Constraint_Error if Is_Empty(Stack).
+    procedure Top (S : in out Stack; I : out Item);
+     -- Top copies, but does not Pop, the topmost element. 
+     -- Top raises Constraint_Error if Is_Empty(Stack).
+    procedure Empty(S : in out Stack); -- Empties the given Stack
+
+    function Is_Empty(S : in Stack) return Boolean; -- True if Empty.
+    function Length(S : in Stack) return Natural; -- returns 0 if Empty
+
+    -- Permission is granted to use this package in any way you wish under
+    -- the condition that the author (David A. Wheeler) is given credit.
+    -- NO WARRANTIES, EITHER EXPRESS OR IMPLIED, APPLY.
+
+  private 
+    type Stack_Node;
+    type Stack_Node_Access is access Stack_Node;
+    type Stack is new Controlled with record
+          Start : Stack_Node_Access;
+        end record;
+    procedure Adjust(Object : in out Stack);
+    procedure Finalize(Object : in out Stack);
+  end Generic_Stack;
+
+</PRE>
+<P>
+<P>
+Note the tricky thing that was done here - the node isn't even completely
+defined in the package!
+Since the node wasn't passed in or out of anything, we can leave it as
+an incomplete type definition and complete the definition in the
+generic package body.
+<P>
+Since it's a generic, we have to instantiate the generic with a specific
+type to use it.
+For test purposes, let's instantiate the generic to allow us to
+stack up Integers:
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+with Generic_Stack;
+ -- Instantiate a Stack of Integers.
+
+package Stack_Int is new Generic_Stack(Integer);
+</PRE>
+<P>
+<P>
+And finally, let's write a short test program to demonstrate using the
+generic stack:
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+
+with Stack_Int;
+use  Stack_Int;
+
+procedure Demo_GS is
+ -- Demonstrate the use of the Generic_Stack package by using a
+ -- Stack of Integers.
+
+ Stack1, Stack2 : Stack;
+ Dummy : Integer;
+begin
+ Push(Stack1, 1); -- Put 1 onto Stack1.
+ Push(Stack1, 2); -- Put 2 onto the Stack1.
+ Stack2 := Stack1; -- Copy stack1's contents into stack2.
+ Pop(Stack2, Dummy); -- Dummy is now 2.
+ Pop(Stack2, Dummy); -- Dummy is now 1.
+ --  Now Stack2 is empty and Stack1 has two items.
+end Demo_GS;
+</PRE>
+<P>
+<P>
+The generic package body implements the operations defined by the
+generic package declaration
+using access types as we've discussed.
+Feel free to examine the
+<A HREF="genestac.adb">package body of Generic_Stack</A>,
+and compare it to its <A HREF="genestac.ads">package specification</A>,
+a <A HREF="stackint.ads">sample instantiation
+(that creates a Stack of Integers)</A>,
+another <A HREF="ststaint.ads">instantiation
+(creating a Stack of Stacks of Integers)</A>,
+a <A HREF="demo_gs.adb">short demonstration program</A>,
+and a <A HREF="tegensta.adb">longer test program</A> that puts
+the Stack through its paces.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Can customers of the generic stack package defined above use the
+Stack_Node_Access type and manipulate the internal structure
+of the Generic_Stack?
+<OL>
+<LI><A HREF="s12sfr1.htm">Yes</A>
+<LI><A HREF="s12sfr2.htm">No</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s12s6.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s13s1.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson12.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 12 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s12sf.htm">http://www.adahome.com/Tutorials/Lovelace/s12sf.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

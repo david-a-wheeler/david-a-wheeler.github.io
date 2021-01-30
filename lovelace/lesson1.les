@@ -1,0 +1,460 @@
+<COMMENT This is the lesson file for the Lovelace Ada tutorial, lesson 1.>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic and other WWW browsers.>
+
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=1>
+
+<COMMENT $Id: lesson1.les,v 1.10 1995/09/22 21:38:21 wheeler Exp wheeler $ >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+
+<SECTION NAME="What is Ada?">
+Ada is a computer programming language originally designed to support the
+construction of long-lived, highly reliable software systems.
+Its design emphasizes readability, avoids error-prone notation,
+encourages reuse and team coordination, and it is designed to be
+efficiently implementable.
+<P>
+<IMG SRC="nobug.gif" ALT="" HEIGHT=29 WIDTH=37 ALIGN=right>
+A significant advantage of Ada is its reduction of debugging time.
+Ada tries to catch as many errors as reasonably possible, as early as possible.
+Many errors are caught at compile-time by Ada that aren't caught or
+are caught much later by other computer languages.
+Ada programs also catch many errors at run-time if they can't be caught
+at compile-time (this checking can be turned off to improve performance
+if desired).
+In addition, Ada includes a problem (exception) handling mechanism so that
+these problems can be dealt with at run-time.
+
+<H2>Who uses Ada?</H2>
+
+Ada was originally designed for the U.S. Department of Defense (DoD) for
+real-time embedded systems.
+Ada is the most commonly used language in U.S. weapons systems
+<IFDEF BOOK>
+modernization [Hook 1995].
+<ELSE>
+modernization
+<A HREF="doduse.htm">(more
+information about the DoD use of Ada is available).</A>
+<ENDIF>
+<P>
+<IMG SRC="jet.gif" ALT="" HEIGHT=31 WIDTH=32 ALIGN=right>
+However, Ada's user base has expanded far beyond the U.S. DoD
+to many other areas such as
+large-scale information systems, distributed systems,
+and scientific computation.
+Major Ada niches include aerospace and safety-critical systems.
+An <A HREF="http://www.comlab.ox.ac.uk/archive/safety/lang-survey.html">informal
+1994 survey</A>
+concluded that Ada was the most popular language for safety-critical systems.
+<P>
+People use Ada for small projects as well as large ones, since Ada's
+error-catching capabilities (both compile-time and run-time)
+significantly reduce debugging time.
+Also, Ada's parallel constructs can take advantage of today's more advanced
+operating systems (such as Microsoft's Windows NT and Linux).
+<P>
+Many people use Ada when the application must run quickly.
+The Ada programming language was designed to be efficiently
+implementable, since one of its key application domains is in real-time
+embedded systems (where efficiency is critical).
+The actual efficiency of an Ada program, of course,
+depends on the the algorithms selected and the actual Ada compiler used.
+The first Ada compilers, like many other first compilers of a given language,
+generated inefficient code; modern Ada compilers
+generally generate relatively good code.
+Sadly, the performance of the initial Ada compilers created a myth of
+slow execution that is only beginning to disappear.
+The best test of efficiency, of course,
+is to benchmark a specific compiler with the
+type of problem you wish to solve.
+
+<H2>Where and how is Ada standardized?</H2>
+
+Ada was originally standardized by ANSI in 1983
+(ISO released an equivalent standard in 1987).
+Ada was recently revised to add some new capabilities;
+this revision is called `Ada 9X' or `Ada 95'.
+<!-- Its revision was actually completed in 1994, -->
+<!-- but due to paperwork delays at -->
+<!-- ISO it's technically considered a 1995 standard. -->
+Ada compiler vendors have generally updated their compilers to
+add the new Ada 95 features.
+This tutorial covers the capabilities of Ada 95, but will note which
+features are new to Ada 95.
+<P>
+<IMG SRC="book05.gif" ALT="" HEIGHT=33 WIDTH=33 ALIGN=right>
+Ada is officially defined in its <EM>reference manual</EM> (RM).
+<A HREF="http://www.adahome.com/rm95/rm9x-toc.html">The
+complete Ada 95 RM is available on-line as a hypertext document</A>.
+<IFDEF BOOK>
+If you have a web browser, you can read the Ada95 RM at URL
+"http://www.adahome.com/rm95/rm9x-toc.html".
+<ENDIF>
+However, the RM is not intended to be a tutorial and can be
+hard to understand if you're not already somewhat familiar with Ada.
+We will often refer to the RM, and feel free to look at it if you're
+interested in more detail about a particular subject.
+<P>
+Ada was not designed by a committee.
+The original Ada design was the winner of a language design competition;
+the winning team was headed by Jean Ichbiah
+(Ichbiah's language was called "Green").
+The 1995 revision of Ada (Ada 95)
+was developed by a small team led by Tucker Taft.
+In both cases, the design underwent a public comment period where the
+designers responded to public comments.
+<P>
+
+<H2>What exactly are Ada's capabilities?</H2>
+<OL>
+<LI>Packages (modules) of related types, objects,
+and operations can be defined.
+<LI>Packages and types can be made generic (parameterized through a template)
+to help create reusable components.
+<LI>Errors can be signalled as exceptions and handled explicitly.
+Many serious errors (such as computational overflow and invalid
+array indexes) are automatically caught and handled
+through this exception mechanism, improving program reliability.
+<LI>Tasks (multiple parallel threads of control) can be created and communicate.
+This is a major capability not supported in a standard way by many
+other languages.
+<LI>Data representation can be precisely controlled to support
+systems programming.
+<LI>A predefined library is included; it provides input/output (I/O),
+string manipulation, numeric functions,
+a command line interface, and a random number generator
+(the last two were available in Ada 83, but are standardized in Ada 95).
+<LI>Object-oriented
+programming is supported (this is a new feature of Ada 95).
+In fact, Ada 95 is the first internationally
+standardized object-oriented programming language.
+<LI>Interfaces to other languages (such as C, Fortran, and COBOL)
+are included in the language (these have been significantly
+enhanced in Ada 95).
+<IFDEF BOOK>
+At least one Ada compiler (from Intermetrics)
+can generate Java Virtual Machine (J-code)
+from Ada, so people can use Ada to develop Java applets and applications.
+<ELSE>
+At least one Ada compiler (from Intermetrics)
+can generate Java Virtual Machine (J-code)
+from Ada, so people can
+<A HREF="java.htm">use Ada
+to develop Java applets and applications</A>.
+<ENDIF>
+</OL>
+
+<H2>What's available for Ada?</H2>
+<P>
+There are
+<A HREF="http://www.adahome.com/Resources/Compilers/Compilers.html">many
+Ada compilers</A>, including
+<A HREF="http://www.adahome.com/Resources/Compilers/GNAT.html">a
+free Ada 95 compiler called GNAT
+based on the Free Software Foundation's gcc</A>.
+<A HREF="http://www.adahome.com/Resources/Tools/Tools.html">There
+are also many Ada-related tools</A>
+and
+<A HREF="http://www.adahome.com/Resources/References.html">on-line
+reference documents</A>.
+<A HREF="s14sf.htm">A later section of this tutorial
+<IFDEF BOOK>
+(lesson 14)
+<ENDIF>
+provides more information about on-line Ada information sources.</A>
+
+<QUESTION Type=Multiple-Choice>
+Which of the following is <EM>not</EM> an Ada capability?
+<CHOICES>
+<CHOICE ANS=1>Reduce errors and debugging time through early detection
+<CHOICE ANS=2>Object-oriented programming
+<CHOICE ANS=3>Efficiently implementable
+<CHOICE ANS=4>None of the above - Ada has all three of these capabilities.
+</CHOICES>
+<ANSWER ANS=4>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.
+Error reduction is an important capability of Ada.
+Ada constructs have been specifically designed to help detect
+errors as early as possible.
+<WHEN ANS=2>
+No, sorry, that's not right.
+It <EM>is</EM> true that the older Ada 83 didn't completely support
+object-oriented (OO) programming.
+Ada 83 was the closest non-OO programming language to support OO programming,
+and so it was often called an `object-based' language.
+Ada 95 has enhanced Ada 83 to become a fully object-oriented programming
+language, including inheritance.
+<WHEN ANS=3>
+No, sorry.
+Ada <EM>is</EM> efficiently implemented.
+The very first Ada compilers, like most first compilers for a language,
+were not very efficient, but they came out in the early 1980s.
+Many of todays' Ada compilers are extremely efficient.
+Indeed, there's a documented case where an Ada
+compiler did better than experienced assembly language programmers
+<A HREF="biblio.htm#elam1992">[Elam 1992]</A>.
+<P>
+Ada compilers can generate code comparable to C, C++, and Pascal compilers.
+Because of the way Ada was designed, Ada compilers
+can sometimes generate better code because they have more information that
+can be used for code optimization.
+For example, in a large number of cases an Ada compiler can do better
+than a C or C++ compiler can while passing parameters, because
+an Ada compiler knows when aliasing is not possible.
+<P>
+Some Ada compilers, such as the GNAT and DEC VAX Ada compilers,
+use the same (back-end) code generators as many other languages,
+and on those systems the Ada compiler's results should be at least as
+good as for other languages.
+<P>
+One paper that discusses this further is ``C vs. Ada: Arguing Performance
+Religion'' by David
+<A HREF="biblio.htm#syiek1995">Syiek [1995]</A>.
+<P>
+It is true that Ada run-time error-checking capabilities require some
+time and space, but they can be selectively or completely turned off.
+Since Ada compilers can often detect and optimize these away, they
+often do not have as much of a performance hit as you might expect even
+when left in.
+<WHEN ANS=4>
+Yes, that's right.
+<IFDEF BOOK>
+<ELSE>
+<P>
+This entire tutorial is broken into a number of sections, and
+most sections end in a quiz (like this one).
+Hopefully the process of answering these quizzes will
+help you remember the material.
+<ENDIF>
+</RESPONSES>
+
+<SECTION NAME="Simple Program">
+Here's a simple program in Ada that simply prints a message,
+often called the <EM>hello, world!</EM>
+<IFDEF BOOK>
+program:
+<ELSE>
+program (for the moment, ignore the buttons below the sample program):
+<ENDIF>
+<P>
+<!-- use FONT=PRE to eliminate link to WebAda. -->
+<TEXT TEMPLATE=compile FILE="hello.adb">
+<P>
+Here's an explanation of each line:
+<OL>
+<LI>
+The first line illustrates a comment; Ada comments begin with ``--''
+and end at the end of the line
+(C++ comments that begin with // work the same way).
+<LI>
+The second line illustrates a <EM>with clause</EM>, which
+specifies the <EM>library units</EM> (other items) that we need.
+This particular <EM>with clause</EM>
+specifies that we need <EM>Ada.Text_IO</EM>.
+The library unit <EM>Ada.Text_IO</EM> is a predefined
+library unit that provides operations to perform
+basic text input and output.
+<LI>
+The third line states that we're defining a new procedure
+named <EM>Hello</EM>. Note that in Ada there's nothing special about
+the name of the main program (in C and C++, it must be called <EM>main</EM>,
+and in Pascal, it must be specially identified as the <EM>program</EM>).
+<LI>
+The fourth line just has the keyword <EM>begin</EM>, which begins
+the definition of the procedure <EM>Hello</EM>.
+<LI>
+The fifth line calls Ada.Text_IO's procedure <EM>Put_Line</EM>, which prints
+a line to the current output (usually the screen) and then ends the
+current line.
+The basic syntax for calling a procedure is to give the library unit name,
+a period, the name of the procedure, and then list the parameters (if any)
+enclosed in parentheses (we'll see how to simplify this soon).
+In Ada, strings are surrounded by double quotes (the same as C and C++;
+Pascal uses single quotes).
+<LI>
+The last line ends the definition of the procedure.
+</OL>
+<P>
+Ada terminates each statement with a semicolon.
+This is like C and C++ and unlike standard Pascal
+(which uses semicolons as statement separators).
+<P>
+<IFDEF BOOK>
+If you're using an Ada 83 compiler instead of an Ada 95 compiler,
+replace the "Ada.Text_IO" with "Text_IO".
+<ELSE>
+Unless you're using a very old browser you should see a button labelled
+"Compile with WebAda" below the source code.
+If you have a working connection to the Internet, just press that button
+and you'll compile the Ada code with the
+<A HREF="http://sw-eng.falls-church.va.us/AdaIC/compilers/webada/">WebAda</A>
+system.
+You can also make changes and see the effect of those changes.
+There are a few other buttons you may find useful:
+the "reset" button will restore the the original text,
+the "verbose" option will let you turn on or off verbose results, and
+the "configure" checkbox will let you change compilation options.
+<P>
+Just a quick note - if you're using an Ada 83 compiler
+instead of an Ada 95 compiler,
+please see the <A HREF="note83.htm">note about using Ada 83</A>
+before compiling this program.
+WebAda will normally use an Ada 95 compiler.
+<ENDIF>
+<P>
+<QUESTION Type=Multiple-Choice>
+What is the name of the new procedure defined above?
+<CHOICES>
+<CHOICE ANS=1>Text_IO
+<CHOICE ANS=2>Hello
+<CHOICE ANS=3>Put_Line
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry. Text_IO is the name of a predefined library
+unit that provides us with operations to perform
+basic text input and output.
+<WHEN ANS=2>
+Right, `Hello' is the name of the procedure defined.
+<IFDEF BOOK>
+<ELSE>
+<P>
+If you're interested in compiling this and other sample programs
+with a real Ada compiler,
+<A HREF="how2comp.htm">an overview on how to use Ada compilers
+is available.</A>
+<ENDIF>
+<WHEN ANS=3>
+No, sorry. Put_Line is the name of a predefined procedure
+that prints text.
+</RESPONSES>
+
+<SECTION NAME="Use Clauses">
+Some programs might be very wordy if you had to always specify
+where a procedure is defined in order to use it.
+Thus, Ada provides the <EM>use clause</EM>.
+Whenever you use a procedure (or something else) but do not specify
+where it is defined, the Ada compiler will search all units
+listed in applicable <EM>use clause</EM>s.
+Use clauses follow the <EM>with clause</EM>,
+begin with the keyword <EM>use</EM>,
+and then list the library units to be searched.
+Here's how that first program would look with a <EM>use clause</EM>:
+
+<TEXT TEMPLATE=compile FILE="hello2.adb">
+
+<QUESTION TYPE=Multiple-Choice>
+If, in this new version of the program, you changed the second-to-last-line
+back to:
+<BR>
+Ada.Text_IO.Put_Line("Hello, world!");
+<BR>
+would the program still work?
+
+<CHOICES>
+<CHOICE ANS=1>Yes
+<CHOICE ANS=2>No
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN CORRECT>
+Right. The `use' clause simply means you don't have to include
+the name of the unit where `Put_Line' is defined, but you can do
+so if you wish to.
+<P>
+Ada includes some other mechanisms to reduce program wordiness.
+For example, you can "rename" packages so you can use shorter names.
+Ada predefines "Text_IO" as a shorter name for "Ada.Text_IO".
+<COMMENT Actually, this predefinition is more to support transition >
+<COMMENT from Ada 83, but this is the simplest place I can find to >
+<COMMENT introduce the "with"ing of just Text_IO. >
+<WHEN ANS=2>
+No, sorry.
+The `use clause' specifies where the Ada compiler should search,
+but you can always fully qualify the name of a procedure.
+</RESPONSES>
+
+<SECTION NAME="Simple Variable, Integers, Parameters and Exceptions">
+Let's create a program to show what a simple variable and
+parameter-passing look like.
+This program will print out powers of 2, starting with 1, ``forever''.
+We'll call this program procedure Compute.
+<P>
+Inside this procedure
+create a local procedure called Double which doubles any number given to it,
+and a local integer variable named `X'.
+<P>
+<TEXT TEMPLATE=compile FILE="compute.adb">
+<P>
+Note that the local variable called `X'
+is of type Integer with an initial value of one.
+Integers are used when you want to store possibly signed integers,
+and you don't care what the minimum and maximum range is.
+As we'll see later, there are other things you should do if you
+<EM>do</EM> care what the minimum and/or maximum range is.
+<P>
+Inside this new procedure is a local procedure called `Double', which
+takes a value and doubles it.
+A local procedure, like a local variable, can only be used inside
+the procedure surrounding it.
+This capability to nest procedures inside other procedures
+is useful in larger programs and is a standard
+capability in Pascal (though not in C or C++).
+<P>
+The phrase `in out' means that the value is both received and changed
+in the procedure.
+<P>
+The phrase "with .. Ada.Integer_Text_IO" permits use of
+a predefined Ada 95 package for performing text input and output on Integers.
+It includes an operation named "Put" that will print an Integer sent to it.
+<P>
+The second `begin' statement defines the Compute procedure itself.
+Compute has an infinite loop, which prints the current value
+and doubles it repeatedly.
+`Put' prints out the number, and `New_Line' causes the text
+to go to the next line.
+<P>
+Computers can't really compute an infinitely large value; sooner
+or later they'll run out of space to store the number.
+What will happen in this case?
+Some programming languages (notably C) simply permit garbage to be computed.
+Ada has a better approach: when a computation (such as doubling)
+cannot be performed, Ada raises an `exception'. Thus, sooner or later
+this program will halt with a message explaining why and where it halted.
+As we'll learn later, these exceptions can be caught and handled
+inside the program.
+<P>
+<QUESTION TYPE=Multiple-Choice>
+When a computation cannot be performed, what does Ada normally do?
+<CHOICES>
+<CHOICE ANS=1>Silently give the wrong answer
+<CHOICE ANS=2>Raise an exception
+<CHOICE ANS=3>Corrupt memory
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN CORRECT>
+Right.
+We'll learn more about exceptions later, but the key idea now
+is that Ada normally detects errors as soon as they occur.
+If you're curious, the name of the exception this program will raise is
+"Constraint_Error".
+<P>
+Also, a quick note for GNAT Ada compiler users -
+at the time of this writing GNAT only detects this
+particular error (integer overflow)
+at run-time if you give it the "-gnato" option.
+There are plans for this to eventually become the default in GNAT;
+see the GNAT documentation for more information.
+
+<WHEN ANS=1>
+No, sorry.
+<WHEN ANS=3>
+No, certainly not.
+</RESPONSES>

@@ -1,0 +1,807 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<COMMENT  Edit the following lines. >
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=12>
+<COMMENT $Id: lesson12.les,v 1.2 1995/04/28 20:32:53 wheeler Exp $ >
+
+<COMMENT  You'll probably want to uncomment and edit these lines: >
+<COMMENT  <PREVIOUS_LESSON LOCATION="URL_of_directory/" >
+<COMMENT  <NEXT_LESSON LOCATION="URL_of_directory/" >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+<COMMENT Each section has a title; SECTION starts a new section.>
+
+<SECTION NAME="Declaring Access Types">
+It is often very useful to have a variable that, instead of storing
+a value, stores a reference to some other object.
+Such variables are called <EM>access</EM> variables in Ada, and
+are essentially equivalent to pointers or references in other languages.
+One common use of access variables is to implement items of varying size.
+<P>
+To create such variables, first create a type for it; these types are
+called <EM>access</EM> types.
+Here's an example of an access type declaration,
+declaring that variables of type Node_Access
+can access (reference) objects of type Node:
+<P>
+<PRE>
+  type Node_Access is access Node;
+</PRE>
+<P>
+Here is the
+<A HREF="bnf.htm">BNF</A> for creating an access type to an object:
+<P>
+<PRE>
+  access_object_type_declaration ::= "type" new_type_name "is"
+                                    "access" ["all"] type_name ";"
+</PRE>
+<P>
+Variables with an access type can either refer to an object or be
+<EM>null</EM>.
+You can make an access variable null by assigning it the value of the
+keyword "null", and you can check if it's null by comparing the variable
+(using "=" or "/=") to "null".
+Basically, you can treat "null" as a special value that any access type
+can store.
+<P>
+The ability to "point" at other values is useful and efficient, but it
+can also be dangerous.
+It's easy to do the wrong thing with pointers and cause surprising results.
+Ada tries to limit the damage that you can do while maintaining efficiency.
+Ada does this through the following rules:
+<UL>
+<LI>
+All access type variables are initialized as null (unless you specifically
+initialize them to something else).
+<LI>
+All operations that use what an access value references first check
+to see if the access value is null.
+If the access value is null, the exception Constraint_Error is raised.
+<LI>
+Normally access-to-object types are limited to referring to
+objects ``created dynamically'', as we will discuss next.
+You must add the keyword ``all'' in the access type definition
+to permit an access type to refer
+to all objects of a given type; such access values are called
+<EM>general</EM> access objects and are new to Ada 95.
+One use for general access objects is to interface with C or C++ programs,
+since C and C++ pointers are essentially equivalent to
+Ada general access objects.
+Another important use for general access objects is for object-oriented
+programming, as we'll discuss later.
+<LI>"Arithmetic" is not permitted on access variables.
+This is like Java and Pascal, which do not permit pointer arithmetic, and
+unlike C and C++, which do support pointer arithmetic.
+If you desparately need it, Ada does have a way to do pointer arithmetic
+(see
+<A HREF="http://www.adahome.com/rm95/rm9x-toc-13-07.html">package
+System in RM 13.7</A>)
+but its use is strongly discouraged in most circumstances.
+</UL>
+<P>
+The Ada compiler will optimize these checks and initializations away
+if it can determine that they're unnecessary.
+You can also turn off these checks for a given subprogram if you know
+that that particular subprogram is totally correct.
+<P>
+Now that we know how to declare access types, let's see how we can use them.
+
+<QUESTION Type=Multiple-Choice>
+Which of the following will define an access type named Thing_Access?
+<CHOICES>
+<CHOICE ANS=1> type Thing_Access is access Thing;
+<CHOICE ANS=2> type access is Thing_Access;
+<CHOICE ANS=3> Thing_Access is access type;
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+That's right.
+<WHEN ANS=2>
+No, the name of a type follows the word "type".
+<WHEN ANS=3>
+No, try again.
+</RESPONSES>
+
+<SECTION NAME="Using Access Variables to Create Unbounded Types">
+Let's imagine that we want to create a long list of
+Integer values, and we don't know exactly how many Integer values
+will be in the list when we set up the list.
+A type that can store varying amounts of information with no fixed limit
+is called an <EM>unbounded</EM> type.
+Arrays can be used to create a list of values if you know
+how many (at most) could be in the list, but arrays alone are not
+enough for easily implementing unbounded types.
+<P>
+You can implement Ada types that handle unbounded amounts of information
+using access types (access types are useful for other situations too, but
+this is certainly one of their uses).
+The basic idea is to create a type called a "node" that stores both:
+<OL>
+<LI>a single piece of the data you want to handle and
+<LI>one or more access values referring to related nodes.
+You can use the access values to "connect" your pieces of data together.
+</OL>
+<P>
+Let's start simply and define something that could handle a list of
+Integers (technically this example is a singly linked list of Integers).
+Let's create a "Node" type that can hold one piece of data - an Integer - and
+a reference referring to the "Next" node in the list.
+<P>
+<PRE>
+  type List_Node is
+    record
+      Data        : Integer;
+      Next        : List_Node_Access;  -- Next Node in the list.
+    end record;
+</PRE>
+<P>
+To create a List_Node we'll need an access type; I'm calling it
+List_Node_Access.
+Here's the definition of List_Node_Access (you have to put this
+before the declaration of List_Node):
+<P>
+<PRE>
+  type List_Node_Access is access List_Node;
+</PRE>
+<P>
+Now we have a problem.
+Type List_Node depends on the definition of type List_Node_Access, but
+type List_Node_Access depends on the definition of type List_Node.
+Note the circularity - each type's definition depends on the other.
+This is a common situation when using access types.
+By Ada rules, you have to declare something before you can use it, and this
+would appear insoluable.
+The way to solve this is to first use an ``incomplete type declaration''
+for the node (this is the same thing you'd do in C or Pascal).
+An incomplete type declaration simply promises the Ada compiler that the
+given type with the given name will be defined later.
+An incomplete type declaration has the keyword "type", the name of the
+type that you plan to declare later, and an immediately following semicolon.
+For example, here's how you'd define the types List_Node and List_Node_Access:
+<P>
+<PRE>
+  type List_Node;  -- An incomplete type declaration.
+  type List_Node_Access is access List_Node;
+  type List_Node is
+    record
+      Data        : Integer;
+      Next        : List_Node_Access;  -- Next Node in the list.
+    end record;
+</PRE>
+<P>
+After defining an access type,
+you can then declare variables of access types using the normal
+variable declaration syntax.
+For example, you can create two
+access variables named Current and Root by declaring them as follows:
+<P>
+<PRE>
+  Current, Root : Tree_Access;
+</PRE>
+<P>
+<QUESTION Type=Multiple-Choice>
+Is the following true or false?
+<P>
+<EM>
+A way to implement unbounded types is to define a record (often
+called a "node") that stores
+(1) a piece of data and (2) one or more access values
+to connect that piece of data to another related piece of data.
+Thus, access types can be used to create data types that hold an "unbounded"
+amount of information.
+</EM>
+<CHOICES>
+<CHOICE ANS=1>True
+<CHOICE ANS=2>False
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right, that's all true.
+<WHEN ANS=2>
+No, sorry, that statement really is true.
+</RESPONSES>
+
+<SECTION NAME="Basic Operations with Access Values">
+Now that we can declare access types and know at least some of their
+potential uses, let's look at basic operations for access values.
+<P>
+One useful operation is one that will create a new List_Node object
+and then return an access value referencing this newly-created object.
+These new objects will be created in a general storage area and
+will <EM>not</EM> automatically disappear just because
+some subprogram has returned.
+The process of creating a new object in some storage area
+is called <EM>allocation</EM>.
+In C the allocation operation is called "malloc", while in Pascal and
+C++ it's called "new".
+Ada also calls this operation <EM>new</EM>, and Ada has the same
+syntax as C++ and Pascal;
+the keyword "new" is followed by the name of the type to be created.
+For example, here's how to create a two new objects of type
+List_Node, setting the value of "Current" to access one and the value
+of "Root" to the other one:
+<P>
+<PRE>
+  Current := new List_Node;
+  Root    := new List_Node;
+</PRE>
+<P>
+At this point, we say that Current accesses a List_Node, and Root
+accesses a different List_Node.
+<P>
+Once an access value accesses a real object (instead of being null), you
+can use the ``dot'' operation to refer to the values in the
+object accessed by the access value.
+This has the same syntax as using values in a record.
+For example,
+since we have created two new nodes, let's set the data for
+the node "Current" accesses to 1, and the data value for what Root
+accesses to 2:
+<P>
+<PRE>
+  Current.Data := 1;
+  Root.Data := 2;
+</PRE>
+<P>
+The nice thing about access values is that you can use them to
+"connect" components together into a more complex structure.
+You can "connect" components by assigning values to access values.
+For example, let's connect the nodes we've been using
+so that the "next" node after what Root accesses is what Current accesses.
+The way to do that is to change the value of "Root.Next".
+But what should its new value be? Well, its new value should be same
+as the value of "Current" so that they access the same node.
+Here's how to make that happen in Ada:
+<P>
+<PRE>
+  Root.Next := Current;
+</PRE>
+<P>
+If you're not familiar with access values this may cause you some headaches.
+One way to read that assignment statement is to read it as the
+following: "change Root.Next so that it now accesses the same thing
+that Current accesses".
+<P>
+There is a common way to draw such structures.
+Basically, draw every variable as a box; draw records as boxes subdivided
+into their record components.
+For non-access values, just write their value in.
+For access values, either write "null" (if its value is null) or an arrow
+from the box to whatever box the value accesses.
+Whenever you execute a "new" command, draw a new box.
+An assignment to an access value changes the destination of that arrow;
+the starting point of the arrow is described on the left hand side of the
+assignment, and the new destination of the arrow is whatever is referenced
+by the right hand side of the assignment.
+The following figure shows what we've done so far:
+<P>
+<IMG ALIGN=right SRC="access1.gif" ALT="[Access1]" WIDTH=245 HEIGHT=142>
+<BR>
+<P>
+In some cases you want to work with the "entire" object being
+accessed instead of just a piece of it.
+In that case, you use the pseudo-component ".all"; an access value with 
+".all" after it refers to what it accesses, not the access variable itself.
+For example, let's say that you
+have some procedure (My_Procedure) that requires as input a Tree_Node.
+Declaring such a procedure is easy:
+<P>
+<PRE>
+  procedure My_Procedure(Input : in Tree_Node);
+</PRE>
+<P>
+However, given this particular declaration, you can't just pass
+in an access value to a Tree_Node, because the
+types are different (an access value is different than what it accesses).
+To handle this, simply use the word "all" after the dot operation
+to refer to the entire object:
+<P>
+<PRE>
+  My_Procedure(Current.all);
+</PRE>
+<P>
+Many people get confused about assignment with and without the ".all" phrase.
+Let's contrast them.
+Here are two different statements that look similar, but are quite
+different in meaning:
+<P>
+<PRE>
+  Root.all := Current.all;  -- Statement (1).
+  Root     := Current;      -- Statement (2).
+</PRE>
+<P>
+If you execute statement (1),
+you will take the entire contents of what Current accesses, and
+copy those contents to what Root accesses.
+If you execute statement (2) instead of executing statement (1),
+you will not affect the underlying node that Root accesses -- you
+will change the value of Root itself so that Root will now access a different
+object - the node that Current accesses.
+<P>
+The following figures show how statement (1) and statement (2) differ.
+<P>
+<IMG SRC="access2.gif" ALT="[Access2]" WIDTH=250 HEIGHT=200>
+<IMG SRC="access3.gif" ALT="[Access3]" WIDTH=250 HEIGHT=200>
+<BR>
+<P>
+If you're familiar with ANSI C, the following "equivalencies" may help you
+understand how to use Ada's access types:
+<P>
+<PRE>
+    Ada Statement or Declaration        ANSI C Equivalent
+    --------------------------------    -------------------------------
+    type Node_Access is access Node;    typedef node *node_access;
+    Start : Node_Access;                node_access start = 0;
+    Current := new Node;                current = malloc(sizeof(node));
+    Current := Start;                   current = start;
+    Current.all := Start.all;           *current = *start;
+    Current.Data := 5;                  current->data = 5;
+</PRE>
+<P>
+
+<QUESTION Type=Multiple-Choice>
+Let's say you execute the following set of
+statements, where both Current and Root are of type List_Node_Access:
+<P>
+<PRE>
+  Current := new List_Node;
+  Root    := new List_Node;
+  Root.Data := 7;
+  Current.Data := 12;
+  Current := Root;
+  Root.Data := 6;
+</PRE>
+<P>
+After executing the statements listed above, what is the value of
+Current.Data?
+Hint: This is not an easy question.
+You may find it easier to answer by using drawings like the ones above.
+
+<CHOICES>
+<CHOICE ANS=1>7
+<CHOICE ANS=2>12
+<CHOICE ANS=3>6
+<CHOICE ANS=3>Unknown
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.
+<WHEN ANS=2>
+No, sorry.
+Current.Data is given the value 12 at one time, but the next statement
+says that Current should now access the same node that Root does.
+<WHEN ANS=3>
+That's correct.
+That was a tricky question, congratulations.
+Here's a figure showing the results of those statements:
+<P>
+<IMG ALIGN=right SRC="access4.gif" ALT="[Access4]" WIDTH=245 HEIGHT=142>
+<BR>
+<WHEN ANS=4>
+No, sorry.
+The value of Current.Data is known.
+</RESPONSES>
+
+<SECTION NAME="Using Access Values"
+Once you have an access type, you can do all sorts of interesting
+things with it.
+<P>
+One common use of access types is to "walk" down a list of nodes to do
+something to each data item.  A subprogram that examines each node in
+turn is sometimes called an <EM>iterator</EM>.
+Here's an example that prints in order
+the value of every node in a list of List_Nodes:
+<P>
+<PRE>
+  -- Assume that "Start" accesses the first node in the list.
+  Current := Start;  -- Set current to the start of the list.
+  while Current /= null loop -- while there is data:
+    Put(Current.Data);       -- Print the value of the Current node.
+    Current := Current.Next; -- Go to the next node in the list.
+  end loop;
+</PRE>
+<P>
+You can have more complex data structures than the simple list we've
+had so far by storing more than one access value in a node.  For example,
+a binary tree is a set of nodes, where each node has a way to locate its
+"parent" node, its "left child" node, and its "right child" node.
+Each node also has data it contains (for example, an Unbounded_String).
+Defining a record for a binary tree node using access values is easy:
+<P>
+<PRE>
+  type Tree_Node; -- Incomplete type declaration.
+  type Tree_Access is access Tree_Node;
+  type Tree_Node is
+    record
+      Parent      : Tree_Access;
+      Left, Right : Tree_Access;
+      Data        : Unbounded_String;
+    end record;
+</PRE>
+<P>
+Here's an example of statements using this tree data structure, if
+A and B are of type Tree_Access:
+<P>
+<PRE>
+  A := new Tree_Node;
+  B := new Tree_Node;
+  A.Data := To_Unbounded_String("Hello!");   -- assign some data
+  B.Data := To_Unbounded_String("Goodbye!");
+  A.Left := B;                               -- connect them.
+  B.Parent := A;
+</PRE>
+<P>
+If a data component is an access value, you can use it as you would any
+other access value.
+As a result, you can find statements with multiple dots (.) in them.
+For example, after running the program above, the value of
+A.Left.Data is "Goodbye!".
+<P>
+It's easy to incorrectly use access types and connect things the wrong way.
+Therefore, it's best to create subprograms that "do it correctly" and
+then use the subprograms instead.
+For example, you might create a subprogram that automatically creates
+new nodes, sets their data value, and connects them up to an existing
+node in the correct place.
+The best approach is to use pre-created reusable components that meet your
+needs if they're available.
+<P>
+
+<QUESTION Type=Multiple-Choice>
+In the tree data structure example above, what is the value of B.Parent.Data?
+<CHOICES>
+<CHOICE ANS=1>An empty Unbounded_String.
+<CHOICE ANS=2>"Hello!" as an Unbounded_String.
+<CHOICE ANS=3>"Goodbye!" as an Unbounded_String.
+<CHOICE ANS=4>None; an exception would be raised.
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.
+An Unbounded_String starts with the "empty" value as its initial
+value, but it's set later.
+<WHEN ANS=2>
+Quite right.
+The value of B.Parent is the same node that A accesses, and so
+B.Parent.Data is "Hello!" as an Unbounded_String.
+<WHEN ANS=3>
+Sorry.
+Please try again.
+<WHEN ANS=4>
+No, that's not true.
+If B.Parent were null, your answer would be correct, but B.Parent was set
+to something other than null.
+</RESPONSES>
+
+<SECTION NAME="Access Parameters (For Object Orientation)">
+
+Often when developing object-oriented systems
+you will want to pass around access values to tagged types
+(we discussed tagged types in <A HREF="lesson7.htm">lesson 7</A>).
+Ada 95 adds a new pseudo-mode called "access" to help you build OO
+systems using access types.
+<P>
+If you recall, every parameter for a subprogram has to be of mode
+<I>in</I>, <I>in out</I>, or <I>out</I>.
+You can use the keyword "access" as a mode (followed by a type name) instead.
+Here's an example:
+<P>
+<PRE>
+ procedure Get(Agent : access Occupant; Direct_Object : access Occupant'Class);
+</PRE>
+<P>
+So what in the world does this example mean??
+Here's the answer:
+<UL>
+<LI>
+When an "access mode" is followed by an ordinary tagged type,
+it means that the input parameter (in this case Agent) must be
+an access value of the given type (in this case Occupant).
+More importantly, this procedure can be overridden, and the
+type of the <I>object being accessed</I> will determine which subprogram
+to dispatch to.
+Thus, we could create another subprogram called "Get" for a descendent
+of Occupant, and that subprogram Get would override the Get defined here.
+This is an essential part of being an OO language - we can dispatch to
+a given program using the current data value.
+Access parameters let us dispatch using the access value.
+<LI>
+When an "access mode" is followed by a class type,
+it means that the input parameter (in this case Direct_Object) must be
+an access value of the given type (in this case Occupant) or <I>any</I>
+of its descendents.
+In this case we do <I>not</I> dispatch on this parameter,
+since any of the descendents will do for this subprogram.
+In this case, access parameters let us accept a wide range of types,
+instead of just a specific access type.
+</UL>
+<P>
+There's an important requirement for access parameters - null values are
+not permitted.
+If you want to permit null values, use the modes in, out, or in out with
+an ordinary access type.
+<P>
+It's difficult to understand access parameters
+without more context, so we'll defer discussing this further until
+<A HREF="lesson18.htm">lesson 18</A> where we will
+look at examples of this.
+What you need to understand right now is that if you're using access types
+and object-oriented programming, you will probably want to use
+the pseudomode "access".
+<QUESTION Type=Multiple-Choice>
+Given the following procedure declaration:
+<P>
+<PRE>
+ procedure Jump(E : access Occupant'Class);
+</PRE>
+<P>
+Will a call to procedure Jump dynamically dispatch to one of many
+subprograms depending on the exact type of "E"?
+<CHOICES>
+<CHOICE ANS=1>Yes, Jump will dynamically dispatch.
+<CHOICE ANS=2>No, Jump will not dynamically dispatch.
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+Sorry, that's not correct.
+Notice that this is an access to a <EM>class</EM> type.
+This one procedure can accept an access value to any type in an entire class.
+Since this one procedure can take any of those types, there's no need to
+dynamically dispatch to one of many different procedures.
+<WHEN ANS=2>
+That's right.
+Again, uses for this will become clearer in context;
+we'll see more in lesson 18.
+</RESPONSES>
+
+<SECTION NAME="Unchecked_Deallocation">
+Over time it's possible that some objects will no longer
+be referenced.
+Handling this case is called ``garbage collection.''
+Ada was designed to permit, but not require, automatic garbage collection.
+Since most Ada compilers do not perform automatic garbage collection,
+it's more portable to assume that garbage collection won't be performed
+automatically.
+Note that Ada compilers that generate
+<IFDEF BOOK>
+Java J-code
+<ELSE>
+<A HREF="http://www.yahoo.com/Computers/Languages/Java">Java</A> J-code
+<ENDIF>
+(bytecodes) <EM>do</EM> perform automatic garbage collection.
+<P>
+Ada provides a generic procedure to release an object if it's no
+longer being referenced.
+This procedure is equivalent to ``free'' in C and ``delete'' in C++.
+This generic procedure's name is ``Unchecked_Deallocation''.
+Since it's a generic, you need to instantiate the generic using the
+access type you're using.
+By convention, the name of the instantiation is usually called "Free".
+<P>
+Here's the official definition of generic procedure
+Unchecked_Deallocation:
+<P>
+<PRE>
+  generic
+    type Object(&lt;&gt;) is limited private;
+    type Name   is access  Object;
+  procedure Unchecked_Deallocation(X : in out Name);
+</PRE>
+<P>
+Note that we need to pass it two things; a type, and the access to that type.
+Here's a simple example - let's instantiate a procedure called ``Free''
+that will let us release objects when they're no longer used:
+<P>
+<PRE>
+  procedure Free is new Unchecked_Deallocation(Tree_Node, Tree_Access);
+</PRE>
+<P>
+Now that we've instantiated a procedure called ``Free'', we can call it.
+Let's continue our example; imagine that we don't want to use
+the node we created in the last section any more.
+That's fine, we'll just call the new ``Free'' routine we've created:
+<P>
+<PRE>
+  Free(Current);
+</PRE>
+<P>
+When Free returns, the variable Current will have the value "null", and
+the memory previously accessed by Current will have been released.
+Any instantiation of Unchecked_Deallocation will automatically call
+any finalization operations defined for the enclosed types, as you would expect.
+<P>
+An important problem arises here that also arises in other languages
+such as C, C++, and Pascal:
+what if there's another access type that refers to that object?
+In our example, the access variable ``Root'' still refers to an object,
+but that object no longer exists.
+Any attempt to use Root to access its object may result in unpredictable
+behavior.
+While Ada provides a number of protections in the use of access variables,
+this is one problem which Ada (as well as some other languages)
+doesn't completely protect against.
+<P>
+This is an area where there is a strong tension between the desire
+to be safe and easy to use versus the desire to be predictably efficient.
+Some languages require deallocation to be handled automatically;
+this is called <EM>automatic garbage collection</EM>.
+Examples of such languages include Smalltalk, Eiffel, and Java.
+Automatic garbage collection is really convenient, so why wouldn't
+everyone want it?
+Well, the problem with automatic garbage collection is that:
+<P>
+<UL>
+<LI>
+automatic garbage collection can cause a significant performance overhead.
+<LI>
+automatic garbage collection can cause performance to be unpredictable.
+Collection overhead might appear at any time, instead of when a specific
+allocation or deallocation call is made.
+<LI>
+automatic garbage collection is difficult to implement well (and thus
+can be expensive to implement well).
+</UL>
+<P>
+The Ada specification does not require automatic garbage collection, but
+Ada is explicitly defined to permit automatic garbage collection.
+Compiler vendors are free to implement it at their option.
+Ada does require that Unchecked_Deallocation be available, which will do
+nothing if there's an automatic garbage collector.
+If you're using an Ada compiler that doesn't do automatic garbage collection
+(true for most) and you're concerned about a incorrect deallocation, you
+can search for all uses of Unchecked_Deallocation.
+<P>
+Unchecked_Deallocation works just fine on any object, including arrays.
+<!-- This is different than C++, which silently causes bad things to happen -->
+<!-- if you use the wrong delete operation. -->
+
+<QUESTION Type=Multiple-Choice>
+Which of the following statements is true?
+<CHOICES>
+<CHOICE ANS=1>The Ada specification prohibits automatic garbage collection.
+<CHOICE ANS=2>The Ada specification permits automatic garbage collection.
+<CHOICE ANS=3>The Ada specification requires automatic garbage collection.
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.
+There are a few Ada compilers that perform automatic garbage collection.
+<WHEN ANS=2>
+That's correct.
+<WHEN ANS=3>
+No, sorry.
+Many Ada compilers do not perform automatic garbage collection.
+</RESPONSES>
+
+<SECTION NAME="Access Variables: Putting It All Together">
+At this point you've seen a lot of different capabilities.
+You've seen information on access values,
+and in previous lessons you saw information on controlled types and generics.
+The question is, how does this all work together?
+<P>
+To help you see how these different capabilities can work together, I've
+built a sample package combining these different ideas.
+You don't need to understand every little nuance at this time, though
+I've given you enough information to do so.
+Concentrate on understanding the big picture the first time you
+read this.
+<P>
+The sample package I've developed is a generic stack package,
+similar to the example we saw in the section on generics.
+Now, however, we can use access types to implement an unbounded stack -
+we no longer need to be limited to any particular size.
+We will want to permit users to assign stacks to other stacks,
+so we will use "Ada.Finalization" and implement type Stack as a
+child of type Controlled so we can control how assignment
+and finalization occurs
+(we discussed type Controlled in the
+<A HREF="s7sf.htm">last section of lesson 7</A>).
+<P>
+We will have push and pop operations as before.
+Let's add an "Empty" operation to erase the contents of a stack, and a
+boolean function "Is_Empty" that will return True
+if there's no data in the stack.
+We'll also add an "=" operation that will return True if two stacks are equal
+(two stacks are equal if they have the same length and contain equal
+data in the same order).
+<P>
+I recommend that you always consider adding a "swap" operation to reusable
+data types
+<A HREF="biblio.htm#wheeler1992">[Wheeler 1992]</A>;
+note that swap operation can be implemented very efficiently
+using access types.
+A "Length" operation is also defined so you can find how many items are
+in the stack.  Note there's a new type, "Natural".
+Natural is a predefined subtype of Integer that starts at zero.
+Since we can't have a negative number of objects on a stack, it's
+more appropriate to return a Natural than to return an Integer.
+<P>
+When you're implementing an unbounded type you should almost always
+override the default Adjust and Finalize procedures - if you don't
+you're probably doing something wrong.
+If we didn't override Adjust, an assignment would cause two
+"different" stacks to point to the same data nodes.
+As a result, any later finalizing we did would affect other stacks, even
+if they shouldn't.
+If we didn't override Finalize, we wouldn't Free the data nodes that we should.
+<P>
+Given all that, here is a generic package specification for Generic_Stack:
+<P>
+<TEXT TEMPLATE=compile FILE="genestac.ads">
+<P>
+Note the tricky thing that was done here - the node isn't even completely
+defined in the package!
+Since the node wasn't passed in or out of anything, we can leave it as
+an incomplete type definition and complete the definition in the
+generic package body.
+<P>
+Since it's a generic, we have to instantiate the generic with a specific
+type to use it.
+For test purposes, let's instantiate the generic to allow us to
+stack up Integers:
+<P>
+<TEXT TEMPLATE=compile FILE="stackint.ads">
+<P>
+And finally, let's write a short test program to demonstrate using the
+generic stack:
+<P>
+<TEXT TEMPLATE=compile FILE="demo_gs.adb">
+<P>
+The generic package body implements the operations defined by the
+generic package declaration
+using access types as we've discussed.
+<IFDEF BOOK>
+The package body of Generic_Stack is printed near the end of this book,
+along with sample instantiations and demonstration programs.
+<ELSE>
+Feel free to examine the
+<A HREF="genestac.adb">package body of Generic_Stack</A>,
+and compare it to its <A HREF="genestac.ads">package specification</A>,
+a <A HREF="stackint.ads">sample instantiation
+(that creates a Stack of Integers)</A>,
+another <A HREF="ststaint.ads">instantiation
+(creating a Stack of Stacks of Integers)</A>,
+a <A HREF="demo_gs.adb">short demonstration program</A>,
+and a <A HREF="tegensta.adb">longer test program</A> that puts
+the Stack through its paces.
+<ENDIF>
+
+<QUESTION Type=Multiple-Choice>
+Can customers of the generic stack package defined above use the
+Stack_Node_Access type and manipulate the internal structure
+of the Generic_Stack?
+<CHOICES>
+<CHOICE ANS=1>Yes
+<CHOICE ANS=2>No
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+Sorry, that's not correct.
+Do you see the word "private"?
+<WHEN ANS=2>
+That's right; that's in the private part of the package.
+This is important to note - even when something is implemented using
+access types, that doesn't mean that everyone needs to see how stacks
+are implemented.
+In this example, customers can push and pop values on a stack without
+knowing how access values work.
+<P>
+Note that this version of Generic_Stack is composable.
+Since this version supports assignment (:=) and equality (=), we can
+create stacks of stacks.
+Even if you never create a stack of stacks, checking to see if a
+reusable component is composable is a good way to check on the
+generality of a resuable component
+<A HREF="biblio.htm#wheeler1992">[Wheeler 1992]</A>.
+</RESPONSES>
+

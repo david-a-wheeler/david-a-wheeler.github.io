@@ -1,0 +1,846 @@
+#!/usr/bin/perl -s
+# 
+# This is mklesson, a `lesson compiler.'
+# Mklesson takes a lesson file (.les) as its sole argument, and uses it to
+# generate a set of hypertext tutor files in HTML (.html) format.
+# The generated files are created in the current directory.
+# Status information is sent to standard output (which is usually the screen).
+#
+# Usage Example:
+#     mklesson lesson9.les
+#
+# Options:
+#   -a  alphabetic filenames (use "s" instead of "-" in
+#       generated filenames)
+#   -b  book
+#   -d  define (not implemented)
+#   -s  short filenames (.htm instead of .html)
+#
+# If you're generating ISO 9660 CD-ROMS, use "-s -a".
+#
+# $Id: mklesson,v 1.15 1995/08/09 21:07:40 wheeler Exp $
+#
+# See the user's guide in file userg.html and formatmk.txt.
+#
+# Input:
+#   (argument 1) -- filename of lesson (.les) file.
+#   template -- file with templates used for file generation.
+#   default  -- if this file exists, it is read to find default settings
+#               (its format is identical to a lesson header section).
+# 
+#
+# Output: The program generates files with the following naming patterns:
+#    sLESSON-SECTION.html  - text for lesson number LESSON, section SECTION.
+#                            If this is the last one, SECTION is "f" (final)
+#                            so that the next lesson can always link
+#                            backwards correctly (didn't use "l" for last,
+#                            because it looks too much like a "1").
+#    sLESSON-SECTIONrRESPONSENUMBER.html - text for response RESPONSENUMBER
+#    lessonLESSON.html    - lesson outline.
+#
+#    With the "-a" option, the dashes above become "s".
+#
+#
+# This program is written in the programming language perl because it's
+# a relatively short program that performs text processing (a perl strength),
+# and I wanted it to be VERY portable (perl is widely available).
+# Perl has some disadvantages, in particular, please be careful modifying
+# this program because the Perl language syntax is so awful that it's
+# as though it was designed to maximize error creation.
+#
+# Copyright (C) 1994 David A. Wheeler.
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+# Since mklesson is free software, if you modify this program and
+# then distribute it (or results generated from it) you ARE REQUIRED
+# to distribute & permit anyone to copy the modified version of this program.
+#
+# You CAN use this program to generate
+# proprietary tutorials, just as you can use gcc to generate
+# proprietary executables. See the GPL for more information.
+
+
+# START OF MAIN PROGRAM
+
+if (defined($s)) {
+   # a "-s" option uses Short extension names (.htm).
+   $html_extension = ".htm";
+}
+else {
+   # without a "-s" option, generate ".html" extensions.
+   $html_extension = ".html";
+}
+
+# This version has primitive support for preprocessing commands of form:
+# <IFDEF BOOK>
+# [<ELSE> ... ]
+# <ENDIF>
+# In the long term I'd like to support arbitrary preprocessing "define"
+# flags, but for now there only one flag, "BOOK".
+# You can set "BOOK" with the "-b" flag.
+# Eventually there will be another parameter to set arbitrary flags.
+
+#  -b ("book") option.
+$is_book = 0;
+if (defined($b)) {
+ $is_book = 1;
+}
+
+# book_state has one of three values:
+#   0 = normal text.
+#   1 = inside an <IFDEF BOOK>. Print only if $is_book.
+#   2 = inside an <ELSE> of <IFDEF BOOK>. Print only if not $is_book.
+$book_state = 0;
+
+#  -a ("alphabetic") option.
+$alphabetic = 0;
+$separator= '-';
+if (defined($a)) {
+ $alphabetic = 1;
+ $separator= 's';
+}
+
+
+&initialize_variables;
+&read_in_template;  # Load the template file into memory.
+&read_in_defaults;  # Load the contents of file "default".
+
+# Open & process the lesson file.
+$lesson_source=shift;
+&open_lesson_file;
+&process_input_header;
+&process_input_body;
+&change_timestamp_file($lesson_source);
+
+&move_in_new_files;
+
+# END OF MAIN PROGRAM
+
+
+# SUBROUTINES:
+
+sub process_input_header {
+ # Process input file as a lesson header section.
+ # Stop processing at end-of-file or a <SECTION> marker.
+ # (The input file could be a "lesson" file or "default" file)
+
+ while (&read_line) {
+  if (m/^ *<TUTOR .*NAME="([^"]*)"/i) {
+    if (($tutor_name ne "") && ($tutor_name ne $1) )
+       {die "Cannot redefine tutor name"};
+    $tutor_name=$1;
+    print "Tutor name is $tutor_name\n";
+    }
+  elsif (m/^ *<LESSON .*NUMBER=([0-9]+)/i) {
+   if ($lesson_number != 0) {die "Cannot redefine lesson number"};
+   $lesson_number=$1;
+   $lesson_outline_URL = "lesson${lesson_number}" . $html_extension;
+   print "Lesson number is $lesson_number\n";
+   }
+  elsif (m/^ *<AUTHOR .*NAME="([^"]*)".*EMAIL="([^"]*)"/i) {
+   $author_name=$1;
+   $author_email=$2;
+   print "Author name is $author_name\n";
+   print "Author email (address) is $author_email\n";
+   }
+  elsif (m/^ *<AUTHOR .*ADDRESS="(.*)">$/i) {
+   # Note: this format is slightly different, grabbing the ENTIRE line.
+   # This is so that the address can include anchors and such, which
+   # require the use of " and > characters.
+   $author_address=$1;
+   print "Author address is $author_address\n";
+   }
+  elsif (m/^ *<PREVIOUS_LESSON .*LOCATION="([^"]*)"/i) {
+   if ($previous_lesson_location_set != 0)
+       {die "Cannot redefine previous lesson location"};
+   $previous_lesson_location = $1;
+   $previous_lesson_location_set = 1;
+   print "Previous lesson location is $previous_lesson_location\n";
+   }
+  elsif (m/^ *<NEXT_LESSON .*LOCATION="([^"]*)"/i) {
+   if ($next_lesson_location_set != 0)
+      {die "Cannot redefine next lesson location"};
+   $next_lesson_location = $1;
+   $next_lesson_location_set = 1;
+   print "Next lesson location is $next_lesson_location\n";
+   }
+  elsif (m/^ *<MASTER_OUTLINE .*HREF="([^"]*)"/i) {
+   if ($master_outline_URL_set != 0)
+     {die "Cannot redefine master lesson outline URL"};
+   $master_outline_URL = $1;
+   $master_outline_URL_set = 1;
+   print "Master outline URL is $master_outline_URL\n";
+   }
+  elsif (m/^ *<TUTOR_HOME_PAGE .*HREF="([^"]*)"/i) {
+   if ($tutor_home_page_set != 0) {die "Cannot redefine tutor home page URL"};
+   $tutor_home_page_URL = $1;
+   $tutor_home_page_URL_set = 1;
+   print "Tutor home page URL is $tutor_home_page_URL\n";
+   }
+  elsif (m/^ *<TUTOR_MASTER_COPY_URL .*HREF="([^"]*)"/i) {
+   if ($tutor_master_copy_URL_set != 0)
+     {die "Cannot redefine tutor master copy URL"};
+   $tutor_master_copy_URL = $1;
+   $tutor_master_copy_URL_set = 1;
+   print "Tutor master copy URL is $tutor_master_copy_URL\n";
+   }
+  elsif (m/^<SECTION /i) {last}
+  elsif (m/^ *$/) {} # Do nothing with blank lines.
+  else {
+    print "WARNING: LINE IN HEADER OF FILE IGNORED, TEXT IS:";
+    print $_;
+  }
+ }
+ # We found a SECTION header or end of file. Stop processing lesson header.
+}
+
+sub process_input_body {
+  # Process body of a lesson file (it should have 2 or more sections).
+
+  # Errorcheck - we should have gotten TUTOR, LESSON, and AUTHOR.
+
+  if ($lesson_number < 1)
+     {die "Sorry, no valid lesson number encountered!"};
+
+  # Set up constants used in the rest of the program & open outline file.
+  # This is the filename for the generated outline.
+  $lesson_outline = "lesson${lesson_number}" . $html_extension;
+  if (!open(OUTLINE, ">${lesson_outline}.new"))
+    {die "Sorry, cannot open output lesson outline file ${lesson_outline}"};
+  &substitute_and_append("outline.head", "outline");
+
+  # Process body of .les file.
+
+  while ($_ ne "") {  # While there's still some text to process.
+    if (m/^<SECTION /i) { &process_section; }
+    else { print "Warning: text ignored outside of a section: $_" };
+    &read_line; # Done processing; read in the next line.
+  }
+
+  # Done with all sections; close everything up.
+  &close_section_if_necessary;
+  &substitute_and_append("outline.tail", "outline");
+  close(OUTLINE);
+  close(IN);
+}
+
+sub process_section {
+ # Process a single section from a lesson file.
+ # Precondition: current line should have a SECTION command.
+ &close_section_if_necessary; # Close previous section if necessary.
+ $section_number++;
+ # In the last section, use "f" as the section number in the filename
+ # so that the next lesson can link back to it correctly.
+ if ($section_number == $number_of_sections)
+    {$section_number_file_rep = "f"}
+ else
+    {$section_number_file_rep = $section_number};
+ # The only way to get here is if $_ contains <SECTION ...>; get its name.
+ $title= $_;
+ $title =~ s/^<SECTION .*NAME="([^"]*)".*$/$1/i;
+ chop($title);
+ print "Processing Section ${lesson_number}.${section_number}, ";
+ print "Name (Title) = $title\n";
+ $section_filename="s${lesson_number}${separator}${section_number_file_rep}" .
+                   $html_extension;
+ if (!open(SECTION, ">${section_filename}.new"))
+   {die "Sorry, cannot open section file ${section_filename}"};
+ $section_file_open = 1;
+
+ &determine_next_section_URL;
+ &determine_previous_section_URL;
+ $section_question_URL = "s${lesson_number}${separator}" .
+                         "${section_number_file_rep}" . $html_extension .
+                         "#quiz";
+ $section_has_question = 0; # We haven't seen section question yet.
+
+ print OUTLINE '<LI><A HREF="', ${section_filename}, '">', ${title}, "</A>\n";
+ 
+ &reset_set_response;
+ # Insert the section header.
+ &substitute_and_append("section.head", "section");
+
+ while (!eof(IN)) {
+  &read_line;
+
+  # Is this the start of a question?
+  if (m/^<QUESTION[ >]/i) {&process_question;};
+
+  # Is this the end of the section?
+  if (m/^<SECTION /i) {&process_section; last}; # recurse.
+  if (m/^<\/SECTION /i) {&close_section_if_necessary; last};
+
+  # Normal text, just append it into the section.
+  print SECTION $_;
+ }
+}
+
+
+sub close_section_if_necessary {
+ if ($section_file_open == 1) {
+   if ($section_has_question == 0) {
+      # No quiz question - insert the no_question template.
+      &substitute_and_append("section.no_question", "section");
+   }
+   &substitute_and_append("section.tail", "section");
+   close(SECTION);
+   $section_file_open = 0;
+ }
+}
+
+sub substitute_and_append {
+ local($template_chunk, $file_to_append) = @_;
+
+ # Append to $file_to_append the contents of $template_chunk
+ # after performing appropriate substitutions.
+
+ # $template_chunk is a string containing the name of the template chunk
+ #              from the template file to read in & perform substitutions on.
+ # $file_to_append is a string containing the name of the file handler
+ #              to append to. This is a kludge; ideally we would pass in
+ #              actual file handle, but perl apparantly can't pass file
+ #              handles, so we pass in a string instead.
+
+ local($template_text) = $template{ $template_chunk };
+
+ # Substitute markers in the template with their current values.
+
+ $template_text =~ s/\[TUTOR_NAME\]/${tutor_name}/g;
+ $template_text =~
+     s/\[FULL_SECTION_NUMBER\]/${lesson_number}.${section_number}/g;
+ $template_text =~ s/\[SECTION_TITLE\]/${title}/g;
+ $template_text =~ s/\[SECTION_NAME\]/${title}/g; # likely misspelling
+ $template_text =~ s/\[AUTHOR_EMAIL\]/${author_email}/g;
+ $template_text =~ s/\[AUTHOR_ADDRESS\]/${author_address}/g;
+ $template_text =~ s/\[AUTHOR_NAME\]/${author_name}/g;
+ $template_text =~ s/\[ANSWER_NUMBER\]/${current_response}/g;
+ $template_text =~ s/\[LESSON_NUMBER\]/${lesson_number}/g;
+ $template_text =~ s/\[LESSON_OUTLINE_URL\]/${lesson_outline_URL}/g;
+ $template_text =~ s/\[TUTOR_HOME_PAGE_URL\]/${tutor_home_page_URL}/g;
+ $template_text =~ s/\[TUTOR_MASTER_COPY_URL\]/${tutor_master_copy_URL}/g;
+
+ $template_text =~ s/\[SECTION_FILENAME\]/${section_filename}/g;
+ $template_text =~ s/\[RESPONSE_FILENAME\]/${response_filename}/g;
+
+ $template_text =~ s/\[MASTER_OUTLINE_URL\]/${master_outline_URL}/g;
+ $template_text =~ s/\[TODAYS_DATE\]/${todays_date}/g;
+ $template_text =~ s/\[TODAYS_YEAR\]/${todays_year}/g;
+
+ # These values may change from section to section.
+ $template_text =~ s/\[NEXT_SECTION_URL\]/${next_section_URL}/g;
+ $template_text =~ s/\[PREVIOUS_SECTION_URL\]/${previous_section_URL}/g;
+ $template_text =~
+   s/\[THE_PREVIOUS_SECTION_OR_HOME\]/${the_previous_section_or_home}/g;
+ $template_text =~
+   s/\[CONFIRM_SKIP_SECTION_URL\]/${confirm_skip_section_URL}/g;
+ $template_text =~
+   s/\[SECTION_QUESTION_URL\]/${section_question_URL}/g;
+
+
+ # Determine where to append this line & append it.
+ if    ($file_to_append eq "section")  {print SECTION  $template_text;}
+ elsif ($file_to_append eq "response") {print RESPONSE $template_text;}
+ elsif ($file_to_append eq "outline")  {print OUTLINE  $template_text;}
+ else {die "Unexpected append parameter value $file_to_append!"};
+}
+
+sub process_question {
+# Process the question in the section.
+
+ $section_has_question = 1;
+ &substitute_and_append("section.question.head", "section");
+
+ # Eliminate marker. If there's text left on this line, use it.
+ s/<QUESTION[^>]*> *//i;
+ chop;
+ if ($_ ne "") {print SECTION "$_\n"};
+ 
+ # Copy text until there's a <CHOICES> marker.
+ while (!eof(IN)) {
+  &read_line;
+  if (/^<CHOICES/) {last};
+  if (/^<SECTION/) {die "Error - previous question had no choices."};
+  print SECTION;
+ }
+
+ # We've sent out the question to its end.
+
+ &process_choices;
+ &process_optional_responses;
+ &generate_default_responses;
+}
+
+
+sub read_line {
+# Read line from file handle <IN>. Sets $_ to its new value, and returns it.
+# Discards <COMMENT > lines, processes TEXT lines.
+# Primitively handles IFDEF.
+# This recurses, which is less efficient but who cares.
+ $_ = <IN>;
+ if (/^ *<COMMENT /i) {&read_line}; # Don't include COMMENT lines.
+
+ # book_state has one of three values:
+ #   0 = normal text.
+ #   1 = inside an <IFDEF BOOK>. Print only if $is_book.
+ #   2 = inside an <ELSE> of <IFDEF BOOK>. Print only if not $is_book.
+
+ if (/^ *<IFDEF BOOK>/i) {$book_state = 1; &read_line};
+ if (/^ *<ELSE>/i) {
+    die "ELSE but not in an IFDEF BOOK!" if $book_state == 0;
+    if ($book_state == 1) {$book_state = 2;}
+    else                  {$book_state = 1;}
+    &read_line;
+ }
+ if (/^ *<ENDIF>/i) {$book_state = 0; &read_line};
+
+ if (/^ *<TEXT /i) {&read_textfile}
+ else {
+    # if we're in the wrong state, recurse reading the next line.
+    if (($book_state == 1) && ($is_book == 0)) {&read_line;}
+    elsif (($book_state == 2) && ($is_book == 1)) {&read_line;}
+    # We can use the line we've read in.
+    else {$_;} # Return the value of the line read in.
+ }
+}
+
+
+sub count_lines_in_file {
+  # Takes arg1 = filename; returns number of lines in file (0 or more).
+  my ($filename) = shift @_;
+  $count = 0;
+  if (!open(COUNTFILE, "<${filename}"))
+    {die "Sorry, cannot open file ${filename}"};
+  while (<COUNTFILE>) { $count += 1;}
+  close(COUNTFILE);
+  return $count;
+}
+
+sub read_textfile {
+# Read in an entire non-HTML text file.
+# Sets $_ to the file contents, and returns $_'s value.
+# Performs substitutions so that "special" HTML characters
+# come out correctly (&, <, etc.)
+  my $lines_in_textfile = 0;
+  my $lines_plus_one_in_textfile = $lines_in_textfile + 1;
+  my $template_name = "";
+  my $temporary = "";
+
+  m/^ *<TEXT .*FILE="([^"]*)"/i;
+  $text_filename=$1;
+  if (m/^ *<TEXT .*TEMPLATE="?([^"> ]*)/i) {
+    $template_name = $1;
+    $lines_in_textfile = &count_lines_in_file($text_filename);
+    $lines_plus_one_in_textfile = $lines_in_textfile + 1;
+  }
+
+  if (m/FONT=PRE/i) {$use_pre=1}
+  else              {$use_pre=0};
+  $file_contents = "";
+  if ($use_pre) {$file_contents .= "<PRE>\n"};
+
+  # This is kludgy; the substitutes are repeated below, and other
+  # chunk substitutes are supported.  In the long term, this should
+  # all be replaced with a nice simple substitution system.
+  if ($template_name) {
+      $temporary = $template{ $template_name . ".head" };
+      $temporary =~ s/\[INCLUDED_FILENAME\]/$text_filename/gm;
+      $temporary =~ s/\[LINES_IN_INCLUDED_FILE\]/$lines_in_textfile/gm;
+      $temporary =~ s/\[LINES_PLUS_ONE_IN_INCLUDED_FILE\]/$lines_plus_one_in_textfile/gm;
+      $file_contents .= $temporary;
+  }
+
+  print "  Incorporating text (non-HTML) file ${text_filename}.\n";
+  if (!open(TEXTFILE, "<${text_filename}"))
+    {die "Sorry, cannot open text file ${text_filename}"};
+  while (<TEXTFILE>) {
+    # Substitute special HTML characters.
+    s/\&/&amp;/g;   # & becomes &amp;
+    s/\</&lt;/g;    # < becomes &lt;
+    s/\>/&gt;/g;    # > becomes &gt;
+    # Do _NOT_ substitute the double-quote character (" into &quot;)
+    # Windows NCSA Mosaic version 2.0 alpha 2 doesn't handle it,
+    # and all the browsers I can find can display them quite well.
+    #  s/\"/&quot;/g;  # " becomes &quot;
+    $file_contents .= $_;  # Add the contents.
+  }
+  close(TEXTFILE);
+  if ($template_name) {
+      $temporary = $template{ $template_name . ".tail" };
+      $temporary =~ s/\[INCLUDED_FILENAME\]/$text_filename/gm;
+      $temporary =~ s/\[LINES_IN_INCLUDED_FILE\]/$lines_in_textfile/gm;
+      $temporary =~ s/\[LINES_PLUS_ONE_IN_INCLUDED_FILE\]/$lines_plus_one_in_textfile/gm;
+      $file_contents .= $temporary;
+  }
+  if ($use_pre) {$file_contents .= "</PRE>\n"};
+  $_ = $file_contents;  # Set the value, and return it.
+}
+
+sub process_choices {
+ # Process the choices portion of a question in a section.
+
+ # It must be of the form:
+ # <CHOICES>
+ # <CHOICE ANS=1>Text_IO
+ # </CHOICES>
+ # <ANSWER ANS=2>
+ # Note: the numbers in the <CHOICE> item are ignored.
+
+ die "CHOICES section expected." unless /^<CHOICES/;
+
+ print SECTION "<OL>\n";
+ $choice_number = 0;
+ while (!eof(IN)) {
+   &read_line;
+   if (/^<\/CHOICES/) {last};
+   if (/^<CHOICE/) {
+     $choice_number++;
+     s/^<CHOICE[^>]*> *//i;
+     chop;
+     print SECTION '<LI><A HREF="' .
+                   "s${lesson_number}${separator}${section_number_file_rep}" .
+                   "r${choice_number}${html_extension}\">";
+     print SECTION $_;
+     print SECTION "</A>\n";
+     }
+   else {die "Sorry, choice text must be on the same line as <CHOICE>."}
+ }
+ $number_of_choices = $choice_number;
+
+ die "A Choice section must end with </CHOICES>" unless (/^<\/CHOICES>/i);
+ &read_line;
+
+ if (/^<ANSWER .*ANS=([0-9])+>/i) {
+   $correct_answer = $1 + 0;
+ } else {
+   die "A Choice section must be followed with the answer, " .
+       "format: <ANSWER ANS=number>";
+ }
+ &read_line;  # Get the next line for the callee.
+
+ &substitute_and_append("section.question.tail", "section");
+}
+
+sub process_optional_responses {
+ # Process the optional response portion of a section:
+ # <RESPONSES>
+ # <WHEN ANS=1> ..text..
+ # </RESPONSES>
+ # A <SECTION> could also follow.
+
+ # Skip blank lines, if any.
+ while ($_ || !eof(IN)) {
+   if (/<RESPONSES>/i) {last};
+   if (/<SECTION/i) {last};
+   chop;
+   if ($_ ne "") {print "Warning: line ignored: $_\n"};
+   &read_line;
+ }
+
+ if (/<RESPONSES>/i) {
+   # We have a response section.
+   $current_response = 0;
+   while (&read_line) {
+     if (/<\/RESPONSES>/i) {&read_line; last};
+     if (/<WHEN .*>/i) {
+       &close_response_if_necessary;
+       if (/<WHEN ANS=[0-9]*>/i) {
+         $current_response = $_;
+         $current_response =~ s/^<WHEN *ANS=([0-9]+)>.*$/$1/i;
+         chop($current_response);
+       }
+       else {
+         if (/<WHEN CORRECT>/i) {$current_response = $correct_answer}
+         else {die "Invalid WHEN clause"}
+        };
+       $set_response[$current_response] = 1; # Mark this response as found
+       &open_response;
+
+       # Insert response.correct.head or response.incorrect.head
+       if ($current_response == $correct_answer) {
+          &substitute_and_append("response.correct.head", "response");
+       } else {
+          &substitute_and_append("response.incorrect.head", "response");
+       }
+
+       # If there's text on the same line as the WHEN clause, put it
+       # in the response file.
+       s/^ *<WHEN[^>]*> *//i;
+       chop;
+       if ($_ ne "") {print RESPONSE "$_\n"};
+     } else {
+        # We got some text, presumably part of a response.
+        if ($current_response == 0) {
+           print "Warning: Responses not associated with a specific answer\n";
+           print "Text is: $_";
+        } else {
+           print RESPONSE;
+        }
+     }
+   }
+   &close_response_if_necessary;
+ }
+}
+
+sub open_response {
+ # Open the response file & set the variable names referring to it.
+ $response_filename="s${lesson_number}${separator}${section_number_file_rep}" .
+                    "r${current_response}${html_extension}";
+ if (!open(RESPONSE, ">${response_filename}.new"))
+      {die "Sorry, cannot open response file ${response_filename}.new"};
+ print "  Opened response file ${response_filename}\n";
+ $response_file_open = 1;
+ &substitute_and_append("response.head", "response");
+}
+
+sub close_response_if_necessary {
+ if ($response_file_open == 1) {
+   if ($current_response == $correct_answer)
+    {&substitute_and_append("response.correct.tail", "response");}
+   else
+    {&substitute_and_append("response.incorrect.tail", "response");};
+   &substitute_and_append("response.tail", "response");
+   close(RESPONSE);
+   $response_file_open = 0;
+ }
+}
+
+sub generate_default_responses {
+ $current_response = 1;
+ while ($current_response <= $number_of_choices) {
+   if ($set_response[$current_response] == 0) {
+      &open_response;
+      # insert default text.
+      if ($current_response == $correct_answer) {
+         &substitute_and_append("response.correct.head", "response");
+         &substitute_and_append("response.correct.default", "response");
+      } else {
+         &substitute_and_append("response.incorrect.head", "response");
+         &substitute_and_append("response.incorrect.default", "response");
+      }
+      &close_response_if_necessary;
+   }
+   $current_response++;
+ }
+}
+
+sub determine_next_section_URL {
+# Set $next_section_URL, $confirm_skip_to_next_section_URL
+ if ($section_number == $number_of_sections) {
+    $next_prefix = $next_lesson_location;
+    $next_lesson_number = $lesson_number + 1;
+    $next_section_file_rep = "1";
+ }
+ else {
+    $next_prefix = "";
+    $next_lesson_number = $lesson_number;
+    $next_section_file_rep = $section_number + 1;
+    if ($next_section_file_rep == $number_of_sections)
+      {$next_section_file_rep = "f"};
+   }
+  $next_section_URL = "${next_prefix}s${next_lesson_number}" .
+                     "${separator}${next_section_file_rep}${html_extension}";
+
+ # Set $confirm_skip_to_next_section_URL, the URL to go to if
+ # the user selects "skip" from a section.
+
+ if ($lesson_number == 1 && $section_number == 1) {
+   # For lesson 1, section 1, confirm the skipping of the quiz
+   # by linking to the special file "skip1-1.html".
+   $confirm_skip_section_URL = 'skip1' . $separator . '1' . $html_extension;
+ } else {
+   $confirm_skip_section_URL = $next_section_URL;
+ };
+}
+
+sub determine_previous_section_URL {
+ # Determine & set the value of:
+ # $previous_section_URL
+ # $the_previous_section_or_home
+
+ $the_previous_section_or_home = $template{"the_previous_section_is_not_home"};
+ if ( $the_previous_section_or_home == "" ) 
+    { $the_previous_section_or_home = "the previous section" };
+ local($template_text) = $template{ $template_chunk };
+ if ($section_number == 1) {
+     $previous_lesson_number = $lesson_number - 1;
+     if ($lesson_number == 1) {
+        # lesson 1, section 1 - the "previous" section is the home page.
+        $previous_section_URL= $tutor_home_page_URL;
+        $the_previous_section_or_home =
+                    $template{"the_previous_section_is_home"};
+        if ( $the_previous_section_or_home == "" ) 
+             { $the_previous_section_or_home = "the tutorial home page" };
+     } elsif ($previous_lesson_location_set == 1) {
+        $previous_section_URL= $previous_lesson_location . '/' .
+                      's' . $previous_lesson_number . $separator . 'f' .
+                      $html_extension;
+     } else {
+        # No previous location set; must be current directory.
+        $previous_section_URL= 's' . $previous_lesson_number . $separator .
+                               'f' .  $html_extension;
+     }
+ } else {
+     $previous_lesson_number = $lesson_number;
+     $previous_section_number = $section_number - 1;
+     $previous_section_URL= 's' . $previous_lesson_number . $separator .
+                            $previous_section_number . $html_extension;
+ }
+
+}
+
+
+sub move_in_new_files {
+# Move in all files with .new extensions to replace original files.
+# If desired, this can be modified so it only replaces "changed" files.
+ print "\n";
+ print "Replacing changed files, if any.\n";
+ while (<*.new>) {
+   $oldname = $_;
+   $newname = $_;
+   $newname =~ s/\.new$//;
+   if (system("cmp -s $oldname $newname") != 0) {
+     # The new file is different, remove the older one.
+     print " Replacing $newname (with $oldname)\n";
+     rename($newname, "${newname}.BAK"); # Keep older one, just in case.
+     rename($oldname, $newname);
+   } else {
+     unlink($oldname);
+   }
+ }
+}
+
+sub change_timestamp_file {
+# Change the timestamp file. Parameter 1 is the input filename.
+# The timestamp is used so we'll know when this file was last generated.
+local($infile_name) = @_;
+$timestamp_filename = $infile_name;
+$timestamp_filename =~ s/\.les$//;
+$timestamp_filename .= ".tim";
+if (!open(TIMESTAMP_FILE, ">${timestamp_filename}"))
+   {die "Sorry, cannot create timestamp file ${timestamp_filename}"};
+print TIMESTAMP_FILE "Lesson Generated.\n";
+close(TIMESTAMP_FILE);
+}
+
+sub read_in_template {
+# Read in file "template", putting results in associative array %template
+local($current_template_unit);
+$current_template_unit = "garbage";
+if (!open(TEMPLATE, "<template"))
+   {die "Sorry, cannot find a local file named template."};
+while (<TEMPLATE>) {
+  if (/^===== (\S+) =====/)
+    {$current_template_unit = $1;}
+  elsif ($current_template_unit eq "comment")
+     {} # Do nothing with comments.
+  elsif ($current_template_unit eq "garbage")
+    {print "WARNING: Garbage line in file template: $_";}
+  else { $template{$current_template_unit} .= $_; } # Append to assoc array.
+};
+close(TEMPLATE);
+
+# If debug on, print out the %template contents.
+if ($debug_template == 1) {
+  print "DEBUG: Printing out template contents as read:\n";
+  foreach $i (%template) {
+   print "=====\n";
+   print $i;
+   print "\n";
+  }
+}
+}
+
+sub reset_set_response {
+ # Reset array "set_response", which stores the list of responses
+ # set in this section by the user. This is used to determine
+ # which responses should have "default" responses set for them.
+
+ # Assume no more than 9 responses.
+ @set_response = ( 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+ $choice_number = 0;
+}
+
+sub initialize_variables {
+# Note - these are GLOBAL variables.
+ $lesson_number = 0;
+ $section_number = 0;
+ $tutor_name="";
+ $author_name="";
+ $author_email="";
+ $author_address="";
+ $section_has_question = 0;  # Does this section have a question? 0=false.
+
+ $previous_lesson_location_set = 0;
+ $previous_lesson_location ="";
+
+ $next_lesson_location_set = 0;
+ $next_lesson_location ="";
+
+ $master_outline_set = 0;
+ $master_outline_URL ="";
+
+ $tutor_home_page_set = 0;
+ $tutor_home_page_URL = "";
+
+ $section_file_open = 0; # 0=false, 1=true.
+ $response_file_open = 0;
+ $current_response = 0;
+
+ # Determine today's date and year.
+ ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
+                                                          localtime(time);
+ $mon++; # Month was returned as 0-11, so we need to fix it.
+ # Determine 4-digit year; recode in 2090.
+ if ($year < 90) { $year += 2000 } else { $year += 1900 };
+ $todays_date =  $year . "." . $mon . "." . $mday . " (YY.MM.DD)";
+ $todays_year = $year;
+ print "Today's date is ${todays_date}; year is $todays_year\n";
+}
+
+sub open_lesson_file {
+ # Get lesson file name and find out how many sections it has.
+ if (!open(IN, "<$lesson_source"))
+   {die "Sorry, cannot open input file ${lesson_source}"};
+ $number_of_sections=0;
+ while (<IN>) {
+  if (m/^<SECTION /i) {$number_of_sections++};
+  };
+ close(IN);
+ print "There are $number_of_sections sections in " .
+       "lesson file ${lesson_source}.\n";
+ if (!open(IN, "<$lesson_source"))
+    {die "Cannot re-open input file ${lesson_source}"};
+}
+
+sub read_in_defaults {
+ # If it exists, load in the file "defaults" as a lesson header file.
+ # This makes it easier to create 'standard defaults' for a specific
+ # tutorial.
+ if (open(IN, "<default")) {
+   print "Default file found; processing it first.\n";
+   &process_input_header;
+   close(IN);
+ } else {
+   print "(No default file found.)\n";
+ }
+}
+
+
+# Potential projects:
+# ?? Process <INCLUDE >
+# ?? Clean up code (use perl shortcuts, examine for EOF).
+# ?? Error check input. For head, warn of unused.
+# ?? More error checking in body processing.

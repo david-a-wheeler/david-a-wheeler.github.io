@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<TITLE>Package spec Occupants</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com"></HEAD>
+<BODY>
+<B>Package spec Occupants</B><P><HR><P>
+<PRE>
+<I>--</I>
+<I>-- Copyright (C) 1996 Ada Resource Association (ARA), Columbus, Ohio.</I>
+<I>-- Author: David A. Wheeler</I>
+<I>--</I>
+
+<B>with</B> <A HREF="thingss.htm#9:9">Things</A>, <A HREF="directis.htm#9:9">Directions</A>;
+<B>use</B>  <A HREF="thingss.htm#9:9">Things</A>, <A HREF="directis.htm#9:9">Directions</A>;
+
+<B>package</B> <A NAME="9:9"></A>Occupants <B>is</B>
+
+ <I>-- An "Occupant" is a Thing that can be inside a Room or another Occupant.</I>
+
+ type <A NAME="13:7"></A>Occupant <B>is</B> <B>abstract</B> <B>new</B> <A HREF="thingss.htm#15:7">Thing</A> <B>with</B> <B>private</B>;
+ type <A NAME="14:7"></A>Occupant_Access   <B>is</B> <B>access</B> <B>all</B> <A HREF="occupans.htm#13:7">Occupant</A>'Class;
+
+ <I>-- Dispatching subprograms:</I>
+
+ <B>procedure</B> <A NAME="18:12"></A><A HREF="occupanb.htm#name-11">Look</A>(T : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>);      <I>-- Ask Occupant T to "look".</I>
+
+ <B>procedure</B> <A NAME="20:12"></A><A HREF="occupanb.htm#name-8">Get</A>(Agent : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>; Direct_Object : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>'Class);
+           <I>-- Ask Agent to get Direct_Object.  This assumes that Agent can</I>
+           <I>-- somehow access Direct_Object (i.e. is in the same room).</I>
+           <I>-- If the agent decides that it can get the object, it will</I>
+           <I>-- call May_I_Get to ask the object if that's okay.</I>
+
+ <B>procedure</B> <A NAME="26:12"></A><A HREF="occupanb.htm#name-7">Drop</A>(Agent : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>; Direct_Object : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>'Class);
+           <I>-- Ask Agent to drop Direct_Object.</I>
+
+ <B>procedure</B> <A NAME="29:12"></A><A HREF="occupanb.htm#name-10">Inventory</A>(Agent : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>);
+           <I>-- Ask Agent to print a list of what Agent is carrying.</I>
+
+ <B>procedure</B> <A NAME="32:12"></A><A HREF="occupanb.htm#name-9">Go</A>(Agent : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>; Dir : <B>in</B> <A HREF="directis.htm#11:7">Direction</A>);
+            <I>-- Ask Agent to go the given Direction Dir (North, South, etc.)</I>
+
+ <B>procedure</B> <A NAME="35:12"></A><A HREF="occupanb.htm#name-12">Put_View</A>(T : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>; Agent : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class);
+            <I>-- Override Thing's Put_View.</I>
+ 
+ <B>function</B> <A NAME="38:11"></A><A HREF="occupanb.htm#name-6">May_I_Get</A>(Direct_Object : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>;
+                    Agent : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>'Class) <B>return</B> Boolean;
+           <I>-- Ask Direct_Object if "Agent" can get this object.</I>
+           <I>-- Returns True if it's okay, else False.</I>
+           <I>-- If the object does something while being gotten (or an attempt</I>
+           <I>-- to do so) it does it in this call.</I>
+
+ <B>function</B>  <A NAME="45:12"></A><A HREF="occupanb.htm#name-5">May_I_Drop</A>(Direct_Object : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>;
+                      Agent         : <B>access</B> <A HREF="occupans.htm#13:7">Occupant</A>'Class) <B>return</B> Boolean;
+           <I>-- Ask Direct_Object if "Agent" can drop this object;</I>
+           <I>-- returns True if it's okay.</I>
+
+<B>private</B>
+
+ type Occupant <B>is</B> <B>abstract</B> <B>new</B> <A HREF="thingss.htm#15:7">Thing</A> <B>with</B>
+  <B>record</B>
+    <B>null</B>;  <I>-- Nothing here for now.</I>
+  <B>end</B> <B>record</B>;
+
+<B>end</B> Occupants;
+
+<I>--</I>
+<I>-- Permission to use, copy, modify, and distribute this software and its</I>
+<I>-- documentation for any purpose and without fee is hereby granted,</I>
+<I>-- provided that the above copyright and authorship notice appear in all</I>
+<I>-- copies and that both that copyright notice and this permission notice</I>
+<I>-- appear in supporting documentation.</I>
+<I>-- </I>
+<I>-- The ARA makes no representations about the suitability of this software</I>
+<I>-- for any purpose.  It is provided "as is" without express</I>
+<I>-- or implied warranty.</I>
+<I>-- </I>
+
+</PRE>
+
+<P><HR><P>
+You may also see <A HREF="occupanb.htm">the corresponding body</A>.
+<P>
+You may also see the <A HREF="pkglist.htm">list of program units</A>.
+<P>
+The following compilation units refer to ("with") Package spec Occupants:
+<UL>
+<LI><A HREF="creaturs.htm">Package spec Creatures</A>
+<LI><A HREF="itemss.htm">Package spec Items</A>
+<LI><A HREF="parserb.htm">Package body Parser</A>
+<LI><A HREF="worlds.htm">Package spec World</A>
+</UL>
+The following compilation units are referred to ("with"'ed) by Package spec Occupants:
+<UL>
+<LI><A HREF="thingss.htm">Package spec Things</A>
+<LI><A HREF="directis.htm">Package spec Directions</A>
+</UL>
+You may return to the <A HREF="small.htm">Program Small Home Page</A>.
+<P>
+<!-- Do NOT delete my name or the tool name from below; -->
+<!-- giving me credit is a condition for use of ada2html -->
+<I>This hypertext format was generated by <A HREF="http://www.adahome.com/Ada/Tutorials/Lovelace/dwheeler.htm">David A. Wheeler</A>'s <A HREF="http://www.adahome.com/Ada/Resources/Tools/ada2html/ada2html.htm">ada2html</A></I>
+</BODY>
+</HTML>
+

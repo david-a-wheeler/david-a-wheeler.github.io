@@ -1,0 +1,691 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=7>
+
+<COMMENT $Id: lesson7.les,v 1.9 1995/05/17 21:25:18 wheeler Exp $ >
+
+<COMMENT  <NEXT_LESSON LOCATION="URL_of_directory/" >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+<COMMENT Each section has a title; SECTION starts a new section.>
+
+<SECTION NAME="Object-Oriented Programming: Overview">
+A major new capability of Ada 95 is the addition of direct support for
+object-oriented (OO) programming.
+Ada has always strongly supported a related approach to software development
+called the ``object-based'' approach.
+It's important to understand the basics of the OO approach
+before learning how Ada now supports OO programming, so this
+section provides a basic overview of the OO approach.
+If you already understand the OO approach well, feel free to skip to the
+next section.
+<P>
+
+<H2>Functional Decomposition</H2>
+First, some history.
+Software development has always involved using approaches to
+manage complexity.
+One well-known approach is called ``functional decomposition.''
+In this approach, the program's ``function''
+is divided (decomposed) into smaller component functions.
+These smaller functions are broken into still smaller functions, and so on.
+For example, the function ``eat_lunch'' might be decomposed into the
+functions ``remove_packaging'', ``eat_food'', and ``throw_away_trash.''
+Functional decomposition can be easily implemented in Ada using subprograms.
+Functional decomposition is still a useful technique for some problems,
+but it does not work well if the structure of the data is complex.
+Thus, other approaches have been developed for systems with nontrivial
+data structures.
+<P>
+
+<H2>Object-Based and Object-Oriented Approaches</H2>
+Two of these other approaches are strongly related to each other,
+and are called the
+``object-oriented'' (OO) approach and the ``object-based''
+approach (the latter is also called the ``abstract data type'' approach).
+Both are approaches to managing software complexity that are quite
+different from functional decomposition.
+In both approaches, a system is described in terms of ``objects'';
+each object contains data and has a set of operations that can be
+performed on that data.
+Objects represent real or abstract things important
+to the problem being solved.
+The object's structure and its set of operations are defined by
+the object's type (also called a <EM>class</EM>).
+For example, we might create a type called a <EM>vehicle</EM> with
+a data element <EM>amount_of_fuel_left</EM> and
+operations <EM>refuel</EM> and <EM>drive_to(location)</EM>.
+We could then create two objects of type <EM>vehicle</EM>
+called my_vehicle and your_vehicle.
+Each vehicle would have its own amount_of_fuel_left, and each
+would respond to the operations refuel and drive_to(location).
+Ada has always supported this approach with its packages and types.
+<P>
+
+The difference between the OO and object-based approaches is that
+the OO approach adds the concept of <EM>inheritance</EM>
+to mimic the way people normally think when they classify objects.
+Inheritance permits
+new types (also called classes) to be defined as extensions of other
+existing types, forming a hierarchy of type definitions.
+Inheritance represents the relation ``is a kind of''
+(as opposed to the relation ``is a part of'' or some other relation).
+To continue our example, we could create two new types called
+``motorcycle'' and ``bus'' as kinds of vehicles.
+Thus bus and motorcycle would <EM>inherit</EM> from vehicle.
+Note that a type called ``wheel'' should generally
+<EM>not</EM> inherit from type vehicle; a wheel
+is a part of a vehicle, but a wheel (by itself) is not a vehicle.
+<P>
+
+A type inherits all of the data structure and operations, so
+in our example a bus would also have a <EM>drive_to(location)</EM> operation.
+More importantly, once we create a new type,
+we can create additional operations that only apply to it, or
+redefine existing operations to perform special actions for this type.
+For example, we could add operations to a bus to allow it to
+<EM>accept_passengers</EM>, and this new operation would apply to
+buses, not to motorcycles or to all vehicles.
+We could also redefine the ``drive_to(location)'' operation of a bus
+so it would do something different with buses.
+<P>
+
+OO programming is an approach to implementing software using the OO approach.
+Grady Booch [1994] defined OO programming this way:
+``OO programming is a method of implementation in which programs
+are organized as cooperative collections of objects, each of which
+represents an instance of some class, and whose classes are all
+members of a hierarchy of classes united via inheritance relationships.''
+<P>
+
+It is difficult to use OO and object-based
+techniques if the underlying programming
+language does not support certain capabilities well.
+In particular, OO techniques are difficult to use if the
+programming language used does not directly support
+inheritance (and a related concept called polymorphism or dynamic dispatching,
+which will be explained later).
+Ada was explicitly designed from the beginning
+to support an object-based approach, and
+in 1995 Ada was extended to support OO programming.
+<P>
+
+<H2>Warning: Oversimplification</H2>
+It is important to understand that the discussion in this section
+is a vast oversimplification.
+In particular, defining the term ``object-oriented'' is not easy and has
+provoked a great deal of debate; I've chosen to use a ``classical
+languages'' kind of definition here.
+The document
+<A HREF="http://iamwww.unibe.ch/~scg/OOinfo/FAQ/">Object-Oriented
+Frequently Asked Questions (OO FAQ)</A> includes some discussion of
+various definitions and approaches along with various
+technical arguments about OO approaches and implementations.
+Note that Ada emphasizes safety and efficiency, while some OO languages
+emphasize other virtues (such as linguistic power, simplicity, or
+compatibility with an older language).  The OO FAQ also includes a
+bibliography of textbooks for more information on OO approaches.
+<P>
+
+The definition of ``functional decomposition'' given above is the
+usual approach when it is implemented in Fortran and Pascal, though
+again, definitions are not universally agreed upon.
+In particular, do not
+confuse this with ``functional programming languages'',
+which support an approach that is a very different extension of
+functional decomposition.
+There are other system decomposition approaches, such as logical programming,
+that are way beyond the scope of this tutorial.
+It can be argued that abstract data types and
+object-based approaches aren't identical;
+such arguments generally hinge on detailed definitions which have never
+had universal agreement.
+
+<!-- ?? Someday, provide a short list of recommended OO textbooks? -->
+<!-- Or better yet, an on-line OO course. -->
+
+<QUESTION Type=Multiple-Choice>
+Here are simplified descriptions of two different systems.
+Which one is described in a more OO manner?
+<P>
+<STRONG>System 1</STRONG>
+is an anti-missile system with 3 major types of components:
+a radar, a launcher, and a missile.
+A radar searches the portion of the sky defined
+by its area_of_search information.
+When a radar sees a target it sends a `target sighting' message
+to a launcher.
+When a launcher receives a `target sighting' message and that launcher's
+combat_state is `armed', it
+selects a missile to launch and sends that missile a launch command.
+A missile accepts a `launch command', which includes the launch time and
+the expected target location; it will then launch at the given time.
+There are two kinds of missiles, a long_range_missile and
+a short_range_missile.
+<P>
+<STRONG>System 2</STRONG> is a coin-operated soup dispenser.
+It accepts coins, then accepts a user's soup choice, and then dispenses soup.
+To accept coins it counts each coin's value until the total equals or
+exceeds the cost of a cup of soup.
+To accept a user's soup choice, the system waits for a selection
+button to be pressed.
+To dispense soup, it drops a cup into the
+user-accessible cup holder, dispenses the selected powdered soup into the
+cup, dispenses boiling water into the cup, and then stirs the soup.
+To stir the soup, a plastic stirrer is inserted into the cup,
+the stirrer is vigorously moved about inside the cup, and the stirrer
+is then removed.
+<P>
+Which system has been described in a more object-oriented manner?
+<CHOICES>
+<CHOICE ANS=1>System 1.
+<CHOICE ANS=2>System 2.
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right.
+Did you notice the inheritance relationship implied at the end of
+system 1's description (both short_range_missile and long_range_missile
+inherit from missile)?
+<P>
+More importantly, notice
+that neither answer involved any code or
+a particular programming language!
+The object-oriented, object-based, and functional decomposition approaches
+are all approaches to managing system complexity, and
+are mainly tools for our minds to help deal with complexity.
+You can use any approach in thinking about a problem, however,
+it's easier to implement a solution if the programming
+language directly supports the approach you choose.
+<WHEN ANS=2>
+No, sorry.
+There are physical objects mentioned in system 2, but note that
+the `system' as a whole (as opposed to specific objects)
+performs all the activities.
+Note that the description focuses on the functions to be
+performed (not what does them) and it repeatedly decomposes
+the functions to be performed into more detailed functions to be performed.
+</RESPONSES>
+<SECTION NAME="Object-Oriented Programming in Ada: Inheritance">
+One of the major features of OO programming
+is its use of <EM>inheritance</EM>.
+In 1995 facilities were added to Ada to easily support inheritance.
+<P>
+Inheritance lets us define new types as extensions of existing types;
+these new types inherit
+all the operations of the types they extend.
+The new types are termed `children' or `derived types', while the types
+extended are usually called `parents' or `base types.'
+Inherited operations can be overridden with new definitions of those
+operations.
+Derived types can also add new operations that apply only to them and not
+their base types. 
+<P>
+In Ada 95 terminology, types that can have parents or children
+are termed ``tagged types'', and have the keyword ``tagged''
+as part of their definition.
+<P>
+This is probably best shown through an example.
+Let's imagine that we're writing a program that must display
+many different kinds of geometric figures, such as circles, rectangles,
+and squares.
+We could create different types to represent the figures, but clearly
+these different kinds of figures share a number of things in common.
+In particular, all of these things can be drawn, and all of them have areas.
+We could create a package called "Figures" to define these different types,
+and we could define a type called "Figure" to represent any of these
+different kinds of figures (circles, rectangles, or squares).
+We could then say that circles and rectangles are a kind of figure, and
+squares are a kind of rectangle.
+A given type includes all of the record components specific to it, plus
+all the record components of its ancestors, so a square has all the
+information a rectangle would.
+<P>
+We'll also need to define some operations on these types, such as
+"Draw", "Area", and "Perimeter".
+For example, function Area will determine the figure's surface area and
+return it as a Float.
+If we don't redefine a subprogram for a given type, the closest ancestor's
+defined subprogram will be used.
+For example, if we don't redefine subprogram "Area" for a Square, the
+"Area" subprogram defined for Rectangle will be used.
+That means that "Area" is still a perfectly valid subprogram for a Square.
+<P>
+Here's a graphical representation these interconnected types; the larger
+boxes represent the tagged types, showing the tagged type's name,
+additional data content, and new or overridden operations.
+The connections show the an inheritance relationship, with the parent
+type above the child type.
+<P>
+<IMG SRC="figures.gif" ALT="[Type Figure is Parent of Circle and Rectangle]" WIDTH=261 HEIGHT=287>
+<BR>
+<P>
+We will also need a "Point" type to store the starting X and Y coordinates
+for each figure.
+To keep things short we'll just define the "Point" type in the same package.
+Since every figure needs a starting position, we'll
+put a starting position (of type Point) in the Figure type.
+Here's an example of how to write this in Ada:
+<P>
+<TEXT TEMPLATE=compile FILE="figures.ads">
+<P>
+
+<QUESTION Type=Multiple-Choice>
+How many record components and subprograms
+are defined <EM>in total</EM> for type Square in package Figures?
+<CHOICES>
+<CHOICE ANS=1>Two record components, no subprograms.
+<CHOICE ANS=2>Three record components, no subprograms.
+<CHOICE ANS=3>Two record components, three subprograms.
+<CHOICE ANS=4>Three record components, three subprograms.
+</CHOICES>
+<ANSWER ANS=4>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.
+What does Square inherit?
+<WHEN ANS=2>
+No - Square inherits some subprograms.
+<WHEN ANS=3>
+No, that's not right.
+There are two record components defined specifically for Rectangle,
+but Rectangle inherits another record component.
+<WHEN ANS=4>
+Yes, that's correct.
+Rectangle has record components Width and Height, and inherits a
+Start component from type Figure.
+It also has the three subprograms Draw, Area, and Perimeter.
+You may have noticed that other subprograms are implicitly
+defined as well, such as assignment and equality; pat yourself on the
+back if you realized that.
+</RESPONSES>
+<SECTION NAME="Dynamic Dispatching (Polymorphism) in Ada">
+Ada 95 also includes the concept of a <EM>class</EM>.
+For each tagged type T there is an associated type T'Class;
+this type comprises the union of all types in the tree of derived types
+rooted at T.
+For example, in the previous example, Rectangle'Class is a class
+that includes the types Rectangle and Square;
+Figure'Class is a class that includes the types
+Circle, Rectangle, and Square.
+<P>
+Note that Ada 95 has a more specific meaning for ``class'' than
+some other object-oriented programming languages (such as C++).
+In C++, the term <EM>class</EM> may mean either
+``a specific type'' or ``the set of a specific types and all types
+that inherit from it, directly and indirectly.''
+Ada 95 uses different terms for these different concepts.
+<P>
+A subprogram can define one or more parameters as a type of the
+form T'Class.
+Any type T, or any of its descendents, is acceptable for a parameter
+of type T'Class.
+You can pass that parameter on to any other subprogram that expects the
+same T'Class without a problem.
+But what happens if that subprogram that accepted something of T'Class
+then tries to call some other subprogram that
+requires a specific type?
+The answer is <EM>dynamic dispatching</EM>.
+<P>
+Dynamic dispatching is simply the process of determining at run-time
+exactly which routine to call, and then calling it.
+How can Ada figure that out?
+The answer is that every value that is a tagged type
+includes an invisible "tag" that tells Ada the actual type.
+This tag is used to figure out which routine to call.
+Because of the compilation rules Ada imposes, Ada can
+guarantee that dynamic dispatching will always find a subprogram to call.
+<P>
+Again, this is easier shown than explained.
+Let's say that we want to create a subprogram
+that takes in any kind of Figure.
+The subprogram is to print
+out the phrase "Area =" and then call the correct Area
+subprogram for any type of figure.
+Here's an example of how to do that:
+<P>
+<PRE>
+ procedure Print_Area(F : in Figure'Class) is
+ begin
+   Put("Area = ");
+   Put( Area(F) );  -- Call the correct area-computing routine for F
+                    -- and then print its result.
+   New_Line;
+ end Print_Area;
+</PRE>
+<P>
+When the Ada program reaches the <EM>Area(F)</EM> statement,
+it will note that the current type is a <EM>Class</EM> type and
+that Area takes only a specific type.
+Therefore Ada <EM>dispatch</EM>
+to the correct Area operation depending on the specific type of the input
+value F.
+<P>
+Only subprograms defined in the same package as the tagged type can
+be dispatched.
+These subprograms are formally called <EM>primitive subprograms</EM>.
+Primitive subprograms should generally be defined immediately after
+the type is defined.
+
+<QUESTION Type=Multiple-Choice>
+In the following package:
+<P>
+<TEXT TEMPLATE=compile FILE="critters.ads">
+<P>
+How many different types does Monster'Class include in
+package Critters?
+<CHOICES>
+<CHOICE ANS=1>1
+<CHOICE ANS=2>2
+<CHOICE ANS=3>3
+<CHOICE ANS=4>4
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN ANS=3>
+Right - Monster'Class includes types Monster, Dragon, and Red_Dragon.
+It doesn't include Person, since person wasn't derived from Monster.
+<WHEN ANS=4>
+No, sorry.
+Person isn't derived from Monster, so it's not one of the types
+in Monster'Class.
+Person <EM>is</EM> one of the types in package Critters, but that isn't
+what the question asked.
+Try again.
+</RESPONSES>
+<SECTION NAME="Encapsulation">
+The ``Figures'' and ``Critters'' examples we've seen
+are excessively public.  What does that mean?
+Those examples permitted all their clients (the ``public'')
+to see exactly how their types were defined.
+Thus, any user of those packages can read or change any of the data
+in those types.
+Sometimes that's appropriate, but usually it isn't -
+this makes it more difficult to change things later.
+<P>
+
+Ada provides a number of mechanisms to ``hide'' information from
+the users (``clients'') of a given type.
+Making information inaccessible to others who should not use it
+is called <EM>encapsulation</EM>.
+Encapsulation improves a program's maintainability and reliability.
+<P>
+
+In the lesson on types we saw how Ada permits types to be
+declared as ``private.''
+This works with tagged types as well, so you can declare tagged
+types as ``private'' and then hide the implementation details
+from everyone who uses the type.
+Ada provides a number of variations on this theme
+to provide control over what information
+is visible and what is not.
+<P>
+
+The most common way to hide implementation details is to define a
+type publicly in a package declaration as
+``tagged private'' (if you don't want the user to know about its parent) or
+``new <EM>parent_name</EM> with private''
+(if you want the user to know what its parent is).
+Follow each type declaration with declarations of subprograms
+that operate on the type.
+In the ``private'' part of the package declaration, define the type.
+<P>
+
+Here's another example.
+Let's create a type called a `File' with a file name, and a derived
+type called an `Ada_File' which also stores whether or not the file
+has been compiled. Both have a ``View'' subprogram.
+Here's how that might look:
+<PRE>
+  package File_System is
+    type File is tagged private;
+    procedure View(F : File);
+
+    type Ada_File is new File with private;
+    procedure View(F : Ada_File);
+
+  private
+    type File is tagged
+     record
+       -- We'll discuss strings later in Lovelace
+       Name : String(1..20);
+     end record;
+
+    type Ada_File is new File with
+     record
+       Compiled : Boolean := False;
+     end record;
+  end File_System;
+</PRE>
+<!-- This example was inspired by Ada Rationale chapter II-4 -->
+<P>
+
+You would then create a package body to define the subprograms:
+<PRE>
+  package body File_System is
+    procedure View(F : File) is
+    begin
+      -- ...
+    end View;
+
+    procedure View(F : Ada_File) is
+    begin
+      -- ...
+    end View;
+  end File_System;
+</PRE>
+<P>
+
+In general, in Ada you'd define a package with a set of types
+inside it. The package declaration would contain a set of types
+declared as ``tagged private'' or ``new Parent_Type with private''.
+In the private part of the package declaration you'd define the
+type ``for real''.
+In the package body you'd define the subprograms.
+<P>
+
+<QUESTION Type=Multiple-Choice>
+Given procedure Try_Stuff:
+<PRE>
+  with File_System;
+  procedure Try_Stuff is
+   My_Ada_File : File_System.Ada_File;
+  begin
+   -- To be done.
+  end Try_Stuff;
+</PRE>
+<P>
+Let's say that at the line labelled ``To be done''
+you'd like to set My_Ada_File's ``Compiled'' value to ``True''.
+How could you do this?
+<CHOICES>
+<CHOICE ANS=1>Replace the line with <EM>My_Ada_File.Compiled := True;</EM>
+<CHOICE ANS=2>Replace the line with <EM>Compiled := True;</EM>
+<CHOICE ANS=3>I couldn't - it can't be done using the material presented so far.
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.
+You'd be right if Ada_File wasn't defined as a private type, but
+Ada_File was defined as a private type.
+<WHEN ANS=3>
+Right.
+Ada_File is defined as a private type; you'd need to add an operation
+to package File_System to make this possible.
+Actually, there <EM>are</EM> other ways in Ada to do this, but
+we've not discussed them and they're all more complicated.
+</RESPONSES>
+<SECTION NAME="Standard Object-Oriented Format">
+Ada has types, packages, and lots of other things; how do you use
+them all together?
+What I suggest is that, barring other information, you use a
+standard format for defining object-oriented types in Ada.
+<P>
+Here's a "standard format" that I use for an OO Ada type definition,
+which you can
+vary to meet your needs (capitalized italics are what you supply):
+<P>
+<PRE>
+  with <I>PACKAGE_NAME_OF_PARENT</I>;
+  use  <I>PACKAGE_NAME_OF_PARENT</I>;
+  package <I>PACKAGE_NAME</I> is
+    type <I>MY_TYPE</I> is tagged private; -- or, new Parent_Type with private
+    type <I>MY_TYPE</I>_Access is access all <I>MY_TYPE</I>'Access;
+        -- We'll talk about this in a later lesson; by adding this declaration
+        -- here you'll make certain operations easier to do later.
+    -- Dispatching operations go here.
+  private
+    -- Define the details of MY_TYPE here.
+  end <I>PACKAGE_NAME</I>;
+</PRE>
+<P>
+For the package name, I generally use the plural of the type name.
+Here's an example:
+<P>
+<PRE>
+  with Creatures;
+  use  Creatures;
+
+  package Players is
+    type Player is new Creature with private; -- Player is a type of Creature
+    type Player_Access is access all Player'Access;
+    -- Dispatching operations go here.
+    procedure Look(P : in Player);
+  private
+    type Player is new Creature with
+     record
+       Logged_In : Boolean;
+     end record;
+  end Players;
+</PRE>
+<P>
+Ada permits multiple OO types to be defined in a package, but that
+doesn't mean you <EM>must</EM> do so.
+As a general rule, put different type definitions in different
+packages unless the two types are strongly interrelated.
+<P>
+<QUESTION Type=Multiple-Choice>
+Given the example above, what is the name of the new tagged type defined above?
+<CHOICES>
+<CHOICE ANS=1>Creatures
+<CHOICE ANS=2>Players
+<CHOICE ANS=3>Player
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN ANS=1>
+No, that's not it.
+"Creatures" was used, that's true, but Creatures wasn't defined in the
+example.
+<WHEN ANS=2>
+No, that's the name of the <EM>package</EM> defined, not of the <EM>type</EM>.
+In Ada there's a separation between a <EM>type</EM> and how that
+type is packaged. Try again.
+</RESPONSES>
+
+<SECTION NAME="Abstract Types and Subprograms">
+It's often useful to declare a tagged type that won't be used directly
+to create objects,
+but instead will be extended by different types in different ways.
+Such types are called ``abstract'' types.
+<P>
+Abstract types <EM>must</EM> be tagged types, since only tagged types
+can be extended.
+To define an abstract type, simply put the keyword <EM>abstract</EM>
+in front of the keyword <EM>tagged</EM> in its definition.
+<P>
+Subprograms can also be declared as <EM>abstract</EM>;
+a call to such subprograms would have to dispatch to an overridden
+version of the subprogram.
+To declare a subprogram as <EM>abstract</EM>,
+place the phrase "is abstract" before the last semicolon in its definition.
+If you have an abstract subprogram for a given type, the type must also
+be abstract.
+<P>
+When you later create another type that descends from an abstract type,
+you <EM>must</EM> define all of its abstract subprograms.
+<P>
+Here's an example of an abstract type representing a set of natural numbers,
+taken directly from the
+<A HREF="http://www.adahome.com/rm95/rm9x-03-09-03.html">Ada
+RM section 3.9.3</A>:
+<P>
+<TEXT TEMPLATE=compile FILE="sets.ads">
+<P>
+Given the above abstract type, you could then derive various
+(nonabstract) extensions of the type, representing alternative
+implementations of a set. You might use a bit vector,
+but impose an upper bound on the largest element representable,
+while another might use a hash table, trading off space for flexibility. 
+<P>
+Abstract subprograms are equivalent to
+ending a C++ function declaration with ``= 0''.
+
+<SECTION NAME="User-Controlled Initialization, Finalization, and Assignment">
+Three kinds of actions are fundamental to the manipulation of objects:
+initialization, finalization, and assignment.
+Initialization of a variable occurs when the program ``executes'' the
+corresponding variable declaration.
+Finalization occurs when you ``destroy'' that variable (for example,
+by returning from the subprogram that declared that variable).
+<P>
+Defaults for these operations are provided by Ada.
+If you want more control over these operations, you can declare
+objects to be a <EM>controlled</EM> type.
+<P>
+To create a controlled type, simply declare it as a descendent of either
+the type "Controlled" or the type "Limited_Controlled"; these types are
+defined in the predefined package "Ada.Finalization".
+Use "Controlled" when you want control over all three operations, and
+use "Limited_Controlled" when you don't want control over assignment.
+<P>
+Here's a partial definition of Ada.Finalization:
+<P>
+<PRE>
+  type Controlled is abstract tagged private;
+  procedure Initialize(Object : in out Controlled);
+  procedure Adjust    (Object : in out Controlled);
+  procedure Finalize  (Object : in out Controlled);
+
+  type Limited_Controlled is abstract tagged limited private;
+  procedure Initialize(Object : in out Limited_Controlled);
+  procedure Finalize  (Object : in out Limited_Controlled);
+</PRE>
+<P>
+Once you've created your own type that's descended from Controlled or
+Limited_Controlled, you can override Initialize, Adjust, or Finalize
+to do whatever you want.
+Whenever an object of your type is created, Ada will do its own
+initializations and then call the routine "Initialize" that you have defined.
+Whenever an object of your type is about to be destroyed (say,
+by exiting the subprogram it was defined in), the "Finalize" routine
+will be executed.
+<P>
+If you use a descendent of type Controlled, you can control assignment (:=)
+as well.
+Then, when Ada executes a statement like "A := B;",
+Ada will first perform the normal assignment and then execute "Adjust".
+<P>
+Some people (particularly those familiar with C++) will ask,
+``what happens if you assign a variable to itself, like A := A''?
+Ada handles this correctly due to a careful definition of assignment
+involving a conceptual "anonymous object"
+(self-assignment is a well-known source of bugs in C++).
+Most compilers will optimize away the intermediate anonymous object in
+most cases, and may do many other optimizations as well.
+<P>
+User defined initialization, assignment and finalization are
+defined in great detail in
+<A HREF="http://www.adahome.com/rm95/rm9x-07-06.html">section 7.6
+of the Ada RM</A>.
+<P>
+The types Controlled and Limited_Controlled are particularly useful
+for implementing types whose "size" can vary without limit (these types are
+called "unbounded" types).
+We'll learn more about them in the later lesson on access types.
+

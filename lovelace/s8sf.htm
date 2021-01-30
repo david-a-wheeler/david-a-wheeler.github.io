@@ -1,0 +1,155 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 8.6 - Unbounded_String Input and Output</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 8.6 - Unbounded_String Input and Output</FONT></H1>
+Ada 95 does not define input and output packages for
+Unbounded_String; instead, it defines operations on type String and
+operations to convert a String into an Unbounded_String.
+<P>
+Personally, I find that it's easier to use a package that defines Input-Output
+operations directly for an Unbounded_String.
+It's easy to define such a package, so I've provided one for you.
+<P>
+I call my package ``Ustrings'', which is a nice short name - I'll explain
+later why it has that name.
+It has a procedure Get_Line, which reads in a whole text line into
+an Unbounded_String. Procedure Put prints the Unbounded_String.
+Procedure Put_Line first Puts the Unbounded_String, and then
+starts a new line.
+Here's a shortened version of this package's declaration:
+<P>
+<PRE>
+package Ustrings is
+  procedure Get_Line(Item : out Unbounded_String);
+  procedure Put(Item : in Unbounded_String);
+  procedure Put_Line(Item : in Unbounded_String);
+end Ustrings;
+</PRE>
+<P>
+If you're curious you can see the complete
+<A HREF="ustrings.ads">declaration (specification)</A> and
+<A HREF="ustrings.adb">body</A>
+of my package Ustrings.
+<P>
+Also, I also believe that
+``Unbounded_String'' is too long a name for
+such a widely-used type, so I define in package ``Ustrings'' a new
+name for Unbounded_String called ``Ustring''.
+You can declare variables of type ``Ustring'' and they'll simply be
+Unbounded_Strings.
+You do <EM>not</EM> need to use the type name "Ustring" instead
+of "Unbounded_String"; I simply find it convenient.
+<P>
+Let's look at a short Unbounded_String demonstration program
+named `Unbound'.
+It reads in text, one line at a time, and then does various things with
+the line of text.
+Study the following program and see if you can figure out what it does.
+<P>
+<PRE>
+
+with Ada.Strings.Unbounded, Ustrings,
+      Text_IO, Ada.Integer_Text_IO;
+use  Ada.Strings.Unbounded, Ustrings,
+      Text_IO, Ada.Integer_Text_IO;
+
+procedure Unbound is -- Demonstrate Unbounded_String.
+  Input : Unbounded_String;
+  Stop  : constant Unbounded_String := To_Unbounded_String("stop");
+begin
+  Put_Line("Please type 'stop' to end this program.");
+
+  loop
+    New_Line;
+    Put_Line("Please type in a line:");
+    Get_Line(Input);
+
+  exit when (Input = Stop);
+
+    Put("You just typed in:"); Put_Line(Input);
+
+    Put("This input line contains ");
+    Put(Length(Input));
+    Put_Line(" characters.");
+
+    for I in reverse 1 .. Length(Input) loop
+      Put(Element(Input, I));
+    end loop;
+    New_Line;
+
+  end loop;
+end Unbound;
+</PRE>
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+What does subprogram Unbound do
+after it prints the line showing the number of characters
+in the input string?
+
+<OL>
+<LI><A HREF="s8sfr1.htm">It prints the input string in reverse.</A>
+<LI><A HREF="s8sfr2.htm">It prints the input string as it was entered.</A>
+<LI><A HREF="s8sfr3.htm">Nothing.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s8s5.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s9s1.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson8.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 8 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s8sf.htm">http://www.adahome.com/Tutorials/Lovelace/s8sf.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

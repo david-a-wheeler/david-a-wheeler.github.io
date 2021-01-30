@@ -1,0 +1,160 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 18.2 - Small's Object-Oriented Class Hierarchy</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 18.2 - Small's Object-Oriented Class Hierarchy</FONT></H1>
+
+We still haven't dealt with what's in package "Things", and
+other packages related to it; these are arguably the
+most important packages.
+Lots of different things can exist in the world, and things can
+contain other things.
+Usually adventure games have "rooms" where the players can go,
+items to pick up, and possibly monsters to meet.
+<P>
+
+<IMG ALIGN=right SRC="small.gif" ALT="[Object Hierarchy] WIDTH=151 HEIGHT=87">
+Here is a figure showing the class hierarchy that I've
+dreamed up; examine it and see if it makes sense to you.
+Anything in this world is considered a Thing; a Thing has a name,
+a description, and may contain other Things.
+Things can be Rooms or Occupants.
+Rooms can have connections (north, south, etc).
+There are two kinds of Occupants, Items and Creatures.
+Items are things like keys and tables.
+Creatures can be either Players or Monsters.
+By "Monster" I mean the technical role-playing game definition: a Monster
+is anything that does actions on its own that is not a player.
+I've intentionally not used the word "Object" here, because we might
+have other objects in other packages that aren't Things.
+<P>
+
+In some sense this class hierarchy is more than we need at first (I'm
+not planning to implement Monsters right now), but
+this gives us room to grow into.
+Future versions might expand this further - for example, perhaps there
+should be types Door and Key that are extensions of Item.
+<P>
+
+So, if we know the hierarchy of types, how will the packages holding
+these types be organized?
+In Ada, types are placed in packages, and they don't <EM>need</EM> to
+match one-for-one.
+You can declare more than one type in a package, and you can use
+child packages to group them in special ways.
+However, unless there's some reason to do otherwise, the
+"simple" way is usually best: create a package for each tagged type.
+As a naming convention I use the plural for the package and the singular
+for the type, so tagged type "Occupant" is in package "Occupants".
+Each package will need to "with" the package of its parent.
+So we'll have packages named Things, Rooms, Occupants, Items, Creatures,
+Monsters, and Players.
+<P>
+
+Now that we know what packages to create, how do we define the types
+inside them?
+Well, Thing and all its descendants must be tagged types, since we have
+inheritance.
+All of the type definitions for the children Room, Occupant, and so on
+will probably look like this:
+<P>
+<PRE>
+ type X is new PARENT with private;
+</PRE>
+<P>
+
+Ah, but how do I define the "root" of this hierarchy (in this
+case type Thing)?
+Although we don't need it right away, we probably want to be able to
+cause special things to happen when some objects are created or destroyed.
+That sounds like we need a "controlled" type, which would let us do that.
+However, we probably don't need to be able to assign between them, so we
+should probably create type Thing as new version of
+the "Limited_Controlled" type.
+Type Thing is not something you'd instantiate directly; instead, you'd create
+instances of its children.
+Thus Thing should be an abstract type; by declaring
+it abstract, people won't be able to create an instance of it.
+Here's the definition of Thing (which we'll place in package Things):
+<P>
+<PRE>
+ type Thing is abstract new Limited_Controlled with private;
+</PRE>
+<P>
+
+There's a key rule of thumb that underlies some of these decisions:
+<EM>never expose in a package specification more than you have to</EM>.
+For example, notice that I've chosen to say "with private" everywhere.
+That means that the actual implementation of these types is hidden
+in the private part of the package specification and can't be used
+directly by its users.
+That means we'll be able to change the implementation later without
+impacting users.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Is a Player a member of the class of Things?
+<OL>
+<LI><A HREF="s18s2r1.htm">Yes.</A>
+<LI><A HREF="s18s2r2.htm">No.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s18s1.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s18s3.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson18.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 18 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s18s2.htm">http://www.adahome.com/Tutorials/Lovelace/s18s2.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

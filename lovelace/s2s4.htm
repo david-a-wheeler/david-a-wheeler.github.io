@@ -1,0 +1,151 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 2.4 - Compilation Units</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 2.4 - Compilation Units</FONT></H1>
+Now that we know about program units, packages, and the
+difference between declarations and bodies, we can talk about
+<EM>compilation units</EM>.
+<P>
+A compilation unit contains either the declaration or the body of
+a program unit,
+preceded by the necessary context clause (`with' or `use' clauses).
+Thus a compilation unit can be a package declaration, a package body,
+a subprogram declaration, or a subprogram body along with its context clause.
+<P>
+An Ada compiler only compiles collections of one or more compilation units.
+That's why it's important to understand compilation units -
+to compile something,
+it must be a part of a legal compilation unit.
+<P>
+Here's a simplified <A HREF="bnf.htm">BNF syntax</A> for a compilation unit.
+The full definition is in
+<A HREF="http://www.adahome.com/rm95/rm9x-10-01.html">
+section 10.1 of the RM</A>:
+<P>
+<OL>
+<LI>
+<EM>compilation_unit ::= context_clause library_item</EM>
+<LI>
+<EM>context_clause ::= {context_item}</EM>
+<LI>
+<EM>context_item ::= with_clause | use_clause</EM>
+<LI>
+<EM>with_clause ::= "with" library_unit_name { "," library_unit_name} ";"</EM>
+<LI>
+<EM>use_clause ::= "use" library_unit_name { "," library_unit_name} ";"</EM>
+<LI>
+<EM>library_item ::= package_declaration | package_body |
+subprogram_declaration | subprogram_body</EM>
+</OL>
+<P>
+Note that compilation units start with "with" and "use" clauses,
+followed by a program unit declaration or body.
+We've already seen three compilation units - the simplified
+package declaration for Text_IO and two versions of the
+"Hello" program (in two different forms).
+Let's go back and look at the "Hello2" program to see that it
+really is a valid compilation unit:
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+-- Print a simple message to demonstrate a trivial Ada program.
+with Ada.Text_IO;
+use Ada.Text_IO;  -- use clause - automatically search Ada.Text_IO.
+procedure Hello2 is
+begin
+ Put_Line("Hello, world!"); -- Note: No longer has "Ada.Text_IO" in front.
+end Hello2;
+</PRE>
+<P>
+<P>
+Ada compilers will only compile a compilation_unit, and
+according to the BNF definition above
+a compilation_unit is a context_clause followed by a library_item.
+The BNF also says that a
+context_clause is a set of zero or more context_items, and a
+context_item is either a "with" clause or "use" clause.
+Since Hello2 starts off with a "with" clause and a "use" clause, we
+have two context_items that make up the context_clause.
+I haven't shown the definition of a library_item, but it turns out
+that the rest of Hello2 is a valid library_item, so we have a valid
+compilation unit.
+<P>
+Although most Ada compilers permit multiple compilation units in a single
+file, it's usually better to put separate compilation units in
+separate files.  One Ada compiler (GNAT)
+<EM>requires</EM> different compilation units to be in different files.
+<P>
+Informally, when people say `show me X's package declaration'
+they really mean `show me the compilation unit that includes the
+package declaration of package X'.
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Which of the following <EM>cannot</EM> be part of a compilation unit
+after the context clause?
+<OL>
+<LI><A HREF="s2s4r1.htm">A package declaration</A>
+<LI><A HREF="s2s4r2.htm">A procedure declaration</A>
+<LI><A HREF="s2s4r3.htm">A procedure body</A>
+<LI><A HREF="s2s4r4.htm">A type definition</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s2s3.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s2sf.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson2.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 2 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s2s4.htm">http://www.adahome.com/Tutorials/Lovelace/s2s4.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

@@ -1,0 +1,132 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 18.4 - Attributes and Operations of Objects</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 18.4 - Attributes and Operations of Objects</FONT></H1>
+
+Well, we have the general structure laid out.
+Now we need to figure out what data values and operations apply to the
+different tagged types.
+<P>
+
+Type Thing should probably have the attributes Name and Description.
+It should also have a way of referring to its container, so we'll
+add a "Container" value in its implementation.
+For example, if Player "Fred" is the Room "kitchen", then Fred's
+Container would refer to the kitchen.
+<P>
+
+Let's completely hide these attributes with other procedures; that way
+we can control what happens to these values.
+In fact, to change "where" an object is, let's only provide the operation
+"Place", which places a given Thing inside another thing.
+That way we can make sure that the internal data values
+are kept consistent.
+<P>
+
+Let's implement "looking" as a pair of procedures. The first procedure,
+called "Look", is a message sent to the object
+doing the looking (i.e. a player).
+That procedure, should it consider looking okay (for example, if it
+determines that the player can see), will then call Put_View of
+whatever object the the player is looking at (i.e. the player's room).
+<P>
+
+I suspect that, if a player is inside a room, the view is different than
+if the player is inside a dragon's belly.
+Therefore Put_View should be a
+dispatching operation so that it can do different things depending on the
+type of the object being viewed.
+In Ada 95, to make a subprogram dispatchable (primitive),
+place the subprogram's declaration in the specification declaring the type.
+<P>
+
+By the same reasoning "Look" should be a primitive operation;
+perhaps different players have different kinds of vision
+(such as X-ray vision or vision that doesn't require light),
+so we'll want that to dispatch depending on the "looker" as well.
+<P>
+
+We'll also need to handle getting and dropping objects.
+Many of the operations in an adventure game involve both the Actor
+(i.e. the Player) and the object being acted on.
+That's similar to how we handled looking, since looking
+involves both the looker and the looked-at object.
+For example, for a "Get" to work, the player must be able to get things,
+and the object being gotten must agree that it can be acquired by the player.
+So let's define pairs of operations for Get: Get itself, which asks
+a given actor to get an object, and May_I_Get, which asks the object if
+the given actor can get it.  The same argument applies to drop, which will
+have the pair Drop and May_I_Drop.
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+If Item box and Player Fred are both in Room Kitchen,
+and Item knife is in Item box, what is the container of Item box?
+<OL>
+<LI><A HREF="s18s4r1.htm">Room Kitchen</A>
+<LI><A HREF="s18s4r2.htm">Player Fred</A>
+<LI><A HREF="s18s4r3.htm">Item knife</A>
+<LI><A HREF="s18s4r4.htm">Item box</A>
+<LI><A HREF="s18s4r5.htm">None of the above</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s18s3.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s18s5.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson18.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 18 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s18s4.htm">http://www.adahome.com/Tutorials/Lovelace/s18s4.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

@@ -1,0 +1,174 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 17.1 - Language-Defined Attributes</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 17.1 - Language-Defined Attributes</FONT></H1>
+Ada predefines, for each type, a number of operations and values termed
+"language defined attributes".
+To use them, enter the name of the type (or object) the attribute
+applies to, a tick (a single apostrophe), and the name of the attribute.
+<A HREF="http://www.adahome.com/rm95/rm9x-K.html">The
+RM appendix K lists all of the language defined attributes
+and their definitions.</A>
+<P>
+Actually, we've already seen one attribute: 'Class.
+Given some type named X, the phrase X'Class
+refers to the class of all types that are descended from X, including X.
+<P>
+Three very common attributes are 'First, 'Last, and 'Range.
+Given some type named X,
+the phrase X'First is the <EM>first</EM> legal value of type X.
+Attribute 'Last refers to the <EM>last</EM> legal value of a given type.
+Attribute 'Range refers to the range between 'First and 'Last, including
+them, and is often used in loops.
+For example, if Repair_Status is an enumerated type with many values,
+you could write a loop as follows:
+<P>
+<PRE>
+  for I in Repair_Status'Range loop
+    -- <EM>Do something here.</EM>
+  end loop;
+</PRE>
+<P>
+Some attributes are actually subprograms that accept parameters,
+which you can call the way you'd call any other subprogram.
+One simple attribute is X'Image; this is a subprogram that takes
+a value of the type X and returns a String representing that value.
+X must be a scalar type (i.e. Integer, Float, or an enumerated value).
+Here's an example:
+<P>
+<PRE>
+  procedure Demo( Value : Integer) is
+    Text_Rep : String := Integer'Image(Value);
+  begin
+    Put(Text_Rep);
+  end Demo;
+</PRE>
+<P>
+Here are some other useful attributes:
+<UL>
+<LI>The inverse of 'Image is 'Value. Attribute 'Value is a function
+which takes a String and returns its scalar value.
+<LI>Attribute X'Val is a function that takes an Integer and returns a value
+of type X whose position number is the same as the integer.
+This is handy for Characters.
+For example, since a space is position 32 in the Latin-1
+character set (and in ASCII for that matter),
+Character'Val(32) is a space character.
+The inverse of 'Val is 'Pos.
+<LI>Attribute X'Access, where X is a subprogram name or variable,
+yields an access value ``pointing'' to X.
+<LI>Attributes X'Min and X'Max take two scalars of type X
+and return the minimum ('Min) or maximum ('Max) value.
+<LI>Attribute X'Round rounds a number of type X
+to the nearest integer; if it's exactly between two integers,
+it rounds away from zero.
+<LI>Several attributes give information on the underlying machine.
+These include 'Size (which gives the number of bits used to store
+something), 'Address (which gives the storage address),
+and 'Bit_Order (which gives the bit ordering).
+These are particularly useful when interfacing with physical devices
+and assembly language, and are sometimes useful for other purposes as well.
+</UL>
+<P>
+There are a several other attributes as well.
+<P>
+Some attributes can be set by the programmer.
+This is mainly used for
+supporting low-level facilities, such as making variables refer to hardware
+interfaces (by setting 'Address) or setting the size of given type.
+The Ada 95 syntax for doing this can be represented as:
+<PRE>
+  for name'attribute_name use expression;
+</PRE>
+<!-- Not using BNF, since the tick may confuse the reader -->
+<P>
+For example, if your machine can read raw temperatures
+as an 8-bit value from address FFFF_0000, you can read temperatures
+just by reading the variable "Current_Temperature" by telling Ada
+to place Current_Temperature at a specific address.
+Here's an example of how to do that:
+<PRE>
+  type Temperature_Reading is 0 .. 2**8 - 1;
+  for Temperature_Reading'Size use 8;
+
+  Current_Temperature : Temperature_Reading;
+  for Current_Temperature'Address use 16#FFFF_0000#;
+  pragma Volatile(Current_Temperature);  -- We haven't discussed this.
+  -- Now just read from "Temperature" as a variable.
+</PRE>
+<P>
+Although an Ada compiler can handle spaces before and after the tick ('),
+don't place any spaces around it.
+That way, tools which don't actually parse Ada (such as semi-smart
+editors and pretty printers) can tell the difference between
+attributes and character constants.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+What would find the smallest value of two Integers A and B, using
+a predefined attribute?
+<OL>
+<LI><A HREF="s17s1r1.htm">Min(A,B)</A>
+<LI><A HREF="s17s1r2.htm">Integer'Min(A,B)</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s16sf.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s17s2.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson17.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 17 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s17s1.htm">http://www.adahome.com/Tutorials/Lovelace/s17s1.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

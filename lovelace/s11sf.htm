@@ -1,0 +1,182 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 11.4 - GADTs versus GADOs</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 11.4 - GADTs versus GADOs</FONT></H1>
+The stack that we created in the previous section is a lot more
+flexible than a non-generic version.
+We can instantiate different generics to handle different types;
+we can even instantiate it multiple times for the same type to get
+several stacks.
+<P>
+It's still not as flexible as it could be, though.
+We can't pass around stacks as parameters, and
+we can't create arrays of them (perhaps we'd like to have
+an array of stacks!).
+<P>
+We <EM>could</EM> have that additional flexibility if inside the
+generic package we defined a new type (e.g., "Stack") and changed
+every operation to use this new type.
+Then, using this new type, we can pass Stacks around,
+use them in arrays, and so on.
+Here's an example of what such a Generic_Stack's package
+specification would look like:
+<P>
+<PRE>
+  generic
+    Size : Positive;
+    type Item is private;
+  package Generic_Stack is
+    type Stack is limited private;
+    procedure Push(S : in out Stack; E : in  Item);
+    procedure Pop (S : in out Stack; E : out Item);
+    Overflow, Underflow : exception;
+  private 
+    type Stack is array(1 .. Size) of Item; 
+  end Generic_Stack;
+</PRE>
+<P>
+Compare this to the previous version of our Generic_Stack package:
+<P>
+<PRE>
+  generic
+    Size : Positive;
+    type Item is private;
+  package Generic_Stack is
+    procedure Push(E : in  Item);
+    procedure Pop (E : out Item);
+    Overflow, Underflow : exception;
+  end Generic_Stack;
+</PRE>
+<P>
+The new version of this package
+is an example of what is called a <EM>generic abstract data type (GADT)</EM>.
+A generic abstract data type is a generic that defines a central data type
+for the other operations so that customers of the package can do things
+such as use them in records and arrays.
+The version we saw in the previous section is called a
+<EM>generic abstract data object (GADO)</EM>.
+You can can think of each instance of a GADO as
+being "machine" that does a fixed set of operations (such as push and pop).
+GADTs require just slightly more work to use because you
+have to instantiate the generic (creating a type you can use),
+and then declare a value (of that new type) to use them.
+You also have to specify with each GADT operation what object
+(i.e. which Stack) to use.
+In exchange for this very slight additional work, GADTs are more versatile.
+For example, if you want an array of stacks with a GADT, it's easy.
+By comparison, it's not really practical to create an array of GADOs.
+Therefore, in general it's recommended that you develop generic packages
+as GADTs, not as GADOs
+(the AQ&amp;S specifically recommends this in chapter 8).
+<P>
+To use our new GADT version of Generic_Stack, we still have to
+instantiate it.  Here's an example
+(notice that we instantiate it the same way!):
+<PRE>
+  package Stack_Int is new Generic_Stack(Size =&gt; 200, Item =&gt; Integer);
+</PRE>
+<P>
+Now, however, we have a new type; we'll need to create variables of that type.
+For example:
+<PRE>
+  with Stack_Int; use Stack_Int;
+  ...
+  My_Stack : Stack;  -- Stack_Int's Stack type.
+</PRE>
+<P>
+To execute various commands, we now need to tell it which Stack to use.
+<P>
+<PRE>
+  Push(My_Stack, 7);
+</PRE>
+<P>
+If you're seriously interested in making the component reusable, you should
+try to make it as flexible as possible.
+For example, you should be able to "compose" reusable components from
+other reusable components to create complex data structures.
+A simple way to test this is to try to compose a reusable component with
+itself <A HREF="biblio.htm#wheeler1992">[Wheeler 1992]</A>.
+While the stack package we've shown so far is pretty good in many respects,
+it doesn't compose very well - we can't create a stack of stacks.  Why?
+Because the type "Stack" in our new version of the package
+is a limited private type - it doesn't provide an assignment operation.
+However, type Item is private, because we need the Item assignment operation
+to implement Push and Pop.
+<P>
+The solution is simple - we should support assignment between Stacks, too.
+One approach would be to make Stack a private type, permitting Ada to use
+its default array assignment operations.
+A better solution would be to use type "Controlled" that we discussed in
+lesson 7 so we can better control the assignment operation, and use that
+to implement our own assignment statement.
+We'll see more of this a little later.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+What is a GADT?
+<OL>
+<LI><A HREF="s11sfr1.htm">A generic package that does not define a new type.</A>
+<LI><A HREF="s11sfr2.htm">A generic package that defines a new type; the new type is used in all the operations (subprograms) defined in the generic package.</A>
+<LI><A HREF="s11sfr3.htm">Any generic package.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s11s3.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s12s1.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson11.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 11 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s11sf.htm">http://www.adahome.com/Tutorials/Lovelace/s11sf.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

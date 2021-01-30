@@ -1,0 +1,122 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 8.4 - Passing String Between Subprograms</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 8.4 - Passing String Between Subprograms</FONT></H1>
+Strings can be passed between subprograms just like any other
+variable type.
+Procedures and functions can have a type String as an in (or in out)
+variable, and those parameters will be set when the subprogram
+is called.
+In addition, functions can return variables of type String, just like
+any other type.
+<P>
+Beginning Ada developers often make an unwarranted assumption
+when writing subprograms that accept Strings - they assume that String
+indexes always begin with one.
+Not true.
+String indexes do not <EM>have</EM> to start at one - that's just
+the smallest possible starting index.
+In particular, if you pass in a string slice as an input parameter
+to a subprogram, the receiving subprogram will receive the slice's
+index values. This helps to keep String efficient, but it can be surprising.
+<P>
+The smallest index value of a String named A is written as
+A'First. Similarly, the largest index value is A'Last, and the
+string's length is A'Length.
+<P>
+Here's a simple rule of thumb: whenever you write a subprogram
+that accepts a String variable as an in parameter, 
+<EM>always</EM> use 'First, 'Last, and
+'Length - never assume that the String index begins with one.
+If you try to reference an out-of-range index, Ada will raise an
+exception - but it's better to not make the mistake in the first place.
+<P>
+Here is an example, which will hopefully make this clearer:
+<P>
+<PRE>
+  with Text_IO; use Text_IO;
+  procedure String2 is
+
+    procedure Print_Reverse( S : String ) is
+    begin
+      for I in reverse S'First .. S'Last loop
+        Put(S(I));
+      end loop;
+    end Print_Reverse;
+  
+    Demo : String := "A test";
+    
+  begin
+    Print_Reverse(Demo(3..Demo'Last));
+  end String2;
+</PRE>
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+When Print_Reverse is called, which is true?
+ 
+<OL>
+<LI><A HREF="s8s4r1.htm">S="test", S'First=3, S'Length=4</A>
+<LI><A HREF="s8s4r2.htm">S="test", S'First=1, S'Length=4</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s8s3.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s8s5.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson8.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 8 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s8s4.htm">http://www.adahome.com/Tutorials/Lovelace/s8s4.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

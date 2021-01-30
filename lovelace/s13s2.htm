@@ -1,0 +1,185 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 13.2 - Creating and Communicating with Tasks</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 13.2 - Creating and Communicating with Tasks</FONT></H1>
+Let's start by looking at an example of a trivial task.
+Let's create a type of task that waits for a "Start" request,
+prints a line of text for a number of times, and then terminates itself.
+<P>
+We'll wait a second between printing each line of text, which will
+help you see what it does.
+To make it more interesting, we'll include in the Start request
+the message to be printed and the number of times it's to print.
+<P>
+First, let's create a task type; the task type will be called Babbler,
+and we'll enclose it in a package called Babble.
+Its declaration could look like the following:
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+  with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
+package Babble is
+
+  task type Babbler is
+    entry Start(Message : Unbounded_String; Count : Natural);
+  end Babbler;
+
+end Babble;
+</PRE>
+<P>
+<P>
+When declaring a task, an "entry" is somewhat analogous to a procedure
+declaration.
+An entry statement declares what requests may be made to the task, including
+what information may be sent to and from the task when the request is made.
+<P>
+Just like packages and subprograms, tasks have a declaration and a body.
+The task body could look like this:
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+with Ustrings;   use Ustrings;
+
+package body Babble is
+
+ task body Babbler is
+   Babble : Unbounded_String;
+   Maximum_Count : Natural;
+ begin
+   accept Start(Message : Unbounded_String; Count : Natural) do
+       Babble := Message;      -- Copy the rendezvous data to
+       Maximum_Count := Count; -- local variables.
+   end Start;
+   for I in 1 .. Maximum_Count loop
+     Put_Line(Babble);
+     delay 1.0;       -- Wait for one second.
+   end loop;
+   -- We're done, exit task.
+ end Babbler;
+
+end Babble;
+</PRE>
+<P>
+<P>
+A task body defines what the task will do when it is started up.
+This particular task simply sets up some local variables and then runs
+an "accept" statement.
+An "accept" statement waits for some other task to make a request via
+the corresponding "entry".
+When another other task makes the matching request, the accepting task 
+runs the accept statements between the word "do" and the "end" that matches
+the accept statement.
+When a task is running the accept statements between "do" and "end", it
+is said to be in a <EM>rendezvous</EM> with the other task;
+the requesting task will not run any instructions until the "end"
+of the accept statement is run.
+A common task done in a rendezvous is to copy the data sent by the
+sending task to a place where the receiving task can use it later.
+Once the rendezvous is complete, both tasks can run.
+<P>
+Here's a short procedure to demonstrate this task type; we'll call it
+the procedure Noise. Noise will create two tasks of the given task type
+and send them Start messages. Note how similar creating a task is to
+creating a variable from an ordinary type:
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+with Babble, Ustrings;
+use  Babble, Ustrings;
+ 
+procedure Noise is
+  Babble_1 : Babbler;  -- Create a task.
+  Babble_2 : Babbler;  -- Create another task.
+begin
+  -- At this point we have two active tasks, but both of them
+  -- are waiting for a "Start" message. So, send them a Start.
+  Babble_1.Start(U("Hi, I'm Babble_1"), 10);
+  Babble_2.Start(U("And I'm Babble_2"), 6);
+end Noise;
+
+</PRE>
+<P>
+<P>
+A procedure that declares a task instance, like procedure Noise,
+is called a <EM>Master</EM>.
+A master must wait for all its tasks to terminate before it can terminate,
+so Noise will wait until Babble_1 and Babble_2 have exited before
+it exits.
+<P>
+Note that when procedure Noise makes a ``call'' to Babble_1 and
+Babble_2's `Start' entry, it is performing a rendezvous.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Should you see the lines of text from Babble_1 and Babble_2 interleaved on your
+display when you run Noise?
+<OL>
+<LI><A HREF="s13s2r1.htm">Yes.</A>
+<LI><A HREF="s13s2r2.htm">No.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s13s1.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s13s3.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson13.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 13 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s13s2.htm">http://www.adahome.com/Tutorials/Lovelace/s13s2.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

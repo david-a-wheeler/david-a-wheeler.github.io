@@ -1,0 +1,169 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 12.6 - Unchecked_Deallocation</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 12.6 - Unchecked_Deallocation</FONT></H1>
+Over time it's possible that some objects will no longer
+be referenced.
+Handling this case is called ``garbage collection.''
+Ada was designed to permit, but not require, automatic garbage collection.
+Since most Ada compilers do not perform automatic garbage collection,
+it's more portable to assume that garbage collection won't be performed
+automatically.
+Note that Ada compilers that generate
+<A HREF="http://www.yahoo.com/Computers/Languages/Java">Java</A> J-code
+(bytecodes) <EM>do</EM> perform automatic garbage collection.
+<P>
+Ada provides a generic procedure to release an object if it's no
+longer being referenced.
+This procedure is equivalent to ``free'' in C and ``delete'' in C++.
+This generic procedure's name is ``Unchecked_Deallocation''.
+Since it's a generic, you need to instantiate the generic using the
+access type you're using.
+By convention, the name of the instantiation is usually called "Free".
+<P>
+Here's the official definition of generic procedure
+Unchecked_Deallocation:
+<P>
+<PRE>
+  generic
+    type Object(&lt;&gt;) is limited private;
+    type Name   is access  Object;
+  procedure Unchecked_Deallocation(X : in out Name);
+</PRE>
+<P>
+Note that we need to pass it two things; a type, and the access to that type.
+Here's a simple example - let's instantiate a procedure called ``Free''
+that will let us release objects when they're no longer used:
+<P>
+<PRE>
+  procedure Free is new Unchecked_Deallocation(Tree_Node, Tree_Access);
+</PRE>
+<P>
+Now that we've instantiated a procedure called ``Free'', we can call it.
+Let's continue our example; imagine that we don't want to use
+the node we created in the last section any more.
+That's fine, we'll just call the new ``Free'' routine we've created:
+<P>
+<PRE>
+  Free(Current);
+</PRE>
+<P>
+When Free returns, the variable Current will have the value "null", and
+the memory previously accessed by Current will have been released.
+Any instantiation of Unchecked_Deallocation will automatically call
+any finalization operations defined for the enclosed types, as you would expect.
+<P>
+An important problem arises here that also arises in other languages
+such as C, C++, and Pascal:
+what if there's another access type that refers to that object?
+In our example, the access variable ``Root'' still refers to an object,
+but that object no longer exists.
+Any attempt to use Root to access its object may result in unpredictable
+behavior.
+While Ada provides a number of protections in the use of access variables,
+this is one problem which Ada (as well as some other languages)
+doesn't completely protect against.
+<P>
+This is an area where there is a strong tension between the desire
+to be safe and easy to use versus the desire to be predictably efficient.
+Some languages require deallocation to be handled automatically;
+this is called <EM>automatic garbage collection</EM>.
+Examples of such languages include Smalltalk, Eiffel, and Java.
+Automatic garbage collection is really convenient, so why wouldn't
+everyone want it?
+Well, the problem with automatic garbage collection is that:
+<P>
+<UL>
+<LI>
+automatic garbage collection can cause a significant performance overhead.
+<LI>
+automatic garbage collection can cause performance to be unpredictable.
+Collection overhead might appear at any time, instead of when a specific
+allocation or deallocation call is made.
+<LI>
+automatic garbage collection is difficult to implement well (and thus
+can be expensive to implement well).
+</UL>
+<P>
+The Ada specification does not require automatic garbage collection, but
+Ada is explicitly defined to permit automatic garbage collection.
+Compiler vendors are free to implement it at their option.
+Ada does require that Unchecked_Deallocation be available, which will do
+nothing if there's an automatic garbage collector.
+If you're using an Ada compiler that doesn't do automatic garbage collection
+(true for most) and you're concerned about a incorrect deallocation, you
+can search for all uses of Unchecked_Deallocation.
+<P>
+Unchecked_Deallocation works just fine on any object, including arrays.
+<!-- This is different than C++, which silently causes bad things to happen -->
+<!-- if you use the wrong delete operation. -->
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Which of the following statements is true?
+<OL>
+<LI><A HREF="s12s6r1.htm">The Ada specification prohibits automatic garbage collection.</A>
+<LI><A HREF="s12s6r2.htm">The Ada specification permits automatic garbage collection.</A>
+<LI><A HREF="s12s6r3.htm">The Ada specification requires automatic garbage collection.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s12s5.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s12sf.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson12.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 12 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s12s6.htm">http://www.adahome.com/Tutorials/Lovelace/s12s6.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

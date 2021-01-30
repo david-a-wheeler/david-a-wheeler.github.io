@@ -1,0 +1,274 @@
+<HTML>
+<HEAD>
+<TITLE>Package body Things</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com"></HEAD>
+<BODY>
+<B>Package body Things</B><P><HR><P>
+<PRE>
+<I>--</I>
+<I>-- Copyright (C) 1996 Ada Resource Association (ARA), Columbus, Ohio.</I>
+<I>-- Author: David A. Wheeler</I>
+<I>--</I>
+
+<B>with</B> Text_IO, <A HREF="ustrings.htm#9:9">Ustrings</A>;
+<B>use</B>  Text_IO, <A HREF="ustrings.htm#9:9">Ustrings</A>;
+
+
+<B>package</B> <B>body</B> <A NAME="10:14"></A>Things <B>is</B>
+
+ <I>-- Define basic types for the world and their operations.</I>
+
+
+ <I>-- Supporting Subprograms:</I>
+
+ <B>procedure</B> <A NAME="name-37"></A><A NAME="17:12"></A>Sorry(Prohibited_Operation : String;
+                 Prohibited_Direct_Object : Unbounded_String) <B>is</B>
+ <B>begin</B>
+  Put_Line("Sorry, you may not " &amp; Prohibited_Operation &amp; " the " &amp;
+           S(Prohibited_Direct_Object));
+ <B>end</B> Sorry;
+
+
+ <I>-- Routines to manipulate First_Containee, Next_Sibling, Container:</I>
+
+ <B>function</B> <A NAME="name-27"></A><A NAME="27:11"></A>Previous_Sibling(Containee : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class)
+          <B>return</B> <A HREF="thingss.htm#16:7">Thing_Access</A> <B>is</B>
+  <I>-- Find the previous sibling of containee.  It's an error to call</I>
+  <I>-- this if Containee has no previous sibling.</I>
+    <A NAME="31:5"></A>Current : <A HREF="thingss.htm#16:7">Thing_Access</A> := Containee.Container.First_Containee;
+ <B>begin</B>
+    <B>while</B> Current.Next_Sibling /= <A HREF="thingss.htm#16:7">Thing_Access</A>(Containee) <B>loop</B>
+      Current := Current.Next_Sibling;
+    <B>end</B> <B>loop</B>;
+    <B>return</B> Current;
+ <B>end</B> Previous_Sibling;
+
+ <B>function</B> <A NAME="name-24"></A><A NAME="39:11"></A>Last_Containee(Container : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class)
+          <B>return</B> <A HREF="thingss.htm#16:7">Thing_Access</A> <B>is</B>
+   <I>-- Return an access value of the last contained Thing in container.</I>
+   <I>-- It's an error to call this routine if there are no containees.</I>
+    <A NAME="43:5"></A>Current : <A HREF="thingss.htm#16:7">Thing_Access</A> := Container.First_Containee;
+ <B>begin</B>
+    <B>while</B> Current.Next_Sibling /= <B>null</B> <B>loop</B>
+      Current := Current.Next_Sibling;
+    <B>end</B> <B>loop</B>;
+    <B>return</B> Current;
+ <B>end</B> Last_Containee;
+
+ <B>procedure</B> <A NAME="name-32"></A><A NAME="51:12"></A>Remove(Containee : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>is</B>
+ <I>-- Remove Containee from its current Container.</I>
+  <A NAME="53:3"></A>Previous_Thing : <A HREF="thingss.htm#16:7">Thing_Access</A>;
+ <B>begin</B>
+  <B>if</B> Containee.Container /= <B>null</B> <B>then</B>
+    <B>if</B> Containee.Container.First_Containee = <A HREF="thingss.htm#16:7">Thing_Access</A>(Containee) <B>then</B>
+       <I>-- Containee is the first Thing in its container.</I>
+       Containee.Container.First_Containee := Containee.Next_Sibling;
+    <B>else</B>
+       Previous_Thing := Previous_Sibling(Containee);
+       Previous_Thing.Next_Sibling := Containee.Next_Sibling;
+    <B>end</B> <B>if</B>;
+    Containee.Next_Sibling := <B>null</B>;
+    Containee.Container    := <B>null</B>;
+  <B>end</B> <B>if</B>;
+ <B>end</B> Remove;
+
+
+ <B>procedure</B> <A NAME="name-30"></A><A NAME="69:12"></A>Place(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class; Into : <A HREF="thingss.htm#16:7">Thing_Access</A>) <B>is</B>
+ <I>-- Place "T" inside "Into".</I>
+  <A NAME="71:3"></A>Last : <A HREF="thingss.htm#16:7">Thing_Access</A>;
+ <B>begin</B>
+  <B>if</B> (<A HREF="thingss.htm#16:7">Thing_Access</A>(T) = Into) <B>then</B>
+    Put_Line("Sorry, that can't be done.");
+    <B>return</B>;
+  <B>end</B> <B>if</B>;
+  Remove(T); <I>-- Remove Thing from where it is now.</I>
+  <B>if</B> Into /= <B>null</B> <B>then</B>
+    <B>if</B> Into.First_Containee = <B>null</B> <B>then</B>
+      Into.First_Containee := <A HREF="thingss.htm#16:7">Thing_Access</A>(T);
+    <B>else</B>
+      Last := Last_Containee(Into);
+      Last.<B>all</B>.Next_Sibling := <A HREF="thingss.htm#16:7">Thing_Access</A>(T);
+    <B>end</B> <B>if</B>;
+  <B>end</B> <B>if</B>;
+  T.Container := Into;
+ <B>end</B> Place;
+
+ <B>procedure</B> <A NAME="name-31"></A><A NAME="89:12"></A>Put_Contents(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+                        Ignore : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+                        Heading_With_Contents : <B>in</B> String;
+                        Heading_Without_Contents : <B>in</B> String := "") is
+   <I>-- Put a description of the contents of T.</I>
+   <I>-- If there is something, print Heading_With_Contents;</I>
+   <I>-- If there isn't something, print Heading_Without_Contents.</I>
+   <I>-- Ignore The_Player, since presumably the player already knows about</I>
+   <I>-- him/herself.</I>
+   <A NAME="98:4"></A>Current : <A HREF="thingss.htm#16:7">Thing_Access</A> := T.First_Containee;
+   <A NAME="99:4"></A>Have_Put_Something : Boolean := False;
+ <B>begin</B>
+  <B>while</B> Current /= <B>null</B> <B>loop</B>
+    <B>if</B> Current /= <A HREF="thingss.htm#16:7">Thing_Access</A>(Ignore) <B>then</B>
+      <I>-- This what we're to ignore, print it out.</I>
+      <B>if</B> Have_Put_Something <B>then</B>
+        Put(", ");
+      <B>else</B>
+        <I>-- We're about to print the first item; print the heading.</I>
+        Put_Line(Heading_With_Contents);
+      <B>end</B> <B>if</B>;
+      Put(Short_Description(Current));
+      Have_Put_Something := True;
+    <B>end</B> <B>if</B>;
+    Current := Current.Next_Sibling;
+  <B>end</B> <B>loop</B>;
+  <B>if</B> Have_Put_Something <B>then</B>
+    Put_Line(".");
+  <B>elsif</B> Heading_With_Contents'Length &gt; 0 <B>then</B>
+    Put_Line(Heading_Without_Contents);
+  <B>end</B> <B>if</B>;
+ <B>end</B> Put_Contents;
+
+
+ <I>-- Dispatching Operations:</I>
+
+ <B>function</B> <A NAME="name-29"></A><A NAME="125:11"></A>What_Is(From : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>; Dir : <B>in</B> <A HREF="directis.htm#11:7">Direction</A>)
+          <B>return</B> <A HREF="thingss.htm#16:7">Thing_Access</A> <B>is</B>
+ <B>begin</B>
+   <B>return</B> <B>null</B>; <I>-- As a default, you can't go ANY direction from "here".</I>
+ <B>end</B> What_Is;
+
+
+ <I>-- Non-dispatching public operations:</I>
+
+ <B>procedure</B> <A NAME="name-36"></A><A NAME="134:12"></A>Set_Name(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class; Article : <B>in</B> <A HREF="thingss.htm#18:7">Article_Type</A>;
+                    Name : <B>in</B> Unbounded_String) <B>is</B>
+ <B>begin</B>
+   T.Article := Article;
+   T.Name    := Name;
+ <B>end</B> Set_Name;
+
+ <B>procedure</B> <A NAME="name-35"></A><A NAME="141:12"></A>Set_Name(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class; Article : <B>in</B> <A HREF="thingss.htm#18:7">Article_Type</A>;
+                    Name : <B>in</B> String) <B>is</B>
+ <B>begin</B>
+   T.Article := Article;
+   T.Name    := To_Unbounded_String(Name);
+ <B>end</B> Set_Name;
+
+ <B>function</B> <A NAME="name-26"></A><A NAME="148:11"></A>Name(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>return</B> Unbounded_String <B>is</B>
+ <B>begin</B>
+  <B>return</B> T.Name;
+ <B>end</B> Name;
+
+ <B>procedure</B> <A NAME="name-34"></A><A NAME="153:12"></A>Set_Description(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+                           Description : <B>in</B> Unbounded_String) <B>is</B>
+ <B>begin</B>
+  T.Description := Description;
+ <B>end</B> Set_Description;
+
+ <B>procedure</B> <A NAME="name-33"></A><A NAME="159:12"></A>Set_Description(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+                           Description : <B>in</B> String) <B>is</B>
+ <B>begin</B>
+  T.Description := To_Unbounded_String(Description);
+ <B>end</B> Set_Description;
+
+ <B>function</B> <A NAME="name-25"></A><A NAME="165:11"></A>Long_Description(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>return</B> Unbounded_String <B>is</B>
+ <B>begin</B>
+   <B>return</B> T.Description;
+ <B>end</B> Long_Description;
+ 
+
+ <I>-- Eventually we'll use an array for the article, but a minor GNAT 2.7.0 bug</I>
+ <I>-- will cause this to raise a Segmentation Fault when the program quits:</I>
+ <I>-- Article_Text : constant array(Article_Type) of Unbounded_String :=</I>
+ <I>--     (A =&gt; U("a "), An =&gt; U("an "), The =&gt; U("the "), Some =&gt; U("some "),</I>
+ <I>--      None =&gt; U(""));</I>
+
+ <B>function</B> <A NAME="name-28"></A><A NAME="177:11"></A>Short_Description(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>return</B> Unbounded_String <B>is</B>
+ <B>begin</B>
+  <B>case</B> T.Article <B>is</B>
+   <B>when</B> <A HREF="thingss.htm#18:24">A</A>    =&gt; <B>return</B> "a "    &amp; T.Name;
+   <B>when</B> <A HREF="thingss.htm#18:27">An</A>   =&gt; <B>return</B> "an "   &amp; T.Name;
+   <B>when</B> <A HREF="thingss.htm#18:31">The</A>  =&gt; <B>return</B> "the "  &amp; T.Name;
+   <B>when</B> <A HREF="thingss.htm#18:36">Some</A> =&gt; <B>return</B> "some " &amp; T.Name;
+   <B>when</B> <A HREF="thingss.htm#18:42">None</A> =&gt; <B>return</B>           T.Name;
+  <B>end</B> <B>case</B>;
+  <I>-- Should become return Article_Text(T.Article) &amp; T.Name;</I>
+ <B>end</B> Short_Description;
+
+ <B>function</B> <A NAME="name-21"></A><A NAME="189:11"></A>Find(Agent : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+               Object_Name : <B>in</B> Unbounded_String) <B>return</B> <A HREF="thingss.htm#16:7">Thing_Access</A> <B>is</B>
+ <B>begin</B>
+   <B>if</B> Agent.Container = <B>null</B> <B>then</B>
+     Put_Line("You aren't in anything.");
+     <B>return</B> <B>null</B>;
+   <B>else</B>
+     <B>return</B> Find_Inside(Agent.Container, Object_Name);
+   <B>end</B> <B>if</B>;
+ <B>end</B> Find;
+
+ <B>function</B> <A NAME="name-22"></A><A NAME="200:11"></A>Find_Inside(Agent : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+                      Object_Name : <B>in</B> Unbounded_String)
+          <B>return</B> <A HREF="thingss.htm#16:7">Thing_Access</A> <B>is</B>
+   <A NAME="203:4"></A>Current : <A HREF="thingss.htm#16:7">Thing_Access</A> := Agent.First_Containee;
+ <B>begin</B>
+   <B>if</B> Empty(Object_Name) <B>then</B>
+     Put_Line("Sorry, you need to name an object.");
+     <B>return</B> <B>null</B>;
+   <B>end</B> <B>if</B>;
+   <B>while</B> Current /= <B>null</B> <B>loop</B>
+     <B>if</B> Current.Name = Object_Name <B>then</B>
+       <B>return</B> Current;
+     <B>end</B> <B>if</B>;
+     Current := Current.Next_Sibling;
+   <B>end</B> <B>loop</B>;
+   Put("Sorry, I don't see a ");
+   Put_Line(Object_Name);
+   <B>return</B> <B>null</B>;
+ <B>end</B> Find_Inside;
+
+ <B>function</B> <A NAME="name-20"></A><A NAME="220:11"></A>Container(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>return</B> <A HREF="thingss.htm#16:7">Thing_Access</A> <B>is</B>
+ <B>begin</B>
+   <B>return</B> T.Container;
+ <B>end</B> Container;
+
+ <B>function</B> <A NAME="name-23"></A><A NAME="225:11"></A>Has_Contents(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>return</B> Boolean <B>is</B>
+ <B>begin</B>
+   <B>if</B> T.First_Containee = <B>null</B> <B>then</B>
+     <B>return</B> False;
+   <B>else</B>
+     <B>return</B> True;
+   <B>end</B> <B>if</B>;
+ <B>end</B> Has_Contents;
+
+<B>end</B> Things;
+
+<I>--</I>
+<I>-- Permission to use, copy, modify, and distribute this software and its</I>
+<I>-- documentation for any purpose and without fee is hereby granted,</I>
+<I>-- provided that the above copyright and authorship notice appear in all</I>
+<I>-- copies and that both that copyright notice and this permission notice</I>
+<I>-- appear in supporting documentation.</I>
+<I>-- </I>
+<I>-- The ARA makes no representations about the suitability of this software</I>
+<I>-- for any purpose.  It is provided "as is" without express</I>
+<I>-- or implied warranty.</I>
+<I>-- </I>
+
+</PRE>
+
+<P><HR><P>
+You may also see <A HREF="thingss.htm">the corresponding specification</A>.
+<P>
+You may also see the <A HREF="pkglist.htm">list of program units</A>.
+<P>
+The following compilation units are referred to ("with"'ed) by Package body Things:
+<UL>
+<LI><A HREF="ustrings.htm">Package spec Ustrings</A>
+</UL>
+You may return to the <A HREF="small.htm">Program Small Home Page</A>.
+<P>
+<!-- Do NOT delete my name or the tool name from below; -->
+<!-- giving me credit is a condition for use of ada2html -->
+<I>This hypertext format was generated by <A HREF="http://www.adahome.com/Ada/Tutorials/Lovelace/dwheeler.htm">David A. Wheeler</A>'s <A HREF="http://www.adahome.com/Ada/Resources/Tools/ada2html/ada2html.htm">ada2html</A></I>
+</BODY>
+</HTML>
+

@@ -1,0 +1,147 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 12.1 - Declaring Access Types</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 12.1 - Declaring Access Types</FONT></H1>
+It is often very useful to have a variable that, instead of storing
+a value, stores a reference to some other object.
+Such variables are called <EM>access</EM> variables in Ada, and
+are essentially equivalent to pointers or references in other languages.
+One common use of access variables is to implement items of varying size.
+<P>
+To create such variables, first create a type for it; these types are
+called <EM>access</EM> types.
+Here's an example of an access type declaration,
+declaring that variables of type Node_Access
+can access (reference) objects of type Node:
+<P>
+<PRE>
+  type Node_Access is access Node;
+</PRE>
+<P>
+Here is the
+<A HREF="bnf.htm">BNF</A> for creating an access type to an object:
+<P>
+<PRE>
+  access_object_type_declaration ::= "type" new_type_name "is"
+                                    "access" ["all"] type_name ";"
+</PRE>
+<P>
+Variables with an access type can either refer to an object or be
+<EM>null</EM>.
+You can make an access variable null by assigning it the value of the
+keyword "null", and you can check if it's null by comparing the variable
+(using "=" or "/=") to "null".
+Basically, you can treat "null" as a special value that any access type
+can store.
+<P>
+The ability to "point" at other values is useful and efficient, but it
+can also be dangerous.
+It's easy to do the wrong thing with pointers and cause surprising results.
+Ada tries to limit the damage that you can do while maintaining efficiency.
+Ada does this through the following rules:
+<UL>
+<LI>
+All access type variables are initialized as null (unless you specifically
+initialize them to something else).
+<LI>
+All operations that use what an access value references first check
+to see if the access value is null.
+If the access value is null, the exception Constraint_Error is raised.
+<LI>
+Normally access-to-object types are limited to referring to
+objects ``created dynamically'', as we will discuss next.
+You must add the keyword ``all'' in the access type definition
+to permit an access type to refer
+to all objects of a given type; such access values are called
+<EM>general</EM> access objects and are new to Ada 95.
+One use for general access objects is to interface with C or C++ programs,
+since C and C++ pointers are essentially equivalent to
+Ada general access objects.
+Another important use for general access objects is for object-oriented
+programming, as we'll discuss later.
+<LI>"Arithmetic" is not permitted on access variables.
+This is like Java and Pascal, which do not permit pointer arithmetic, and
+unlike C and C++, which do support pointer arithmetic.
+If you desparately need it, Ada does have a way to do pointer arithmetic
+(see
+<A HREF="http://www.adahome.com/rm95/rm9x-toc-13-07.html">package
+System in RM 13.7</A>)
+but its use is strongly discouraged in most circumstances.
+</UL>
+<P>
+The Ada compiler will optimize these checks and initializations away
+if it can determine that they're unnecessary.
+You can also turn off these checks for a given subprogram if you know
+that that particular subprogram is totally correct.
+<P>
+Now that we know how to declare access types, let's see how we can use them.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Which of the following will define an access type named Thing_Access?
+<OL>
+<LI><A HREF="s12s1r1.htm">type Thing_Access is access Thing;</A>
+<LI><A HREF="s12s1r2.htm">type access is Thing_Access;</A>
+<LI><A HREF="s12s1r3.htm">Thing_Access is access type;</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s11sf.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s12s2.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson12.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 12 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s12s1.htm">http://www.adahome.com/Tutorials/Lovelace/s12s1.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

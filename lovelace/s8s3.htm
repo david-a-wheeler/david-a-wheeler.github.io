@@ -1,0 +1,158 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 8.3 - Basics of Type String</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 8.3 - Basics of Type String</FONT></H1>
+Ada's type <EM>String</EM> can be considered
+a "primitive" type for handling sequences of text.
+It's simple and efficient, but some operations require a little work.
+<P>
+A String is simply an array of characters.
+The major "catch" with variables of type String is that,
+when you create a String variable, you must give Ada a way of determining
+its length - and the variable will stay fixed at that length from then on.
+There are two major ways for determining a string's length -
+you can explicitly state how long the string will be, or you can
+assign the variable a string value (Ada will determine how long the
+string value is and make the new variable that length).
+<P>
+Ada requires that at least the bounds or the initial string value be given;
+if both are given, they must match. The "low_bound" is usually 1, though
+Ada permits the low_bound to be a larger Integer.
+Here are some examples:
+<P>
+<PRE>
+A        : String(1..50);   -- Variable A holds 50 characters.
+Question : String := "What is your name?"  -- Ada will make String(1..18).
+</PRE>
+<P>
+<P>
+Here's a simplified <A HREF="bnf.htm">BNF</A>
+for declaring String variables:
+<P>
+<PRE>
+declare_string_variable ::= list_of_variable_names ":" [ "constant" ]
+                           "String" [ bounds ] 
+                                    [ ":=" initial_string_value ]
+bounds ::= "(" low_bound ".." high_bound ")"
+</PRE>
+Once you have a string, you can use predefined Ada operations on arrays
+(since a string is simply an array of characters).
+These include the following:
+<OL>
+<LI>You can read or overwrite a Character (an element of a String) at
+a given index position. For example, A(2) refers to the character
+in string A at index position 2.
+Any attempt to read or write a nonexistent index position will cause
+the exception Constraint_Error to be raised.
+To change the character at a given position,
+simply assign to it, for example:
+<PRE>
+    A(2) := 'f';
+</PRE>
+<LI>You can read or overwrite a <EM>slice</EM> (i.e., a substring).
+A slice refers to a portion of a string, from one index position
+to another, and is also considered a String.
+A slice from index position "low" to position "high" of some
+String variable B is written as "B(low..high)".
+You can write to a slice, too, but the source and destinations
+must have the same length.
+<LI>You can assign a whole string from one String to another the same
+way as any other variable, as long as their lengths are equal, like this:
+<PRE>
+    B := A;
+</PRE>
+<LI>You can concatenate (combine) strings together using the "&amp;"
+operator.
+</OL>
+<P>
+There are also predefined operations in Text_IO for printing
+Strings, namely Put and Put_Line.
+Let's look at an example:
+<P>
+<PRE>
+  with Text_IO; use Text_IO;
+  procedure String1 is
+    A : String := "Hello";
+    B : String(1..5);
+  begin
+    B := A;                      -- B becomes "Hello"
+    A(1) := 'h';                 -- A becomes "hello"
+    A(2..3) := A(4..5);          -- A becomes "hlolo"
+    A := B(1) &amp; A(2..3) &amp; "ol";  -- A becomes "Hlool"
+    Put_Line(A);
+    A(2..3) := B(2..3);
+    Put_Line(A);
+  end String1;
+</PRE>
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+What is the last line that program String1 will print?
+
+<OL>
+<LI><A HREF="s8s3r1.htm">Hello</A>
+<LI><A HREF="s8s3r2.htm">Hlolo</A>
+<LI><A HREF="s8s3r3.htm">hello</A>
+<LI><A HREF="s8s3r4.htm">Helol</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s8s2.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s8s4.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson8.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 8 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s8s3.htm">http://www.adahome.com/Tutorials/Lovelace/s8s3.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

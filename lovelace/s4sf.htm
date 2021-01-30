@@ -1,0 +1,151 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 4.3 - Subprogram Bodies and Local Variables</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 4.3 - Subprogram Bodies and Local Variables</FONT></H1>
+A subprogram body defines the actual algorithm used by the subprogram.
+A subprogram body starts out with a subprogram specification (which is the
+subprogram declaration without the final semicolon) followed by the
+keyword "is".
+This is followed by a declaration of local variables, the keyword "begin", the
+statements to be executed, and then the keyword "end".
+<P>
+Here's a simple subprogram body that implements the procedure Average we
+declared in the last section. Note that after the word `end' we can add
+a word indicating what we're ending (the Ada compiler will check to make
+sure this is correct). Also note that the assignment statement in Ada
+is written as `:=' (the same as Pascal):
+<P>
+<PRE>
+procedure Average(A, B : in Integer; Result : out Integer) is
+begin
+ Result := (A + B) / 2;
+end Average;
+</PRE>
+<P>
+Local variables and local subprograms can be declared between the "is" and the
+"begin".
+Local variables and local subprograms exist as long as their enclosing
+subprogram exists.
+Local variables are useful as "scratchpads" to hold intermediate results.
+Local variables are written the same as parameters are: the variable name(s),
+a colon, and their type.
+They can be given initial values (the following example initializes its local
+variable `Total' to the value of A).
+Functions return a value using the `return' statement.
+Here's an example:
+<P>
+<PRE>
+function Sum(A, B : in Integer) return Integer is
+ Total : Integer := A;
+begin
+ Total := Total + B;
+ return Total;
+end Sum;
+</PRE>
+<P>
+Here's an example with a function that computes the sum of the squares
+of two Integers. It works by creating a local function called Square:
+<P>
+<PRE>
+function Sum_Squares(A, B : in Integer) return Integer is
+
+  function Square(X : in Integer) return Integer is
+  begin -- this is the beginning of Square
+    return X*X;
+  end Square;
+
+begin -- this is the beginning of Sum_Squares
+ return Square(A) + Square(B);
+end Sum_Squares;
+</PRE>
+<P>
+Here's a <A HREF="bnf.htm">BNF</A> for subprogram declarations:
+</P>
+<PRE>
+subprogram_body ::= subprogram_specification "is"
+                      declarative_part
+                    "begin"
+                      sequence_of_statements
+                    "end" [designator] ";"
+
+declarative_part ::= { declarative_item }
+
+declarative_item ::= object_declaration | subprogram_body
+
+object_declaration ::= identifier_list : [constant] type [":=" expression] ";"
+</PRE>
+<P>
+A brief note about statement sequences: like C, Ada uses semicolons as
+a statement <EM>terminator</EM> - each Ada statement ends in a semicolon.
+This is different than Pascal,
+which uses the semicolon as a statement <EM>separator</EM>.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Which of the examples in this section has an empty declarative_part
+(i.e. no local variables or subprograms)?
+<OL>
+<LI><A HREF="s4sfr1.htm">procedure Average</A>
+<LI><A HREF="s4sfr2.htm">function Sum</A>
+<LI><A HREF="s4sfr3.htm">function Sum_Squares</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s4s2.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s5s1.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson4.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 4 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s4sf.htm">http://www.adahome.com/Tutorials/Lovelace/s4sf.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

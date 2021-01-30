@@ -1,0 +1,680 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<COMMENT  Edit the following lines. >
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=18>
+<AUTHOR NAME="David A. Wheeler" EMAIL="dwheeler&#64;dwheeler.com">
+<AUTHOR ADDRESS="<A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A>">
+<COMMENT $Id$ >
+
+<SECTION NAME="Example Program Small (Introduction)">
+
+Now that you've seen various parts of the Ada 95 programming language,
+it's time to create a program more than a few lines long.
+This program will use many of the different Ada capabilities at one time,
+so you can see how they work together.
+I can't walk you through every detail of every decision, but I'll try to
+carry you through the highlights.
+<P>
+
+The program we'll create is a small text adventure game.
+This program will simulate a small world, describing the current
+situation to the user.
+The user can then type in commands (like "look" and "get key")
+to make things happen.
+First we will implement "look" and "quit" commands;
+we will then add "get object" and "drop object" commands;
+and then we'll add
+"go <EM>direction</EM>" (north, south, etc.) commands.
+We'll want to be flexible so we can easily add other commands (like "open")
+and have different operations do different things (for example, perhaps
+you can get some objects but not others).
+<P>
+
+Given those simple requirements, what should the basic program design be?
+Let's try to break it down into logical groupings.
+An adventure game involves manipulating different things, of
+different but related types, performing possibly different actions when given
+the same commands.
+It sounds like an object-oriented approach would be appropriate
+for this kind of problem, so we'll probably have a set of different object
+type definitions.  We'll figure out how to define them in a moment, but we'll
+probably need to define a "root" type of all these different things, since
+they'll probably share many of the same operations.
+For the moment, let's assume that we'll define a package called "Things"
+that defines the root tagged type called Thing:
+<P>
+<PRE>
+ package Things is
+   type Thing is tagged ...; -- We'll figure this out later.
+   type Thing_Access is access all Thing'Class; -- Usual OO definition.
+   -- Operations to be determined ...
+ end Things;
+</PRE>
+<P>
+
+We also need to take a line of text and attempt to execute it.
+We might want that functionality for other reasons (for example, perhaps
+objects can have lines of text that are executed, or perhaps monsters
+can accept commands), so let's separate
+that capability into a separate package rather than incorporating
+it inside package Things.
+So let's make a package called "Parser" and a procedure inside it called
+"Execute"; Execute will take one parameter (a line of text), parse that
+line, and execute it:
+<PRE>
+ package Parser is
+  procedure Execute(Command : in Unbounded_String);
+ end Parser;
+</PRE>
+<P>
+
+Finally, we'll need to kick off this whole program, so we'll create
+a main procedure that gets everything going.
+In general, it's good for main procedures to be relatively small;
+in this case the main procedure will run a simple loop -
+wait for input, and then send that input to Execute to execute the command.
+Let's call the main procedure (and thus the program) "Small", since it's
+a small text adventure game:
+<PRE>
+ procedure Small is
+ begin
+  -- Repetitively get a command, then send it to Parser.Execute.
+ end Small;
+</PRE>
+<P>
+
+We already have another package called "Ustrings" that provides a routine
+to read a text line into an Unbounded_String; that will be
+useful for implementing procedure Small.
+<P>
+
+But wait - how will the main procedure know when "quit" has been commanded?
+There might be other reasons a player would stop the game (for example,
+if the player is "killed"). Probably Execute should return a Boolean
+value, which says whether or not more commands should be accepted.
+So we'll go back to Execute and change it to:
+<PRE>
+  procedure Execute(Command : in Unbounded_String; Quit : out Boolean);
+</PRE>
+<P>
+
+This particular change is only one example of many changes - I actually
+restructured this example several times as I was designing it.
+This is <EM>normal</EM>. You should try to break the system down, and
+then carefully examine the design to repair omissions in the
+interface between components.
+You should also strive to have a general structure so that changes
+you can anticipate can be easily handled.
+<P>
+
+Note that we're <EM>only</EM> worrying about the major design components
+and making sure their interfaces are sufficient for the job.
+In Ada, that means that you generally define the package
+declarations (specifications) <EM>first</EM>, and then once you think
+you've got them (basically) right you then implement the bodies.
+You'll notice that I haven't written any bodies yet - why bother, since I'm
+still working on the program's basic structure?
+You'll find that implementing bodies is easy if the specifications are right.
+<P>
+
+<QUESTION Type=Multiple-Choice>
+How many program units have we broken this problem into so far?
+<CHOICES>
+<CHOICE ANS=1>1
+<CHOICE ANS=2>2
+<CHOICE ANS=3>3
+<CHOICE ANS=4>4
+<CHOICE ANS=5>5
+</CHOICES>
+<ANSWER ANS=4>
+<RESPONSES>
+<WHEN ANS=2>
+No, that's not right. Program units are packages or
+top-level procedures.
+<WHEN ANS=3>
+Sorry, not quite right.
+Did you forget package Ustrings or procedure Small?
+Try again!
+<WHEN ANS=4>
+That's right.
+We have package Things, package Parser, procedure Small,
+and package Ustrings.
+We'll add more as we deal with package Things.
+</RESPONSES>
+
+<SECTION NAME="Small's Object-Oriented Class Hierarchy">
+
+We still haven't dealt with what's in package "Things", and
+other packages related to it; these are arguably the
+most important packages.
+Lots of different things can exist in the world, and things can
+contain other things.
+Usually adventure games have "rooms" where the players can go,
+items to pick up, and possibly monsters to meet.
+<P>
+
+<IMG ALIGN=right SRC="small.gif" ALT="[Object Hierarchy] WIDTH=151 HEIGHT=87">
+Here is a figure showing the class hierarchy that I've
+dreamed up; examine it and see if it makes sense to you.
+Anything in this world is considered a Thing; a Thing has a name,
+a description, and may contain other Things.
+Things can be Rooms or Occupants.
+Rooms can have connections (north, south, etc).
+There are two kinds of Occupants, Items and Creatures.
+Items are things like keys and tables.
+Creatures can be either Players or Monsters.
+By "Monster" I mean the technical role-playing game definition: a Monster
+is anything that does actions on its own that is not a player.
+I've intentionally not used the word "Object" here, because we might
+have other objects in other packages that aren't Things.
+<P>
+
+In some sense this class hierarchy is more than we need at first (I'm
+not planning to implement Monsters right now), but
+this gives us room to grow into.
+Future versions might expand this further - for example, perhaps there
+should be types Door and Key that are extensions of Item.
+<P>
+
+So, if we know the hierarchy of types, how will the packages holding
+these types be organized?
+In Ada, types are placed in packages, and they don't <EM>need</EM> to
+match one-for-one.
+You can declare more than one type in a package, and you can use
+child packages to group them in special ways.
+However, unless there's some reason to do otherwise, the
+"simple" way is usually best: create a package for each tagged type.
+As a naming convention I use the plural for the package and the singular
+for the type, so tagged type "Occupant" is in package "Occupants".
+Each package will need to "with" the package of its parent.
+So we'll have packages named Things, Rooms, Occupants, Items, Creatures,
+Monsters, and Players.
+<P>
+
+Now that we know what packages to create, how do we define the types
+inside them?
+Well, Thing and all its descendants must be tagged types, since we have
+inheritance.
+All of the type definitions for the children Room, Occupant, and so on
+will probably look like this:
+<P>
+<PRE>
+ type X is new PARENT with private;
+</PRE>
+<P>
+
+Ah, but how do I define the "root" of this hierarchy (in this
+case type Thing)?
+Although we don't need it right away, we probably want to be able to
+cause special things to happen when some objects are created or destroyed.
+That sounds like we need a "controlled" type, which would let us do that.
+However, we probably don't need to be able to assign between them, so we
+should probably create type Thing as new version of
+the "Limited_Controlled" type.
+Type Thing is not something you'd instantiate directly; instead, you'd create
+instances of its children.
+Thus Thing should be an abstract type; by declaring
+it abstract, people won't be able to create an instance of it.
+Here's the definition of Thing (which we'll place in package Things):
+<P>
+<PRE>
+ type Thing is abstract new Limited_Controlled with private;
+</PRE>
+<P>
+
+There's a key rule of thumb that underlies some of these decisions:
+<EM>never expose in a package specification more than you have to</EM>.
+For example, notice that I've chosen to say "with private" everywhere.
+That means that the actual implementation of these types is hidden
+in the private part of the package specification and can't be used
+directly by its users.
+That means we'll be able to change the implementation later without
+impacting users.
+
+<QUESTION Type=Multiple-Choice>
+Is a Player a member of the class of Things?
+<CHOICES>
+<CHOICE ANS=1>Yes.
+<CHOICE ANS=2>No.
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Yes indeed.
+In Ada terms, Player is a member of Thing'Class.
+<WHEN ANS=2>
+Sorry, that's not it.
+The "class of things" is the set of all types that are derived,
+directly or indirectly, from Thing.
+Take a look at the hierarchy again.
+</RESPONSES>
+
+<SECTION NAME="Any Structures Missing (Locating Operations)?">
+
+It's best to try to identify all the major components of a program
+and their purpose before going further.
+One way to do this is to think of important operations and data values
+and then determine if they have a "home" in our program structure.
+We've already covered the basic hierarchy of tagged types, and that
+seems to cover most of our needs.
+Let's think about the kinds of operations we'll need, and where
+they will be defined, to see if
+there are any that can't easily be located on our current design.
+<P>
+
+I think most of the commands should be attached to type Occupant (and
+thus placed in the Occupants package), with possible
+overriding for more specific types.
+You'd like to be able to command things other than the player to
+do things; it would be useful to command monsters and magic swords,
+for example.
+Even if you don't want a user to be able to "get" a monster, you want to print
+a reasonable message (not raise an exception) if the user attempts it.
+On the other hand, it's not as easy to imagine a room "getting" things
+(though you <EM>could</EM> define what that means), so for our
+purposes we'll attach many operations to Occupant.
+<P>
+
+The parser package will need to be able to command objects to Look, Get,
+Drop, and so on.
+It sounds like the operations like Look, Get, Drop, and so on will
+need to be in the specification of the various packages defining their
+corresponding tagged types.
+We'll come back to that later, but it looks like the structure
+we've developed so far will handle that easily.
+<P>
+
+The parser will need to break apart the text and then send a message to
+the player object to do something. Hmm, how can we find the player object?
+We could just define a global variable, but if this game ever became a
+multi-player game that wouldn't be very flexible.
+Let's define a function called "Me" that returns something that
+can represent the player.
+That way, we can create a function that varies who "Me" is easily.
+<P>
+
+Okay, where should that function "Me" go? It could be part of the
+Occupant class, but I'd rather have a separate package that sets up and
+keeps track of the "current state of the world".
+That way, all the other packages
+only need to react to specific commands and requests given to them, and
+they won't need (or even have available!) global information about the
+state of the world without specifically requesting that information.
+I'll call the package that keeps track of the general world state
+package "World".
+<P>
+
+We've already identified package Ustrings as a useful package, and I
+can't think of anything else we'd need, so it looks like we have
+a basic structure for program Small.
+
+<QUESTION Type=Multiple-Choice>
+What new package have we identified?
+<CHOICES>
+<CHOICE ANS=1>package World
+<CHOICE ANS=2>package Ustrings
+<CHOICE ANS=2>package Me
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+That's right.
+It's not the end of the world (ha!) if we later determine that we need to add
+new components to our design, but it's best to try to identify design
+components earlier.
+That way, we can have a more coherent design (maximizing reuse of lower-level
+components and working coherently together).
+<WHEN ANS=2>
+We identified package Ustrings in the previous section.
+I don't think you've been reading very carefully; try again!
+<WHEN ANS=3>
+Is "Me" a package?
+No - "Me" is a function inside another package.
+Try again.
+</RESPONSES>
+<SECTION NAME="Attributes and Operations of Objects">
+
+Well, we have the general structure laid out.
+Now we need to figure out what data values and operations apply to the
+different tagged types.
+<P>
+
+Type Thing should probably have the attributes Name and Description.
+It should also have a way of referring to its container, so we'll
+add a "Container" value in its implementation.
+For example, if Player "Fred" is the Room "kitchen", then Fred's
+Container would refer to the kitchen.
+<P>
+
+Let's completely hide these attributes with other procedures; that way
+we can control what happens to these values.
+In fact, to change "where" an object is, let's only provide the operation
+"Place", which places a given Thing inside another thing.
+That way we can make sure that the internal data values
+are kept consistent.
+<P>
+
+Let's implement "looking" as a pair of procedures. The first procedure,
+called "Look", is a message sent to the object
+doing the looking (i.e. a player).
+That procedure, should it consider looking okay (for example, if it
+determines that the player can see), will then call Put_View of
+whatever object the the player is looking at (i.e. the player's room).
+<P>
+
+I suspect that, if a player is inside a room, the view is different than
+if the player is inside a dragon's belly.
+Therefore Put_View should be a
+dispatching operation so that it can do different things depending on the
+type of the object being viewed.
+In Ada 95, to make a subprogram dispatchable (primitive),
+place the subprogram's declaration in the specification declaring the type.
+<P>
+
+By the same reasoning "Look" should be a primitive operation;
+perhaps different players have different kinds of vision
+(such as X-ray vision or vision that doesn't require light),
+so we'll want that to dispatch depending on the "looker" as well.
+<P>
+
+We'll also need to handle getting and dropping objects.
+Many of the operations in an adventure game involve both the Actor
+(i.e. the Player) and the object being acted on.
+That's similar to how we handled looking, since looking
+involves both the looker and the looked-at object.
+For example, for a "Get" to work, the player must be able to get things,
+and the object being gotten must agree that it can be acquired by the player.
+So let's define pairs of operations for Get: Get itself, which asks
+a given actor to get an object, and May_I_Get, which asks the object if
+the given actor can get it.  The same argument applies to drop, which will
+have the pair Drop and May_I_Drop.
+<P>
+
+<QUESTION Type=Multiple-Choice>
+If Item box and Player Fred are both in Room Kitchen,
+and Item knife is in Item box, what is the container of Item box?
+<CHOICES>
+<CHOICE ANS=1>Room Kitchen
+<CHOICE ANS=2>Player Fred
+<CHOICE ANS=3>Item knife
+<CHOICE ANS=4>Item box
+<CHOICE ANS=5>None of the above
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+That's correct.
+You probably had to read that question several times, but
+I wanted to make sure you got the concept.
+<P>
+Notice that this hierarchy of containment (Room contains an Item which
+contains another Item) is completely different than the inheritance
+hierarchy.
+A kitchen may contain a box, and a box may contain a knife, but that
+does not mean that a knife is a kind of box.
+The concept of "hierarchy" is a useful concept, but it appears in several
+different contexts.
+Don't confuse an inheritance hierarchy (where one thing is an extension of
+another) with a containment hierarchy (where one thing is contained in another).
+<WHEN ANS=2>
+No, the container of Player Fred is the Room Kitchen, and
+none of the things mentioned were contained by Player Fred.
+Try again!
+<WHEN ANS=3>
+No, sorry.
+The container of Item knife is Item box, but that's not what was asked.
+The container of Item box is not Item knife, but something else.
+Please try again.
+<WHEN ANS=4>
+No, Item box doesn't contain itself.
+As an aside, self-containing objects are usually a sign of trouble in
+a text adventure game - you'll find that program "Small" specifically checks
+for this and prevents it.
+Try again.
+<WHEN ANS=5>
+No, sorry. Room kitchen didn't have any container mentioned for it,
+but there was a specific container listed for Item box.
+Go back to the question and see if you can determine what that is.
+</RESPONSES>
+<SECTION NAME="Parameter Types">
+
+Now, I haven't mentioned how to define parameter types for all these
+operations. Ada provides several different choices - you can use a specific
+type name or an entire type class, and you can use an "access mode" or
+a normal mode (<I>in</I>, <I>in out</I>, or <I>out</I>).
+If you want to
+dispatch on a specific parameter, you can define operations as either of:
+<P>
+<PRE>
+  procedure Look(Actor : in Occupant);      -- Option 1.
+  procedure Look(Actor : access Occupant);  -- Option 2.
+</PRE>
+<P>
+For option 1, you're passing the Occupant to Look; in option 2,
+you're passing an access-to-Occupant value.
+Both will dispatch, both can be overridden, and you
+can use both approaches in the same program (it's no big deal to convert
+between them).
+Personally, I find that option 2 closer to the way I think
+about the problem, so I've used it throughout program Small where appropriate.
+Why do I find it more natural?
+Well, I think of Things lying out there in the simulated
+world, and that these subprogram simply pass around references to them.
+You'll find that different people have different preferences depending on the
+circumstance.
+<P>
+
+If you do <EM>not</EM> need to dispatch on an operation, you can define
+operations as:
+<P>
+<PRE>
+  procedure X(Actor : in Occupant'Class);       -- Option 3.
+  procedure X(Actor : access Occupant'Class);   -- Option 4.
+  procedure X(Actor : in Occupant_Access);      -- Option 5.
+</PRE>
+<P>
+Option 3 basically says we can accept any type at all as long as that
+type is a member of the class Occupant.
+Option 4 says we can take any access value at all, as long as 
+it accesses a type that's a member of Occupant'Class.
+Option 5 uses an access type defined elsewhere, and if that type
+(Occupant_Access)
+is defined as access Occupant'Class it's quite similar to option 4
+except in one very important way - option 5 permits a null value to
+be passed in.
+<P>
+
+Thus, if we're passing around access values and we want to
+permit a null value, we should use "Occupant_Access" as the parameter type.
+Otherwise,
+if we don't need to pass a null value, we can use option 4 (so that
+it uses access values as well).
+<P>
+
+Generally, if you use option 1 you'll use option 3, and if you use
+option 2 you'll use options 4 and 5 (depending on whether or not
+you want to permit a null value).
+Which you choose depends mainly on how you think about your problem -
+are you thinking in terms of passing around specific objects, or
+are you thinking in terms of passing access (reference) values to those
+objects?
+Your answer suggests which you should use.
+<P>
+
+So what do we do about the function "Me" we mentioned earlier?
+Conceivably a future version might permit a Player to command a Monster
+or Item, so let's make
+function "Me" return an Occupant_Access.
+<P>
+
+At this point we have the basic idea on how to implement Look, Quit,
+Get, Drop, and Inventory.
+<P>
+
+<QUESTION Type=Multiple-Choice>
+Could the actual accessed object function "Me" returns be of type Player?
+<CHOICES>
+<CHOICE ANS=1>Yes.
+<CHOICE ANS=2>No.
+</CHOICES>
+<ANSWER ANS=1>
+
+<SECTION NAME="Starting Implementation">
+
+Okay, let's start implementing program Small.
+I started by writing a version of procedure body Small, package Parser,
+package Thing, and package World, just enough to make it possible to
+run "look" and "quit".
+Rather than looking at everything in program Small, let's quickly
+examine some specific areas.
+For example, let's see how
+we can now define package Things more specifically:
+<P>
+<PRE>
+
+package Things is
+
+ -- "Thing" is the root class for all things in this small world.
+ -- Rooms, Players, Items, and Monsters are derived from Thing.
+
+ type Thing is abstract new Limited_Controlled with private;
+ type Thing_Access is access all Thing'Class;
+
+ -- Public Dispatching operations.
+
+ procedure Put_View(T : access Thing; Agent : access Thing'Class) is abstract;
+  -- Put what Agent sees inside T.
+
+  -- Public non-Dispatching operations:
+
+ procedure Set_Description(T : access Thing'Class;
+                           Description : in String);
+ function Long_Description(T : access Thing'Class) return Unbounded_String;
+ function Short_Description(T : access Thing'Class) return Unbounded_String;
+
+ -- ...
+end Things;
+
+</PRE>
+<P>
+We now have a root type called "Thing" defined in package "Things".
+We can set its description using procedure Set_Description,
+and retrieve descriptions using functions Long_Description
+or Short_Description.
+Any player who successfully looks at some thing will call procedure
+Put_View to print whatever that Thing looks like.
+Now we can implement procedure "Look" in package Occupants; it will
+figure out what you're looking at and call the corresponding Put_View.
+<P>
+
+For Get and Drop we'll add the corresponding operations to package Occupants.
+However, to implement Get and Drop we need to be able to move objects around.
+To do this, let's add this operation to package Thing:
+<P>
+<PRE>
+ procedure Place(T : access Thing'Class; Into : Thing_Access);
+   -- Place T inside "Into" (removing it from wherever it was).
+   -- Attempting to place T into itself will print an error message
+   -- and fail.
+</PRE>
+<P>
+Procedure Place doesn't need to dispatch, and we're passing access values
+around, so the first parameter is access Thing'Class (if we wanted
+this to dispatch, we could change it to "access Thing").
+The second parameter is Thing_Access, not Thing'Class, because
+"null" should be a valid value for "Into"
+(that would mean we'll move T so it will have no container).
+<P>
+
+I've added support for directions -
+that way players can go north, south, east, west, up, or down.
+To do so, I've added a "Direction" type that has the values
+North, South, East, West, Up, and Down.
+Rooms have data on what's at a given direction, Occupants
+have commands to go in a given direction, and the Parser recognizes
+those commands.
+Since different packages (Rooms, Occupants, and Parser) need to know about
+directions, I've added another package (Directions) to define
+this new type Direction.
+<P>
+
+<QUESTION Type=Multiple-Choice>
+Between Look and Put_View, which would be called first?
+<CHOICES>
+<CHOICE ANS=1>Look
+<CHOICE ANS=2>Put_View
+</CHOICES>
+<ANSWER ANS=1>
+<SECTION NAME="Closing Remarks on Program Small">
+
+I haven't explained every detail of <A HREF="small.htm">program Small</A>,
+but hopefully by now you've got a flavor of it.
+<P>
+
+There are lots of ways to extend this program; it's a small world, after all.
+You could add lots of specialized types of Item (door, key, weapon, etc.).
+You could add multi-playerness (this would involve finding a way to get
+data from multiple players,
+say a binding to BSD-style sockets, and switching from Text_IO
+to an IO routine that would use the interface).
+You could permit dynamic creation and modification of the world at run-time
+(add a "wizard" command, and then add wizard-only commands like
+@create object, @destroy object, @view object, and @set object attribute=value).
+I haven't implemented independently active monsters, or a combat system, or
+magic; you might want one or more of them.
+Perhaps you could permit scripts to be executed at run-time.
+<P>
+
+The best way to understand Small is probably to look at it.
+<IFDEF BOOK>
+The source code for Small is included in the back of this book.
+<ELSE>
+There are several ways you can look at it:
+<UL>
+<LI><A HREF="small.htm">You can look at the source code for
+program Small as a set of hypertext documents</A>;
+you can easily wander about the whole program in a little time, stopping
+and examining whatever parts interest you.
+<LI>You can view the
+<A HREF="small.txt">source code as a single large ASCII file</A>.
+<LI>You can download the
+<A HREF="small.zip">source files as a "zip" file</A>.
+</UL>
+<P>
+You are strongly encouraged to wander about and look at
+<A HREF="small.htm">the hypertext source code for Small</A>, but
+you do not have to.
+The Lovelace home page has a link to Small if you choose to look
+at it later.
+<ENDIF>
+<P>
+
+Note that the following legal note appears in each file of program Small:
+<PRE>
+--
+-- Copyright (C) 1996 Ada Resource Association (ARA), Columbus, Ohio.
+-- Author: David A. Wheeler
+--
+
+--
+-- Permission to use, copy, modify, and distribute this software and its
+-- documentation for any purpose and without fee is hereby granted,
+-- provided that the above copyright and authorship notice appear in all
+-- copies and that both that copyright notice and this permission notice
+-- appear in supporting documentation.
+-- 
+-- The ARA makes no representations about the suitability of this software
+-- for any purpose.  It is provided "as is" without express
+-- or implied warranty.
+-- 
+</PRE>
+<IFDEF BOOK>
+<P>
+This concludes Lovelace, the Ada tutorial.
+If you've made it this far, congratulations!
+I hope that you find what you've learned both useful and informative.
+<ENDIF>
+

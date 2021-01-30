@@ -1,0 +1,322 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=5>
+
+<COMMENT $Id: lesson5.les,v 1.5 1995/05/17 21:25:18 wheeler Exp $ >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+
+<SECTION NAME="If Statements">
+Inside a subprogram body, between the "is" and the "end &lt;name&gt;", is a
+sequence_of_statements.
+A sequence_of_statements is simply - well - a sequence of statements,
+each terminated with a semicolon.
+There are many different kinds of statements; we've already seen assignment
+statements and procedure call statements.
+We'll now examine a few other kinds of statements, starting with the
+<EM>if statement</EM>.
+<P>
+If statements determine if some condition is true, and then execute some
+sequence of statements depending on that determination.
+Here's a trivial example that determines if A is equal to B; if it is,
+A receives the value of B plus one. If A isn't equal to B, A receives the
+value of B minus one:
+<P>
+<PRE>
+ if A = B then
+    A := B + 1;
+ else
+    A := B - 1;
+ end if;
+</PRE>
+<P>
+Here's the full <A HREF="bnf.htm">BNF</A> for the if statement:
+<PRE>
+if_statement ::=
+  "if" condition "then"
+     sequence_of_statements
+  {"elsif" condition "then"
+     sequence_of_statements}
+  ["else" 
+     sequence_of_statements]
+  "end if;"
+</PRE>
+<P>
+Like other algorithmic languages, if `condition' is true the
+`then' part is executed.
+Otherwise, the elsif clauses (if any) are checked in first-to-last order,
+again looking for a true condition.
+Finally, if none of the conditions are true, the `else' clause is executed
+(if there's an "else" clause).
+<P>
+Notice that the keyword "then" is mandatory (it doesn't exist in C or C++).
+<P>
+<QUESTION Type=Multiple-Choice>
+What is the final value of A in the following sequence of statements?
+<PRE>
+ A := 5;
+ B := 6;
+ if A &gt; B then
+  A := 7;
+ else
+  A := A - 2;
+ end if;
+</PRE>
+<CHOICES>
+<CHOICE ANS=1>3
+<CHOICE ANS=2>5
+<CHOICE ANS=3>7
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right.
+<WHEN ANS=2>
+No, sorry. A is changed by the if..then..else.
+<WHEN ANS=3>
+No, sorry. 5 &gt; 6 is false, so we'd execute the "else" clause.
+</RESPONSES>
+<SECTION NAME="Case Statements">
+Sometimes you want to execute one of many different sequences of statements,
+based on the value of a single expression.
+You can do this by using a set of "elsif" clauses, but most languages
+(including Ada) provide a simpler way to do this.
+<P>
+Ada's mechanism is a <EM>case statement</EM>.
+A case statement computes the value of an expression, and then compares
+it to lists of values to determine what to execute next.
+Here's an example:
+<P>
+<PRE>
+  case A is                      -- Execute something depending on A's value:
+    when 1          =&gt; Fly;      -- if A=1, execute Fly.
+    when 3 .. 10    =&gt; Put(A);   -- if A is 3 through 10, put it to the screen.
+    when 11 | 14    =&gt; null;     -- if A is 11 or 14, do nothing.
+    when 2 | 20..30 =&gt; Swim;     -- if A is 2 or 20 through 30, execute Swim.
+    when others     =&gt; Complain; -- if A is anything else, execute Complain.
+  end case;
+</PRE>
+<P>
+Note that after each "when" is a list of one or more possible values.
+A "when others" clause matches anything that hasn't matched anything else.
+A case statement chooses one and only one alternative; the alternatives
+must be exhaustive (cover all possible cases) and exclusive
+(you can't have two "when 5 =&gt;" clauses).
+An Ada compiler will detect missing or duplicate cases at compile-time.
+<P>
+
+Here's the full <A HREF="bnf.htm">BNF</A> for the case statement:
+<PRE>
+case_statement ::=
+  "case" expression "is"
+      case_statement_alternative
+     {case_statement_alternative}
+  "end case;"
+
+case_statement_alternative ::=
+   "when" discrete_choice_list "=&gt;" sequence_of_statements
+
+discrete_choice_list ::= discrete_choice { | discrete_choice }
+
+discrete_choice ::= expression | discrete_range | "others"
+</PRE>
+<P>
+
+The Ada case statement is functionally identical to
+C's "switch" statement.
+Unlike C, Ada supports ranges of values and does not
+require a "break" statement at the end of each sequence (a common C error).
+<P>
+
+Case statements are useful, but a large number of case statements
+may indicate that you should be using a more object-oriented approach.
+Ada's object-oriented features will be discussed in a later lesson.
+
+<QUESTION Type=Multiple-Choice>
+In the sample case statement above, if A contained 12, what
+would be executed?
+<CHOICES>
+<CHOICE ANS=1>Fly.
+<CHOICE ANS=2>Put(A).
+<CHOICE ANS=3>null (do nothing).
+<CHOICE ANS=4>Swim.
+<CHOICE ANS=5>Complain.
+</CHOICES>
+<ANSWER ANS=5>
+<RESPONSES>
+<WHEN ANS=1>
+No, fly is only executed when A=1.
+<WHEN ANS=2>
+No, Put(A) is only executed when A is between 3 and 10 (inclusively).
+Twelve is larger than 10, so it's outside that range.
+<WHEN ANS=3>
+No, sorry. "Null" (do nothing)
+is executed when A is 11 <EM>or</EM> 14, not if A is between 11 and 14.
+<WHEN ANS=4>
+No, Swim is only executed when A=2 or if A is between 20 and 30
+(including 20 and 30).
+</RESPONSES>
+<SECTION NAME="Simple Loops">
+Ada has a number of `looping constructs' for situations where something
+must repeat over and over again.
+The simplest looping construct just repeats `forever'.
+A simple loop simply begins with the phrase ``loop'', has statements to repeat,
+and ends with ``end loop;''.  Here's an example of a procedure body
+that, when run, repeatedly prints the same message over and over again:
+<P>
+
+<TEXT TEMPLATE=compile FILE="forever.adb">
+
+<P>
+A loop can be terminated through an ``exit'' or an ``exit when'' clause
+(similar to C's break statement).
+An `exit' causes an immediate exiting of the innermost loop.
+An `exit when' clause causes exiting of the innermost loop only if the
+following condition is true.
+<P>
+The `exit when' clause is particularly useful in circumstances
+where you must do some action(s)
+before you can figure out if the loop has to stop or not.
+These are called ``loop-and-a-half'' constructs - you start with "loop",
+perform calculations to determine if the loop should stop, use an `exit when'
+to exit on that condition, and then work on the result.
+<P>
+Here's an example of a loop-and-a-half.
+This program reads in a list of numbers and prints out
+their squares, but stops (without printing) when it reads in the number `0':
+
+<TEXT TEMPLATE=compile FILE="prinsqua.adb">
+
+<QUESTION Type=Multiple-Choice>
+What will A's final value be?
+<PRE>
+A := 1;
+loop
+ A := A + 1;
+ exit when A &gt; 3;
+end loop;
+</PRE>
+<CHOICES>
+<CHOICE ANS=1>1
+<CHOICE ANS=2>2
+<CHOICE ANS=3>3
+<CHOICE ANS=4>4
+<CHOICE ANS=5>5
+</CHOICES>
+<ANSWER ANS=4>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.
+<WHEN ANS=2>
+No, sorry.
+<WHEN ANS=3>
+No, sorry.
+<WHEN ANS=4>
+Right!
+<WHEN ANS=5>
+No, sorry.
+</RESPONSES>
+
+<SECTION NAME="Loop Iteration Schemes">
+There are two other common styles of loops that are directly
+supported in Ada: <EM>while</EM> loops and <EM>for</EM> loops.
+While and for loops are called `iteration schemes'; they are
+loops with information prepended to them on the kind of looping
+scheme desired.
+<P>
+The <EM>while</EM> loop is particularly easy.
+Write a normal loop block, as you saw in the previous section,
+and put in front of the block
+the keyword ``while'' and a condition.
+A while loop repeatedly executes the statements in the loop as long
+as the while condition is true.
+Here is an example of a loop that, while N is less than 20,
+it prints N and then adds one to it:
+<!-- Note that HTML requires the less-than sign to be handled specially -->
+<PRE>
+ while N &lt; 20
+ loop
+  Put(N);
+  N := N + 1;
+ end loop;
+</PRE>
+<P>
+The <EM>for</EM> loop is similar, starting with the keyword ``for''.
+A <EM>for</EM> loop assigns a local loop parameter a lower value.
+It then repeatedly checks if the loop parameter is less than or equal to the
+higher value, and if so it executes a sequence of statements and then
+adds one to the loop parameter.
+Here's an example of a loop that prints "Hello" 20 times:
+<PRE>
+ for Count in 1 .. 20
+ loop
+   Put_Line("Hello");
+ end loop;
+</PRE>
+<P>
+There are some key points about
+<EM>for</EM> loops that need mentioning:
+<OL>
+<LI>
+The variable named in the `for' loop is a local variable visible
+only in the statements inside it, and it <EM>cannot</EM> be modified
+by the statements inside (you <EM>can</EM> exit a for loop, using the
+exit statement we've already seen).
+<LI>
+Normally a loop always adds one.
+The reverse order can be requested by
+using the keyword `reverse' after the keyword `in'.
+In this case the loop value starts with the upper bound (given second)
+and decrements until it is less than the lower bound (given first).
+If you need to increment or decrement by more than one, use another
+kind of loop instead.
+</OL>
+<P>
+Both ``while'' and ``for'' loops check their conditions before
+executing each loop.
+That means that the loop can conceivably execute "zero" times if the
+loop condition starts as false.
+This does create a trap for beginning Ada programmers, though.
+The construct:
+<PRE>
+  for J in 10 .. 1 loop
+</PRE>
+<BR>
+repeats zero times (i.e. it never executes the loop contents)
+because 10 is always greater than 1.
+<P>
+The construct
+<PRE>
+  for J in reverse 10 .. 1 loop
+</PRE>
+repeats zero times as well; Ada considers 10 .. 1 an empty list, and
+doing nothing in reverse order still does nothing.
+What you probably want instead is:
+<PRE>
+  for J in reverse 1 .. 10 loop
+</PRE>
+
+<QUESTION Type=Multiple-Choice>
+If you wanted to repeat something exactly ten times, which
+iteration construct would be the most straightforward?
+<CHOICES>
+<CHOICE ANS=1>While loop.
+<CHOICE ANS=2>For loop.
+<CHOICE ANS=3>A loop without an iteration scheme.
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.
+You <EM>could</EM> do that with a while loop,
+but another construct would be simpler.
+<WHEN ANS=2>
+Right.
+<WHEN ANS=3>
+No, sorry.
+You <EM>could</EM> do that using a loop without an iteration
+scheme, but another construct would be simpler.
+</RESPONSES>

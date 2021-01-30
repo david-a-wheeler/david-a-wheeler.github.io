@@ -1,0 +1,211 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 16.2 - Interfacing with C</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 16.2 - Interfacing with C</FONT></H1>
+Since there are many useful utilities that can be called from C
+it's a good idea to know how to call them from Ada.
+This section assumes you know the C language to some basic level;
+if you don't know C you can skim this section.
+<P>
+First, here are some general rules on how Ada and C correspond, based on
+the
+<A HREF="http://www.adahome.com/rm95/rm9x-B-03.html">RM B.3(63):</A>
+<OL>
+<LI>An Ada procedure corresponds to a void-returning C function.
+<LI>An Ada function corresponds to a non-void-returning C function.
+<LI>An Ada array corresponds to a C pointer to the first element.
+<LI>Simple scalar types (integers, floats, and access/pointer types) correspond
+to the obvious type in the other language.
+</OL>
+<P>
+Ada 95 provides a set of predefined packages that make it easier to
+interface with C.
+The primary package is named "Interfaces.C", which contains definitions
+for C types in Ada.
+These include C's types int, long, unsigned, and double.
+The C type float is called "C_float" in Ada so that it isn't
+confused with Ada's type Float (Ada Float and C float are probably identical,
+but that's not necessarily true).
+<P>
+The type "char_array" mimics C character arrays.
+Many C functions assume that character arrays are terminated with
+the special character "nul" (written in C as '\0').
+Since Ada strings aren't normally nul-terminated, functions
+To_C and To_Ada convert between Ada String types and C char_array types.
+<P>
+There are additional packages called Interfaces.C.Strings and
+Interfaces.C.Pointers that provide additional types and
+operations on C-style strings and C pointers.
+In particular, package "Interfaces.C.Strings" defines the type "chars_ptr",
+which corresponds to the typical C type "char*" when used to point to
+a C string (i.e. a pointer to an array of characters).
+The package also defines:
+<OL>
+<LI>constant <EM>Null_Ptr</EM>, which corresponds to C's <EM>(char*)NULL</EM>,
+<LI>procedure <EM>Free</EM>, which corresponds to C's <EM>free()</EM>, and
+<LI>function <EM>Value</EM>, which takes a chars_ptr and returns a
+normal Ada String. This function raises an exception Dereference_Error
+if passed a null pointer.
+</OL>
+<P>
+Let's work through a real-life example so you can see how this really works.
+This example is from
+<A HREF="http://wuarchive.wustl.edu/languages/ada/swcomps/cgi/cgi.html">"package
+CGI"</A>, an Ada binding to the World Wide Web
+Common Gateway Interface (CGI).
+Let's say that you want to get the value of an environment variable
+from the Operating System, and you want to get this value via a
+pre-existing C function that does this.
+In C this function is called "getenv" and it has the following C definition
+(see [Kernighan and Ritchie 1988, edition 2, page 253]):
+<P>
+<PRE>
+  char *getenv(char *name);
+</PRE>
+<P>
+This can be pretty straightforwardly translated into Ada as:
+<P>
+<PRE>
+  function getenv(Variable : chars_ptr) return chars_ptr;
+  pragma Import(C, getenv);
+</PRE>
+<P>
+That works, but it's inconvenient to have to keep translating
+values in and out of type "chars_ptr" in an Ada program.
+It's probably better to write a wrapper program that translates the Ada
+Strings to C strings (chars_ptr) and back for us.
+Let's define an Ada function to do that for us:
+<P>
+<PRE>
+with Interfaces.C.Strings; use Interfaces.C.Strings;
+-- ...
+
+ function Get_Environment(Variable : String) return String is
+ -- Return the value of the given environment variable.
+ -- If there's no such environment variable, return an empty string.
+ 
+   function getenv(Variable : chars_ptr) return chars_ptr;
+   pragma Import(C, getenv);
+   -- getenv is a standard C library function; see K&amp;R 2, 1988, page 253.
+   -- it returns a pointer to the first character; do NOT free its results.
+ 
+   Variable_In_C_Format : chars_ptr := New_String(Variable);
+   Result_Ptr : chars_ptr := getenv(Variable_In_C_Format);
+   Result : String := Value_Without_Exception(Result_Ptr);
+
+ begin
+  Free(Variable_In_C_Format);
+  return Result;
+ end Get_Environment;
+</PRE>
+<P>
+Notice that a lot of string manipulation is happening in the declaration
+section.
+That's an easy way to get things done,
+because simple Ada Strings have a fixed length once they're declared.
+There's a call to some function called Value_Without_Exception;
+that's because normally an attempt to turn a null C pointer into a string will
+raise an exception, and we just want to turn it into an empty string instead.
+That means we'll have to define such a function; here's a definition:
+<P>
+<PRE>
+ function Value_Without_Exception(S : chars_ptr) return String is
+ -- Translate S from a C-style char* into an Ada String.
+ -- If S is Null_Ptr, return "", don't raise an exception.
+ begin
+   if S = Null_Ptr then return "";
+    else return Value(S);
+   end if;
+ end Value_Without_Exception;
+ pragma Inline(Value_Without_Exception);
+</PRE>
+<P>
+Now we can easily get environment variables in Ada. For example, to get
+the value of environment variable REQUEST_METHOD, use:
+<P>
+<PRE>
+  Request_Method_Text : String := Get_Environment("REQUEST_METHOD");
+</PRE>
+<P>
+One thing we haven't covered are C <EM>struct</EM>s.
+Ada records and C structs clearly correspond, but how exactly should
+they correspond?
+The Ada RM advises, but does not require, that
+Ada records always be passed to C as pointers to the beginning of the
+corresponding C struct.
+For those (relatively rare) cases where a C function expects to be passed
+a structure by value (a copy instead of the more common pointer-to-structure),
+you could create a new C function that converts a pointer into the
+actual structure and then call that new C function from Ada.
+However, this is simply advice, and
+the GNAT compiler does not follow this advice - instead, GNAT sends
+Ada records by value (copies).
+Both approaches are reasonable, but unfortunately they are different.
+The safest approach for passing Ada records is to always pass
+"access to record" values - since they are scalar, they are guaranteed
+to pass correctly in all Ada compilers.
+
+<!-- No quiz question -->
+<P>
+<HR>
+<P>
+There is no quiz question for this section.
+<P>
+<IMG SRC="pright.gif" ALT="" HEIGHT="14" WIDTH="33">
+<A HREF="s16s3.htm">
+<FONT SIZE="+1"><STRONG>You may go to the next section.</STRONG></FONT></A>
+<P>
+<HR>
+You may also:
+<P>
+
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s16s1.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="lesson16.htm">
+<IMG SRC="barrowr.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to the outline of lesson 16</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s16s2.htm">http://www.adahome.com/Tutorials/Lovelace/s16s2.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

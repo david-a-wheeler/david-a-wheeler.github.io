@@ -1,0 +1,265 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<COMMENT  Edit the following lines. >
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=9>
+<COMMENT $Id: lesson9.les,v 1.3 1995/05/17 21:25:18 wheeler Exp $ >
+
+<COMMENT  You'll probably want to uncomment and edit these lines: >
+<COMMENT  <PREVIOUS_LESSON LOCATION="URL_of_directory/" >
+<COMMENT  <NEXT_LESSON LOCATION="URL_of_directory/" >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+<COMMENT Each section has a title; SECTION starts a new section.>
+
+<SECTION NAME="Simple Text File Input/Output">
+Throughout this tutorial we've been using selected input/output
+subprograms, mainly from the predefined package Text_IO.
+Now it's time to learn how to use more capabilities of Text_IO,
+especially how to read and write text files.
+<P>
+Operating system files are represented in Text_IO by a type called,
+reasonably enough, File_Type.
+All operations on files operate on objects of type File_Type.
+The default for inputting operations (such as Get)
+is Current_Input (Current_Input is of type File_Type), while the default for
+all outputting operations (such as Put and Put_Line) is Current_Output
+(which also has type File_Type).
+<P>
+Before a text file can be read or written it must be either
+opened or created.
+There are two basic procedures in Text_IO, called, naturally enough,
+Open and Create.
+Open opens an existing file, while Create creates a new file
+(eliminating the original file) and then opens it.
+Before you stop your program you should close all the files you've
+opened; the Close procedure is used to do that.
+Here are their definitions:
+<P>
+<PRE>
+  procedure Create (File : in out File_Type;
+                    Mode : in File_Mode := Out_File;
+                    Name : in String    := "";
+                    Form : in String    := "");
+
+  procedure Open   (File : in out File_Type;
+                    Mode : in File_Mode;
+                    Name : in String;
+                    Form : in String := "");
+
+  procedure Close  (File : in out File_Type);
+</PRE>
+<P>
+The ``Mode'' can be In_File (an input file),
+Out_File (an output file), or
+Append_File (an output file appending after existing text).
+The ``Form'' parameter is optional, and is used to provide
+operating-system-specific information if it's necessary.
+<P>
+All the Get and Put subprograms can take a parameter of type File_Type
+as their first parameter; if they're handed a File_Type, the subprogram
+will read or write to the given file.
+In general, if you don't want to use the default File_Type, add the
+File_Type as the first parameter of an input-output subprogram.
+<P>
+Here's a trivial example - a program that creates a new
+file called "hi" and writes text into it:
+<P>
+<TEXT TEMPLATE=compile FILE="make_hi.adb">
+<P>
+
+<QUESTION Type=Multiple-Choice>
+If you ran program Make_Hi twice, how many text
+lines would the file "hi" contain when you were done?
+<CHOICES>
+<CHOICE ANS=1>1.
+<CHOICE ANS=2>2.
+<CHOICE ANS=3>None.
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right. Every time program Make_Hi runs, it creates a new file,
+erasing whatever was there before.
+<WHEN ANS=2>
+No, sorry.
+Re-read what the ``Create'' command does.
+</RESPONSES>
+<SECTION NAME="Line and File Endings">
+Package Text_IO models text files as a sequence of text lines;
+each text line has zero or more characters in it.
+Different operating systems have different ways to indicate
+the end of a line and the end of a file,
+so Text_IO detects them using the local operating system's conventions.
+<P>
+The following subprograms help deal with
+end of line and end of file:
+<DL>
+<DT>Procedure New_Line
+<DD>
+New_Line ends the current line and starts a new line.
+It takes an optional parameter indicating how many new lines to create
+(the default is one).
+You can also specify the file to output this new line to
+(the default is Current_Output).
+<DT>Procedure Skip_Line
+<DD>
+Skip_Line is the counterpart of New_Line;
+it gets ready to read the line after the current line,
+discarding any text on the current line that hasn't been read.
+<DT>Function End_Of_Line
+<DD>
+End_Of_Line returns True if the input is at the end of the line (else it
+returns False).
+<DT>Function End_Of_File
+<DD>
+End_Of_File returns True if the input is at the end of the file (else it
+returns False).
+<DT>Function Line
+<DD>
+Line reports the current line number of the file you're reading or writing
+(the first line is number 1).
+This is useful if you're processing some input data and you've suddenly
+found an input problem.
+</DL>
+<P>
+As with the Get and Put operations, put a File_Type as the first parameter
+with these routines
+if you want to work with a given file, or you'll use the default
+Current_Input and Current_Output.
+For example, if you're reading from Startup_File (a variable
+of type File_Type), you can check for the end of the file by checking
+"End_Of_File(Startup_File)".
+<P>
+These subprograms are quite useful without being passed any parameters.
+Note that in Ada, if you call a subprogram but don't want to pass it any
+parameters, don't include the parentheses() after the name of the subprogram
+(this is a slightly different syntax than in C and C++).
+<P>
+Here's another demo program, one that only prints ``long'' lines.
+This demo program illustrates a very common Ada idiom - using
+``while (not End_Of_File)'', which processes an entire input file.
+<P>
+<TEXT TEMPLATE=compile FILE="put_long.adb">
+<P>
+
+
+<QUESTION Type=Multiple-Choice>
+If you want to discard the rest of
+a line of input, what subprogram would you use?
+<CHOICES>
+<CHOICE ANS=1>New_Line
+<CHOICE ANS=2>Skip_Line
+<CHOICE ANS=3>End_Of_Line
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry, New_Line <EM>outputs</EM> a new line.
+<WHEN ANS=2>
+Very nice.
+<WHEN ANS=3>
+No, End_Of_Line just reports if you've reached the end of a line or not.
+It doesn't change anything regarding the input.
+</RESPONSES>
+<SECTION NAME="Miscellaneous Text_IO Capabilities">
+Here are some miscellaneous capabilities of Text_IO that you may find useful.
+<P>
+Text_IO defines functions Current_Input, Current_Output, and Current_Error;
+each returns a File_Type.
+Current_Error is like Current_Output but should be used for
+error messages.
+Here's an example of printing an error message:
+<PRE>
+  Put(Current_Error, "Error - the widget file is missing.");
+</PRE>
+<P>
+Procedures Set_Input, Set_Output, and Set_Error let you set the
+current input, output, and error files somewhere else.
+For example, if you want all error messages to go to file "error", do
+the following:
+<PRE>
+  Error_File : File_Type;
+  -- ...
+  Create(Error_File, Out_File, "error");
+  Set_Error(Error_File);
+</PRE>
+<P>
+Ada and the underlying operating system
+may delay sending output to the user to increase overall performance.
+This is called buffering.
+Usually buffering is a good idea,
+but sometimes you want the output to be displayed right away.
+In that case, use the <EM>Flush</EM> operation to immediately display
+everything sent to a given file (the default is Current_Output).
+<P>
+Sometimes you want to check the keyboard to see if a user has pressed
+a key, and if so, what that key was.
+The Ada 95 procedure to do that is called <EM>Get_Immediate</EM>.
+There are a few caveats with Get_Immediate:
+<UL>
+<LI>
+On some systems it's not possible to implement Get_Immediate;
+in that case Ada can't do it (obviously).
+<LI>
+On multiprocessing systems it's often not a good idea to continuously
+check if something has happened.
+This is called polling, and polling can slow the whole system down.
+If you plan to just wait if a key hasn't been pressed, use <EM>Get</EM>
+instead.
+</UL>
+<SECTION NAME="Package Command_Line">
+There is a special kind of input and output between the
+operating system and the Ada program.
+This input is the information from the <EM>command line</EM>, and
+the output is what's called an <EM>exit status</EM>.
+This was easy to do in Ada 83 but there wasn't a standard way to do it.
+Ada 95 has added
+a standard package to perform this input and output called
+<EM>Command_Line</EM>.
+Command_Line is very similar to C's argc, argv, and exit.
+<P>
+Command_Line provides a few subprograms for input from the operating system.
+This package defines a function named <EM>Argument_Count</EM> that
+returns the number of arguments given to it (it will be zero or higher).
+It also provides a function called <EM>Argument</EM> that takes an
+argument number (an index) and returns that argument's value as a String.
+It also provides function Command_Name, which returns the name of the
+program as a String; some operating systems don't support this.
+<P>
+Command_Line provides subprograms for returning a <EM>Status_Code</EM>
+to the operating system, which is some sort of integer type.
+There are two predefined Status_Codes: Success and Failure.
+You can set the Status_Code using the procedure Set_Status; when the
+program ends, the last value set in Set_Status will be returned to the
+operating system.
+<P>
+Here's the definition of Command_Line
+(from the
+<A HREF="http://www.adahome.com/rm95/rm9x-A-15.html">RM
+section A.15</A>):
+<P>
+<PRE>
+  package Ada.Command_Line is
+    function Argument_Count return Natural;
+    function Argument (Number : in Positive) return String;
+    function Command_Name return String;
+
+    type Exit_Status is <EM>implementation-defined integer type;</EM>
+    Success : constant Exit_Status;
+    Failure : constant Exit_Status;
+    procedure Set_Exit_Status (Code : in Exit_Status);
+    -- ...
+  end Ada.Command_Line;
+</PRE>
+<P>
+Here's an example of Command_Line;
+program Show takes as arguments a list of files and prints them out,
+indented with one space:
+<P>
+<TEXT FONT=PRE FILE="show.adb">
+<P>
+Package Command_Line may not be useful if there's
+no operating system, since in that case there's nothing to communicate with.

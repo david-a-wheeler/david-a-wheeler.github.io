@@ -1,0 +1,162 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 6.3 - Creating Types and Subtypes</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 6.3 - Creating Types and Subtypes</FONT></H1>
+In Ada, a <EM>type</EM> is characterized by a set of values
+and a set of <EM>primitive operations</EM>.
+For example, the type Integer can be characterized by a set of
+values (..., -2, -1, 0, 1, 2, ...) and a set of primitive
+operations (+, -, *, /, etc.).
+We'll learn more about the phrase ``primitive operation'' later.
+<P>
+An <EM>object</EM> of a given type is a run-time entity that
+contains (has) a value of the type.
+For example, a variable named `Number_Of_Widgets' is an object;
+Number_Of_Widgets could be of the type <EM>Integer</EM>.
+<P>
+Ada lets you create your own types, and has a very rich set
+of capabilities for creating types with exactly the operations
+you want.
+<P>
+To create a new type, use a <EM>type declaration</EM>.
+A type declaration begins with the keyword <EM>type</EM>, followed
+by the name of the new type, the keyword <EM>is</EM>, and then
+a definition of the new type.
+Here's an example of a new type named <EM>Column</EM> which can
+only have integer values in the range 1 through 72, and another
+type called <EM>Row</EM> that has values 1 through 24:
+<P>
+<PRE>
+ type Column is range 1 .. 72;
+ type Row    is range 1 .. 24;
+</PRE>
+<P>
+Ada permits types declarations in essentially the same places as variable
+declarations, but in real Ada programs type declarations are usually declared
+near the beginning of a package specification,
+followed by declarations of subprograms that use that type.
+Types are occasionally declared near the beginning of package bodies for
+types that are only used in the internal implementation of a package.
+<P>
+One <EM>very</EM> important difference between Ada and some other
+languages is that Ada considers types different even if
+they happen to be implemented the same way at a particular time.
+For example, an object of type Column can't be added with an object
+of type Row or Integer without some additional expressions, even though they
+may be implemented the same way in the (current) underlying system.
+Why? Because they have different types.
+Now, you could <EM>create</EM> such operations to allow them to be mixed,
+but these operations don't come automatically.
+<P>
+This prohibition of mixing types is often useful for catching errors,
+but sometimes it's not what you want.
+Beginning Ada programmers sometimes create too many different numeric types,
+turning simple programs into complicated ones.
+If two different types are closely related and it should be possible
+to mix the different types together,
+perhaps you have two related types instead of two independent types.
+What you probably need in that case is a <EM>subtype</EM> declaration.
+<P>
+A <EM>subtype</EM> is simply another name for an existing type
+that may have some additional constraints on it.
+For example, let's say you have a program that manipulates counts
+of many different kinds of things.
+You could have a base type called `Count', and subtypes to represent
+counts of different kinds of things.
+If there must be less than 100,000 things, and widgets must have less
+than 100 (while there's no specific limit for eggs), you could define
+these subtypes as follows:
+<PRE>
+ type Count is range 0 .. 99_999;
+ subtype Widget_Count is Count range 0 .. 99;
+ subtype Egg_Count is Count;
+</PRE>
+<P>
+Subtypes can be declared in the same places that types can be declared.
+<P>
+One place I specifically recommend using subtypes instead of using many
+new numeric types are in real-time control or scientific software in
+which there are a large number of different units that are combined
+throughout the software.  It is possible in Ada to define a new type called
+"Meters", another called "Meters_Squared", another called
+"Meters_Per_Second", and so on.  To make this scheme work, however, you
+have to create multiply operations that take two "meters" and multiply
+them to produce a "Meters_Squared", and so on.  For most real software
+of this kind, the effort to generate all possible combinations isn't
+worth the benefit.  There are usually a large number of
+different units and they are combined in many different ways throughout
+the program.
+<P>
+Don't get the idea that creating new numeric types are always a
+bad thing, however; there are a number of places where creating a new
+type for numeric values is appropriate.  Ada provides you with a number
+of tools; you need to decide which tool is appropriate for your task.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+If you want to permit free mixing of two different kinds of numbers,
+should they be defined as subtypes or different types?
+<OL>
+<LI><A HREF="s6s3r1.htm">subtypes</A>
+<LI><A HREF="s6s3r2.htm">types</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s6s2.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s6s4.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson6.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 6 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s6s3.htm">http://www.adahome.com/Tutorials/Lovelace/s6s3.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

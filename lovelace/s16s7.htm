@@ -1,0 +1,187 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 16.7 - Java Interfaces and Aliased Components</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 16.7 - Java Interfaces and Aliased Components</FONT></H1>
+Java also includes a construct called an "interface".
+Java interfaces are basically a weakened form of multiple inheritance.
+A Java interface is like a class you can inherit from,
+but all of its methods must be abstract.
+A class that "inherits" from an interface is said to "implement"
+that interface.
+Java classes can implement (inherit)
+from zero, one, or more than one interface.
+Thus, while Java classes can only directly inherit from one other class
+(as is true with Ada), they can implement zero or more interfaces.
+<P>
+Ada doesn't have anything that directly corresponds to a Java interface.
+However, to use the Java library there must be a way for an Ada program
+to use Java interfaces.
+Here's the convention you need: if you're defining an Ada type
+that is to implement some interface defined in the Java language as I,
+add to the Ada type's record a field with name "I"
+and type "aliased I_Obj".
+For example, let's say you're defining some applet My_Applet and
+you want it to implement a Java interface named Runnable in Java package
+"java.lang".
+You'd define your class as follows:
+<P>
+<PRE>
+  with java.applet.Applet; use java.applet.Applet;
+  with java.lang.Runnable; use java.lang.Runnable;
+
+  package My_Applet is
+    type My_Applet_Obj is new Applet_Obj with
+      record
+        Runnable : aliased Runnable_Obj;
+      end record;
+    type My_Applet_Ptr is access all My_Applet_Obj'Class;
+  end My_Applet;
+</PRE>
+<P>
+All interfaces are marked with a special pragma that tells the compiler
+that it's an interface and to take special actions to produce the
+right code.
+<P>
+Some operations will require you to pass the <I>interface</I>
+type instead of the regular type.
+For example, some Java library methods require
+the Java "Runnable" type (instead of, say, Java's "Applet" type).
+That's not a problem; instead of passing the access value <I>A</I>,
+pass such methods the value <I>A.Runnable'Access</I> where
+"Runnable" is the field representing the interface.
+For example, let's say you want to call the
+Java "Thread" constructor (called "new_Thread" in Ada).
+This constructor expects to be handed something of type "Runnable".
+You can create a new Thread by executing the following:
+<P>
+<PRE>
+  My_Thread : Thread_Ptr := new_Thread(X.Runnable'Access);
+</PRE>
+<P>
+You can create your own interfaces by identifying their "_Obj" type
+using pragma Convention with language type
+"Java_Interface". For example, if Concept_Obj is
+actually a new interface you're defining, simply say:
+<P>
+<PRE>
+  pragma Convention(Java_Interface, Concept_Obj);
+</PRE>
+<P>
+The "aliased" phrase above is not specific to
+Java, but is a standard part of Ada 95.
+Normally you can only obtain an access value on entire record, not of
+some component inside.
+However, sometimes you'd like to have access values that can refer
+to subcomponents of a record.
+Ada will let you do that if you identify the component as <I>aliased</I>.
+For example, the phrase "X.Runnable'Access" used above only works because
+Runnable is marked as "aliased".
+<P>
+This approach to implementing Java interfaces
+suggests a simple way to implement multiple inheritance in
+Ada, should you need to.
+You can use inheritance to inherit from the "most natural" class.
+You can then include, in your type's record,
+components that contain the "other" classes
+that you'd like to inherit from.
+Finally, you can redefine calls for those other classes (in the case of Java
+interfaces this is partly done for you).  However, be very careful if
+you're using true multiple inheritance:  many object-oriented languages
+(including Smalltalk and Java) don't include full multiple inheritance
+because it's easy to create horrifically unmaintainable structures.
+Use this approach only if it really appears to
+be the simplest and most maintainable approach.
+A description of various approaches for implementing multiple inheritance
+in Ada, should you desire it, is included in the
+<A HREF="http://www.adahome.com/LRM/95/Rationale/rat95html/rat95-p2-4.html#6">Ada Rationale Part Two, section 4.6</A>.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+You can create a class to lay out graphical components
+by creating a class that implements the Java interface
+"LayoutManager" (which is in the Java package "java.awt").
+Let's say say you want to create a "Special_Layout", and you've
+started as follows:
+<P>
+<PRE>
+  with java.lang; use java.lang; -- "Object" type is defined here.
+  with java.awt.LayoutManager; use java.awt.LayoutManager;
+
+  package Special_Layout is
+    type Special_Layout_Obj is new Object with
+      record
+        -- SOMETHING
+      end record;
+    type Special_Layout_Ptr is access all Special_Layout_Obj'Class;
+    -- Special_Layout methods go here.
+  end Special_Layout;
+</PRE>
+<P>
+What should "-- SOMETHING" be replaced with?
+<OL>
+<LI><A HREF="s16s7r1.htm">LayoutManager : Layout_Manager_Obj;</A>
+<LI><A HREF="s16s7r2.htm">LayoutManager : Layout_Manager_Ptr;</A>
+<LI><A HREF="s16s7r3.htm">LayoutManager : aliased LayoutManager_Obj;</A>
+<LI><A HREF="s16s7r4.htm">LayoutManager : aliased Layout_Manager_Ptr;</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s16s6.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s16sf.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson16.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 16 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s16s7.htm">http://www.adahome.com/Tutorials/Lovelace/s16s7.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

@@ -1,0 +1,168 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 11.1 - Defining Generics</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 11.1 - Defining Generics</FONT></H1>
+It's often useful to first create a more generic version of a subprogram
+or package and then use that generic version to create more specific
+subprograms or packages.
+Ada's capability to do this is called a <EM>generic</EM>, and it's
+the same thing as C++'s <EM>templates</EM>.
+Generics are also somewhat similar to C's "#define" preprocessor command,
+though Ada generics are type-checked and thus much safer.
+<P>
+It's probably easiest to understand this by example.
+First, let's write a procedure to swap two Integers:
+<P>
+<PRE>
+  -- Here's the declaration (specification):
+  procedure Swap(Left, Right : in out Integer);
+
+  -- .. and here's the body:
+  procedure Swap(Left, Right : in out Integer) is
+    Temporary : Integer;
+  begin
+    Temporary := Left;
+    Left := Right;
+    Right := Temporary;
+  end Swap;
+</PRE>
+<P>
+Swap is a perfectly fine procedure, but it's too specialized.
+We can't use Swap to swap Floats, or Unbounded_Strings, or anything else.
+What we want is a more generic version of Swap, but one where we can
+substitute the type "Integer" with a more <EM>generic</EM> type.
+A generic version of Swap would look like this:
+<P>
+<PRE>
+  -- Here's the declaration (specification):
+  generic
+    type Element_Type is private;
+  procedure Generic_Swap(Left, Right : in out Element_Type);
+
+  -- .. and here's the body:
+  procedure Generic_Swap(Left, Right : in out Element_Type) is
+    Temporary : Element_Type;
+  begin
+    Temporary := Left;
+    Left := Right;
+    Right := Temporary;
+  end Generic_Swap;
+</PRE>
+<P>
+In general, to create a generic version of a subprogram (or package),
+write the subprogram using a few generically-named types.
+Then precede the subprogram or package with the keyword ``generic''
+and a list of the information you'd like to make generic.
+This list is called the <EM>generic formal parameters</EM>; this list is
+like the list of parameters in a procedure declaration.
+We'll explain more later
+what the phrase ``is private'' means.
+<P>
+To use a generic subprogram (or package), we have to create a real
+subprogram (or package) from the generic version.
+This process is called <EM>instantiating</EM>, and the result is
+called an <EM>instantiation</EM> or <EM>instance</EM>.
+These are big words for a simple concept.
+For example, here's how to create three Swap procedure instances
+from the generic one:
+<P>
+<PRE>
+  procedure Swap is new Generic_Swap(Integer);
+  procedure Swap is new Generic_Swap(Float);
+  procedure Swap is new Generic_Swap(Unbounded_String);
+</PRE>
+<P>
+Note that when you instantiate a generic, you ``pass'' types
+in the same way that you pass parameters to an ordinary procedure call.
+<P>
+From here on, you can call the Swap procedure that takes Integers, the
+Swap procedure that takes Floats, and the Swap procedure that takes
+Unbounded_Strings.
+Thus if A and B are both of type Integer, Swap(A,B) would swap their values.
+As for any other Ada subprogram, if different subprograms 
+share the same name, Ada will determine at compile time
+which one to call based on the argument types.
+<P>
+Here's a simple test program for Generic_Swap:
+<PRE>
+with Generic_Swap;
+
+procedure Tswap is
+ procedure Swap is new Generic_Swap(Integer);
+ A, B : Integer;
+begin
+ A := 5;
+ B := 7;
+ Swap(A, B);
+ -- Now A=7 and B=5.
+end Tswap;
+</PRE>
+<P>
+For brevity I'm showing procedure Swap being instantiated in procedure
+Tswap, but in most real programs almost everything is enclosed in a package
+and the instantiations would be inside the package body.
+
+<!-- No quiz question -->
+<P>
+<HR>
+<P>
+There is no quiz question for this section.
+<P>
+<IMG SRC="pright.gif" ALT="" HEIGHT="14" WIDTH="33">
+<A HREF="s11s2.htm">
+<FONT SIZE="+1"><STRONG>You may go to the next section.</STRONG></FONT></A>
+<P>
+<HR>
+You may also:
+<P>
+
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s10sf.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="lesson11.htm">
+<IMG SRC="barrowr.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to the outline of lesson 11</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s11s1.htm">http://www.adahome.com/Tutorials/Lovelace/s11s1.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

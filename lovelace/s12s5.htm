@@ -1,0 +1,133 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 12.5 - Access Parameters (For Object Orientation)</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 12.5 - Access Parameters (For Object Orientation)</FONT></H1>
+
+Often when developing object-oriented systems
+you will want to pass around access values to tagged types
+(we discussed tagged types in <A HREF="lesson7.htm">lesson 7</A>).
+Ada 95 adds a new pseudo-mode called "access" to help you build OO
+systems using access types.
+<P>
+If you recall, every parameter for a subprogram has to be of mode
+<I>in</I>, <I>in out</I>, or <I>out</I>.
+You can use the keyword "access" as a mode (followed by a type name) instead.
+Here's an example:
+<P>
+<PRE>
+ procedure Get(Agent : access Occupant; Direct_Object : access Occupant'Class);
+</PRE>
+<P>
+So what in the world does this example mean??
+Here's the answer:
+<UL>
+<LI>
+When an "access mode" is followed by an ordinary tagged type,
+it means that the input parameter (in this case Agent) must be
+an access value of the given type (in this case Occupant).
+More importantly, this procedure can be overridden, and the
+type of the <I>object being accessed</I> will determine which subprogram
+to dispatch to.
+Thus, we could create another subprogram called "Get" for a descendent
+of Occupant, and that subprogram Get would override the Get defined here.
+This is an essential part of being an OO language - we can dispatch to
+a given program using the current data value.
+Access parameters let us dispatch using the access value.
+<LI>
+When an "access mode" is followed by a class type,
+it means that the input parameter (in this case Direct_Object) must be
+an access value of the given type (in this case Occupant) or <I>any</I>
+of its descendents.
+In this case we do <I>not</I> dispatch on this parameter,
+since any of the descendents will do for this subprogram.
+In this case, access parameters let us accept a wide range of types,
+instead of just a specific access type.
+</UL>
+<P>
+There's an important requirement for access parameters - null values are
+not permitted.
+If you want to permit null values, use the modes in, out, or in out with
+an ordinary access type.
+<P>
+It's difficult to understand access parameters
+without more context, so we'll defer discussing this further until
+<A HREF="lesson18.htm">lesson 18</A> where we will
+look at examples of this.
+What you need to understand right now is that if you're using access types
+and object-oriented programming, you will probably want to use
+the pseudomode "access".
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Given the following procedure declaration:
+<P>
+<PRE>
+ procedure Jump(E : access Occupant'Class);
+</PRE>
+<P>
+Will a call to procedure Jump dynamically dispatch to one of many
+subprograms depending on the exact type of "E"?
+<OL>
+<LI><A HREF="s12s5r1.htm">Yes, Jump will dynamically dispatch.</A>
+<LI><A HREF="s12s5r2.htm">No, Jump will not dynamically dispatch.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s12s4.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s12s6.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson12.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 12 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s12s5.htm">http://www.adahome.com/Tutorials/Lovelace/s12s5.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

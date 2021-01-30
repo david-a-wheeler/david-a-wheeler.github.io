@@ -1,0 +1,354 @@
+<COMMENT This is the lesson file for the Lovelace Ada tutorial, lesson 2.>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic and other WWW browsers.>
+
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=2>
+
+<COMMENT $Id: lesson2.les,v 1.7 1995/05/17 21:25:18 wheeler Exp $ >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+
+<SECTION NAME="Program Units">
+Now that we have very brief flavor of what Ada code looks like, we
+need to define some key terms.
+<P>
+More formally, an Ada program is composed of one or more <EM>program units</EM>.
+A program unit can be a:
+<OL>
+<LI>
+<EM>subprogram</EM>, which define executable algorithms.
+Procedures and functions are both subprograms.
+<LI>
+<EM>package</EM>, which defines a collection of entities.
+Packages are the main grouping mechanism in Ada, somewhat analogous
+to Modula's "module".
+<LI>
+<EM>task unit</EM>, which defines a computation that can occur in
+parallel with other computations.
+<LI>
+<EM>protected unit</EM>, which can coordinate data sharing
+between parallel computation.  This did not exist in Ada 83.
+<LI>
+<EM>generic units</EM>, which helps to make reusable components
+(C++'s templates are similar).
+</OL>
+<P>
+The latter three are advanced topics, so we will concentrate for
+now on packages and subprograms.
+<P>
+The <EM>package</EM> is structurally the most important kind of program unit.
+Most Ada programs are basically a set of a large number of packages, with
+one procedure used as the ``main'' procedure to start the Ada program.
+<P>
+<QUESTION Type=Multiple-Choice>
+In section 1-1 we defined a simple procedure called Hello.
+What kind of program unit was procedure Hello?
+<CHOICES>
+<CHOICE ANS=1>Subprogram
+<CHOICE ANS=2>Package
+<CHOICE ANS=3>Task Unit
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right. A procedure is a kind of subprogram, and a subprogram is a kind of
+program unit.
+<WHEN ANS=2>
+No, sorry. While packages are very important to Ada, procedure Hello
+was not a package.
+<WHEN ANS=3>
+No, sorry.
+</RESPONSES>
+
+<SECTION NAME="Declarations and Bodies">
+Program units (including subprograms and packages)
+normally consist of two parts:
+<UL>
+<LI>
+The <EM>declaration</EM>, which contains information that will
+be visible to other program units. The declaration defines the interface
+for a program unit.
+Sometimes people refer to a declaration as a <EM>specification</EM>.
+They are somewhat analogous to the contents of C ``.h'' files.
+<LI>
+The <EM>body</EM>, which contains implementation details that need not
+be visible to other parts.
+They are somewhat analogous to the contents of C ``.c'' files.
+</UL>
+<P>
+These separate parts of program units are usually stored in separate files.
+This explicit distinction between declaration and body allows a program
+to be designed, written, and tested as a set of largely independent
+software components.
+<P>
+There are two special cases to help make programming easier:
+<OL>
+<LI>
+Separate declarations are not <EM>required</EM> for subprograms
+(procedures and functions). If a subprogram has a body but no declaration,
+the body of a subprogram can serve as its own declaration.
+This makes writing the `hello, world' program in lesson 1 easier -
+technically, that simple program is a procedure body that
+automatically gives its own declaration.
+<LI>
+For some packages, it's not possible to have implementation details.
+For example, a package declaration could be just
+a collection of constants (like pi and the square root of 2).
+In this case, the package must not have a body, since one isn't needed.
+This is relatively rare - most packages need
+both a declaration and a body.
+</OL>
+<P>
+<QUESTION Type=Multiple-Choice>
+Which part of a program unit contains the implementation details?
+<CHOICES>
+<CHOICE ANS=1>Declaration
+<CHOICE ANS=2>Body
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.
+<WHEN ANS=2>
+Right. That was an easy question, but the distinction is important.
+</RESPONSES>
+
+<SECTION NAME="Packages">
+The package is Ada's basic unit for defining a collection of logically
+related entities.
+For example, a package can be used to define a set of type declarations
+and their associated operations.
+<P>
+For example, all Ada compilers provide a package called <EM>Text_IO</EM>.
+Here's a highly simplified version of the package declaration of the
+package Text_IO
+(the lengthy complete definition is
+<A HREF="http://www.adahome.com/rm95/rm9x-toc-A-10.html">part
+of the RM's appendix A</A>):
+<P>
+<PRE>
+package Text_IO is
+  type File_Type is limited private;
+  type File_Mode is (In_File, Out_File, Append_File);
+  procedure Create (File : in out File_Type;
+                    Mode : in File_Mode := Out_File;
+                    Name : in String := "");
+  procedure Close (File : in out File_Type);
+  procedure Put_Line (File : in File_Type; Item : in String);
+  procedure Put_Line (Item : in String);
+end Text_IO;  
+</PRE>
+<P>
+The package declaration of package Text_IO defines
+a type called `File_Type' that represents an
+opened or created file. The phrase `limited private' means that there
+are no predefined operations on this type (more about that later).
+<P>
+Package Text_IO also defines a type called `File_Mode'; values of this type
+can only have one of three values (this is how enumeration types are defined
+in Ada).
+<P>
+The type definitions are followed by a set of subprograms that can accept
+values of type File_Type. Note that procedures (subprograms) can be
+contained inside packages.
+Procedure `Create' lets you create files with given names;
+procedure `Close' closes a file.
+<P>
+There are two procedures named `Put_Line' which write text out,
+but they differ
+in the arguments they can accept. The first takes a file and the
+string to be output, while the other just takes the string to be output.
+<P>
+If a package declaration includes other declarations inside it
+then there must be a package body somewhere that includes the bodies of
+the items declared.
+This simplified package declaration for Text_IO
+has procedure declarations, so somewhere else
+there must be a package body for Text_IO.
+
+<QUESTION TYPE=Multiple-Choice>
+In this simplified package declaration for package Text_IO,
+how many subprograms have been defined that explicitly require a
+File_Type parameter?
+<CHOICES>
+<CHOICE ANS=1>One
+<CHOICE ANS=2>Two
+<CHOICE ANS=3>Three
+<CHOICE ANS=4>Four
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN CORRECT>
+Right. They are Create, Close, and one of the Put_Line procedures.
+<WHEN ANS=1>
+No, sorry.  Keep looking.
+<WHEN ANS=2>
+No, sorry.  Keep looking.
+<WHEN ANS=4>
+This package does have explicit definitions of four subprograms,
+but not all of them have File_Type as a parameter.
+Please look again.
+</RESPONSES>
+<SECTION NAME="Compilation Units">
+Now that we know about program units, packages, and the
+difference between declarations and bodies, we can talk about
+<EM>compilation units</EM>.
+<P>
+A compilation unit contains either the declaration or the body of
+a program unit,
+preceded by the necessary context clause (`with' or `use' clauses).
+Thus a compilation unit can be a package declaration, a package body,
+a subprogram declaration, or a subprogram body along with its context clause.
+<COMMENT To be honest, some program units can't be used directly as >
+<COMMENT compilation units, namely tasks and protected types. >
+<COMMENT I haven't mentioned that here because we haven't even talked >
+<COMMENT about them yet, and it would just be confusing at this stage. >
+<P>
+An Ada compiler only compiles collections of one or more compilation units.
+That's why it's important to understand compilation units -
+to compile something,
+it must be a part of a legal compilation unit.
+<P>
+Here's a simplified <A HREF="bnf.htm">BNF syntax</A> for a compilation unit.
+<IFDEF BOOK>
+BNF is a common method for describing the syntax of a computer language.
+If you're not familiar with it, you can read about it in the appendix.
+<ENDIF>
+The full definition is in
+<A HREF="http://www.adahome.com/rm95/rm9x-10-01.html">
+section 10.1 of the RM</A>:
+<P>
+<OL>
+<LI>
+<EM>compilation_unit ::= context_clause library_item</EM>
+<LI>
+<EM>context_clause ::= {context_item}</EM>
+<LI>
+<EM>context_item ::= with_clause | use_clause</EM>
+<LI>
+<EM>with_clause ::= "with" library_unit_name { "," library_unit_name} ";"</EM>
+<LI>
+<EM>use_clause ::= "use" library_unit_name { "," library_unit_name} ";"</EM>
+<LI>
+<EM>library_item ::= package_declaration | package_body |
+subprogram_declaration | subprogram_body</EM>
+</OL>
+<P>
+Note that compilation units start with "with" and "use" clauses,
+followed by a program unit declaration or body.
+We've already seen three compilation units - the simplified
+package declaration for Text_IO and two versions of the
+"Hello" program (in two different forms).
+Let's go back and look at the "Hello2" program to see that it
+really is a valid compilation unit:
+<P>
+<TEXT TEMPLATE=compile FILE="hello2.adb">
+<P>
+Ada compilers will only compile a compilation_unit, and
+according to the BNF definition above
+a compilation_unit is a context_clause followed by a library_item.
+The BNF also says that a
+context_clause is a set of zero or more context_items, and a
+context_item is either a "with" clause or "use" clause.
+Since Hello2 starts off with a "with" clause and a "use" clause, we
+have two context_items that make up the context_clause.
+I haven't shown the definition of a library_item, but it turns out
+that the rest of Hello2 is a valid library_item, so we have a valid
+compilation unit.
+<P>
+Although most Ada compilers permit multiple compilation units in a single
+file, it's usually better to put separate compilation units in
+separate files.  One Ada compiler (GNAT)
+<EM>requires</EM> different compilation units to be in different files.
+<P>
+Informally, when people say `show me X's package declaration'
+they really mean `show me the compilation unit that includes the
+package declaration of package X'.
+<QUESTION TYPE=Multiple-Choice>
+Which of the following <EM>cannot</EM> be part of a compilation unit
+after the context clause?
+<CHOICES>
+<CHOICE ANS=1>A package declaration
+<CHOICE ANS=2>A procedure declaration
+<CHOICE ANS=3>A procedure body
+<CHOICE ANS=4>A type definition
+</CHOICES>
+<ANSWER ANS=4>
+<RESPONSES>
+<WHEN CORRECT>
+Right.
+Okay, this question was a little sneaky since
+we haven't really discussed type definitions yet, but they clearly
+aren't listed in the BNF defining compilation units and the
+others <EM>are</EM> part of the BNF.
+To compile type definitions you must put them in something else
+(such as a package declaration); we'll discuss that more later.
+<WHEN ANS=1>
+No, sorry.
+<WHEN ANS=2>
+No, sorry.
+<WHEN ANS=3>
+No, sorry.
+</RESPONSES>
+<SECTION NAME="Review of Basic Ada Structures">
+Let's briefly review what we've learned so far:
+<OL>
+<LI>
+Logically, Ada programs are composed of a set of <EM>program units</EM>.
+<LI>
+There are different kinds of program units; the ones we've concentrated
+on are <EM>subprograms</EM> and <EM>packages</EM>.
+<LI>
+Subprograms define processing algorithms.
+Subprograms can be <EM>procedures</EM> or <EM>functions</EM>.
+<LI>
+<EM>Packages</EM> are the main Ada structuring tool used to group
+things together.
+<LI>
+In general, a program unit has two parts, a <EM>declaration</EM>
+and a <EM>body</EM>.
+Sometimes a declaration is also called a <EM>specification</EM>.
+<LI>
+Ada compilers compile <EM>compilation units</EM>.
+A compilation unit is either a program unit's declaration or body,
+preceded by a <EM>context clause</EM>.
+<LI>
+A <EM>context clause</EM> is a set of <EM>with clauses</EM>
+(that state what other program units are needed) and/or
+<EM>use clauses</EM> (the program units to search by default).
+</OL>
+<QUESTION TYPE=Multiple-Choice>
+Given what you know now, is it possible for an Ada compiler to
+compile a package declaration (when preceded by the appropriate
+context clauses), even if implementation details are needed and
+the package body has not been developed yet?
+<CHOICES>
+<CHOICE ANS=1>Yes
+<CHOICE ANS=2>No
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN CORRECT>
+Right.
+A package declaration, when preceded by the appropriate context
+clauses, is a compilation unit and thus can be compiled.
+The Ada compiler cannot create an executable program from just the
+declaration alone, but it can check for interface errors.
+<P>
+This makes it easier for teams to develop software - they can
+develop the declarations and compile them to check their accuracy.
+Then each of them can go off and develop the bodies for different
+declarations, with an increased confidence that the different parts
+will work together.
+<WHEN ANS=2>
+No, sorry.
+Here are some hints:
+<OL>
+<LI>
+If a package declaration has the
+right context clause in front of it, what does it become?
+<LI>
+What does an Ada compiler compile?
+</OL>
+</RESPONSES>

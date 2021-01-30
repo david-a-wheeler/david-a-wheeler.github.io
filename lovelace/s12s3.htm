@@ -1,0 +1,227 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 12.3 - Basic Operations with Access Values</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 12.3 - Basic Operations with Access Values</FONT></H1>
+Now that we can declare access types and know at least some of their
+potential uses, let's look at basic operations for access values.
+<P>
+One useful operation is one that will create a new List_Node object
+and then return an access value referencing this newly-created object.
+These new objects will be created in a general storage area and
+will <EM>not</EM> automatically disappear just because
+some subprogram has returned.
+The process of creating a new object in some storage area
+is called <EM>allocation</EM>.
+In C the allocation operation is called "malloc", while in Pascal and
+C++ it's called "new".
+Ada also calls this operation <EM>new</EM>, and Ada has the same
+syntax as C++ and Pascal;
+the keyword "new" is followed by the name of the type to be created.
+For example, here's how to create a two new objects of type
+List_Node, setting the value of "Current" to access one and the value
+of "Root" to the other one:
+<P>
+<PRE>
+  Current := new List_Node;
+  Root    := new List_Node;
+</PRE>
+<P>
+At this point, we say that Current accesses a List_Node, and Root
+accesses a different List_Node.
+<P>
+Once an access value accesses a real object (instead of being null), you
+can use the ``dot'' operation to refer to the values in the
+object accessed by the access value.
+This has the same syntax as using values in a record.
+For example,
+since we have created two new nodes, let's set the data for
+the node "Current" accesses to 1, and the data value for what Root
+accesses to 2:
+<P>
+<PRE>
+  Current.Data := 1;
+  Root.Data := 2;
+</PRE>
+<P>
+The nice thing about access values is that you can use them to
+"connect" components together into a more complex structure.
+You can "connect" components by assigning values to access values.
+For example, let's connect the nodes we've been using
+so that the "next" node after what Root accesses is what Current accesses.
+The way to do that is to change the value of "Root.Next".
+But what should its new value be? Well, its new value should be same
+as the value of "Current" so that they access the same node.
+Here's how to make that happen in Ada:
+<P>
+<PRE>
+  Root.Next := Current;
+</PRE>
+<P>
+If you're not familiar with access values this may cause you some headaches.
+One way to read that assignment statement is to read it as the
+following: "change Root.Next so that it now accesses the same thing
+that Current accesses".
+<P>
+There is a common way to draw such structures.
+Basically, draw every variable as a box; draw records as boxes subdivided
+into their record components.
+For non-access values, just write their value in.
+For access values, either write "null" (if its value is null) or an arrow
+from the box to whatever box the value accesses.
+Whenever you execute a "new" command, draw a new box.
+An assignment to an access value changes the destination of that arrow;
+the starting point of the arrow is described on the left hand side of the
+assignment, and the new destination of the arrow is whatever is referenced
+by the right hand side of the assignment.
+The following figure shows what we've done so far:
+<P>
+<IMG ALIGN=right SRC="access1.gif" ALT="[Access1]" WIDTH=245 HEIGHT=142>
+<BR>
+<P>
+In some cases you want to work with the "entire" object being
+accessed instead of just a piece of it.
+In that case, you use the pseudo-component ".all"; an access value with 
+".all" after it refers to what it accesses, not the access variable itself.
+For example, let's say that you
+have some procedure (My_Procedure) that requires as input a Tree_Node.
+Declaring such a procedure is easy:
+<P>
+<PRE>
+  procedure My_Procedure(Input : in Tree_Node);
+</PRE>
+<P>
+However, given this particular declaration, you can't just pass
+in an access value to a Tree_Node, because the
+types are different (an access value is different than what it accesses).
+To handle this, simply use the word "all" after the dot operation
+to refer to the entire object:
+<P>
+<PRE>
+  My_Procedure(Current.all);
+</PRE>
+<P>
+Many people get confused about assignment with and without the ".all" phrase.
+Let's contrast them.
+Here are two different statements that look similar, but are quite
+different in meaning:
+<P>
+<PRE>
+  Root.all := Current.all;  -- Statement (1).
+  Root     := Current;      -- Statement (2).
+</PRE>
+<P>
+If you execute statement (1),
+you will take the entire contents of what Current accesses, and
+copy those contents to what Root accesses.
+If you execute statement (2) instead of executing statement (1),
+you will not affect the underlying node that Root accesses -- you
+will change the value of Root itself so that Root will now access a different
+object - the node that Current accesses.
+<P>
+The following figures show how statement (1) and statement (2) differ.
+<P>
+<IMG SRC="access2.gif" ALT="[Access2]" WIDTH=250 HEIGHT=200>
+<IMG SRC="access3.gif" ALT="[Access3]" WIDTH=250 HEIGHT=200>
+<BR>
+<P>
+If you're familiar with ANSI C, the following "equivalencies" may help you
+understand how to use Ada's access types:
+<P>
+<PRE>
+    Ada Statement or Declaration        ANSI C Equivalent
+    --------------------------------    -------------------------------
+    type Node_Access is access Node;    typedef node *node_access;
+    Start : Node_Access;                node_access start = 0;
+    Current := new Node;                current = malloc(sizeof(node));
+    Current := Start;                   current = start;
+    Current.all := Start.all;           *current = *start;
+    Current.Data := 5;                  current->data = 5;
+</PRE>
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Let's say you execute the following set of
+statements, where both Current and Root are of type List_Node_Access:
+<P>
+<PRE>
+  Current := new List_Node;
+  Root    := new List_Node;
+  Root.Data := 7;
+  Current.Data := 12;
+  Current := Root;
+  Root.Data := 6;
+</PRE>
+<P>
+After executing the statements listed above, what is the value of
+Current.Data?
+Hint: This is not an easy question.
+You may find it easier to answer by using drawings like the ones above.
+
+<OL>
+<LI><A HREF="s12s3r1.htm">7</A>
+<LI><A HREF="s12s3r2.htm">12</A>
+<LI><A HREF="s12s3r3.htm">6</A>
+<LI><A HREF="s12s3r4.htm">Unknown</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s12s2.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s12s4.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson12.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 12 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s12s3.htm">http://www.adahome.com/Tutorials/Lovelace/s12s3.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

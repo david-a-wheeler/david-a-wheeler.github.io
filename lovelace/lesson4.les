@@ -1,0 +1,284 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=4>
+
+<COMMENT $Id: lesson4.les,v 1.5 1995/08/09 21:07:40 wheeler Exp $ >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+
+<SECTION NAME="Type Integer">
+The next few sections will describe how to create subprograms, but we really
+can't talk about creating subprograms until we know a little about
+the Ada type <EM>Integer</EM>.
+<P>
+The Ada type Integer is used to store integer values if you don't care
+what its minimum and maximum range is -- Ada will then select whatever range is
+``most natural'' for your machine.
+Ada guarantees that an Integer can store numbers between
+-32767 and 32767 (inclusive); an Integer is likely to have a wider range.
+In other words, an Integer type must use at least 16 bits, but the actual
+number of bits used will depend on the compiler and machine.
+<P>
+If you <EM>do</EM> care what the range of a value is, Integer isn't the
+right type to use.
+In fact, as we'll discover later, Ada has a rich collection of types and typing
+mechanisms to specify what you <EM>do</EM> want.
+Many real Ada programs don't use Integer very much - but what they
+<EM>do</EM> use will have to wait for a later lesson.
+<P>
+Normal Integer operations are available: + means add, - means subtract,
+* means multiply, / means (integer) division, and ** means exponentiate.
+The normal mathematical rules of evaluation are used, so exponentiation is
+done first, then multiplications and division, then addition and subtraction.
+Parentheses can be used to change the order or to make it clearer.
+Thus ``2+3*5'' is 17, and ``(2+3)*5'' is 25.
+<P>
+A <EM>key</EM> difference between Ada and some other languages (such as
+C and C++) is what happens when an evaluation cannot be completed.
+If a division by zero is attempted, or an expression result is too large,
+Ada will normally <EM>raise</EM> an <EM>exception</EM>.
+Exceptions can be handled, but if they aren't, the
+program will halt (with some debugging output
+to help identify the kind and location of the problem).
+This means that instead of silently giving wrong answers, Ada programs
+normally will halt when a computation cannot be completed.
+This simplifies debugging.
+<P>
+Normal Integer comparisons (which return true or false) are also available:
+= means ``is equal to'', &gt; means ``greater than'',
+&gt;= means ``greater than or equal to'', and so on.
+The ``not equal to'' operation is written as ``/='' (which looks
+like the mathematical symbol for `not equal').
+Comparisons are considered after arithmetic operations,
+so ``3 + 4 &gt; 6'' is evaluated as ``7 &gt; 6'' (which is True).
+<P>
+Unlike C or C++, but like Pascal and many other languages, Integers are
+<EM>not</EM> considered the same as True or False.
+A zero and False aren't the same thing (in Ada terms they are different types).
+If you want to determine if a number is zero, compare it (using =) to zero.
+This helps to catch errors early.
+
+<QUESTION Type=Multiple-Choice>
+Which of the following expressions is true?
+<CHOICES>
+<CHOICE ANS=1>(2+3)*4 = 2+(3*4)
+<CHOICE ANS=2>6/3 &gt; 12-2
+<CHOICE ANS=3>2+8 /= 28
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.
+<P>
+(2+3)*4 evaluates to (5)*4, which is 20.
+<P>
+However, 2+(3*4) evaluates to 2+(12), which is 14.
+<P>
+They aren't equal.
+<WHEN ANS=2>
+No, sorry.
+<P>
+6/3 evaluates to 2.
+<P>
+12-2 evaluates to 10.
+<P>
+Is 2 &gt; 10? No, 2 is not greater than 10.
+<WHEN ANS=3>
+Very good!
+</RESPONSES>
+
+<SECTION NAME="Subprogram Declarations and Parameters">
+Let's see how to declare a subprogram (procedure or function) declaration.
+The main difference between a procedure and function is that a function
+returns a value, while a procedure does not (though a procedure
+can change the values of parameters sent to it).
+Here's an example of a procedure declaration for a procedure named Average,
+which takes as input two values (called A and B)
+and changes a third variable (called Result, presumably to hold the average):
+<P>
+<PRE>
+procedure Average(A, B : in Integer; Result : out Integer);
+</PRE>
+<P>
+Actually, a subprogram that averages two numbers would probably be defined
+as a function. Here's a declaration of a function which takes as input
+two values and returns a result:
+<P>
+<PRE>
+function Average_Two(A, B : in Integer) return Integer;
+</PRE>
+<P>
+Note the keywords `in' and `out';
+this indicates the <EM>mode</EM> of the parameter.
+There are three possible modes:
+<OL>
+<LI>
+`in' - the parameter's value may be used but not changed.
+<LI>
+`out' - the parameter's value may be changed but not used.
+<LI>
+`in out' - the parameter's value may be used and/or changed.
+</OL>
+<P>
+The default mode is `in', but I recommend that you always state
+the desired mode.
+<P>
+Here's a <A HREF="bnf.htm">BNF</A> for subprogram declarations:
+<P>
+<PRE>
+subprogram_declaration ::= subprogram_specification ";"
+
+subprogram_specification ::= "procedure" procedure_name parameter_profile | 
+                 "function" procedure_name parameter_profile "return" type
+
+parameter_profile ::= [ "(" parameter_specification
+                            { ";" parameter_specification} ")" ]
+
+parameter_specification ::= parameter_name_list ":" mode type
+                            [ ":=" default_expression ]
+
+mode ::= [ "in" ] | "out" | "in" "out"
+
+parameter_name_list ::= identifier { "," identifier }
+
+procedure_name ::= identifier
+</PRE>
+
+<QUESTION Type=Multiple-Choice>
+Which of the following is not a legal subprogram declaration?
+<CHOICES>
+<CHOICE ANS=1>procedure Delete_File( in Integer : A );
+<CHOICE ANS=2>procedure Initialize;
+<CHOICE ANS=3>function Middle_Value( A, B, C : in Integer ) return Integer;
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right. The parameter name is given first, then a colon,
+then the mode ("in", "out", "in out"), and
+then the name of the type.
+<P>
+A note for the picky - "Integer" isn't a reserved keyword in Ada, it's
+just the name of a predefined type.
+Thus, if there were a type named "A", then the
+following slightly-different declaration would be okay:
+<P>
+<PRE>
+procedure Delete_File( Integer : in A );
+</PRE>
+<P>
+This declaration creates a procedure "Delete_File" that takes
+an input variable named "Integer"; variable "Integer" is of type "A".
+An Ada compiler can handle that kind of bizarre declaration, but
+I <EM>strongly</EM> recommend that you do <EM>not</EM>
+use the names of predefined types as variable names.
+Using predefined type names as variable names
+is really confusing to humans trying to read the program.
+<WHEN ANS=2>
+No, sorry, that's a perfectly legitimate procedure declaration.
+If a procedure has no parameters, the parentheses aren't used.
+In the BNF, note that the `parameter_profile' is optional (surrounded by []).
+<WHEN ANS=3>
+No, sorry.
+That's a perfectly acceptable declaration of a function.
+</RESPONSES>
+
+<SECTION NAME="Subprogram Bodies and Local Variables">
+A subprogram body defines the actual algorithm used by the subprogram.
+A subprogram body starts out with a subprogram specification (which is the
+subprogram declaration without the final semicolon) followed by the
+keyword "is".
+This is followed by a declaration of local variables, the keyword "begin", the
+statements to be executed, and then the keyword "end".
+<P>
+Here's a simple subprogram body that implements the procedure Average we
+declared in the last section. Note that after the word `end' we can add
+a word indicating what we're ending (the Ada compiler will check to make
+sure this is correct). Also note that the assignment statement in Ada
+is written as `:=' (the same as Pascal):
+<P>
+<PRE>
+procedure Average(A, B : in Integer; Result : out Integer) is
+begin
+ Result := (A + B) / 2;
+end Average;
+</PRE>
+<P>
+Local variables and local subprograms can be declared between the "is" and the
+"begin".
+Local variables and local subprograms exist as long as their enclosing
+subprogram exists.
+Local variables are useful as "scratchpads" to hold intermediate results.
+Local variables are written the same as parameters are: the variable name(s),
+a colon, and their type.
+They can be given initial values (the following example initializes its local
+variable `Total' to the value of A).
+Functions return a value using the `return' statement.
+Here's an example:
+<P>
+<PRE>
+function Sum(A, B : in Integer) return Integer is
+ Total : Integer := A;
+begin
+ Total := Total + B;
+ return Total;
+end Sum;
+</PRE>
+<P>
+Here's an example with a function that computes the sum of the squares
+of two Integers. It works by creating a local function called Square:
+<P>
+<PRE>
+function Sum_Squares(A, B : in Integer) return Integer is
+
+  function Square(X : in Integer) return Integer is
+  begin -- this is the beginning of Square
+    return X*X;
+  end Square;
+
+begin -- this is the beginning of Sum_Squares
+ return Square(A) + Square(B);
+end Sum_Squares;
+</PRE>
+<P>
+Here's a <A HREF="bnf.htm">BNF</A> for subprogram declarations:
+</P>
+<PRE>
+subprogram_body ::= subprogram_specification "is"
+                      declarative_part
+                    "begin"
+                      sequence_of_statements
+                    "end" [designator] ";"
+
+declarative_part ::= { declarative_item }
+
+declarative_item ::= object_declaration | subprogram_body
+
+object_declaration ::= identifier_list : [constant] type [":=" expression] ";"
+</PRE>
+<P>
+A brief note about statement sequences: like C, Ada uses semicolons as
+a statement <EM>terminator</EM> - each Ada statement ends in a semicolon.
+This is different than Pascal,
+which uses the semicolon as a statement <EM>separator</EM>.
+
+<QUESTION Type=Multiple-Choice>
+Which of the examples in this section has an empty declarative_part
+(i.e. no local variables or subprograms)?
+<CHOICES>
+<CHOICE ANS=1>procedure Average
+<CHOICE ANS=2>function Sum
+<CHOICE ANS=3>function Sum_Squares
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right!
+<WHEN ANS=2>
+No, sorry.
+<WHEN ANS=3>
+No, sorry.
+</RESPONSES>

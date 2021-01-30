@@ -1,0 +1,133 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 13.5 - Other Tasking Issues</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 13.5 - Other Tasking Issues</FONT></H1>
+
+The underlying operating system does affect tasking,
+particularly if the operating system does not provide
+certain minimal capabilities (i.e. thread support).
+Here are two effects that you need to be aware of:
+<OL>
+<LI>
+Some operating systems (such as Microsoft Windows 3.1 and many older
+Unixes) do not support threads (lightweight processes), but instead
+only support regular processes (sometimes called heavyweight processes).
+The difference is that threads can share memory, while processes
+generally do not.
+On systems which do not support threads,
+if any task makes an operating system request
+(say, to get input), <EM>all</EM> the Ada tasks are usually halted until the
+operating system completes the request.
+This is because most Ada compilers in such environments put all of the
+Ada tasks into a single operating system process and then simulate
+the tasking inside the process.
+The operating system can't distinguish
+between the different Ada tasks in the single process,
+so all Ada tasks get stopped.
+As more operating systems become more capable this is becoming
+less of a problem, and this is generally not a problem for
+embedded systems (where Ada has complete control over the system
+or is running on a real-time operating system).
+<LI>
+Some operating systems make it difficult or inefficient to automatically
+share time between tasks.
+The ability to automatically share time between tasks of equal
+priority is called ``pre-emptive multitasking'' or ``time slicing''.
+Operating systems that support
+pre-emptive multitasking are more convenient for programmers.
+Because some operating systems don't support it well,
+an Ada compiler is permitted to keep running one
+task until that task tries to communicate with another task or waits
+(using the delay statement).
+This kind of behavior is called "cooperative multitasking", because
+tasks of equal priority must cooperate to share the CPU.
+Most people prefer Ada implementations that have
+preemptive multitasking.
+If you have to deal with an Ada compiler that only supports cooperative
+multitasking, consider inserting "delay 0.0" statements in each task
+in various places to give other tasks a chance to run.
+Check your compiler documentation; some compilers permit you to choose
+between pre-emptive and cooperative behavior.
+Again, most of today's Ada compilers provide the (more general)
+pre-emptive multitasking behavior.
+</OL>
+<P>
+There's much more about tasking that Lovelace doesn't cover.
+For example:
+<UL>
+<LI>
+You can create tasks that exist for as long as the program runs, by
+declaring the task in a package declaration or body (the same
+way you can declare a global variable).
+<LI>
+Instead of creating a task type and then a task, you can create a task
+directly.
+<LI>
+Entries are queued in first-in-first-out order, and can be re-queued
+if desired.
+</UL>
+
+<!-- No quiz question -->
+<P>
+<HR>
+<P>
+There is no quiz question for this section.
+<P>
+<IMG SRC="pright.gif" ALT="" HEIGHT="14" WIDTH="33">
+<A HREF="s14s1.htm">
+<FONT SIZE="+1"><STRONG>You may go to the next section.</STRONG></FONT></A>
+<P>
+<HR>
+You may also:
+<P>
+
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s13s4.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="lesson13.htm">
+<IMG SRC="barrowr.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to the outline of lesson 13</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s13sf.htm">http://www.adahome.com/Tutorials/Lovelace/s13sf.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

@@ -1,0 +1,205 @@
+<HTML><HEAD>
+<TITLE>User Guide to Mklesson - Home Page</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF">
+<H1>Mklesson User Guide</H1>
+<!-- $Id: userg.html,v 1.6 1995/09/22 21:38:21 wheeler Exp wheeler $ -->
+This is a brief user guide for mklesson, a tutor-generating program for
+the World Wide Web (WWW)!
+I developed mklesson so that tutorials on the WWW would be significantly
+easier to create and modify.
+Unlike some other tutorial generators, mklesson does not require
+any CGI programs or modification of the local web server program, making
+it especially useful if you don't have control over a web server or
+wish to create a tutorial without one (say for CD-ROM distribution).
+A tutorial handled by mklesson need not be maintained by a single person.
+Mklesson tutorials are broken into many lessons, and different lessons
+may have different maintainers and web server locations.
+<P>
+Mklesson is simply a program which takes as input a file
+called a ``lesson file'' (with the file extension .les).
+Mklesson produces a large
+set of WWW files in HTML format (with the file extension .htm or .html).
+You can create or modify the .les file using whatever text
+editor you prefer, and then run mklesson.
+The resulting HTML format files can then be used by tutorial users.
+<P>
+First, some terminology.
+Mklesson considers a tutorial to be a set of two or more
+<EM>lessons</EM>, numbered 1, 2, 3, etc.
+Each lesson consists of two or more <EM>sections</EM>, again
+numbered 1, 2, 3, etc.
+A section may optionally end with a question.
+Each section with a question has two or more <EM>responses</EM> to that
+question, each of them numbered 1, 2, 3, etc.
+Mklesson requires that exactly one response is <EM>correct</EM>;
+the rest are <EM>incorrect</EM>.
+<P>
+To invoke mklesson once it's installed, type:
+<PRE>
+  mklesson lesson1.les
+</PRE>
+replacing '1' with whatever the number of your lesson is.
+<P>
+Since "mklesson" is a Perl 5 program, you'll need to make sure
+your computer knows to invoke perl when running mklesson.
+If you can't talk your computer into doing that (it's automatic on
+Unix systems), try the following (change "perl" below to the full filename,
+or add the perl directory to your "path"):
+<PRE>
+  perl mklesson lesson1.les
+</PRE>
+<P>
+Mklesson will create the following files in the current directory:
+<PRE>
+  For each section:        sLESSON-SECTION.htm
+  For each response:       sLESSON-SECTIONrRESPONSE.htm
+  For each lesson outline: lessonLESSON.htm
+  For each processed file: lessonLESSON.tim   (as a timestamp)
+</PRE>
+where LESSON is the lesson number, SECTION is the section number, and RESPONSE
+is the response number for a given question.
+<P>
+Mklesson requires that the current directory contain the file
+"template", which provides mklesson with formatting information
+(how to generate the lesson sections, responses, and outline).
+You can edit this "template" file to give your tutorial a different
+look-and-feel, and/or to generate tutorial formatting for languages other
+than English (see the
+<A HREF="frtemp">French template</A>, for example).
+<P>
+Mklesson also uses the file "default" if it exists to set certain
+default values.
+If you are creating lessons for an existing tutorial, use the "default"
+and "template" files used by the tutorial creator.
+If you're creating lessons for an existing tutorial you will also need
+to set the PREVIOUS_LESSON and NEXT_LESSON location so that users
+can go backward and forwards to connected lessons.
+<P>
+Mklesson only changes files that ACTUALLY changed; thus, it's possible to
+run mklesson and not change any files.
+If no files are changed, that means that the
+lesson file, template file, and default file
+did not change enough to cause a change in the generated files.
+<P>
+Mklesson does _NOT_ generate the "master outline" or the home page
+of the tutorial, nor any auxillary files; you'll need to create
+those files in other ways.
+<P>
+<A HREF="http://www.civeng.carleton.ca/~nholtz/tut/doc/doc.html">Another
+somewhat similar program is available</A>
+that generates tutorials for WWW browsing.
+However, it's an HTTP server, and thus it requires you to change your HTTP
+server.
+This is difficult for many people to do (for example, for security reasons).
+Also, it doesn't support distributed tutorials like mklesson does.
+Mklesson's input format is intentionally similar to this other tutorial's
+to ease transition of lessons and people.
+<P>
+I've added a "-s" option; if you use this option, mklesson will generate
+"short" filename extensions (.htm instead of .html).
+This is especially useful for distributing portable CD-ROMs;
+the original ISO 9660 standard only permits 8+3 character filenames,
+and different operating systems unfortunately use different approaches
+for handling longer filenames.
+While using the "-s" option isn't strictly needed for
+MS-DOS machines (they'll just ignore the last character), it does make
+it easier because you can use the same filenames on all platforms.
+<P>
+A related option is the "-a" option, which uses "s" instead of dashes
+in the generated filenames.
+This is all in an effort to deal with CD-ROM filenames, which by the
+immorally shortsighted ISO standard don't even support dashes in filenames.
+Thus, if you're developing for CD-ROMs, you might want both the -a
+and -s options.
+<P>
+I've also added a "-b" option to permit generating hardcopy books and
+hypertext lessons from the same source.
+If you use the "-b" option, mklesson assumes
+that you're generating a book from the same source as the regular lesson.
+The "BOOK" variable will then be set, and therefore
+text inside "IFDEF BOOK" sections will be used.
+See the format information for about books.
+<P>
+If you're creating tutorial files for Lovelace (an Ada tutorial),
+talk to me <STRONG>first</STRONG> before starting,
+and read the
+<A HREF="helpmake.htm">guidelines for helping to expand Lovelace</A>.
+<P>
+To install mklesson on your machine, create a new
+directory, 
+<A HREF="mklesson.tar.gz">download the collection of mklesson-related files</A>
+into that directory, then gunzip and untar it.
+On many machines, the command to gunzip a file is "gunzip mklesson.tar",
+and the command to untar a file is "tar xvf mklesson.tar",
+You will then find a big set of files, including mklesson (the program).
+Next, install the program
+<A HREF="http://web.nexor.co.uk/public/perl/perl.html">perl</A>
+if it's not already installed (you'll need perl version 5 or later).
+Copy the file `blank.les' into a new lesson filename, and
+you're ready to go.
+<P>
+As noted above, mklesson requires a specific input format called the
+lesson file (.les) format.
+<A HREF="formatmk.txt">
+More information on the lesson file (.les) format is available.</A>
+<P>
+<HR>
+<P>
+You can also:
+<UL>
+<LI>
+<A HREF="lovelace.htm">See the Lovelace Ada tutor (an example)</A>
+<LI>
+<A HREF="mklesson.tar.gz">Download all mklesson-related files</A>
+(as a single tar + gzip compressed file).
+<LI>
+<A HREF="mklesson.zip">Download all mklesson-related files</A>
+(as a zip file).
+<LI>
+<A HREF="formattm.htm">
+See more information on the format of the `template' file</A>
+(this is of more interest to those creating new tutorials).
+<LI>
+<A HREF="mklesson">Download only
+the source code for mklesson (a perl script)
+(it will require the 'template' file to run)</A>
+<LI>
+<A HREF="template">Download the template file used for Lovelace</A>
+<LI>
+<A HREF="frtemp">Download a French version of the
+template file used for Lovelace</A>
+<LI>
+<A HREF="txttemp">Download a template file that doesn't
+use any graphics</A>
+<LI>
+<A HREF="default">See the Lovelace default file</A>
+<LI>
+<A HREF="lesson1.les">See Lovelace's lesson 1 as an example.</A>
+<LI>
+<A HREF="legal.htm">See legal details about mklesson (and Lovelace).</A>
+<LI>
+<A HREF="blank.les">See a blank lesson file
+(which may be useful as a starting place).</A>
+Simply copy that file into lessonNUMBER.les (where NUMBER is the number
+of your lesson) and edit it!
+<LI>
+<A HREF="new_sect">A blank section</A> (part of a lesson file).
+</UL>
+
+<!-- This homepage (C) David A. Wheeler 1994-6 -->
+<!-- Redistributable under the terms of the FSF General Public License -->
+
+<!-- This homepage and related pages are -->
+<!-- copyright (C) David A. Wheeler 1994 -->
+<!-- The pages of this tutorial are released for use under the terms of the -->
+<!-- FSF General Public License (GPL), also called a "copyleft". -->
+
+<P>
+This page last modified on 29-Apr-1998.
+<P>
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+</BODY></HTML>

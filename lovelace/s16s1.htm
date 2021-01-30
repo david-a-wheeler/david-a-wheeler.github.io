@@ -1,0 +1,160 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 16.1 - General Information on Interfacing to Other Languages</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 16.1 - General Information on Interfacing to Other Languages</FONT></H1>
+Ada 95 provides a set of packages and some
+special pragmas to interface with other computer languages.
+The three most useful pragmas are called Import, Export, and Convention:
+<OL>
+<LI>Pragma import "imports" a subprogram from another ("foreign") language
+into an Ada program.
+Use pragma import if you want to call,
+for example, an existing C function.
+<LI>Pragma export "exports" an Ada subprogram to a "foreign" language.
+For example, if you've written an Ada procedure and want to call it from
+C, use pragma export.
+<LI>Pragma Convention specifies that a specified type should
+use the storage conventions of a given "foreign" language.
+It is also used on subprograms if they are "callback" subprograms
+(described below).
+</OL>
+<P>
+Here's an example of each:
+<P>
+<PRE>
+  pragma Import(C, getenv);  -- Use the C program getenv in my Ada program.
+  pragma Export(COBOL, Read_Sensor); -- Provide Ada procedure "Read_Sensor"
+                                     -- to the COBOL compiler.
+  pragma Convention(Fortran, State_Vector) -- Read and write State_Vector
+                                     -- using Fortran storage conventions
+                                     -- (e.g. column-major format)
+</PRE>
+<P>
+Here is the <A HREF="bnf.htm">BNF</A> for these pragmas:
+<PRE>
+  import_pragma ::= "pragma Import("
+                        [ "Convention =&gt;" ] language ","
+                        [ "Entity =&gt;" ] unit
+                        [ "," [ "Link_Name =&gt;" ] link_name ]  ");"
+
+  export_pragma ::= "pragma Export("
+                        [ "Convention =&gt;" ] language ","
+                        [ "Entity =&gt;" ] unit 
+                        [ "," [ "Link_Name =&gt;" ] link_name ]  ");"
+
+  convention_pragma ::= "pragma Convention("
+                        [ "Convention =&gt;" ] language ","
+                        [ "Entity =&gt;" ] unit ");"
+</PRE>
+<P>
+Ada compilers always support the Convention (language) Ada, naturally enough.
+Your Ada compiler probably also supports the languages C, Fortran,
+and possibly COBOL.
+GNAT supports C++ as the language name CPP, and you can also interface
+Ada and C++ programs by having both use the C convention to send
+information to each other.
+For assembly language modules, use the name of the high level language
+that the module's interface mimics.
+<P>
+The "Link_Name" parameter often isn't necessary, but it's useful in
+some circumstances, for example,
+if you need access to an object whose name has been "mangled"
+in a way the Ada compiler doesn't know about or if the name is not
+a legal Ada identifier (such as names with leading underscores).
+<P>
+"Callback" subprograms are subprograms which have access (pointer)
+values held in some external location and are then called later using
+that external value. If you have an Ada subprogram that will be called
+this way, use pragma Convention on both the subprogram and on the
+access type used.
+This is useful, for example, in dealing with the X window graphical
+user interface (GUI).
+<P>
+If the "main" subprogram is not in Ada, there is an additional
+issue to consider called "elaboration".
+The actual main subprogram should make sure that the environment
+for Ada is correctly set up.
+This is done automatically if the main subprogram is in Ada, but if
+it isn't, you have to do it yourself.
+The
+<A HREF="http://www.adahome.com/rm95/rm9x-B-01.html">Ada RM
+section B.1(39)</A>
+suggests that compilers provide
+subprograms called "adainit" to start up the Ada environment and
+"adafinal" to clean it up after the Ada subprograms have stopped running.
+If you need to have a non-Ada main subprogram,
+check your compiler manual to see if
+it supports this and if there are any restrictions on what is and is
+not permitted.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+You're writing an Ada program and want to directly
+call an existing C function
+called <EM>display</EM>. Which of the following pragmas should you use?
+<OL>
+<LI><A HREF="s16s1r1.htm">pragma Import(C, display);</A>
+<LI><A HREF="s16s1r2.htm">pragma Export(C, display);</A>
+<LI><A HREF="s16s1r3.htm">pragma Convention(C, display);</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s15sf.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s16s2.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson16.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 16 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s16s1.htm">http://www.adahome.com/Tutorials/Lovelace/s16s1.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

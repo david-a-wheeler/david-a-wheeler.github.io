@@ -1,0 +1,195 @@
+Mklesson is a program which generates a large number of HTML files from
+a single lesson input file, which makes tutorials MUCH easier to create and
+modify.
+
+For mklesson to work its input file must be in the correct format, termed
+a `lesson' format (also called an `.les' format).
+This document describes that format.
+An '.les' file is in an extended form of HTML that is then transformed
+by mklesson into normal HTML.
+
+To help you out, I've created a blank lesson file called 'blank.les'.
+Simply copy that file into lessonNUMBER.les (where NUMBER is the number
+of your lesson) and edit it!
+
+All of these HTML extensions must begin at the BEGINNING of a text line
+and must not continue onto later lines.
+
+The format of a comment is:
+<COMMENT Text>
+
+An .les file starts with a header; here's an example of such a header:
+
+<TUTOR NAME="Lovelace">
+<LESSON NUMBER=1>
+<AUTHOR NAME="David A. Wheeler" EMAIL="mailto:dwheeler&#64;dwheeler.com">
+<AUTHOR ADDRESS="David A. Wheeler (dwheeler&#64;dwheeler.com)">
+
+The "author address" section is what's used at the end of a section
+in the "address" section, and you can use it to create a link
+to somewhere else (like a resume).  See my Lovelace lesson files
+for examples.
+
+The lesson header is followed by a lesson body, which contains
+one or more sections.  Each section begins with a section command like:
+
+<SECTION NAME="Simple Program">
+
+This is followed by HTML text, and then optionally by a question.
+Here's an example of a question:
+
+<QUESTION Type=Multiple-Choice>
+What is the name of the new procedure defined above?
+<CHOICES>
+<CHOICE ANS=1>Text_IO
+<CHOICE ANS=2>Hello
+<CHOICE ANS=3>Put_Line
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry. Text_IO is the name of a predefined library
+unit that provides us with operations to perform
+basic text input and output.
+<WHEN ANS=2>
+Right, `Hello' is the name of the procedure defined.
+<WHEN ANS=3>
+No, sorry. Put_Line is the name of a predefined procedure
+that prints text.
+</RESPONSES>
+
+
+The responses are optional; if a choice or the entire response section
+is omitted, default responses will be generated.
+
+If there is no question, some text will be inserted
+that permits the user to go on to the next section.
+
+The generator assumes that each lesson has at least 2 sections.
+(otherwise it's not clear if the sole section should be named the "final" one
+or not).
+
+If you want to include non-HTML text from other files (say, source code),
+you'll probably want to use the <TEXT FILE="x"> command.
+This command will insert the contents of the named file at that point.
+It will also automatically perform the substitutions necessary to
+keep it as legal HTML (the characters &, <, and > aren't legal otherwise).
+You can also include an optional FONT=PRE inside the command,
+which will automatically put the entire contents in a fixed-width font.
+For example, if you want to include Ada source program from file hello.ads:
+<TEXT FONT=PRE FILE="hello.ads">
+
+The "TEXT" command takes an optional "TEMPLATE=X" value. If the value is
+given, the contents of "X.head" are inserted, then the file contents
+(converted to HTML), then "X.tail" is inserted. This is useful, for example,
+if you want the text to be the default for a form to be filled out.
+See the Lovelace tutorial for an example of how to use this (it's used
+to permit users to press a button and compile programs they're viewing).
+
+Here are a few little nitpicks and details:
++ The very first section (1-1) is somewhat special.  If a user decides
+  to skip the quiz and go to the next section, they will link to
+  the special file "skip1-1.html".  This file is where you can chide
+  the user to take the quiz, but permit them to move on.
+  I've included the skip1-1.html file for Lovelace; you will want to
+  modify it for your own program.
+
++ The standard "template" file uses graphic files:
+  up.gif (point up), previous.gif (point left), next.gif (point right),
+  and tinyhome.gif (an icon representing your home page).
+  The tinyhome.gif file included in the distribution is for Lovelace;
+  you should replace this with an image representing your tutorial.
+  If you don't want graphics at all, copy the file txttemp into the
+  file template; txttemp contains a template that doesn't use any graphics.
+
++ Mklesson doesn't automatically create the "master outline" file
+  nor the tutorial home page; you'll have to do that some other way.
+
++ The <TEXT FILE="x"> command does _NOT_ substitute the double-quote (")
+  character.  Technically the double-quote character is supposed to be
+  substituted, but at least one browser (Windows Mosaic 2.0 alpha 2)
+  can't display the substitution correctly. All the browsers I have available
+  handle bare double-quote characters correctly.
+
++ A recent feature is support for "books".  If you invoke mklesson with a
+  "-b" option, the variable "BOOK" is set. You can use this in
+  <IFDEF BOOK> expressions.
+
++ Mklesson doesn't have many size limitations, but if you want the
+  results to work on MS-DOS machines you'll be limited
+  by MS-DOS's rediculous filename size limitations (8+3 character maximum).
+  For such machines, there can be up to 999 lessons.
+  Lessons 1-9     can have up to 999 sections each,
+  lessons 10-99   can have up to 99 sections each, and
+  lessons 100-999 can have up to 9 sections each.
+  This assumes that there are no more than 9 possible responses to
+  a specific quiz question.
+  This limitation is because of the way filenames are generated by mklesson;
+  this doesn't apply to systems which permit longer filenames.
+  If MS-DOS machines may use your files, you might want to consider using
+  the "-s" option, which generates "short" filename extensions
+  (.htm instead of .html).
+
+Here is a BNF of the les file format. In this BNF,
+   !p!   means p is a nonterminal,
+   [q]   means q is optional,
+   {r}*  means r repeats 0 or more times
+   {s}+  means s repeats 1 or more times
+   ;     is a BNF comment
+   ::=   defines a nonterminal
+
+
+!lesfile! ::= !header!
+              {!body!}+
+
+!header! ::= <TUTOR NAME="name_of_tutor_system">
+             <LESSON NUMBER=number_of_lesson>
+             <AUTHOR NAME="name" ADDRESS="email_address">
+             [<PREVIOUS_LESSON LOCATION="URL_of_directory/">]
+             [<NEXT_LESSON LOCATION="URL_of_directory/">]
+             [<TUTOR_HOME_PAGE HREF="URL">]
+             [<MASTER_OUTLINE HREF="URL">]
+
+
+!body! ::= <SECTION NAME="section_name">
+           section_text_as_HTML
+           [!quiz!]
+           [</SECTION>]
+
+!section_text_as_HTML! ::=  { HTML_text |
+           <TEXT [FONT=PRE] [TEMPLATE=X] FILE="filename"> |
+           ifdef
+           }*
+
+!ifdef! ::= <IFDEF BOOK>
+            HTML_text_to_include_if_this_is_a_book
+            <ELSE>
+            HTML_text_to_include_if_this_is_NOT_a_book
+            <ENDIF>
+
+  ; Each section generates a file named:
+  ;   "s" + lesson_number + "-" section_number + ".html"
+  ;   (section_number is replaced with the text "last" for the last section)
+  ; The header is generated from section.head, the tail from section.tail, by
+  ; substituting various variables in section.head and section.tail.
+
+!quiz! ::= <QUESTION [Type=Multiple-Choice]>
+           question_text_as_HTML?
+           <CHOICES>
+           {choice_clause!}+
+           </CHOICES>
+           <ANSWER ANS=the_answer>
+           [!responses!]
+
+!choice_clause! ::= <CHOICE [ANS=number]> choice_text_as_HTML
+
+!responses! ::= <RESPONSES>
+                {!when_clause!}+
+                </RESPONSES>
+
+!when_clause! ::= <WHEN ANS=number>
+                  response_text_as_HTML
+
+!when_clause! ::= <WHEN CORRECT>
+                  response_text_as_HTML
+

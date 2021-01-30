@@ -1,0 +1,143 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 9.1 - Simple Text File Input/Output</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 9.1 - Simple Text File Input/Output</FONT></H1>
+Throughout this tutorial we've been using selected input/output
+subprograms, mainly from the predefined package Text_IO.
+Now it's time to learn how to use more capabilities of Text_IO,
+especially how to read and write text files.
+<P>
+Operating system files are represented in Text_IO by a type called,
+reasonably enough, File_Type.
+All operations on files operate on objects of type File_Type.
+The default for inputting operations (such as Get)
+is Current_Input (Current_Input is of type File_Type), while the default for
+all outputting operations (such as Put and Put_Line) is Current_Output
+(which also has type File_Type).
+<P>
+Before a text file can be read or written it must be either
+opened or created.
+There are two basic procedures in Text_IO, called, naturally enough,
+Open and Create.
+Open opens an existing file, while Create creates a new file
+(eliminating the original file) and then opens it.
+Before you stop your program you should close all the files you've
+opened; the Close procedure is used to do that.
+Here are their definitions:
+<P>
+<PRE>
+  procedure Create (File : in out File_Type;
+                    Mode : in File_Mode := Out_File;
+                    Name : in String    := "";
+                    Form : in String    := "");
+
+  procedure Open   (File : in out File_Type;
+                    Mode : in File_Mode;
+                    Name : in String;
+                    Form : in String := "");
+
+  procedure Close  (File : in out File_Type);
+</PRE>
+<P>
+The ``Mode'' can be In_File (an input file),
+Out_File (an output file), or
+Append_File (an output file appending after existing text).
+The ``Form'' parameter is optional, and is used to provide
+operating-system-specific information if it's necessary.
+<P>
+All the Get and Put subprograms can take a parameter of type File_Type
+as their first parameter; if they're handed a File_Type, the subprogram
+will read or write to the given file.
+In general, if you don't want to use the default File_Type, add the
+File_Type as the first parameter of an input-output subprogram.
+<P>
+Here's a trivial example - a program that creates a new
+file called "hi" and writes text into it:
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+
+with Text_IO;
+use  Text_IO;
+
+procedure Make_Hi is
+  New_File : File_Type;
+begin
+  Create(New_File, Out_File, "hi");
+  Put_Line(New_file, "Hi, this is a test!");
+  Close(New_File);
+end Make_Hi;
+</PRE>
+<P>
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+If you ran program Make_Hi twice, how many text
+lines would the file "hi" contain when you were done?
+<OL>
+<LI><A HREF="s9s1r1.htm">1.</A>
+<LI><A HREF="s9s1r2.htm">2.</A>
+<LI><A HREF="s9s1r3.htm">None.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s8sf.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s9s2.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson9.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 9 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s9s1.htm">http://www.adahome.com/Tutorials/Lovelace/s9s1.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

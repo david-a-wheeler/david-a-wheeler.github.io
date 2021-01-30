@@ -1,0 +1,22 @@
+#!/bin/sh
+# mkcomm - make the "comments.htm" file
+# using files comments.hd, COMMENTS, and comments.tl.
+# If there's no file COMMENTS, do nothing.
+
+# This script requires the (Unix) Bourne shell.
+
+# This script takes file COMMENTS and fixes <, >, and &
+# so they'll be okay in a <PRE> .. </PRE> section of an
+# HTML document.  If there's an <A HREF="">..</A> on one line,
+# that is slipped through as a normal HTML reference.
+
+if [ -s COMMENTS ]
+then
+  cat comments.hd > comments.htm
+  sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' \
+      -e 's/>/\&gt;/g' \
+      -e 's/&lt;\(A HREF="[^"]*"\)&gt;\(.*\)&lt;\/A&gt;/<\1>\2<\/A>/g' \
+      -e 's/^From .*/<H3><B>&<\/B><\/H3>/' \
+      COMMENTS >> comments.htm
+  cat comments.tl >> comments.htm
+fi

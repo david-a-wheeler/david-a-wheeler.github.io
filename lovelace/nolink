@@ -1,0 +1,68 @@
+#!/usr/bin/perl -w
+#
+# nolink - reports HTML files that don't have "local" links.
+#
+# Input is a list of HTML filenames (on the argument list).
+# Output is nothing if each file has a local link, otherwise a warning
+# message is displayed.
+#
+# Options:
+#  -i  ignore  the name of a hypertext link to ignore.
+#
+# A "local" link is a hypertext link to another file in the same
+# system.  A file without a local link probably needs one.
+#
+# BUGS:
+#   If the only internal hypertext links occur on the same line after
+#   an ignored internal link, an extraneous warning will be printed.
+
+############### Process Options ##############################
+
+require 'getopts.pl';
+
+undef $opt_i;
+
+$valid_options = &Getopts('i:');
+
+if (! $valid_options ) {
+ print '
+Usage: nolink [options] -- [filename]*
+Nolink reports HTML files without local hypertext links.
+  Usage: nolink {options} filename*
+    where options can be:
+ -i  ignore - name of file to ignore.
+';
+ exit 1;
+}
+
+
+if      (defined($opt_i))  {$ignore = $opt_i;}
+else                       {$ignore = "";}
+
+
+############### Perform Check ################################
+
+while (<>) {
+ # Loop through all input file(s).
+ # $. is current line, $ARGV is current filename.
+
+ if (m/<A\s+HREF="(file:)?([^:"]+)"/i) {
+   # We found a local link.  Should we ignore it?
+   $local_link = $2;
+   if ($local_link ne $ignore) {
+     # This is not an ignored local link, so this file's okay.
+     # Let's stop and look at the next file.
+     close(ARGV);
+     next;             # Restart processing the next file.
+   }
+ }
+
+ if (eof) {
+    # Close file on end of each file to reset line numbering.
+    # Use "eof", NOT "eof()", or this won't work due to a perl oddity.
+    print "WARNING: file $ARGV has no local links.\n";
+    close(ARGV);
+ }
+
+}
+

@@ -1,0 +1,174 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 13.1 - Tasking Basics</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 13.1 - Tasking Basics</FONT></H1>
+The Ada language includes built-in support for concurrent (parallel)
+processing with Ada <EM>tasks</EM>.
+Ada tasks run concurrently and can interact with each other using a few
+different mechanisms.
+In essence, each Ada task works as though it were running on
+a separate computer.
+Tasks are called by some people ``threads'' or ``light-weight processes''.
+More general terms for task-like behavior include ``process'',
+``agent'', and ``active object''.
+<P>
+Why would you want to use tasks?
+Well, here's one example - let's imagine you're developing a
+World Wide Web browser.
+Such a browser must download information through some (slow) communication
+device and then display the information.
+Now, you could wait until all the information was available and then
+display it, but that would make the user wait for a possibly long time.
+A better solution would be to have two tasks - one that downloads the
+information, and another that displays the information.
+As the first task gathers more information, it could pass portions of
+what it's downloaded along to the second task.
+The second task could work to display information to the user, even if
+the first task hasn't finished gathering its data yet.
+Both tasks could then work ``simultaneously''.
+<P>
+Tasks can be started up (activated) and stopped (terminated).
+There are a variety of ways tasks can communicate with each other
+once they are activated; the main ways are:
+<UL>
+<LI>
+Tasks can wait for other tasks to complete.
+<LI>
+Tasks can send messages between each other; this is called a
+rendezvous.
+<LI>
+Tasks can use `protected objects', which provide exclusive read-write access
+to data.
+Protected objects are new to Ada 95.
+<LI>
+Tasks can set global variables to communicate.
+This last method is efficient but dangerous, especially if you do not
+have a thorough understanding of concurrency issues.
+Ada permits this last approach because some real-time system developers
+really want this capability, but use this approach with great caution.
+</UL>
+<P>
+We'll discuss these different communication methods in the next few sections.
+<P>
+Some computing systems actually have several computers built into them.
+If the Ada compiler and/or operating system can do so, different tasks
+may be run on different machines, which may significantly speed up
+execution of a program.
+<P>
+There are some important caveats about tasks:
+<UL>
+<LI>
+Ada can't create what doesn't exist.
+On single-CPU machines, Ada must simulate 
+multiple computers on a single computer, and there
+is some overhead to doing that.
+This overhead is called the ``scheduling overhead,''
+and a significant portion of the scheduling overhead is something called the
+``context switching time''.
+Most compiler vendors provide information about these values.
+<LI>
+Tasks can be under-used or over-used.
+Some people create hundreds of unnecessary tasks,
+producing slow, terrible programs.
+Like any other tool, use tasks appropriately.
+As a rule of thumb, check what you're doing if you're using more
+than ten to twenty tasks on a single CPU, especially if more than a
+few of them are simultaneously active.
+Also, while there may be many low-level (hardware-level) tasks that
+do trivial work, tasks should generally not simply
+do a trivial operation and then send information on to yet another task.
+Do not follow these rules slavishly; think of these as naive
+guidelines until you understand tasking more completely.
+<LI>
+If there's an underlying operating system, the operating system
+must provide some reasonable support for Ada tasks to work well.
+Modern operating systems that support threads or light-weight
+processes generally work nicely; such
+operating systems include Windows NT, Windows 95, OS/2, Mach, and Solaris.
+Nearly all real-time operating systems provide mechanisms sufficient for
+implementing Ada tasks.
+Windows 3.1 and some old Unix systems do not provide such support, and
+this causes some minor but annoying limitations on those
+systems as we'll discuss later.
+MS-DOS doesn't directly support threads, but it's such a primitive operating
+system that tasks can be created by simply taking over the entire machine
+(old versions of GNAT didn't support tasking on MS-DOS; that has since been
+added by specially implementing tasks on top of MS-DOS).
+</UL>
+<P>
+Technically speaking, an Ada program always includes at least one
+task, called the <EM>environment</EM> task; the main (starting) subprogram
+runs in this environment task.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Software XYZ is running on a single processor and has
+10,000 tasks.
+There's a task for every switch on an input panel
+and a task for every light on a display panel.
+Does this sound like a good design?
+<OL>
+<LI><A HREF="s13s1r1.htm">This is probably a good design.</A>
+<LI><A HREF="s13s1r2.htm">This is probably not a good design.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s12sf.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s13s2.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson13.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 13 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s13s1.htm">http://www.adahome.com/Tutorials/Lovelace/s13s1.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

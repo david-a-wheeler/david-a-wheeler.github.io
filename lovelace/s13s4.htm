@@ -1,0 +1,153 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 13.4 - Protected Types Part 2</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 13.4 - Protected Types Part 2</FONT></H1>
+Now that you know the different types of protected operations,
+declaring a protected type will make more sense.
+
+<P>
+Here's an example - this is a semaphore implemented using
+protected types.
+You can request to "Seize" the semaphore;
+once it is Seized no other task can Seize it until it is Released.
+<P>
+<PRE>
+  protected type Resource is
+    entry Seize;        -- Acquire this resource exclusively.
+    procedure Release;  -- Release the resource.
+  private
+    Busy : Boolean := False;
+  end Resource;
+ 
+  protected body Resource is
+    entry Seize when not Busy is
+    begin
+      Busy := True;
+    end Seize;
+ 
+    procedure Release is
+    begin
+      Busy := False;
+    end Release;
+  end Resource;
+</PRE>
+<P>
+Here's an example of creating a protected variable that
+is an instance of the protected type Resource:
+<P>
+<PRE>
+  Control : Resource;
+</PRE>
+<P>
+And here's an example of using it:
+<P>
+<PRE>
+  Control.Seize;
+  Diddle;
+  Control.Release;
+</PRE>
+<P>
+Here's the
+<A HREF="bnf.htm">BNF</A>
+for a protected (type) declaration and its corresponding
+protected body:
+<P>
+<PRE>
+  protected_declaration ::= "protected" [ "type" ] identifier "is"
+                            { protected_operation_declaration }
+                            [ "private" { protected_element_declaration } ]
+                            "end" [ identifier ]
+  protected_operation_declaration ::= subprogram_declaration |
+                                      entry_declaration
+  protected_element_declaration ::= protected_operation_declaration |
+                                    component_declaration
+  
+  protected_body ::= "protected" "body" identifier "is"
+                     { protected_operation_item }
+                     "end" [ identifier ] ";"
+</PRE>
+<P>
+I've shown how to implement a semaphore using protected types
+because semaphores are a well-known construct for concurrent programs.
+However, it's better to use protected types directly instead of
+trying to build task interaction constructs
+using semaphores as the building block.
+One reason is that semaphores are notoriously hard to use correctly
+for complex task interactions - once multiple semaphores are involved 
+it can be difficult to get the interactions correct for all cases
+(truly getting such interactions right may require developing a
+formal proof of a concurrent protocol, a really difficult thing to do).
+Also, when exceptions occur Ada can handle protected types automatically,
+which is easy to get wrong when doing it "by hand".
+Besides, the protected type may be more efficient.
+<P>
+One particularly useful use of protected types is to implement
+a buffered queue of messages between tasks.
+See the
+<A HREF="http://www.adahome.com/LRM/95/Rationale/rat95html/rat95-p2-9.html#1">Ada Rationale (Part 2, section 9.1.2)</A>
+for an example of this (the Mailbox_Pkg protected type).
+ 
+<!-- No quiz question -->
+<P>
+<HR>
+<P>
+There is no quiz question for this section.
+<P>
+<IMG SRC="pright.gif" ALT="" HEIGHT="14" WIDTH="33">
+<A HREF="s13sf.htm">
+<FONT SIZE="+1"><STRONG>You may go to the next section.</STRONG></FONT></A>
+<P>
+<HR>
+You may also:
+<P>
+
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s13s3.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="lesson13.htm">
+<IMG SRC="barrowr.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to the outline of lesson 13</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s13s4.htm">http://www.adahome.com/Tutorials/Lovelace/s13s4.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

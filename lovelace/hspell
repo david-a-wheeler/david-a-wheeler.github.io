@@ -1,0 +1,60 @@
+#!/bin/sh
+
+# HTML spell checker.
+# This takes a list of filenames of HTML files and checks
+# the spelling of each. It ignores words found in the
+# okayword file.
+
+# Note - this program only works on Unix systems, since it
+# depends on /bin/sh, spell, and so on. Sorry.
+
+# This also takes an option "-x filename"; the filename following
+# -x is eXcluded from the spellcheck.  The -x option must be given before
+# the actual filename, or it won't work.
+# Currently only one file may be excluded.
+
+# Re-sort okayword, since it must be sorted.
+# It's easy to forget to re-sort that file, so let's use some
+# time and sort it ourselves.
+
+sort -u okayword > okayword.srt
+if cmp -s okayword okayword.srt
+then
+ # Okayword was already sorted.
+ rm okayword.srt
+else
+ echo "File okayword had to be re-sorted."
+ mv okayword.srt okayword
+fi
+
+/bin/rm -fr ,errs
+
+if [ "a$1" = 'a-x' ]
+then
+  exclude=$2
+  shift ; shift
+else
+  exclude=""
+fi
+
+for file in $*
+do
+ if [ "$file" != "$exclude" ]
+ then
+  # sed -e 's/<[^>]*>//g' -e 's/&[a-z][a-z]*;//' $file | spell +okayword > ,temp
+  rmhtml $file | spell +okayword > ,temp
+  if [ -s ,temp ]
+  then
+   # We found some errors, add them to ,errs
+   sed -e "s/^/${file}:/" ,temp >> ,errs
+  fi
+ fi
+done
+
+if [ -s ,errs ]
+then
+  more ,errs
+  exit 2 # Return an error code.
+else
+  exit 0
+fi

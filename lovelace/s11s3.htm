@@ -1,0 +1,139 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 11.3 - Example of a Generic Package</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 11.3 - Example of a Generic Package</FONT></H1>
+Let's look an example of a generic package.
+This example of a generic package is straight from the
+<A HREF="http://www.adahome.com/rm95/rm9x-12-08.html">Ada 95
+RM section 12.8</A>.
+<P>
+Let's imagine that you want to create a generic package for a Stack
+that takes operations Push and Pop.
+Here's one way to define such a Stack; we'll define a Stack package that
+stores some Item type and has a maximum size:
+<P>
+<PRE>
+  generic
+    Size : Positive;
+    type Item is private;
+  package Generic_Stack is
+    procedure Push(E : in  Item);
+    procedure Pop (E : out Item);
+    Overflow, Underflow : exception;
+  end Generic_Stack;
+</PRE>
+<P>
+Now a definition needs to be implemented, so here's a sample implementation:
+<P>
+<PRE>
+  package body Generic_Stack is
+    type Table is array (Positive range &lt;&gt;) of Item;
+    Space : Table(1 .. Size);
+    Index : Natural := 0;
+
+    procedure Push(E : in Item) is
+    begin
+      if Index &gt;= Size then
+        raise Overflow;
+      end if;
+      Index := Index + 1;
+      Space(Index) := E;
+    end Push;
+
+    procedure Pop(E : out Item) is
+    begin
+      if Index = 0 then
+        raise Underflow;
+      end if;
+      E := Space(Index);
+      Index := Index - 1;
+    end Pop;
+
+  end Generic_Stack;
+</PRE>
+<P>
+Somewhere else you can instantiate the Generic_Stack package.
+If you wanted to instantiate a new package called ``Stack_Int''
+which could hold 200 Integers, you could say:
+<P>
+<PRE>
+  package Stack_Int is new Generic_Stack(Size =&gt; 200, Item =&gt; Integer);
+</PRE>
+<P>
+The ``Size =&gt;'' and ``Item =&gt;'' are optional; you could omit them
+if you wanted to, but including them makes the code clearer.
+From then on, you could "Push" a new Integer onto Stack_Int by saying:
+<P>
+<PRE>
+  Stack_Int.Push(7);
+</PRE>
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+What are the formal parameters for generic package Stack?
+<OL>
+<LI><A HREF="s11s3r1.htm">Size, Positive, Item, and private.</A>
+<LI><A HREF="s11s3r2.htm">Size and Item.</A>
+<LI><A HREF="s11s3r3.htm">Size.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s11s2.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s11sf.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson11.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 11 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s11s3.htm">http://www.adahome.com/Tutorials/Lovelace/s11s3.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

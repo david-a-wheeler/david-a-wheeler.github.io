@@ -1,0 +1,130 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 18.3 - Any Structures Missing (Locating Operations)?</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 18.3 - Any Structures Missing (Locating Operations)?</FONT></H1>
+
+It's best to try to identify all the major components of a program
+and their purpose before going further.
+One way to do this is to think of important operations and data values
+and then determine if they have a "home" in our program structure.
+We've already covered the basic hierarchy of tagged types, and that
+seems to cover most of our needs.
+Let's think about the kinds of operations we'll need, and where
+they will be defined, to see if
+there are any that can't easily be located on our current design.
+<P>
+
+I think most of the commands should be attached to type Occupant (and
+thus placed in the Occupants package), with possible
+overriding for more specific types.
+You'd like to be able to command things other than the player to
+do things; it would be useful to command monsters and magic swords,
+for example.
+Even if you don't want a user to be able to "get" a monster, you want to print
+a reasonable message (not raise an exception) if the user attempts it.
+On the other hand, it's not as easy to imagine a room "getting" things
+(though you <EM>could</EM> define what that means), so for our
+purposes we'll attach many operations to Occupant.
+<P>
+
+The parser package will need to be able to command objects to Look, Get,
+Drop, and so on.
+It sounds like the operations like Look, Get, Drop, and so on will
+need to be in the specification of the various packages defining their
+corresponding tagged types.
+We'll come back to that later, but it looks like the structure
+we've developed so far will handle that easily.
+<P>
+
+The parser will need to break apart the text and then send a message to
+the player object to do something. Hmm, how can we find the player object?
+We could just define a global variable, but if this game ever became a
+multi-player game that wouldn't be very flexible.
+Let's define a function called "Me" that returns something that
+can represent the player.
+That way, we can create a function that varies who "Me" is easily.
+<P>
+
+Okay, where should that function "Me" go? It could be part of the
+Occupant class, but I'd rather have a separate package that sets up and
+keeps track of the "current state of the world".
+That way, all the other packages
+only need to react to specific commands and requests given to them, and
+they won't need (or even have available!) global information about the
+state of the world without specifically requesting that information.
+I'll call the package that keeps track of the general world state
+package "World".
+<P>
+
+We've already identified package Ustrings as a useful package, and I
+can't think of anything else we'd need, so it looks like we have
+a basic structure for program Small.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+What new package have we identified?
+<OL>
+<LI><A HREF="s18s3r1.htm">package World</A>
+<LI><A HREF="s18s3r2.htm">package Ustrings</A>
+<LI><A HREF="s18s3r3.htm">package Me</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s18s2.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s18s4.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson18.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 18 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s18s3.htm">http://www.adahome.com/Tutorials/Lovelace/s18s3.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

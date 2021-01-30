@@ -1,0 +1,128 @@
+<HTML>
+<HEAD>
+<TITLE>Package body Parser</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com"></HEAD>
+<BODY>
+<B>Package body Parser</B><P><HR><P>
+<PRE>
+<I>--</I>
+<I>-- Copyright (C) 1996 Ada Resource Association (ARA), Columbus, Ohio.</I>
+<I>-- Author: David A. Wheeler</I>
+<I>--</I>
+
+<B>with</B> Text_IO, Ada.Strings.Maps.Constants, <A HREF="ustrings.htm#9:9">Ustrings</A>, <A HREF="thingss.htm#9:9">Things</A>, <A HREF="occupans.htm#9:9">Occupants</A>, <A HREF="worlds.htm#9:9">World</A>;
+<B>use</B>  Text_IO, Ada.Strings.Maps.Constants, <A HREF="ustrings.htm#9:9">Ustrings</A>, <A HREF="thingss.htm#9:9">Things</A>, <A HREF="occupans.htm#9:9">Occupants</A>, <A HREF="worlds.htm#9:9">World</A>;
+<B>use</B>  Ada.Strings, Ada.Strings.Maps;
+
+<B>with</B> <A HREF="directis.htm#9:9">Directions</A>;
+<B>use</B>  <A HREF="directis.htm#9:9">Directions</A>;
+
+<B>package</B> <B>body</B> <A NAME="13:14"></A>Parser <B>is</B>
+
+ <A NAME="15:2"></A>Spaces : <B>constant</B> Character_Set := To_Set(' ');
+
+ <B>procedure</B> <A NAME="name-14"></A><A NAME="17:12"></A>Split(Source     : <B>in</B>  Unbounded_String;
+                 First_Word : <B>out</B> Unbounded_String;
+                 Rest       : <B>out</B> Unbounded_String) <B>is</B>
+  <A NAME="20:3"></A>First : Positive; <I>-- Index values of first word.</I>
+  <A NAME="21:3"></A>Last  : Natural;
+ <I>-- Puts first word of Source into First_Word, the rest of the words in Rest</I>
+ <I>-- (without leading spaces); words are separated by one or more spaces;</I>
+ <I>-- if there are no spaces, Rest returns empty.</I>
+ <B>begin</B>
+  Find_Token(Source, <A HREF="parserb.htm#15:2">Spaces</A>, Outside, First, Last);
+  First_Word := U(Slice(Source, First, Last));
+  Rest       := Trim(U(Slice(Source, Last + 1, Length(Source))), Left);
+ <B>end</B> Split;
+
+
+
+ <B>procedure</B> <A NAME="name-13"></A><A NAME="33:12"></A>Execute(Command : <B>in</B> Unbounded_String; Quit : <B>out</B> Boolean) <B>is</B>
+  <A NAME="34:3"></A>Trimmed_Command : Unbounded_String := Trim(Command, Both);
+  <A NAME="35:3"></A>Verb, <A NAME="35:9"></A>Arguments, <A NAME="35:20"></A>First_Argument, <A NAME="35:36"></A>Rest_Of_Arguments : Unbounded_String;
+  <A NAME="36:3"></A>Direct_Object : <A HREF="occupans.htm#14:7">Occupant_Access</A>;
+ <B>begin</B>
+  Quit := False; <I>-- By default assume we won't quit.</I>
+  <B>if</B> (Empty(Trimmed_Command)) <B>then</B>
+    <B>return</B>;      <I>-- Ignore blank lines.</I>
+  <B>end</B> <B>if</B>;
+
+  <I>-- Extract Verb and First_Argument and force them to lower case.</I>
+  <A HREF="parserb.htm#17:12">Split</A>(Trimmed_Command, Verb, Arguments);
+  Translate(Verb, Lower_Case_Map);
+  <A HREF="parserb.htm#17:12">Split</A>(Arguments, First_Argument, Rest_Of_Arguments);
+  Translate(First_Argument, Lower_Case_Map);
+
+
+  <I>-- Try to execute "Verb".</I>
+
+  <B>if</B>    Verb = "look" then
+    <A HREF="occupans.htm#18:12">Look</A>(<A HREF="worlds.htm#15:11">Me</A>);
+  <B>elsif</B> Verb = "get" then
+    Direct_Object := <A HREF="occupans.htm#14:7">Occupant_Access</A>(Find(<A HREF="worlds.htm#15:11">Me</A>, First_Argument));
+    <B>if</B> Direct_Object /= <B>null</B> <B>then</B>
+      <A HREF="occupans.htm#20:12">Get</A>(<A HREF="worlds.htm#15:11">Me</A>, Direct_Object);
+    <B>end</B> <B>if</B>;
+  <B>elsif</B> Verb = "drop" then
+    Direct_Object := <A HREF="occupans.htm#14:7">Occupant_Access</A>(Find_Inside(<A HREF="worlds.htm#15:11">Me</A>, First_Argument));
+    <B>if</B> Direct_Object /= <B>null</B> <B>then</B>
+      <A HREF="occupans.htm#26:12">Drop</A>(<A HREF="worlds.htm#15:11">Me</A>, Direct_Object);
+    <B>end</B> <B>if</B>;
+  <B>elsif</B> Verb = "inventory" or Verb = "inv" then
+    <A HREF="occupans.htm#29:12">Inventory</A>(<A HREF="worlds.htm#15:11">Me</A>);
+  <B>elsif</B> Verb = "quit" then
+    Quit := True;
+  <B>elsif</B> Verb = "go" and then Is_Direction(First_Argument) then
+    <A HREF="occupans.htm#32:12">Go</A>(<A HREF="worlds.htm#15:11">Me</A>, <A HREF="directis.htm#18:11">To_Direction</A>(First_Argument));
+    <A HREF="occupans.htm#18:12">Look</A>(<A HREF="worlds.htm#15:11">Me</A>);
+  <B>elsif</B> Is_Direction(Verb) <B>then</B>  <I>-- Is the verb a direction (north, etc)?</I>
+    <A HREF="occupans.htm#32:12">Go</A>(<A HREF="worlds.htm#15:11">Me</A>, <A HREF="directis.htm#18:11">To_Direction</A>(Verb));
+    <A HREF="occupans.htm#18:12">Look</A>(<A HREF="worlds.htm#15:11">Me</A>);
+  <B>elsif</B> Verb = "help" then
+    Put_Line("Please type in one or two word commands, beginning with a verb");
+    Put_Line("or direction. Directions are north, south, east, west, etc.");
+    Put_Line("Here are some sample commands:");
+    Put_Line("look, get box, drop box, inventory, go west, west, w, quit.");
+  <B>else</B>
+   Put_Line("Sorry, I don't recognize that verb. Try 'help'.");
+  <B>end</B> <B>if</B>;
+  
+ <B>end</B> Execute;
+<B>end</B> Parser;
+
+<I>--</I>
+<I>-- Permission to use, copy, modify, and distribute this software and its</I>
+<I>-- documentation for any purpose and without fee is hereby granted,</I>
+<I>-- provided that the above copyright and authorship notice appear in all</I>
+<I>-- copies and that both that copyright notice and this permission notice</I>
+<I>-- appear in supporting documentation.</I>
+<I>-- </I>
+<I>-- The ARA makes no representations about the suitability of this software</I>
+<I>-- for any purpose.  It is provided "as is" without express</I>
+<I>-- or implied warranty.</I>
+<I>-- </I>
+
+</PRE>
+
+<P><HR><P>
+You may also see <A HREF="parsers.htm">the corresponding specification</A>.
+<P>
+You may also see the <A HREF="pkglist.htm">list of program units</A>.
+<P>
+The following compilation units are referred to ("with"'ed) by Package body Parser:
+<UL>
+<LI><A HREF="occupans.htm">Package spec Occupants</A>
+<LI><A HREF="thingss.htm">Package spec Things</A>
+<LI><A HREF="directis.htm">Package spec Directions</A>
+<LI><A HREF="ustrings.htm">Package spec Ustrings</A>
+<LI><A HREF="worlds.htm">Package spec World</A>
+</UL>
+You may return to the <A HREF="small.htm">Program Small Home Page</A>.
+<P>
+<!-- Do NOT delete my name or the tool name from below; -->
+<!-- giving me credit is a condition for use of ada2html -->
+<I>This hypertext format was generated by <A HREF="http://www.adahome.com/Ada/Tutorials/Lovelace/dwheeler.htm">David A. Wheeler</A>'s <A HREF="http://www.adahome.com/Ada/Resources/Tools/ada2html/ada2html.htm">ada2html</A></I>
+</BODY>
+</HTML>
+

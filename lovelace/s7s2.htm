@@ -1,0 +1,177 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 7.2 - Object-Oriented Programming in Ada: Inheritance</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 7.2 - Object-Oriented Programming in Ada: Inheritance</FONT></H1>
+One of the major features of OO programming
+is its use of <EM>inheritance</EM>.
+In 1995 facilities were added to Ada to easily support inheritance.
+<P>
+Inheritance lets us define new types as extensions of existing types;
+these new types inherit
+all the operations of the types they extend.
+The new types are termed `children' or `derived types', while the types
+extended are usually called `parents' or `base types.'
+Inherited operations can be overridden with new definitions of those
+operations.
+Derived types can also add new operations that apply only to them and not
+their base types. 
+<P>
+In Ada 95 terminology, types that can have parents or children
+are termed ``tagged types'', and have the keyword ``tagged''
+as part of their definition.
+<P>
+This is probably best shown through an example.
+Let's imagine that we're writing a program that must display
+many different kinds of geometric figures, such as circles, rectangles,
+and squares.
+We could create different types to represent the figures, but clearly
+these different kinds of figures share a number of things in common.
+In particular, all of these things can be drawn, and all of them have areas.
+We could create a package called "Figures" to define these different types,
+and we could define a type called "Figure" to represent any of these
+different kinds of figures (circles, rectangles, or squares).
+We could then say that circles and rectangles are a kind of figure, and
+squares are a kind of rectangle.
+A given type includes all of the record components specific to it, plus
+all the record components of its ancestors, so a square has all the
+information a rectangle would.
+<P>
+We'll also need to define some operations on these types, such as
+"Draw", "Area", and "Perimeter".
+For example, function Area will determine the figure's surface area and
+return it as a Float.
+If we don't redefine a subprogram for a given type, the closest ancestor's
+defined subprogram will be used.
+For example, if we don't redefine subprogram "Area" for a Square, the
+"Area" subprogram defined for Rectangle will be used.
+That means that "Area" is still a perfectly valid subprogram for a Square.
+<P>
+Here's a graphical representation these interconnected types; the larger
+boxes represent the tagged types, showing the tagged type's name,
+additional data content, and new or overridden operations.
+The connections show the an inheritance relationship, with the parent
+type above the child type.
+<P>
+<IMG SRC="figures.gif" ALT="[Type Figure is Parent of Circle and Rectangle]" WIDTH=261 HEIGHT=287>
+<BR>
+<P>
+We will also need a "Point" type to store the starting X and Y coordinates
+for each figure.
+To keep things short we'll just define the "Point" type in the same package.
+Since every figure needs a starting position, we'll
+put a starting position (of type Point) in the Figure type.
+Here's an example of how to write this in Ada:
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+package Figures is
+ -- Package to demonstrate Object Orientation.
+
+type Point is
+   record
+      X, Y: Float;
+   end record;
+
+type Figure is tagged
+   record
+      Start : Point;
+   end record;
+function Area  (F: Figure) return Float;
+function Perimeter (F:Figure) return Float;
+procedure Draw (F: Figure);
+
+type Circle is new Figure with
+   record
+      Radius: Float;
+   end record;
+function  Area (C: Circle) return Float;
+function  Perimeter (C: Circle) return Float;
+procedure Draw (C: Circle);
+
+type Rectangle is new Figure with
+   record
+      Width: Float;
+      Height: Float;
+   end record;
+function Area (R: Rectangle) return Float;
+function Perimeter (R: Rectangle) return Float;
+procedure Draw (R: Rectangle);
+
+type Square is new Rectangle with null record;
+
+end Figures;
+</PRE>
+<P>
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+How many record components and subprograms
+are defined <EM>in total</EM> for type Square in package Figures?
+<OL>
+<LI><A HREF="s7s2r1.htm">Two record components, no subprograms.</A>
+<LI><A HREF="s7s2r2.htm">Three record components, no subprograms.</A>
+<LI><A HREF="s7s2r3.htm">Two record components, three subprograms.</A>
+<LI><A HREF="s7s2r4.htm">Three record components, three subprograms.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s7s1.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s7s3.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson7.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 7 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s7s2.htm">http://www.adahome.com/Tutorials/Lovelace/s7s2.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

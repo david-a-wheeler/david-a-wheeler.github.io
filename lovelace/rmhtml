@@ -1,0 +1,17 @@
+#!/usr/bin/perl -w
+
+# rmhtml - remove HTML markings.
+# This filter copies standard input to standard output,
+# removing HTML markings (anything between <> and between & and ;).
+
+$in_pre_section = 0;
+
+while (<>) {
+ if    (m/^ *<pre> *$/i) { $in_pre_section = 1; }
+ elsif (m/^ *<\/pre> *$/i) { $in_pre_section = 0; }
+ elsif (not $in_pre_section) {
+   s/<[^>]*>//g;
+   s/&[a-z][a-z]*;/ /g;
+   print;
+ }
+}

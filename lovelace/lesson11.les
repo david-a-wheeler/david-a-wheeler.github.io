@@ -1,0 +1,400 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<COMMENT  Edit the following lines. >
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=11>
+<COMMENT $Id: lesson11.les,v 1.4 1995/08/09 21:07:40 wheeler Exp $ >
+
+<COMMENT  You'll probably want to uncomment and edit these lines: >
+<COMMENT  <PREVIOUS_LESSON LOCATION="URL_of_directory/" >
+<COMMENT  <NEXT_LESSON LOCATION="URL_of_directory/" >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+<COMMENT Each section has a title; SECTION starts a new section.>
+
+<SECTION NAME="Defining Generics">
+It's often useful to first create a more generic version of a subprogram
+or package and then use that generic version to create more specific
+subprograms or packages.
+Ada's capability to do this is called a <EM>generic</EM>, and it's
+the same thing as C++'s <EM>templates</EM>.
+Generics are also somewhat similar to C's "#define" preprocessor command,
+though Ada generics are type-checked and thus much safer.
+<P>
+It's probably easiest to understand this by example.
+First, let's write a procedure to swap two Integers:
+<P>
+<PRE>
+  -- Here's the declaration (specification):
+  procedure Swap(Left, Right : in out Integer);
+
+  -- .. and here's the body:
+  procedure Swap(Left, Right : in out Integer) is
+    Temporary : Integer;
+  begin
+    Temporary := Left;
+    Left := Right;
+    Right := Temporary;
+  end Swap;
+</PRE>
+<P>
+Swap is a perfectly fine procedure, but it's too specialized.
+We can't use Swap to swap Floats, or Unbounded_Strings, or anything else.
+What we want is a more generic version of Swap, but one where we can
+substitute the type "Integer" with a more <EM>generic</EM> type.
+A generic version of Swap would look like this:
+<P>
+<PRE>
+  -- Here's the declaration (specification):
+  generic
+    type Element_Type is private;
+  procedure Generic_Swap(Left, Right : in out Element_Type);
+
+  -- .. and here's the body:
+  procedure Generic_Swap(Left, Right : in out Element_Type) is
+    Temporary : Element_Type;
+  begin
+    Temporary := Left;
+    Left := Right;
+    Right := Temporary;
+  end Generic_Swap;
+</PRE>
+<P>
+In general, to create a generic version of a subprogram (or package),
+write the subprogram using a few generically-named types.
+Then precede the subprogram or package with the keyword ``generic''
+and a list of the information you'd like to make generic.
+This list is called the <EM>generic formal parameters</EM>; this list is
+like the list of parameters in a procedure declaration.
+We'll explain more later
+what the phrase ``is private'' means.
+<P>
+To use a generic subprogram (or package), we have to create a real
+subprogram (or package) from the generic version.
+This process is called <EM>instantiating</EM>, and the result is
+called an <EM>instantiation</EM> or <EM>instance</EM>.
+These are big words for a simple concept.
+For example, here's how to create three Swap procedure instances
+from the generic one:
+<P>
+<PRE>
+  procedure Swap is new Generic_Swap(Integer);
+  procedure Swap is new Generic_Swap(Float);
+  procedure Swap is new Generic_Swap(Unbounded_String);
+</PRE>
+<P>
+Note that when you instantiate a generic, you ``pass'' types
+in the same way that you pass parameters to an ordinary procedure call.
+<P>
+From here on, you can call the Swap procedure that takes Integers, the
+Swap procedure that takes Floats, and the Swap procedure that takes
+Unbounded_Strings.
+Thus if A and B are both of type Integer, Swap(A,B) would swap their values.
+As for any other Ada subprogram, if different subprograms 
+share the same name, Ada will determine at compile time
+which one to call based on the argument types.
+<P>
+Here's a simple test program for Generic_Swap:
+<PRE>
+with Generic_Swap;
+
+procedure Tswap is
+ procedure Swap is new Generic_Swap(Integer);
+ A, B : Integer;
+begin
+ A := 5;
+ B := 7;
+ Swap(A, B);
+ -- Now A=7 and B=5.
+end Tswap;
+</PRE>
+<P>
+For brevity I'm showing procedure Swap being instantiated in procedure
+Tswap, but in most real programs almost everything is enclosed in a package
+and the instantiations would be inside the package body.
+
+<SECTION NAME="Generic Formal Parameters">
+We will only look a little bit at generics, just enough so you'll
+understand what they can do.
+However, it's difficult to read and use generics if you don't understand
+what can be used in a generic formal parameter
+(i.e. the stuff right after the keyword "generic").
+Here are the things that can be
+included in a generic formal parameter list:
+<UL>
+<LI>Values or variables of any type. These are called `formal objects'.
+For example, a maximum size might be a useful formal object.
+<LI>Any type. These are called `formal types'.
+<LI>Packages which are instances of other generic packages.
+These are called `formal packages'; we won't discuss them further here.
+</UL>
+<P>
+Here's an example of a formal_object_declaration:
+<P>
+<PRE>
+   Maximum_Size : Integer;
+</PRE>
+<P>
+Here's the syntax for defining a value or variable as a formal object
+in <A HREF="bnf.htm">BNF</A> format:
+<P>
+<PRE>
+  formal_object_declaration ::= identifier_list ":" [ "in" | "in out" ]
+                                type_name [ ":=" default_expression ] ";"
+</PRE>
+<P>
+We've already seen an example of a formal type declaration.
+Formal types specify the name of a type and what ``kind of type'' is permitted.
+A formal
+type declaration specifies the "minimum" or "worst case" kind of
+type that is required.
+The most minimal type in Ada is called a "limited private" type.
+This is the "worst case" because the keyword "private"
+means that you may not know anything about how it's implemented,
+and "limited" means that there might not be
+assignment or equality operations defined for it.
+<P>
+A formal type declaration has the following syntax (this is actually
+highly simplified; many more things are permitted):
+<P>
+<PRE>
+  formal_type_declaration ::= "type" defining_identifier "is"
+                              formal_type_definition ";"
+
+  formal_type_definition ::= ["tagged"] ["limited"] "private" | "(&lt;&gt;)"
+</PRE>
+<P>
+Let's look at some examples, with their meaning written beside them:
+<P>
+<PRE>
+  type Item is limited private;  -- Item can be any type.
+  type Item is private;          -- Item can be any type that has assignment
+                                 -- (:=) and equal-to (=) operation.
+  type Item is tagged limited private; -- Item can be any tagged type.
+  type Item is tagged private;   -- Item can be any tagged type with :=.
+  type Item is (&lt;&gt;);             -- Item can be any discrete type, including
+                                 -- Integer and Boolean.
+</PRE>
+<P>
+In the next section we'll look at an example that should make these
+things clearer.
+
+<QUESTION Type=Multiple-Choice>
+If you want to create a generic with a formal type named Unit
+that could be any type at all, how would you declare it?
+<CHOICES>
+<CHOICE ANS=1>type Unit is limited private;
+<CHOICE ANS=2>type Unit is private;
+<CHOICE ANS=3>type Unit is (&lt;&gt;);
+</CHOICES>
+<ANSWER ANS=1>
+
+<SECTION NAME="Example of a Generic Package">
+Let's look an example of a generic package.
+This example of a generic package is straight from the
+<A HREF="http://www.adahome.com/rm95/rm9x-12-08.html">Ada 95
+RM section 12.8</A>.
+<P>
+Let's imagine that you want to create a generic package for a Stack
+that takes operations Push and Pop.
+Here's one way to define such a Stack; we'll define a Stack package that
+stores some Item type and has a maximum size:
+<P>
+<PRE>
+  generic
+    Size : Positive;
+    type Item is private;
+  package Generic_Stack is
+    procedure Push(E : in  Item);
+    procedure Pop (E : out Item);
+    Overflow, Underflow : exception;
+  end Generic_Stack;
+</PRE>
+<P>
+Now a definition needs to be implemented, so here's a sample implementation:
+<P>
+<PRE>
+  package body Generic_Stack is
+    type Table is array (Positive range &lt;&gt;) of Item;
+    Space : Table(1 .. Size);
+    Index : Natural := 0;
+
+    procedure Push(E : in Item) is
+    begin
+      if Index &gt;= Size then
+        raise Overflow;
+      end if;
+      Index := Index + 1;
+      Space(Index) := E;
+    end Push;
+
+    procedure Pop(E : out Item) is
+    begin
+      if Index = 0 then
+        raise Underflow;
+      end if;
+      E := Space(Index);
+      Index := Index - 1;
+    end Pop;
+
+  end Generic_Stack;
+</PRE>
+<P>
+Somewhere else you can instantiate the Generic_Stack package.
+If you wanted to instantiate a new package called ``Stack_Int''
+which could hold 200 Integers, you could say:
+<P>
+<PRE>
+  package Stack_Int is new Generic_Stack(Size =&gt; 200, Item =&gt; Integer);
+</PRE>
+<P>
+The ``Size =&gt;'' and ``Item =&gt;'' are optional; you could omit them
+if you wanted to, but including them makes the code clearer.
+From then on, you could "Push" a new Integer onto Stack_Int by saying:
+<P>
+<PRE>
+  Stack_Int.Push(7);
+</PRE>
+<P>
+
+<QUESTION Type=Multiple-Choice>
+What are the formal parameters for generic package Stack?
+<CHOICES>
+<CHOICE ANS=1>Size, Positive, Item, and private.
+<CHOICE ANS=2>Size and Item.
+<CHOICE ANS=3>Size.
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+Well, all that text is in there, but there are only two parameters.
+</RESPONSES>
+<SECTION NAME="GADTs versus GADOs">
+The stack that we created in the previous section is a lot more
+flexible than a non-generic version.
+We can instantiate different generics to handle different types;
+we can even instantiate it multiple times for the same type to get
+several stacks.
+<P>
+It's still not as flexible as it could be, though.
+We can't pass around stacks as parameters, and
+we can't create arrays of them (perhaps we'd like to have
+an array of stacks!).
+<P>
+We <EM>could</EM> have that additional flexibility if inside the
+generic package we defined a new type (e.g., "Stack") and changed
+every operation to use this new type.
+Then, using this new type, we can pass Stacks around,
+use them in arrays, and so on.
+Here's an example of what such a Generic_Stack's package
+specification would look like:
+<P>
+<PRE>
+  generic
+    Size : Positive;
+    type Item is private;
+  package Generic_Stack is
+    type Stack is limited private;
+    procedure Push(S : in out Stack; E : in  Item);
+    procedure Pop (S : in out Stack; E : out Item);
+    Overflow, Underflow : exception;
+  private 
+    type Stack is array(1 .. Size) of Item; 
+  end Generic_Stack;
+</PRE>
+<P>
+Compare this to the previous version of our Generic_Stack package:
+<P>
+<PRE>
+  generic
+    Size : Positive;
+    type Item is private;
+  package Generic_Stack is
+    procedure Push(E : in  Item);
+    procedure Pop (E : out Item);
+    Overflow, Underflow : exception;
+  end Generic_Stack;
+</PRE>
+<P>
+The new version of this package
+is an example of what is called a <EM>generic abstract data type (GADT)</EM>.
+A generic abstract data type is a generic that defines a central data type
+for the other operations so that customers of the package can do things
+such as use them in records and arrays.
+The version we saw in the previous section is called a
+<EM>generic abstract data object (GADO)</EM>.
+You can can think of each instance of a GADO as
+being "machine" that does a fixed set of operations (such as push and pop).
+GADTs require just slightly more work to use because you
+have to instantiate the generic (creating a type you can use),
+and then declare a value (of that new type) to use them.
+You also have to specify with each GADT operation what object
+(i.e. which Stack) to use.
+In exchange for this very slight additional work, GADTs are more versatile.
+For example, if you want an array of stacks with a GADT, it's easy.
+By comparison, it's not really practical to create an array of GADOs.
+Therefore, in general it's recommended that you develop generic packages
+as GADTs, not as GADOs
+(the AQ&amp;S specifically recommends this in chapter 8).
+<P>
+To use our new GADT version of Generic_Stack, we still have to
+instantiate it.  Here's an example
+(notice that we instantiate it the same way!):
+<PRE>
+  package Stack_Int is new Generic_Stack(Size =&gt; 200, Item =&gt; Integer);
+</PRE>
+<P>
+Now, however, we have a new type; we'll need to create variables of that type.
+For example:
+<PRE>
+  with Stack_Int; use Stack_Int;
+  ...
+  My_Stack : Stack;  -- Stack_Int's Stack type.
+</PRE>
+<P>
+To execute various commands, we now need to tell it which Stack to use.
+<P>
+<PRE>
+  Push(My_Stack, 7);
+</PRE>
+<P>
+If you're seriously interested in making the component reusable, you should
+try to make it as flexible as possible.
+For example, you should be able to "compose" reusable components from
+other reusable components to create complex data structures.
+A simple way to test this is to try to compose a reusable component with
+itself <A HREF="biblio.htm#wheeler1992">[Wheeler 1992]</A>.
+While the stack package we've shown so far is pretty good in many respects,
+it doesn't compose very well - we can't create a stack of stacks.  Why?
+Because the type "Stack" in our new version of the package
+is a limited private type - it doesn't provide an assignment operation.
+However, type Item is private, because we need the Item assignment operation
+to implement Push and Pop.
+<P>
+The solution is simple - we should support assignment between Stacks, too.
+One approach would be to make Stack a private type, permitting Ada to use
+its default array assignment operations.
+A better solution would be to use type "Controlled" that we discussed in
+lesson 7 so we can better control the assignment operation, and use that
+to implement our own assignment statement.
+We'll see more of this a little later.
+
+<QUESTION Type=Multiple-Choice>
+What is a GADT?
+<CHOICES>
+<CHOICE ANS=1>A generic package that does not define a new type.
+<CHOICE ANS=2>A generic package that defines a new type; the new type is used in all the operations (subprograms) defined in the generic package.
+<CHOICE ANS=3>Any generic package.
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, that's a GADO (generic abstract data object).
+<WHEN ANS=2>
+Correct, that's a GADT (generic abstract data type).
+<WHEN ANS=3>
+No, sorry.
+</RESPONSES>
+

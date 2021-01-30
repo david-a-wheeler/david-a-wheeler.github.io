@@ -1,0 +1,232 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 17.4 - Safety and Ada</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 17.4 - Safety and Ada</FONT></H1>
+While Ada is used in applications where safety isn't a
+significant concern,
+many safety-critical applications are developed in Ada.
+Even if you're not planning to build safety-critical software
+today, it's good to know some basics.
+First we'll introduce some software safety concepts, then
+follow them with Ada-specific items.
+<P>
+<H2>Software Safety Overview</H2>
+<P>
+Software safety involves ensuring that software executes within a
+system context without resulting in an unacceptable system risk. Safety
+is a property of an entire system, not just software, but software
+components can be a determiner of a system's safety.
+Risk may be defined as a function of (1) the probability of a mishap and
+(2) the severity of a mishap's effects should the mishap occur.
+Few things in real life can be "perfectly" safe; instead, we try to reduce
+the risk to some very small, acceptable level.
+<P>
+One common misconception is that a well-tested, highly reliable
+software system is safe. It has been demonstrated experimentally that
+traditional verification (testing) techniques are grossly inadequate for
+detecting safety-critical faults even for a simple program
+<A HREF="biblio.htm#gowen1994">[Gowen 1994]</A>.
+Thus, simply testing a system is unlikely to result in a safe system.
+A reliable system isn't necessarily a safe system either; a
+system that works most of the time but occasionally kills everyone
+in a large radius would usually be considered unsafe.
+The moderated newsgroup
+<A HREF="news:comp.risks">comp.risks</A>
+provides a continuous stream of examples of
+software going awry and causing serious problems.
+<P>
+Personally, I think that if you're developing software that could
+cause death, serious injury, or significant property damage, you
+should be just a little afraid.
+If you aren't, you probably
+don't understand the issues involved.
+That small amount of fear is healthy, because it will motivate you
+to learn and use techniques to reduce the overall risk.
+<P>
+Some good survey papers that give an overview of the software safety
+field include
+<A HREF="biblio.htm#place1993">Place [1993]</A>,
+<A HREF="biblio.htm#leveson1991a">Leveson [1991a]</A>,
+and
+<A HREF="biblio.htm#leveson1986">Leveson [1986]</A>,
+Note that
+<A HREF="ftp://ftp.sei.cmu.edu/pub/documents/93.reports/tr05.93.ps">[Place 1993]
+is freely available through the Internet</A>.
+<P>
+There are a number of specialized hazard analysis techniques that help to
+identify safety problems.
+Here are two of them:
+<OL>
+<LI>Software Fault Tree Analysis (FTA)
+is a technique for identifying potential causes of safety
+hazards in a system.
+In software FTA, a list of safety hazards (conditions to be avoided) is
+first made.
+Then the analyst assumes that, for analysis purposes,
+that each hazard (in turn) has occurred.
+The analyst then works
+backwards from those hazards through the software,
+creating logic diagrams, to show that how the safety hazards can occur
+(ideally, the analyst should determine that they cannot occur).
+The technique is easy to understand and can be easily integrated
+with system safety work.
+<A HREF="biblio.htm#leveson1983">Leveson [1983]
+provides a general discussion on software FTA</A>, while
+<A HREF="biblio.htm#leveson1991b">Leveson [1991b]
+shows specifically how to apply software FTA to
+Ada programs</A>.
+<LI>Another set of safety-related techniques are
+called formal methods.
+Formal methods are the application
+of (formal) mathematical techniques for definition and possibly proof of
+program properties.
+Currently formal methods are a subject of a great deal of research,
+but they are not often used in practice due to the difficulty of
+applying them to realistic program sizes.
+Still, there are systems which have used formal methods to varying degrees,
+and there is reason to hope that their applicability will increase
+over time.
+<A HREF="http://www.yahoo.com/Science/Computer_Science/Formal_Methods/">The
+Internet directory YAHOO has several references to
+information relating to formal methods</A>.
+Well-known specification languages include VDM and
+<A HREF="http://www.cis.ohio-state.edu/hypertext/faq/usenet/z-faq/faq.html">Z
+(pronounced "zed")</A>.
+</OL>
+<P>
+One web server on safety is the
+<A HREF="http://www.comlab.ox.ac.uk/archive/safety.html">The
+World Wide Web Virtual Library: Safety-Critical Systems</A>.
+This web server emphasizes the formal methods aspects, but does cover
+others to some extent.
+<P>
+<H2>Ada and Software Safety</H2>
+<P>
+Ada is often used in safety-critical software because of its built-in
+capabilities.
+Here are some Ada capabilities specifically for safety-critical systems:
+<OL>
+<LI>In some circumstances it's important to check to see if a scalar
+value (such as an Integer or enumerated type) is in a legal
+range.
+For example, hardware errors and cosmic rays can cause values to change
+outside of software control, and foreign language interfaces can pass
+in out-of-range values.
+Ada 95 has an attribute named 'Valid to check if a value is out-of-range
+<A HREF="http://www.adahome.com/rm95/rm9x-13-09-02.html">('Valid
+is explained in RM 13.9.2)</A>.
+The expression
+X'Valid, where X is some scalar variable, is True if X is in-range
+and False otherwise.
+<LI>In safety systems the computer language is often restricted to constructs
+that are easier to show correct (either for formal methods or just to
+avoid potential problems).
+<A HREF="http://www.adahome.com/rm95/rm9x-13-12.html">Pragma
+Restrictions (see RM 13.12)</A>
+can be used to specify what parts of the language
+may not be used in a particular program.
+<LI>Ada 95 has an optional
+<A HREF="http://www.adahome.com/rm95/rm9x-H.html">"Safety and
+Security" annex</A>
+which, if implemented in the compiler, adds additional operations and features
+to support safe and/or secure program development.
+For example, this annex adds pragma Normalize_Scalars, which sets
+uninitialized values to out-of-range values where possible (this makes
+it easier to detect uninitialized values).
+</OL>
+<P>
+Here are two examples of safety-restricted Ada subsets:
+<OL>
+<LI>SPARK is a `safe' subset of Ada 83 designed to be
+susceptible to formal methods, accompanied with a set of approaches and tools.
+Using SPARK,
+a developer takes a Z specification and performs a stepwise
+refinement from the specification to SPARK code. For each refinement
+step a tool is used to produce verification conditions (VC's), which are
+mathematical theorems. If the VC's can be proved then the refinement
+step will be known to be valid. However if the VC's cannot be proved
+then the refinement step may be erroneous.
+<A HREF="http://daedalus.dra.hmg.gb/hewitt/swi/swi.html">More
+information about SPARK is available on the WWW</A>.
+<LI><A HREF="biblio.htm#pyle1991">Pyle [1991]</A>
+discusses and compares various restrictions for safety purposes in his book.
+</OL>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Given the following two statements:
+<P>
+<OL>
+<LI>If a program is reliable and has been extensively tested, it's safe.
+<LI>The safety implications of software can be analyzed by itself,
+without examining how the software will be used.
+</OL>
+<P>
+Which is true?
+
+<OL>
+<LI><A HREF="s17s4r1.htm">Statement 1.</A>
+<LI><A HREF="s17s4r2.htm">Statement 2.</A>
+<LI><A HREF="s17s4r3.htm">Both statement one and statement two.</A>
+<LI><A HREF="s17s4r4.htm">Neither statement.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s17s3.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s17s5.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson17.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 17 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s17s4.htm">http://www.adahome.com/Tutorials/Lovelace/s17s4.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

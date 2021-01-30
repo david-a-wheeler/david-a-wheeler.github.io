@@ -1,0 +1,130 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 7.7 - User-Controlled Initialization, Finalization, and Assignment</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 7.7 - User-Controlled Initialization, Finalization, and Assignment</FONT></H1>
+Three kinds of actions are fundamental to the manipulation of objects:
+initialization, finalization, and assignment.
+Initialization of a variable occurs when the program ``executes'' the
+corresponding variable declaration.
+Finalization occurs when you ``destroy'' that variable (for example,
+by returning from the subprogram that declared that variable).
+<P>
+Defaults for these operations are provided by Ada.
+If you want more control over these operations, you can declare
+objects to be a <EM>controlled</EM> type.
+<P>
+To create a controlled type, simply declare it as a descendent of either
+the type "Controlled" or the type "Limited_Controlled"; these types are
+defined in the predefined package "Ada.Finalization".
+Use "Controlled" when you want control over all three operations, and
+use "Limited_Controlled" when you don't want control over assignment.
+<P>
+Here's a partial definition of Ada.Finalization:
+<P>
+<PRE>
+  type Controlled is abstract tagged private;
+  procedure Initialize(Object : in out Controlled);
+  procedure Adjust    (Object : in out Controlled);
+  procedure Finalize  (Object : in out Controlled);
+
+  type Limited_Controlled is abstract tagged limited private;
+  procedure Initialize(Object : in out Limited_Controlled);
+  procedure Finalize  (Object : in out Limited_Controlled);
+</PRE>
+<P>
+Once you've created your own type that's descended from Controlled or
+Limited_Controlled, you can override Initialize, Adjust, or Finalize
+to do whatever you want.
+Whenever an object of your type is created, Ada will do its own
+initializations and then call the routine "Initialize" that you have defined.
+Whenever an object of your type is about to be destroyed (say,
+by exiting the subprogram it was defined in), the "Finalize" routine
+will be executed.
+<P>
+If you use a descendent of type Controlled, you can control assignment (:=)
+as well.
+Then, when Ada executes a statement like "A := B;",
+Ada will first perform the normal assignment and then execute "Adjust".
+<P>
+Some people (particularly those familiar with C++) will ask,
+``what happens if you assign a variable to itself, like A := A''?
+Ada handles this correctly due to a careful definition of assignment
+involving a conceptual "anonymous object"
+(self-assignment is a well-known source of bugs in C++).
+Most compilers will optimize away the intermediate anonymous object in
+most cases, and may do many other optimizations as well.
+<P>
+User defined initialization, assignment and finalization are
+defined in great detail in
+<A HREF="http://www.adahome.com/rm95/rm9x-07-06.html">section 7.6
+of the Ada RM</A>.
+<P>
+The types Controlled and Limited_Controlled are particularly useful
+for implementing types whose "size" can vary without limit (these types are
+called "unbounded" types).
+We'll learn more about them in the later lesson on access types.
+
+<!-- No quiz question -->
+<P>
+<HR>
+<P>
+There is no quiz question for this section.
+<P>
+<IMG SRC="pright.gif" ALT="" HEIGHT="14" WIDTH="33">
+<A HREF="s8s1.htm">
+<FONT SIZE="+1"><STRONG>You may go to the next section.</STRONG></FONT></A>
+<P>
+<HR>
+You may also:
+<P>
+
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s7s6.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="lesson7.htm">
+<IMG SRC="barrowr.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to the outline of lesson 7</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s7sf.htm">http://www.adahome.com/Tutorials/Lovelace/s7sf.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

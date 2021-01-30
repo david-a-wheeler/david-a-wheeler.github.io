@@ -1,0 +1,518 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=6>
+
+<COMMENT $Id: lesson6.les,v 1.8 1995/09/22 21:38:21 wheeler Exp wheeler $ >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+<COMMENT Each section has a title; SECTION starts a new section.>
+
+<SECTION NAME="Type Float">
+For the next few sections we'll learn a little more about
+Ada types. We've already seen Ada's built-in type Integer.
+<P>
+Like Integer, Ada also has a predefined type called <EM>Float</EM>.
+Float can store fractional values and `large' values.
+<EM>Float</EM> is used when you don't care about the
+minimum or maximum range of numbers, nor about the minimum
+accuracy of the value - the Ada compiler
+will choose whatever is most `natural' for the machine.
+Type `Float' is not appropriate if you
+<EM>do</EM> care about the range or accuracy;
+Ada has ways to specify these.
+<P>
+Float has all the arithmetic
+(+, -, *, /, **, etc.) and comparison (=, /=, &gt;, &gt;=, &lt;, &lt;=)
+operations you'd expect.
+The ``**'' operator means ``exponentiate''.
+<P>
+Ada insists that types be correct in operations, and there
+aren't any predefined operations for mixing Integer and Float using
++, -, *, or /. Thus, if you're using an Integer and Float together,
+put a function called `Float()' around the Integer variables to
+cause them to be converted into floating-point values.
+This makes it clear when such conversions are taking place, which is
+sometimes important in understanding what a program is doing.
+Also, whenever you set a Float to a constant, the constant must
+be written with a period in it, or the compiler will complain.
+<P>
+Here are some examples:
+<TEXT TEMPLATE=compile FILE="think.adb">
+<P>
+It's important that you understand the general limitations of floating
+point numbers on digital computers.
+Floating point numbers are usually stored as a
+binary approximation using a limited number of bits.
+The upshot is that results are usually only
+approximately the value you'd expect.
+Even numbers that are represented exactly in decimal may only
+be approximate when converted to an internal floating point number.
+Thus, be wary of using "=" to compare
+two floating point numbers.
+This isn't specific to Ada - Fortran, C, Pascal, and so on
+all do the same thing.
+For more information on this subject, see
+the survey by
+<A HREF="biblio.htm#goldberg1991">David Goldberg [1991]</A>
+on floating-point arithmetic.
+
+<QUESTION Type=Multiple-Choice>
+In procedure Think defined above, what will be printed out as
+the final value of B?
+<CHOICES>
+<CHOICE ANS=1>10.0
+<CHOICE ANS=2>0.0
+<CHOICE ANS=3>7.0
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right!
+Here's what happens:
+<PRE>
+A := B+7.0 = 0.0 + 7.0 =  7.0
+I := J*3   = 1*3       =  3
+B := I+A   = 3.0 + 7.0 = 10.0
+</PRE>
+
+<WHEN ANS=2>
+Sorry.
+Zero is the starting value of B, but that isn't the final value of B
+at the end of "Think".
+<WHEN ANS=3>
+Sorry.
+The value of A is 7.0 at the end of "Think",
+but 7.0 isn't the final value of B.
+Try again.
+</RESPONSES>
+<SECTION NAME="Boolean">
+Ada also predefines a simple type called <EM>Boolean</EM>,
+which can only have two values, <EM>True</EM> and <EM>False</EM>.
+All of the comparison operations (=, &gt;=, /=, etc.) have result
+values of type Boolean.
+All conditions (such as what goes after an <EM>if</EM> and <EM>while</EM>)
+must be of type Boolean.
+<P>
+There are a few special infix operations that take two Booleans and
+result in a Boolean: "and", "or", and "xor" (exclusive-or),
+with their usual meanings.
+The value of `True and False' is False, while the value of `True or False'
+is True.
+`Exclusive or' is true if either of two conditions, but not both, is true.
+<P>
+There is also the prefix operation ``not''.
+If a boolean variable A has the value True, `not A' has the value False.
+<P>
+Although you can probably guess what the values of any combination
+of values is, here they are officially:
+<PRE>
+--- When ---+------------------- Then -----------------
+A     B     | (A and B)   (A or B)   (A xor B)  (not A)
+True  True  |   True        True       False     False
+True  False |   False       True       True      False
+False True  |   False       True       True      True
+False False |   False       False      False     True
+</PRE>
+<P>
+Normally Ada will evaluate these
+expressions in whatever order is most efficient for the machine.
+If it's important to evaluate them in a certain order
+and to stop evaluating them when the answer is known, there are
+versions of `and' and `or' that are called `short-circuit operations'.
+These operations
+will execute strictly left-to-right and will not execute anything
+if they don't have to.
+C's &amp;&amp; and || operations work this way.
+The short-circuit version of `and' is `and then'; the short-circuit
+version of `or' is `or else'. For example, if
+you want to do something if K isn't zero and
+1.0/K is more than B, but you realize that the latter test <EM>must</EM>
+be done after the former:
+<P>
+<PRE>
+ if K /= 0 and then 1.0/Float(K) &gt; B then ...
+</PRE>
+
+<QUESTION Type=Multiple-Choice>
+Which of the following is True?
+<CHOICES>
+<CHOICE ANS=1>(True and False)
+<CHOICE ANS=2>not (True or False)
+<CHOICE ANS=3>True and then True
+</CHOICES>
+<ANSWER ANS=3>
+
+<SECTION NAME="Creating Types and Subtypes">
+In Ada, a <EM>type</EM> is characterized by a set of values
+and a set of <EM>primitive operations</EM>.
+For example, the type Integer can be characterized by a set of
+values (..., -2, -1, 0, 1, 2, ...) and a set of primitive
+operations (+, -, *, /, etc.).
+We'll learn more about the phrase ``primitive operation'' later.
+<P>
+An <EM>object</EM> of a given type is a run-time entity that
+contains (has) a value of the type.
+For example, a variable named `Number_Of_Widgets' is an object;
+Number_Of_Widgets could be of the type <EM>Integer</EM>.
+<P>
+Ada lets you create your own types, and has a very rich set
+of capabilities for creating types with exactly the operations
+you want.
+<P>
+To create a new type, use a <EM>type declaration</EM>.
+A type declaration begins with the keyword <EM>type</EM>, followed
+by the name of the new type, the keyword <EM>is</EM>, and then
+a definition of the new type.
+Here's an example of a new type named <EM>Column</EM> which can
+only have integer values in the range 1 through 72, and another
+type called <EM>Row</EM> that has values 1 through 24:
+<P>
+<PRE>
+ type Column is range 1 .. 72;
+ type Row    is range 1 .. 24;
+</PRE>
+<P>
+Ada permits types declarations in essentially the same places as variable
+declarations, but in real Ada programs type declarations are usually declared
+near the beginning of a package specification,
+followed by declarations of subprograms that use that type.
+Types are occasionally declared near the beginning of package bodies for
+types that are only used in the internal implementation of a package.
+<P>
+One <EM>very</EM> important difference between Ada and some other
+languages is that Ada considers types different even if
+they happen to be implemented the same way at a particular time.
+For example, an object of type Column can't be added with an object
+of type Row or Integer without some additional expressions, even though they
+may be implemented the same way in the (current) underlying system.
+Why? Because they have different types.
+Now, you could <EM>create</EM> such operations to allow them to be mixed,
+but these operations don't come automatically.
+<P>
+This prohibition of mixing types is often useful for catching errors,
+but sometimes it's not what you want.
+Beginning Ada programmers sometimes create too many different numeric types,
+turning simple programs into complicated ones.
+If two different types are closely related and it should be possible
+to mix the different types together,
+perhaps you have two related types instead of two independent types.
+What you probably need in that case is a <EM>subtype</EM> declaration.
+<P>
+A <EM>subtype</EM> is simply another name for an existing type
+that may have some additional constraints on it.
+For example, let's say you have a program that manipulates counts
+of many different kinds of things.
+You could have a base type called `Count', and subtypes to represent
+counts of different kinds of things.
+If there must be less than 100,000 things, and widgets must have less
+than 100 (while there's no specific limit for eggs), you could define
+these subtypes as follows:
+<PRE>
+ type Count is range 0 .. 99_999;
+ subtype Widget_Count is Count range 0 .. 99;
+ subtype Egg_Count is Count;
+</PRE>
+<P>
+Subtypes can be declared in the same places that types can be declared.
+<P>
+One place I specifically recommend using subtypes instead of using many
+new numeric types are in real-time control or scientific software in
+which there are a large number of different units that are combined
+throughout the software.  It is possible in Ada to define a new type called
+"Meters", another called "Meters_Squared", another called
+"Meters_Per_Second", and so on.  To make this scheme work, however, you
+have to create multiply operations that take two "meters" and multiply
+them to produce a "Meters_Squared", and so on.  For most real software
+of this kind, the effort to generate all possible combinations isn't
+worth the benefit.  There are usually a large number of
+different units and they are combined in many different ways throughout
+the program.
+<P>
+Don't get the idea that creating new numeric types are always a
+bad thing, however; there are a number of places where creating a new
+type for numeric values is appropriate.  Ada provides you with a number
+of tools; you need to decide which tool is appropriate for your task.
+
+<QUESTION Type=Multiple-Choice>
+If you want to permit free mixing of two different kinds of numbers,
+should they be defined as subtypes or different types?
+<CHOICES>
+<CHOICE ANS=1>subtypes
+<CHOICE ANS=2>types
+</CHOICES>
+<ANSWER ANS=1>
+
+<SECTION NAME="Enumeration">
+Often a variable can have only one of a small set of values.
+An <EM>enumeration</EM> type can be created for such variables,
+making it easier to understand and permitting error detection.
+For example, let's say that a variable
+`Today' must be one of seven values, Monday through Sunday.
+Let's call the list of legal values type `Day', and set
+`Today' to Tuesday as an example:
+<P>
+<PRE>
+ type Day is (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday);
+ subtype Weekday is Day range Monday .. Friday;
+ subtype Weekend is Day range Saturday .. Sunday;
+ -- ... some time later
+ Today : Day;
+ -- ... Here's an example of setting Today to a value.
+ Today := Tuesday;
+</PRE>
+<P>
+Here's a simplified <A HREF="bnf.htm">BNF</A> for
+declaring enumeration types:
+<P>
+<PRE>
+ enumeration_type_declaration ::=
+   "("  enumeration_literal_specification
+      {  "," enumeration_literal_specification }  ")"
+</PRE>
+<P>
+It happens that the Boolean type mentioned earlier is an Enumeration type
+with only two values - True and False.
+<COMMENT No question >
+
+<SECTION NAME="Arrays">
+An array type in Ada can contain many components with the same subtype.
+An Ada array is quite similar to arrays in many other languages,
+but here are some important things to know about them:
+<P>
+<OL>
+<LI>
+Ada array indices are not required to start at zero or one.
+Array indices can begin (and end) with any discrete value - whatever
+makes the most sense for the data.
+This means that you can start arrays at -5 (if that makes sense),
+and you can use enumerated values as indices as well.
+Ada programs usually use a starting index of 1 if there's
+no particularly natural starting point; this reduces the
+probability of so-called ``one-off'' errors
+(people normally count from one, not zero, and
+can sometimes get confused when starting from zero).
+<LI>
+Like many other things in Ada, array accesses (both read and write)
+are normally checked at run-time.
+Thus, if the array index is out-of-bounds,
+instead of quietly doing the wrong thing,
+an <EM>exception</EM> will be raised.
+This catches a surprisingly large number of errors.
+<LI>
+Multi-dimensional arrays are handled in an intuitive way.
+<LI>
+A directive can be used to <EM>pack</EM> arrays, which requests
+the compiler to store the array in a memory-efficient way.
+This is particularly handy for arrays of Boolean and Character values.
+<LI>
+Using a value from an array intentionally looks like a function call.
+That way, if you change an array into a function, code that uses
+the values often needs relatively few changes.
+<LI>
+You can define array types without completely fixing their
+minimum and maximum size.
+These are called `unconstrained' arrays.
+While they are very useful, we will discuss them further later.
+</OL>
+<P>
+Here are a few examples:
+<P>
+<PRE>
+ -- Sample array type definitions:
+  type Table is array(1 .. 100) of Integer; -- 100 Integers.
+  type Schedule is array(Day) of Boolean; -- Seven Booleans, one per Day
+  type Grid is array(-100 .. 100, -100 .. 100) of Float; -- 40401 Floats.
+ -- Sample variable declarations:
+  Products_On_Hand : Table;   -- This variable has 100 Integers.
+  Work_Schedule : Schedule;
+  Temperature : Grid;
+ -- And sample uses:
+  Products_On_Hand(1) := 20;  -- We have 20 of Product number 1
+  Work_Schedule(Sunday) := False; -- We don't work on Sunday.
+  Temperature(0,0) := 100.0;  -- Set temperature to 100.0 at grid point (0,0).
+  Put(Products_On_Hand(1)); -- Print out the number 20.
+</PRE>
+
+<COMMENT No question. We haven't shown the BNF. >
+
+<SECTION NAME="Records">
+Types can be a complex collection of other types;
+the primary method for collecting these is through the <EM>record</EM>
+(which is basically identical to the Pascal record and C struct).
+For example, here's an example of a record useful for recording dates:
+<P>
+<PRE>
+ type Date is
+  record
+   Day   : Integer range 1 .. 31;
+   Month : Integer range 1 .. 12;
+   Year  : Integer range 1 .. 4000 := 1995;
+  end record;
+</PRE>
+<COMMENT ??? Haven't discussed this kind of range stuff >
+<P>
+The record component `Year' has an example of an `initialization clause' -
+any object created with this type automatically has initial values
+given in initialization clauses.
+<P>
+Creating variables of a record type is done the same way as any other
+type.
+A record component is referenced by using the variable name, a period,
+and the name of the record component.
+For example, let's create a variable called Ada_Birthday, and set
+its values to December 10, 1815:
+<P>
+<PRE>
+ procedure Demo_Date is
+   Ada_Birthday : Date;
+ begin
+   Ada_Birthday.Month := 12;
+   Ada_Birthday.Day   := 10;
+   Ada_Birthday.Year  := 1815;
+ end Demo_Date;
+</PRE>
+
+<QUESTION Type=Multiple-Choice>
+If you had the following record type:
+<P>
+<PRE>
+ type Complex is
+  record
+    Real_Part, Imaginary_Part : Float := 0.0;
+  end record;
+</PRE>
+<P>
+and you declared the following type:
+<P>
+<PRE>
+  X : Complex;
+</PRE>
+<P>
+How would you set X's Real_Part to 1?
+
+<CHOICES>
+<CHOICE ANS=1>Complex.X.Real_Part := 1.0;
+<CHOICE ANS=2>X.Real_Part := 1.0;
+<CHOICE ANS=3>Real_Part.X := 1.0;
+</CHOICES>
+<ANSWER ANS=2>
+
+<SECTION NAME="Private and Limited Private Types">
+If you simply declare types in a package specification
+in the way we've discussed so far,
+anyone who <EM>with</EM>s the package will be able to do anything
+to your new type that they could with the original types.
+In many cases this is bad, because these users (sometimes called
+<EM>clients</EM> or <EM>customers</EM>) will become dependent on the
+specific way the type was implemented.
+If the customers become dependent in this way, it will
+be very difficult to change the way the type is implemented
+(to improve performance, for example).
+<P>
+Ada provides several mechanisms to hide capabilities from customers.
+But first, it's important to understand the idea that, by removing
+capabilities, you gain more freedom.
+By <EM>removing</EM> capabilities from your customers, you (as the
+implementor of a type) gain more freedom to implement the type in any
+way that you choose. You also have more freedom to change the
+implementation later.
+Let's say that you declare a new type in a package specification in the
+way we've discussed so far. If you happen to base it on
+type Integer, your customers can still add, subtract, and so on.
+Even if you really want customers to only use the "less than" operation
+(as an "ordering" concept),
+the customers may not realize what limitations you had in
+mind and use all sorts of other operations that might not make sense
+in later revisions of the system.
+If you remove the ability to use the type as a normal Integer, the customers
+will be forced to use the type the way you intended -- and as a result
+you can change your implementation much more easily.
+<P>
+When declaring a type in a package declaration, you
+can declare the type as <EM>private</EM>.
+By declaring the type as "private" you disable the normal operations
+on that type (for example, "+" on Integers).
+After declaring a type as private, you then list the subprograms that
+you want to permit as publically-accessible operations on that type.
+If you declare a type as private, you must complete
+the type's definition in a section of the package declaration
+called the <EM>private</EM> part.
+If a type is declared as <EM>private</EM>, other packages can only
+use the operations that you provide and the
+assignment (:=) and equality (=) operations.
+<P>
+Here's an example.
+Let's say that you want to create a type called `Key', which
+uniquely identifies some resource; you only want people to be
+able to Request a key and determine if one key was requested
+before another (let's call that operation "&lt;").
+Here's one way to implement this
+(this example is inspired by the
+<A HREF="http://www.adahome.com/rm95/rm9x-07-03-01.html">Ada
+RM section 7.3.1</A>):
+<P>
+<TEXT TEMPLATE=compile FILE="keys.ads">
+<P>
+Note that the type declaration in the package declaration is
+declared as `private'.
+This is later followed by the word `private' introducing the
+`private part' of the package specification.
+Here the type must be completely defined, as well as any constants
+necessary to complete its definition.
+Although Key is actually a numeric type, other
+packages cannot use addition, multiplication, and other numeric
+operations because Key is declared as `private' - the only operations
+are those defined in the package (as well as := and =).
+<P>
+Notice the function "&lt;" in the example above.
+In Ada, you can redefine an infix operator such as "+", "*", and "&lt;".
+The way to do that is to define the operation as a function taking two values,
+and using as the number name the operation inside double quotes.
+Notice also that you can create a constant value without saying exactly what
+its value is; you declare it as a constant with the given type, but don't
+actually give it its value; you then give the complete constant definition
+in the private part.
+<P>
+What if we don't want the default assignment (:=) and equals-to (=)
+operations?
+The answer: we declare the type as a <EM>limited private</EM> type
+instead of a <EM>private</EM> type.
+A limited private type is a private type that doesn't even define
+the default assignment and equals-to operations.
+Think of "limited" as an adjective on the word private.
+Here's how Key would be defined as a limited private type:
+<P>
+<PRE>
+  type Key is limited private;
+</PRE>
+
+<QUESTION Type=Multiple-Choice>
+How would you define a type if you wanted <EM>only</EM>
+two operations on it called `up' and `down'?
+<CHOICES>
+<CHOICE ANS=1>private
+<CHOICE ANS=2>limited private
+<CHOICE ANS=3>non-private
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.
+That would also have assignment and equals-to operations.
+<WHEN ANS=2>
+Right. Here's what that might look like:
+<P>
+<PRE>
+package Up_And_Down is
+  type Up_And_Down_Type is limited private;
+  procedure Up(U : Up_And_Down_Type);
+  procedure Down(U : Up_And_Down_Type);
+end Up_And_Down;
+</PRE>
+<WHEN ANS=3>
+No; if you didn't use "private" you'd get lots of other operations you
+might not want.
+</RESPONSES>

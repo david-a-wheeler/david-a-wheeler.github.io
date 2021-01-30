@@ -1,0 +1,1181 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<COMMENT  Edit the following lines. >
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=16>
+<COMMENT $Id$ >
+
+<COMMENT  You'll probably want to uncomment and edit these lines: >
+<COMMENT  <PREVIOUS_LESSON LOCATION="URL_of_directory/" >
+<COMMENT  <NEXT_LESSON LOCATION="URL_of_directory/" >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+<COMMENT Each section has a title; SECTION starts a new section.>
+
+<SECTION NAME="General Information on Interfacing to Other Languages">
+Ada 95 provides a set of packages and some
+special pragmas to interface with other computer languages.
+The three most useful pragmas are called Import, Export, and Convention:
+<OL>
+<LI>Pragma import "imports" a subprogram from another ("foreign") language
+into an Ada program.
+Use pragma import if you want to call,
+for example, an existing C function.
+<LI>Pragma export "exports" an Ada subprogram to a "foreign" language.
+For example, if you've written an Ada procedure and want to call it from
+C, use pragma export.
+<LI>Pragma Convention specifies that a specified type should
+use the storage conventions of a given "foreign" language.
+It is also used on subprograms if they are "callback" subprograms
+(described below).
+</OL>
+<P>
+Here's an example of each:
+<P>
+<PRE>
+  pragma Import(C, getenv);  -- Use the C program getenv in my Ada program.
+  pragma Export(COBOL, Read_Sensor); -- Provide Ada procedure "Read_Sensor"
+                                     -- to the COBOL compiler.
+  pragma Convention(Fortran, State_Vector) -- Read and write State_Vector
+                                     -- using Fortran storage conventions
+                                     -- (e.g. column-major format)
+</PRE>
+<P>
+Here is the <A HREF="bnf.htm">BNF</A> for these pragmas:
+<PRE>
+  import_pragma ::= "pragma Import("
+                        [ "Convention =&gt;" ] language ","
+                        [ "Entity =&gt;" ] unit
+                        [ "," [ "Link_Name =&gt;" ] link_name ]  ");"
+
+  export_pragma ::= "pragma Export("
+                        [ "Convention =&gt;" ] language ","
+                        [ "Entity =&gt;" ] unit 
+                        [ "," [ "Link_Name =&gt;" ] link_name ]  ");"
+
+  convention_pragma ::= "pragma Convention("
+                        [ "Convention =&gt;" ] language ","
+                        [ "Entity =&gt;" ] unit ");"
+</PRE>
+<P>
+Ada compilers always support the Convention (language) Ada, naturally enough.
+Your Ada compiler probably also supports the languages C, Fortran,
+and possibly COBOL.
+GNAT supports C++ as the language name CPP, and you can also interface
+Ada and C++ programs by having both use the C convention to send
+information to each other.
+For assembly language modules, use the name of the high level language
+that the module's interface mimics.
+<P>
+The "Link_Name" parameter often isn't necessary, but it's useful in
+some circumstances, for example,
+if you need access to an object whose name has been "mangled"
+in a way the Ada compiler doesn't know about or if the name is not
+a legal Ada identifier (such as names with leading underscores).
+<P>
+"Callback" subprograms are subprograms which have access (pointer)
+values held in some external location and are then called later using
+that external value. If you have an Ada subprogram that will be called
+this way, use pragma Convention on both the subprogram and on the
+access type used.
+This is useful, for example, in dealing with the X window graphical
+user interface (GUI).
+<P>
+<COMMENT Should add a link to the Ada RM from below>
+If the "main" subprogram is not in Ada, there is an additional
+issue to consider called "elaboration".
+The actual main subprogram should make sure that the environment
+for Ada is correctly set up.
+This is done automatically if the main subprogram is in Ada, but if
+it isn't, you have to do it yourself.
+The
+<A HREF="http://www.adahome.com/rm95/rm9x-B-01.html">Ada RM
+section B.1(39)</A>
+suggests that compilers provide
+subprograms called "adainit" to start up the Ada environment and
+"adafinal" to clean it up after the Ada subprograms have stopped running.
+If you need to have a non-Ada main subprogram,
+check your compiler manual to see if
+it supports this and if there are any restrictions on what is and is
+not permitted.
+
+<QUESTION Type=Multiple-Choice>
+You're writing an Ada program and want to directly
+call an existing C function
+called <EM>display</EM>. Which of the following pragmas should you use?
+<CHOICES>
+<CHOICE ANS=1>pragma Import(C, display);
+<CHOICE ANS=2>pragma Export(C, display);
+<CHOICE ANS=3>pragma Convention(C, display);
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right.
+In addition to the pragma, you'd also need to tell Ada what
+display's parameters were, so the complete form would probably
+look something like this:
+<P>
+<PRE>
+  procedure display(Value : Integer);
+  pragma Import(C, display);
+</PRE>
+<P>
+I say "something like this" because we haven't talked about how
+to send data types between languages.
+Let's do that now for C, a very common language;
+handling data types for other languages is handled similarly.
+<WHEN ANS=2>
+No, sorry.
+Export would send an <EM>Ada</EM> subprogram out so that a <EM>C</EM>
+program could call it.
+<WHEN ANS=3>
+Close, but not quite.
+Convention would make it possible to use an Ada subprogram called
+display out to C so that C could call it back.
+Try again.
+</RESPONSES>
+
+<SECTION NAME="Interfacing with C">
+Since there are many useful utilities that can be called from C
+it's a good idea to know how to call them from Ada.
+This section assumes you know the C language to some basic level;
+if you don't know C you can skim this section.
+<P>
+First, here are some general rules on how Ada and C correspond, based on
+the
+<A HREF="http://www.adahome.com/rm95/rm9x-B-03.html">RM B.3(63):</A>
+<OL>
+<LI>An Ada procedure corresponds to a void-returning C function.
+<LI>An Ada function corresponds to a non-void-returning C function.
+<LI>An Ada array corresponds to a C pointer to the first element.
+<LI>Simple scalar types (integers, floats, and access/pointer types) correspond
+to the obvious type in the other language.
+</OL>
+<P>
+Ada 95 provides a set of predefined packages that make it easier to
+interface with C.
+The primary package is named "Interfaces.C", which contains definitions
+for C types in Ada.
+These include C's types int, long, unsigned, and double.
+The C type float is called "C_float" in Ada so that it isn't
+confused with Ada's type Float (Ada Float and C float are probably identical,
+but that's not necessarily true).
+<P>
+The type "char_array" mimics C character arrays.
+Many C functions assume that character arrays are terminated with
+the special character "nul" (written in C as '\0').
+Since Ada strings aren't normally nul-terminated, functions
+To_C and To_Ada convert between Ada String types and C char_array types.
+<P>
+There are additional packages called Interfaces.C.Strings and
+Interfaces.C.Pointers that provide additional types and
+operations on C-style strings and C pointers.
+In particular, package "Interfaces.C.Strings" defines the type "chars_ptr",
+which corresponds to the typical C type "char*" when used to point to
+a C string (i.e. a pointer to an array of characters).
+The package also defines:
+<OL>
+<LI>constant <EM>Null_Ptr</EM>, which corresponds to C's <EM>(char*)NULL</EM>,
+<LI>procedure <EM>Free</EM>, which corresponds to C's <EM>free()</EM>, and
+<LI>function <EM>Value</EM>, which takes a chars_ptr and returns a
+normal Ada String. This function raises an exception Dereference_Error
+if passed a null pointer.
+</OL>
+<P>
+Let's work through a real-life example so you can see how this really works.
+This example is from
+<A HREF="http://wuarchive.wustl.edu/languages/ada/swcomps/cgi/cgi.html">"package
+CGI"</A>, an Ada binding to the World Wide Web
+Common Gateway Interface (CGI).
+Let's say that you want to get the value of an environment variable
+from the Operating System, and you want to get this value via a
+pre-existing C function that does this.
+In C this function is called "getenv" and it has the following C definition
+(see [Kernighan and Ritchie 1988, edition 2, page 253]):
+<P>
+<PRE>
+  char *getenv(char *name);
+</PRE>
+<P>
+This can be pretty straightforwardly translated into Ada as:
+<P>
+<PRE>
+  function getenv(Variable : chars_ptr) return chars_ptr;
+  pragma Import(C, getenv);
+</PRE>
+<P>
+That works, but it's inconvenient to have to keep translating
+values in and out of type "chars_ptr" in an Ada program.
+It's probably better to write a wrapper program that translates the Ada
+Strings to C strings (chars_ptr) and back for us.
+Let's define an Ada function to do that for us:
+<P>
+<PRE>
+with Interfaces.C.Strings; use Interfaces.C.Strings;
+-- ...
+
+ function Get_Environment(Variable : String) return String is
+ -- Return the value of the given environment variable.
+ -- If there's no such environment variable, return an empty string.
+ 
+   function getenv(Variable : chars_ptr) return chars_ptr;
+   pragma Import(C, getenv);
+   -- getenv is a standard C library function; see K&amp;R 2, 1988, page 253.
+   -- it returns a pointer to the first character; do NOT free its results.
+ 
+   Variable_In_C_Format : chars_ptr := New_String(Variable);
+   Result_Ptr : chars_ptr := getenv(Variable_In_C_Format);
+   Result : String := Value_Without_Exception(Result_Ptr);
+
+ begin
+  Free(Variable_In_C_Format);
+  return Result;
+ end Get_Environment;
+</PRE>
+<P>
+Notice that a lot of string manipulation is happening in the declaration
+section.
+That's an easy way to get things done,
+because simple Ada Strings have a fixed length once they're declared.
+There's a call to some function called Value_Without_Exception;
+that's because normally an attempt to turn a null C pointer into a string will
+raise an exception, and we just want to turn it into an empty string instead.
+That means we'll have to define such a function; here's a definition:
+<P>
+<PRE>
+ function Value_Without_Exception(S : chars_ptr) return String is
+ -- Translate S from a C-style char* into an Ada String.
+ -- If S is Null_Ptr, return "", don't raise an exception.
+ begin
+   if S = Null_Ptr then return "";
+    else return Value(S);
+   end if;
+ end Value_Without_Exception;
+ pragma Inline(Value_Without_Exception);
+</PRE>
+<P>
+Now we can easily get environment variables in Ada. For example, to get
+the value of environment variable REQUEST_METHOD, use:
+<P>
+<PRE>
+  Request_Method_Text : String := Get_Environment("REQUEST_METHOD");
+</PRE>
+<P>
+One thing we haven't covered are C <EM>struct</EM>s.
+Ada records and C structs clearly correspond, but how exactly should
+they correspond?
+The Ada RM advises, but does not require, that
+Ada records always be passed to C as pointers to the beginning of the
+corresponding C struct.
+For those (relatively rare) cases where a C function expects to be passed
+a structure by value (a copy instead of the more common pointer-to-structure),
+you could create a new C function that converts a pointer into the
+actual structure and then call that new C function from Ada.
+However, this is simply advice, and
+the GNAT compiler does not follow this advice - instead, GNAT sends
+Ada records by value (copies).
+Both approaches are reasonable, but unfortunately they are different.
+The safest approach for passing Ada records is to always pass
+"access to record" values - since they are scalar, they are guaranteed
+to pass correctly in all Ada compilers.
+
+<SECTION NAME="Ada Bindings">
+The previous material should help you develop a "binding" (interface)
+between software components, where one component is written in Ada
+and another component is written in another language.
+Naturally, it's easier if someone else or a tool
+does the job for you.
+<P>
+Before you can evaluate what someone else has done, you need to
+understand the major types of bindings between an Ada program and another
+program.
+These types are called "direct" and "abstract":
+<P>
+<UL>
+<LI>A "direct" (also called "thin") binding
+provides a one-to-one mapping to Ada
+of whatever interface the foreign program provides.
+Direct bindings are easy to understand if you understand the foreign
+program's interface, and direct bindings for Ada are easy to create.
+In particular, you can use the existing documentation, which is a very
+important advantage for complex interfaces (like windowing systems).
+Unfortunately, direct bindings are often a little clumsy to work with and
+often don't provide the protection usually provided by Ada interfaces.
+Thus, it's often nicer to work with "abstract" bindings.
+<LI>An "abstract" (also called "thick") binding provide a more
+abstract, Ada-like view of the foreign program.
+Unfortunately, while "abstract" bindings are nicer to work with, it takes
+work and time to create the right abstractions.
+Thus abstract bindings are harder to create.
+</UL>
+<P>
+Here are some other things you need to know about bindings:
+<UL>
+<LI>"Direct" and "abstract" are really extremes on a continuum;
+there are bindings that are "mostly direct" but have been abstracted a
+little, and there are "abstract" bindings that have some direct
+one-to-one mappings.
+<LI>The terms "thick" and "thin" have other
+related meanings (involving how a standard is written),
+which is why I've used the terms "direct" and "abstract" here.
+</UL>
+<P>
+Now that you understand these basic issues, you can go hunt for
+ways to make this interfacing job easier.
+The Ada Information Clearinghouse maintains a
+<A HREF="http://sw-eng.falls-church.va.us/AdaIC/source-code/">list
+of source (including Ada bindings)</A> and a
+<A HREF="ftp://sw-eng.falls-church.va.us/public/AdaIC/tools/bindings/">document
+listing existing Ada bindings for other products and standards</A>.
+Their list is incomplete, but it's a good starting point, especially
+for common products or standards such as POSIX, X windows, Microsoft Windows,
+or SQL databases.
+<A HREF="http://www.adahome.com/Resources/Bindings.html">HBAP also
+maintains a list of existing Ada bindings</A>.
+If you're interfacing with a commercial product, ask the vendor
+to supply you with an Ada interface.
+You could also post a request to
+<A HREF="news:comp.lang.ada">comp.lang.ada</A>
+if you can't find what you're looking for.
+<P>
+Here are some commonly-requested bindings:
+<OL>
+<LI>
+<A HREF="http://sw-eng.falls-church.va.us/AdaIC/source-code/bindings/win32ada/win32ada.html">Win32 API</A>.
+This is an interface for Microsoft Windows NT, Microsoft Windows 95, and OS/2;
+a subset of Win32 works under Microsoft Windows 3.1.
+<LI>
+<A HREF="http://www.inmet.com/~mg/x11ada/x11ada.html">X11Ada</A>
+is an Ada 95 binding to Motif and X11 developed by Intermetrics.
+See the general listings given earlier for other X-related bindings and
+information.
+<LI>
+Relational databases generally use SQL as their query language.
+Although you can embed SQL queries in Ada as you can with other languages,
+a better approach is a specialized interface language that lets you
+really take advantage of both languages.
+There's an ISO standard (ISO/IEC 12227) of such a language, named SAMeDL.
+The
+<A HREF="http://www.sei.cmu.edu/products/publications/95.reports/95.sr.018.html">SAMeDL specification</A>,
+as well as a
+<A HREF="http://www.sei.cmu.edu/products/publications/92.reports/92.tr.016.html">rationale for SAMeDL</A>
+and
+<A HREF="http://www.sei.cmu.edu/products/publications/91.reports/91.tr.012.html">notes on applications</A>.
+<LI>
+An Ada binding to CORBA's IDL has been developed, enabling you to request
+and receive requests from other programs (written in arbitrary languages
+and located on arbitrary machines) via CORBA.
+You can learn more from the
+<A HREF="http://alsp.arpa.mil/corba-ada/abwg-omg.html">Ada
+bindings working group</A>, and you can download
+the
+<A HREF="http://www.omg.org/docs/1995/95-05-16.ps">specification
+from the Object Management Group (OMG)</A>.
+</OL>
+<P>
+There are also tools to automatically generate direct (thin)
+Ada bindings to C libraries.
+Here are three tools (there are others as well):
+<OL>
+<LI>C2Ada translates C into Ada; it can handle complete programs, but its
+primary use has been to
+translate C header files into Ada to create Ada bindings.
+C2Ada was created as a major upgrade to Cbind (below).
+C2Ada is easy to use to create simple bindings,
+but it also provides many "hooks" (in the form of a
+configuration file) to support control on the translation process.
+<A HREF="http://www.inmet.com/~mg/c2ada/c2ada.html">C2Ada is available via
+Intermetrics</A>.
+<LI>Cbind translates C declarations and C preprocessor definitions
+into Ada package(s).
+Its strength is in ease-of-use; just type:
+<PRE>
+   "cbind file.h &gt; file.ads".
+</PRE>
+Cbind is available via
+<A HREF="ftp://rational.com/public/tools/cbind">Rational</A>
+and
+<A HREF="http://www.cdrom.com/pub/ada/swtools/cbind">Walnut Creek.</A>
+<P>
+<LI><A HREF="ftp://cs.nyu.edu/pub/gnat/contrib/forest/">CtoAda
+translates declarations from C to Ada.</A>
+CtoAda's strength is that it provides many "hooks" to allow a programmer
+to control the translation.
+This gives more control at the expense
+of requiring more work by the programmer.
+</OL>
+
+<QUESTION Type=Multiple-Choice>
+If you want to quickly create a binding to another language
+and don't mind that it might be a little clumsy to use,
+what kind of binding would you create?
+<CHOICES>
+<CHOICE ANS=1>Direct ("thin") binding
+<CHOICE ANS=2>Abstract ("thick") binding
+</CHOICES>
+<ANSWER ANS=1>
+
+<SECTION NAME="Java and Ada">
+<P>
+Sun's Java technology has become a "hot" topic. Java makes it possible for
+users to run programs just by browsing the World Wide Web (WWW). Using Java,
+WWW users can use sophisticated user interfaces and handle arbitrary data
+formats (the data and the program to handle the data can be sent together!).
+Java can also be used to distribute computer platform independent software
+(i.e. the same software would run on an IBM-compatible PC, Apple Macintosh,
+and arbitrary Unix machine).</P>
+<P>It turns out that Java programs can be created using Ada. To understand
+what that means, we'll first need to define some terms.</P>
+<H2>Java Terminology</H2>
+<P>You can use Java to develop <I>applications</I> and <I>applets</I>:</P>
+<OL>
+<LI>An <I>application</I> is a traditional kind of program. Users install Java applications in a
+manner similar to any other application, and a Java application can read
+files, write files, and so on. It's possible for a single Java application
+to run on many different computer platforms. 
+<LI>An <I>applet</I> is a program that automatically starts running
+when a WWW user views a
+page containing the applet. The user does not install the applet; in fact,
+the user isn't even asked if he or she wants the applet to run. To keep
+this from becoming a security problem, applets are restricted from performing
+certain tasks.
+At this time, applets generally can't read or write to local
+disk files, they can't print, and they can only communicate over
+a network to the computer where they came from. 
+In some cases users may grant their applets additional privileges; the
+key is that applets are normally restricted to keep them becoming a
+security problem.
+</OL>
+<P>The Java Technology, as developed by Sun, can be divided into four components:</P>
+<OL>
+<LI><I>Specifications for the Java Virtual Machine (JVM) and class files</I>.
+The JVM is an abstract computer that executes programs stored in "class"
+files. The JVM can be implemented on real computers in many different ways,
+and that's the point: as long as your computer faithfully recreates this
+abstract computer, it can run programs stored in class files. For example,
+the JVM might be implemented as an interpreter built into a web browser,
+or as a separate program that interprets the class files. Your computer
+could implement the JVM by transforming the class files into an executable
+program specific for that machine just before running them (this is called
+a "just-in-time" compiler). In fact, your computer hardware might even use
+JVM directly. As long as you have an implementation of the JVM, you can run Java programs,
+because Java programs are stored in class files. Class files are also called J-code files.
+<LI><I>The Java language</I>. The Java language is an object-oriented computer programming language
+that resembles C++ and Objective-C in syntax. It resembles Ada in its emphasis
+on safety (for example, neither have pointers), and a strong Smalltalk influence
+is evident as well.
+<LI><I>A compiler that generates class files</I>. The JVM runs class files, so you need a way to create them. Sun has developer
+a compiler that takes programs written in the Java language and generates
+Java class files. Other vendors have also developed compilers that generate
+class files.
+<LI><I>The Java library</I>. The Java technology includes a set of components for simple platform-independent
+graphical user interface (GUI) handling as well as other useful components. 
+</OL>
+<P>Many people use the term "Java" for each of these different components and
+for the technology as a whole. You'll need to determine what they mean by
+its context.
+The key point is that when people "run a Java program", they're actually
+running a set of class files on their version of the JVM.
+</P>
+<P>An Ada compiler that accepts Ada code as its input and generates Java class
+files as its output makes it possible to generate Java programs using Ada.
+<A HREF="http://www.inmet.com/java.html">Intermetrics' Ada compiler, AppletMagic</A>,
+does this, and other Ada compilers may follow.</P>
+<P>Since programs only know about each other through their Java class files,
+programs written in the Java language and Ada language can freely communicate
+with each other. Java programs can easily call Ada programs just by looking
+at their class files. To permit Ada programs to call existing Java programs,
+Ada programs need an Ada specification. AppletMagic includes a tool called
+java2ada that generates Ada specifications from class files, and any other
+Ada-to-Java compilers would probably include similar tools.</P>
+
+<IMG SRC="java.gif" ALT="[Relationship of Java Technology Components]" WIDTH=300 HEIGHT=300>
+<H2>Java-Ada Correspondence</H2>
+<P>Many concepts in Ada and Java are quite close.
+Java's "primitive data types" generally have simple corresponding Ada
+types: Java "boolean" corresponds to Ada "Boolean", Java "float" to Ada "Float",
+Java "char" to Ada "Wide_Character", and Java "int" to Ada "Integer".
+All other Java data types are passed by reference, which corresponds to
+passing around Ada's access types.
+Both Ada and Java support hierarchical packages.
+<P>
+The Java library is a critical part of Java technology, so standard conventions
+are needed to define how an Ada program can call a Java library component.
+That way, when you read about a Java library component in a Java book, you
+can easily determine how to call it from Ada.
+The convention used by AppletMagic is that a Java class "C" in Java package
+"P" is translated to an Ada package named "P.C". Inside that Ada package is
+an Ada tagged type named <I>C</I>_Obj and an access type named
+<I>C</I>_Ptr. Java methods that return nothing (have "void" in front
+of their method name) become
+Ada procedures, while Java methods that return something
+(i.e. have some type name in front of the method name)
+usually become Ada functions.
+Java methods, unless they're defined as "static", have an implicit
+initial parameter identifying the object being handled;
+this translates to an Ada subprogram with an additional first parameter of type
+"access <I>CLASS_BEING_DEFINED</I>_Obj".
+All other parameters have the corresponding Ada type if they're a Java
+primitive type or <I>CLASS_NAME</I>_Ptr if they're a Java class.
+<P>
+For example, here's an abbreviated definition of Java class "Applet" in
+Java package "java.applet".
+Don't be confused by the use of the phrase "applet" in two different ways;
+Java package "java.applet" contains a number of classes, including
+the class "Applet".
+In the Java language, class Applet is defined as:</P>
+<PRE>
+ package java.applet;
+ public class Applet extends Panel {
+   public void init();  // initialize the Applet.
+   public boolean IsActive();
+   public void resize(int width, int height);
+   public Image getImage(URL url);
+   public void showStatus(String msg);
+ }
+</PRE>
+<P>This is translated into the following Ada package:</P>
+<PRE>
+ with java.awt.Panel; use java.awt.Panel;  -- Package with Parent Type.
+ with java.lang.String; use java.lang.String;  -- Java Strings.
+ with java.net.URL; use java.net.URL;
+
+ package java.applet.Applet is
+  type Applet_Obj is new Panel_Obj with null record;
+  type Applet_Ptr is access all Applet_Obj'Class;
+
+  procedure init(Obj : access Applet_Obj); -- initialize the Applet.
+  function isActive(Obj : access Applet_Obj) return Boolean;
+  procedure resize(Obj : access Applet_Obj; width : Integer; height : Integer);
+  function getImage(Obj : access Applet_Obj; url : URL_Ptr) return Image_Ptr;
+  procedure showStatus(Obj : access Applet_Obj; msg : String_Ptr);
+ end java.applet.Applet;
+</PRE>
+<P>
+Now that you know how they correspond, you can call or override
+the Java library routines from Ada.
+I suggest that you try to use the same conventions for your own packages
+if you're writing Java programs in Ada; while in many cases it's not necessary,
+it makes your program more uniform and easier to understand.
+The correspondence described here is from AppletMagic, but it's reasonable
+to expect that any other Ada compiler that generates Java would use the
+same conventions (these conventions were defined by the designer of Ada 95!).
+<P>
+More specific details of the correspondence between Java and
+Ada, including information on constructors, is described in a paper by
+<A HREF="biblio.htm#taft1996">Tucker Taft [1996]</A>.
+<A HREF="http://www.inmet.com/javadir/download/api/index.htm">Documentation
+on the Ada interface to the Java library is available</A>.
+More Ada/Java information can be found at the
+<A HREF="http://www.adahome.com/Resources/Ada_Java.html">Home
+of the Brave Ada Programmers' Java section</A> and
+the <A HREF="http://www.acm.org/sigada/wg/web_ada/index.html">SIGAda
+Web Working group page</A>. As noted above,
+<A HREF="http://www.inmet.com/java.html">information about
+Intermetrics' AppletMagic</A> is available as well. More
+information about Java in general can be found in the
+<A HREF="http://sunsite.unc.edu/javafaq/javafaq.html">Java FAQ</A>
+and <A HREF="http://www.javasoft.com/">Sun's Java site</A>. A
+large collection of sample Java applets is available at
+<A HREF="http://www.gamelan.com/">Gamelan</A>.
+
+<QUESTION Type=Multiple-Choice>
+Let's say that you want to write a program that is automatically run when
+a user views a page on the World Wide Web (WWW). Which of the following
+kind of program do you want to create?
+<CHOICES>
+<CHOICE ANS=1>Application
+<CHOICE ANS=2>Applet
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+Ouch, that's not it.
+A program that runs automatically when someone views a WWW page is
+called an "applet."
+<WHEN ANS=2>
+That's correct.
+<IFDEF BOOK>
+The next few sections will present more detail in how to
+write Ada applets and interface with the Java libraries.
+If you wish, you can
+<A HREF="s16-f.htm">skip the details on Java</A>.
+Otherwise, you can go on and learn how to make Ada and Java
+work together.
+<ELSE>
+Let's see how to write one in Ada.
+<ENDIF>
+</RESPONSES>
+
+<SECTION NAME="Writing Ada Applets">
+<P>In this section we'll first describe event driven programming, the basic
+mindset of applets (and most other graphical user interface programs). We'll
+then examine a simple "Hello, World" applet in Ada. The section closes with
+a list of some other useful Applet methods.</P>
+
+<H2>Event Driven Programming</H2>
+<P>Most graphical user interface (GUI) programs do not run "top to bottom"
+in a simple linear way. Instead, most such programs are structured as components
+which wait for an "event" (such as a mouse button click) to occur. That
+event is processed, and then the component returns so that the next event
+can be processed. Events are queued up, so your program only needs to respond
+to one event at a time; later ones will not be lost. It's important that
+the component return, or no further event will be processed. This approach
+is called "event driven programming".</P>
+<P>To create an Ada applet, we'll need to create a new type that extends the
+Java "Applet" class in Java package "java.applet". We can then override
+various methods of Applet to process events we're interested in. The default
+reaction to events is to return immediately (i.e. do nothing), so any events
+we don't override will be ignored.</P>
+
+<H2>A Simple Ada Applet</H2>
+<P>Here is a simple Ada applet to show the basic idea of how to implement Java
+applets in Ada. Below is the canonical "Hello World!" program as written
+by Tucker Taft; it simply displays the phrase "Hello, world!" on the screen:</P>
+<PRE>
+with java.applet.Applet; use java.applet.Applet;
+with java.awt.Graphics; use java.awt.Graphics;
+package Hello is
+ type Hello_Obj is new Applet_Obj with null record;
+ procedure paint(Obj : access Hello_Obj; g : Graphics_Ptr);
+end Hello;
+
+
+with interfaces.Java; use interfaces.Java; -- for "+" on strings
+package body Hello is
+ procedure paint(Obj : access Hello_Obj; g : Graphics_Ptr) is
+ begin
+ drawString(g, +"Hello, Java world!", x =&gt; 10, y =&gt; size(Obj).height/2);
+ end paint;
+end Hello;
+</PRE>
+
+<P>So what does this program do? Let's break it down step by step:
+<OL>
+<LI>To create an applet we must extend the tagged type "Applet_Obj" defined
+in the package java.applet.Applet. Since we need package java.applet.Applet,
+we must "with" it. Note that standard Java package names have a very simple
+correspondence to Ada package names. 
+<LI>To handle graphics, we'll need package java.awt.Graphics.
+<LI>We'll create a new package named "Hello". 
+<LI>We'll create a new tagged type "Hello_Obj" that extends the Java library
+tagged type "Applet_Obj". This new type represents our new applet, per the
+conventions described earlier. 
+<LI>Almost any applet will override the default "paint" operation of Applet_Obj
+with something more interesting. The "paint" operation is called whenever
+the system determines that the graphical area controlled by the applet has
+been uncovered and needs to be drawn again. The parameters for the paint
+operation are an object representing the applet itself and an object representing
+the applet drawing surface (you could read the package specification of
+java.applet.Applet to see what other operations are defined). 
+<LI>The package body of Hello withs "interfaces.Java", an Ada package
+that provides
+useful operations when interfacing from Ada to Java. Of particular use is
+a "+" prefix operation that converts an Ada string into a Java string.
+<LI>Paint is implemented by making a call to subprogram "drawString"
+in java.awt.Graphics,
+which draws the text into graphical viewing area "g". Note the little "+"
+sign used to convert an Ada String into a Java string (String_Ptr).
+Note that more complex
+Ada expressions work as well, such as the expression giving the y-coordinate
+for drawing.
+</OL>
+<P>You'll need to compile the code above, but to see it execute you also need
+a web page that references the applet. The web page will need to include
+an APPLET command. Here's a simple web page that references the applet (you
+can type this text into a file using a text editor and call it "hello.html"):
+<PRE>
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;TITLE&gt;Hello World&lt;/TITLE&gt;&lt;/HEAD&gt;
+&lt;BODY&gt;
+&lt;H1&gt;Hello World&lt;/H1&gt;
+Below is the hello world applet.
+
+&lt;APPLET CODE="Hello.class" WIDTH=200 HEIGHT=100&gt;
+&lt;/APPLET&gt;
+
+&lt;/BODY&gt;
+&lt;/HTML&gt;
+</PRE>
+<P>The text beginning with "&lt;APPLET " tells the web browser to run
+a Java applet.
+The quoted text after "CODE" indicates which program to run. The "WIDTH"
+and "HEIGHT" parameters specify the width and height in pixels of the graphical
+area the applet may use. There are other possible parameters. In particular,
+if the class you wish to run is not in the same directory as the web page,
+you need to add a "CODEBASE=" parameter that gives the directory of the
+class to run.</P>
+<P>Any text between &lt;APPLET&gt; and &lt;/APPLET&gt; will be displayed by web browsers
+that don't handle Java, which is useful so you can handle such browsers
+(for example, you could give them a static picture or a form instead). You
+can also use that area to pass parameters to the applet.</P>
+<P>To view this applet, use a web browser that supports Java and view
+the web
+page, or run an applet viewing program (a program designed to run Java
+applets).
+<IFDEF BOOK>
+<ELSE>
+If you're using a Java-capable browser,
+<A HREF="hello.htm">you can see the Hello applet right now</A>.
+Use the "back" key on your browser to return to this page.
+<ENDIF>
+
+<H2>Other Applet Methods</H2>
+<P>A descendent of Java class Applet can override methods other than "paint"
+to do useful things. Here are some of those methods:</P>
+<OL>
+<LI>init is called when the applet starts up, before any other events
+are processed.  You can override this method to initialize some
+variables. Netscape also calls this method when an applet is
+reloaded or you return to the page containing the applet, so
+make sure it can handle being called multiple times.
+<LI>stop is called when the user is no longer looking at the page that contains
+the applet.
+<LI>start is called when a user brings their attention back to an applet, and
+is called after the init method.
+<LI>mouseDown is called whenever the mouse button is pressed. Typical uses are
+to highlight the item being pressed (like a button) to make it clear to
+the user what they're about to select.
+<LI>mouseUp is called whenever the mouse button is <I>released</I> in the
+applet's viewing area. In many cases you want to react to a mouse
+button being released (mouseUp), not when it's been pressed (mouseDown),
+so that users can change their mind by moving the mouse away without
+releasing the button.
+<LI>mouseDrag is called when the user moves the mouse while holding the mouse
+button down.
+<LI>keyDown is called when the user pressed a key while the applet is active.
+</OL>
+<P>
+The Java library is quite extensive; see
+<A HREF="http://java.sun.com/java.sun.com/doc/programmer.html">Sun's
+on-line Java documentation</A> or one of the
+<A HREF="http://lightyear.ncsa.uiuc.edu/~srp/java/javabooks.html">many
+books on Java</A>.</P>
+
+<QUESTION Type=Multiple-Choice>
+Which of the following statements is true?
+<OL>
+<LI>Most applets that use the mouse button should cause important actions
+to happen on mouseDown so that if the user changes his mind, he can move
+the mouse away.
+<LI>Most applets will override the "paint" operation to draw whatever it is
+that they want to draw.
+<LI>There's no way to provide alternative text or graphics
+for users with a Java-less web browser.
+</OL>
+<CHOICES>
+<CHOICE ANS=1>Statement 1.
+<CHOICE ANS=2>Statement 2.
+<CHOICE ANS=3>Statement 3.
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+1. Nope, sorry, that was tricky.
+The justification is good, but that justifies the operation mouseUp.
+The statement talks about "mouseDown".
+<WHEN ANS=2>
+That's correct; in fact, that was the only operation the "Hello World"
+applet overrode.
+<WHEN ANS=3>
+That's not true; anything between
+the &lt;APPLET&gt; and &lt;/APPLET&gt; is displayed
+to the user if the web browser can't handle Java applets at all.
+</RESPONSES>
+
+<SECTION NAME="A Larger Ada Applet">
+Let's look at how to create a slightly larger applet called "Doodle".
+This applet will let you do simple freehand drawing in a window - just
+hold down the mouse button to draw.
+<P>
+When a "mouseDown" occurs we'll need to remember where on the screen
+it occurred.
+When a "mouseDrag" occurs we'll need to draw a line from the last screen
+position to the current one.
+That would be enough to permit scribbling, but if the doodling
+area was scrolled away or a window were placed on top we'd lose the scribbles.
+So, let's save the starting and ending points of the lines so we can
+redraw it later in the "paint" method.
+We can store the list of starting and ending points in a Java type
+called a "Vector".
+To set up these Vectors we'll use the "init" method on the Applet.
+We'll also use another Java type called a Point, which simply stores
+a combined x and y location.
+<P>
+Many Java library classes have special methods called "Constructors".
+A Constructor creates a new instance of an object.
+In the Java language, any method with exactly the same method
+name as the class it's in is a constructor.
+These constructors can be called by Ada; their Ada function names are simply
+"new_" followed by the name of the class.
+For example, class Vector has a method named Vector that takes two
+integer parameters.
+Since the class and method name are identical, this must be a constructor
+for creating new Vectors.
+To use that constructor from Ada, call "new_Vector" with those two parameters.
+In this example, the parameters are
+(1) how many points the Vector should initially
+hold, and (2) the amount of points to increase by every time the Vector runs
+out of space.
+I've set the Vectors so they'll store 100 points, and will add space for
+another 100 points each time the current limit is exceeded.
+Unlike other non-static methods,
+do <I>not</I> add an extra parameter in front of the list -
+a constructor creates a new object, so there'd be nothing to pass!
+<P>
+Here's the source code for Doodle.
+You needn't study it carefully unless you plan to develop Java programs,
+but skim it at least to see how things are done:
+<P>
+<TEXT FONT=PRE FILE="doodle.ada">
+<P>
+<IFDEF BOOK>
+<ELSE>
+If you're interested and have a Java-capable browser,
+<A HREF="doodle.htm">you can try out the Doodle applet</A>.
+<P>
+<ENDIF>
+<P>
+
+<QUESTION Type=Multiple-Choice>
+In Java package "java.awt" there is a class named "Color".
+The documentation for it says that one of its methods is also named
+"Color" and is defined as follows in the Java language:
+<P>
+<PRE>
+  public Color(int r, int g, int b);
+</PRE>
+<P>
+How could you call this method in Ada?
+<CHOICES>
+<CHOICE ANS=1>Color(0, 255, 64)
+<CHOICE ANS=2>Color(C, 0, 255, 64) where C is something of type Color.
+<CHOICE ANS=3>new_Color(0, 255, 64)
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN ANS=1>
+Nope.
+Remember, the class is named Color, and the method is also
+named Color.
+That means we have a Java "Constructor".
+<WHEN ANS=2>
+No. You don't add an extra parameter at the beginning of the parameter
+list for a constructor.
+<WHEN ANS=3>
+That's correct.
+When the class and method names are identical, you have a constructor,
+so you need to put the "new_" in front of the name.
+You can define your own constructors in Ada, but you need to use
+special pragmas to tell the Java system (which is very picky about the
+rules governing constructors).
+</RESPONSES>
+
+<SECTION NAME="Java Interfaces and Aliased Components">
+Java also includes a construct called an "interface".
+Java interfaces are basically a weakened form of multiple inheritance.
+A Java interface is like a class you can inherit from,
+but all of its methods must be abstract.
+A class that "inherits" from an interface is said to "implement"
+that interface.
+Java classes can implement (inherit)
+from zero, one, or more than one interface.
+Thus, while Java classes can only directly inherit from one other class
+(as is true with Ada), they can implement zero or more interfaces.
+<P>
+Ada doesn't have anything that directly corresponds to a Java interface.
+However, to use the Java library there must be a way for an Ada program
+to use Java interfaces.
+Here's the convention you need: if you're defining an Ada type
+that is to implement some interface defined in the Java language as I,
+add to the Ada type's record a field with name "I"
+and type "aliased I_Obj".
+For example, let's say you're defining some applet My_Applet and
+you want it to implement a Java interface named Runnable in Java package
+"java.lang".
+You'd define your class as follows:
+<P>
+<PRE>
+  with java.applet.Applet; use java.applet.Applet;
+  with java.lang.Runnable; use java.lang.Runnable;
+
+  package My_Applet is
+    type My_Applet_Obj is new Applet_Obj with
+      record
+        Runnable : aliased Runnable_Obj;
+      end record;
+    type My_Applet_Ptr is access all My_Applet_Obj'Class;
+  end My_Applet;
+</PRE>
+<P>
+All interfaces are marked with a special pragma that tells the compiler
+that it's an interface and to take special actions to produce the
+right code.
+<P>
+Some operations will require you to pass the <I>interface</I>
+type instead of the regular type.
+For example, some Java library methods require
+the Java "Runnable" type (instead of, say, Java's "Applet" type).
+That's not a problem; instead of passing the access value <I>A</I>,
+pass such methods the value <I>A.Runnable'Access</I> where
+"Runnable" is the field representing the interface.
+For example, let's say you want to call the
+Java "Thread" constructor (called "new_Thread" in Ada).
+This constructor expects to be handed something of type "Runnable".
+You can create a new Thread by executing the following:
+<P>
+<PRE>
+  My_Thread : Thread_Ptr := new_Thread(X.Runnable'Access);
+</PRE>
+<P>
+You can create your own interfaces by identifying their "_Obj" type
+using pragma Convention with language type
+"Java_Interface". For example, if Concept_Obj is
+actually a new interface you're defining, simply say:
+<P>
+<PRE>
+  pragma Convention(Java_Interface, Concept_Obj);
+</PRE>
+<P>
+The "aliased" phrase above is not specific to
+Java, but is a standard part of Ada 95.
+Normally you can only obtain an access value on entire record, not of
+some component inside.
+However, sometimes you'd like to have access values that can refer
+to subcomponents of a record.
+Ada will let you do that if you identify the component as <I>aliased</I>.
+For example, the phrase "X.Runnable'Access" used above only works because
+Runnable is marked as "aliased".
+<P>
+This approach to implementing Java interfaces
+suggests a simple way to implement multiple inheritance in
+Ada, should you need to.
+You can use inheritance to inherit from the "most natural" class.
+You can then include, in your type's record,
+components that contain the "other" classes
+that you'd like to inherit from.
+Finally, you can redefine calls for those other classes (in the case of Java
+interfaces this is partly done for you).  However, be very careful if
+you're using true multiple inheritance:  many object-oriented languages
+(including Smalltalk and Java) don't include full multiple inheritance
+because it's easy to create horrifically unmaintainable structures.
+Use this approach only if it really appears to
+be the simplest and most maintainable approach.
+A description of various approaches for implementing multiple inheritance
+in Ada, should you desire it, is included in the
+<A HREF="http://www.adahome.com/LRM/95/Rationale/rat95html/rat95-p2-4.html#6">Ada Rationale Part Two, section 4.6</A>.
+
+<QUESTION Type=Multiple-Choice>
+You can create a class to lay out graphical components
+by creating a class that implements the Java interface
+"LayoutManager" (which is in the Java package "java.awt").
+Let's say say you want to create a "Special_Layout", and you've
+started as follows:
+<P>
+<PRE>
+  with java.lang; use java.lang; -- "Object" type is defined here.
+  with java.awt.LayoutManager; use java.awt.LayoutManager;
+
+  package Special_Layout is
+    type Special_Layout_Obj is new Object with
+      record
+        -- SOMETHING
+      end record;
+    type Special_Layout_Ptr is access all Special_Layout_Obj'Class;
+    -- Special_Layout methods go here.
+  end Special_Layout;
+</PRE>
+<P>
+What should "-- SOMETHING" be replaced with?
+<CHOICES>
+<CHOICE ANS=1>LayoutManager : Layout_Manager_Obj;
+<CHOICE ANS=2>LayoutManager : Layout_Manager_Ptr;
+<CHOICE ANS=3>LayoutManager : aliased LayoutManager_Obj;
+<CHOICE ANS=4>LayoutManager : aliased Layout_Manager_Ptr;
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN ANS=1>
+Nope.
+Re-read the description about "aliased".
+<WHEN ANS=3>
+Right.
+Now that you know how to do this,
+you can use Java Interfaces whenever you need to.
+To be honest, the text above doesn't quite work with the current
+version of AppletMagic. Instead of doing:
+<PRE>
+  My_Thread : Thread_Ptr := new_Thread(X.Runnable'Access);
+</PRE>
+<P>
+You need to do this:
+<P>
+<PRE>
+  My_Thread : Thread_Ptr := new_Thread(Runnable_Ptr'(X.Runnable'Access));
+</PRE>
+<P>
+It turns out that in the currently-available version of AppletMagic
+there is an ambiguity in the "new_Thread" method.
+The problem is that there are several "new_Thread" operations that
+take one parameter, and they're ambiguous enough that the Ada compiler
+can't determine which one to call.
+The "Runnable_Ptr'(" stuff tells the Ada compiler that the parameter enclosed
+is of type "Runnable_Ptr", which is enough to enable the code to be
+compiled.
+<WHEN ANS=4>
+Close, but not quite. Look carefully at the definition of choices 3 and 4.
+</RESPONSES>
+
+<SECTION NAME="Ada language vs. Java language">
+<P>It makes sense to close a discussion of Ada and Java by comparing the two
+languages.</P>
+<P>Ada and Java have more similarities than differences. Both the Ada language
+and the Java language were designed with safety in mind
+(both support strong typing, omit pointers, and perform many compile-time
+and run-time checks).
+Both support an object-oriented approach based on a single
+inheritance hierarchy.
+When generating class files,
+both Ada and Java support garbage collection, multitasking,
+and platform-independent
+graphical user interfaces (GUIs).
+<P>There are differences, of course. Here are some technical advantages of
+the Ada language over the Java language
+(<A HREF="http://www.acm.org/sigada/wg/web_ada/rewebada.html">SigAda
+has a similar list</A>):</P>
+<OL>
+<LI>Ada supports enumerated types. 
+<LI>Ada supports operator overloading for infix operators (for example,
+you can define an infix + operation for complex numbers).
+<LI>Ada supports generics. There is no Java equivalent, though
+Java's "Interface" and its root Object class can
+sometimes be used to do similar things.
+<LI>Ada supports "in", "out", and "in out" to document the use of parameters,
+and these modifiers work on both tagged types and scalars. 
+<LI>Ada is easier to read in some cases (compare "and" with "&amp;&amp;";
+compare "for I in 1..10" with "for (i=1; i &lt;= 10; i++)";
+compare "a=b" with "a==b").
+<LI>Ada permits array boundaries to start with any scalar. The Java language
+requires array boundaries to start at 0, a common source of "one-off" errors. 
+<LI>Ada supports numeric range checks more specific than the built-in types.
+This can be used to detect errors that Java doesn't.
+<LI>Ada supports method calls using named and unordered parameters,
+and supports default parameter values. 
+<LI>Ada supports subprogram access types and nested subprograms. 
+</OL>
+<P>Java has some technical advantages over Ada, too:</P>
+<OL>
+<LI>Java supports "interface" types.
+There is no standard Ada equivalent, though
+Ada generics and the nesting of objects
+can sometimes be used to do similar things.
+Ada programs that generate Java code can use and define Java interfaces,
+using a special pragma to do so.
+<LI>Java permits specifications to be circular (A depends on B which depends
+on A), while Ada does not. There is some argument that this is a disadvantage,
+since circular references can indicate poorly structured systems, but in
+terms of ease-of-use this is an advantage.
+<LI>Java class definitions tend to be shorter than Ada.
+Here are some of the reasons for this:
+<OL>
+<LI>
+Ada enforces a distinction between objects and access values
+to objects.
+This causes definitions to be longer (for example, in Ada you have to define
+X_Obj and X_Ptr types everywhere, while all of that is not used
+in the Java language).
+<LI>
+Ada requires an explicit list of all classes used ("with" statements) in a
+class being defined.
+Java does not require a list of classes used; the closest Java has is
+its "import" statement, which is like the "use" clause in Ada.
+<LI>
+Java has an implicit "this" parameter for non-static methods; Ada requires
+all parameters to be explicitly listed.
+<LI>
+Java interfaces have to be handled using a somewhat clumsy Ada syntax.
+</OL>
+<LI>Java supports hierarchies of exception definitions. Java also includes
+definitions
+of exceptions that might be thrown (raised) by each method as part of the
+method definition.
+</OL>
+<P>Naturally, more than technical issues make a decision. Here are some other
+issues regarding the use of the Java language and Ada language for creating
+Java applets and applications:
+<OL>
+<LI>There are a number of tooling issues.
+At the time of this writing
+there are more Ada compilers than Java compilers, but by the time you read
+this there should be many compilers for both languages.
+Most Ada compilers
+generate native (high-speed) code that can take advantage of the underlying
+hardware, while Java compilers are just beginning to appear.
+However, currently
+only one Ada compiler can generate class files and applets, so the quantity
+of compilers tilts towards Java
+if you're solely interested in generating applets and/or class files.
+You'll also need to compare the tool capabilities themselves: which have
+better interactive development environments (IDEs)?
+Which have additional functionality (like user interface generators) that
+you'd like?
+Since just-in-time Java compilers that take class files can compile both Java
+and Ada class files, the choice of language is irrelevant
+for just-in-time compilers.
+<LI>There are large reusable component libraries for both languages, each with
+different focuses.
+Compare the relevant reusable components
+in the different languages for your application.
+<LI>There is an ISO (international) standard for Ada, while a standard for Java
+is probably many years away (at the time of this writing).
+<LI>There is a large standard test suite for Ada compilers; none yet exists
+for Java.
+<LI>There are sometimes vendor restrictions prohibiting use of the
+Java language
+for safety-critical systems; Ada is commonly used in such areas, and compilers
+can be bought without such prohibitions.
+<LI>The use of
+<A HREF="ftp://ftp.cs.iastate.edu/pub/kelvin/rtjava.ps">Java
+in real-time applications</A> is somewhat currently a research area,
+while Ada is already used in such areas and has been for many years.
+<LI>Most Java materials and tools assume that users are using
+the Java language.
+Thus, if you're developing a Java application in Ada you'll need to
+learn the translation conventions (as discussed in previous sections) and
+be able to make such translations mentally.
+No such translations are needed if you're using the Java language.
+</OL>
+
+<QUESTION Type=Multiple-Choice>
+Which of the following statements is true?
+<OL>
+<LI>The Java language lets you write your own infix operators, while
+the Ada standard supports interface types and hierarchical exceptions.
+<LI>A web browser that includes a just-in-time compiler for class files
+can't compile programs written in Ada.
+<LI>When generating Java class files, both Ada and Java support
+garbage collection and a standard graphical user interface.
+</OL>
+<CHOICES>
+<CHOICE ANS=1>Statement 1.
+<CHOICE ANS=2>Statement 2.
+<CHOICE ANS=3>Statement 3.
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN ANS=1>
+Nope, that's reversed.
+The Java language, as of this writing, doesn't let you write your own
+infix operators.
+The Ada standard doesn't normally support interface types; we had to
+learn about a special convention and Java pragma to make them work.
+<WHEN ANS=2>
+Not at all.
+A web browser with a just-in-time compiler takes the class files and
+compiles them.
+It doesn't know if you originally wrote the class files
+in the Java language or the Ada language, nor should it care.
+</RESPONSES>

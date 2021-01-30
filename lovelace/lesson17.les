@@ -1,0 +1,790 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<COMMENT  Edit the following lines. >
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=17>
+<COMMENT $Id$ >
+
+<COMMENT  You'll probably want to uncomment and edit these lines: >
+<COMMENT  <PREVIOUS_LESSON LOCATION="URL_of_directory/" >
+<COMMENT  <NEXT_LESSON LOCATION="URL_of_directory/" >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+<COMMENT Each section has a title; SECTION starts a new section.>
+
+<SECTION NAME="Language-Defined Attributes">
+Ada predefines, for each type, a number of operations and values termed
+"language defined attributes".
+To use them, enter the name of the type (or object) the attribute
+applies to, a tick (a single apostrophe), and the name of the attribute.
+<A HREF="http://www.adahome.com/rm95/rm9x-K.html">The
+RM appendix K lists all of the language defined attributes
+and their definitions.</A>
+<P>
+Actually, we've already seen one attribute: 'Class.
+Given some type named X, the phrase X'Class
+refers to the class of all types that are descended from X, including X.
+<P>
+Three very common attributes are 'First, 'Last, and 'Range.
+Given some type named X,
+the phrase X'First is the <EM>first</EM> legal value of type X.
+Attribute 'Last refers to the <EM>last</EM> legal value of a given type.
+Attribute 'Range refers to the range between 'First and 'Last, including
+them, and is often used in loops.
+For example, if Repair_Status is an enumerated type with many values,
+you could write a loop as follows:
+<P>
+<PRE>
+  for I in Repair_Status'Range loop
+    -- <EM>Do something here.</EM>
+  end loop;
+</PRE>
+<P>
+Some attributes are actually subprograms that accept parameters,
+which you can call the way you'd call any other subprogram.
+One simple attribute is X'Image; this is a subprogram that takes
+a value of the type X and returns a String representing that value.
+X must be a scalar type (i.e. Integer, Float, or an enumerated value).
+Here's an example:
+<P>
+<PRE>
+  procedure Demo( Value : Integer) is
+    Text_Rep : String := Integer'Image(Value);
+  begin
+    Put(Text_Rep);
+  end Demo;
+</PRE>
+<P>
+Here are some other useful attributes:
+<UL>
+<LI>The inverse of 'Image is 'Value. Attribute 'Value is a function
+which takes a String and returns its scalar value.
+<LI>Attribute X'Val is a function that takes an Integer and returns a value
+of type X whose position number is the same as the integer.
+This is handy for Characters.
+For example, since a space is position 32 in the Latin-1
+character set (and in ASCII for that matter),
+Character'Val(32) is a space character.
+The inverse of 'Val is 'Pos.
+<LI>Attribute X'Access, where X is a subprogram name or variable,
+yields an access value ``pointing'' to X.
+<LI>Attributes X'Min and X'Max take two scalars of type X
+and return the minimum ('Min) or maximum ('Max) value.
+<LI>Attribute X'Round rounds a number of type X
+to the nearest integer; if it's exactly between two integers,
+it rounds away from zero.
+<LI>Several attributes give information on the underlying machine.
+These include 'Size (which gives the number of bits used to store
+something), 'Address (which gives the storage address),
+and 'Bit_Order (which gives the bit ordering).
+These are particularly useful when interfacing with physical devices
+and assembly language, and are sometimes useful for other purposes as well.
+</UL>
+<P>
+There are a several other attributes as well.
+<P>
+Some attributes can be set by the programmer.
+This is mainly used for
+supporting low-level facilities, such as making variables refer to hardware
+interfaces (by setting 'Address) or setting the size of given type.
+The Ada 95 syntax for doing this can be represented as:
+<PRE>
+  for name'attribute_name use expression;
+</PRE>
+<!-- Not using BNF, since the tick may confuse the reader -->
+<P>
+For example, if your machine can read raw temperatures
+as an 8-bit value from address FFFF_0000, you can read temperatures
+just by reading the variable "Current_Temperature" by telling Ada
+to place Current_Temperature at a specific address.
+Here's an example of how to do that:
+<PRE>
+  type Temperature_Reading is 0 .. 2**8 - 1;
+  for Temperature_Reading'Size use 8;
+
+  Current_Temperature : Temperature_Reading;
+  for Current_Temperature'Address use 16#FFFF_0000#;
+  pragma Volatile(Current_Temperature);  -- We haven't discussed this.
+  -- Now just read from "Temperature" as a variable.
+</PRE>
+<P>
+Although an Ada compiler can handle spaces before and after the tick ('),
+don't place any spaces around it.
+That way, tools which don't actually parse Ada (such as semi-smart
+editors and pretty printers) can tell the difference between
+attributes and character constants.
+
+<QUESTION Type=Multiple-Choice>
+What would find the smallest value of two Integers A and B, using
+a predefined attribute?
+<CHOICES>
+<CHOICE ANS=1>Min(A,B)
+<CHOICE ANS=2>Integer'Min(A,B)
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+Sorry.
+There wasn't a tick (') there, so there's no predefined attribute
+in use.
+The phrase Min(A,B) would just call some used-defined subprogram named
+Min, not the predefined subprogram.
+</RESPONSES>
+
+<SECTION NAME="Recursion">
+Subprograms can call other subprograms so they can get work done.
+Sometimes it's useful for a subprogram to call itself.
+The technique of using a subprogram to call itself is
+called <EM>recursion</EM>.
+<P>
+The standard example of recursion is computing the factorial of an Integer.
+A factorial of some number n is defined as follows:
+<OL>
+<LI>if n is 0, the factorial of n is 1.
+<LI>if n is more than 0, the factorial of n is equal to n times
+the factorial of n-1.
+</OL>
+<P>
+Recursive subprograms are written in a relatively standard format:
+first, check for the "stopping" criteria of the recursion.
+If the "stopping" criteria is not met, do part of the work and
+then call "yourself" to complete the task.
+<P>
+Here's the factorial program:
+<P>
+<PRE>
+function Factorial(A : in Integer) return Integer is
+begin
+ if A &lt; 0 then                -- Stop recursion if A &lt;= 0.
+   raise Constraint_Error;
+ elsif A = 0 then
+    return 1;
+ else
+   return A * Factorial(A - 1);   -- recurse.
+ end if;
+end Sum;
+</PRE>
+<P>
+Actually, you can implement the factorial using a "for" loop much more
+easily, but more complicated problems are sometimes easier to handle
+using recursion.
+<QUESTION Type=Multiple-Choice>
+If you evaluated Factorial(5), how many times would the subprogram
+Factorial be called?
+<CHOICES>
+<CHOICE ANS=1>Once.
+<CHOICE ANS=2>Four times.
+<CHOICE ANS=3>Five times.
+<CHOICE ANS=4>Six times.
+</CHOICES>
+<ANSWER ANS=4>
+<RESPONSES>
+<WHEN ANS=1>
+No, that's not right.
+When you evaluate Factorial(5), the Factorial program will try to
+return 5*Factorial(4). Which will call Factorial again.  And so on.
+<WHEN ANS=4>
+That's right.
+Factorial will be repeatedly called with the values 5, 4, 3, 2, 1, and 0,
+for a total of six calls.
+</RESPONSES>
+
+
+<SECTION NAME="Efficiency">
+In many circumstances it's important to maximize program efficiency, i.e.
+your program's execution time and/or memory utilization.
+<P>
+A trivial way to improve efficiency (also called performance)
+is to set your compiler options to aggressively optimize your program.
+This is an easy way to gain efficiency, since it takes only a few
+moments, doesn't change your source code at all, and most compilers
+don't turn on their most aggressive optimizations unless you request them.
+<P>
+Before using any other efficiency improvement technique,
+<EM>measure</EM> to see what uses most of the current resources.
+Most programs spend most of their time in a very small portion of the
+entire program - thus, if you want to improve execution time, you must
+spend your time working on those small portions.
+It's important to measure, because
+programmers often guess incorrectly on where most of the time is being spent.
+<P>
+The <EM>most effective efficiency improvement method</EM> is
+usually changing the algorithm (approach) used to solve the problem.
+<P>
+Jon Bentley has written two good books on general efficiency
+improvement techniques, titled
+<A HREF="biblio.htm#bentley1982"><EM>Writing Efficient
+Programs</EM> [Bentley 1982]</A>
+and
+<A HREF="biblio.htm#bentley1986"><EM>Programming
+Pearls</EM> [Bentley 1986]</A>.
+<P>
+Here are some Ada-specific capabilities for improving efficiency (performance):
+<OL>
+<LI><A HREF="http://www.adahome.com/rm95/rm9x-06-03-02.html">Pragma
+Inline</A> specifies that the code for a particular subprogram should be
+included immediately inline
+rather than performing a normal subprogram call (with its associated overhead).
+This can be beneficial for simple subprograms with only a few lines of code.
+<LI><A HREF="http://www.adahome.com/rm95/rm9x-02-08.html#23">Pragma
+Optimize</A> lets you specify if you want to optimize for speed
+or memory space.
+<LI><A HREF="http://www.adahome.com/rm95/rm9x-11-05.html">Pragma
+Suppress</A> lets you suppress various run-time checks.
+It's best to make sure your program works <EM>before</EM> suppressing
+run-time checks.
+You may want to only suppress selected checks for selected types or
+subprograms, which will let you keep most of Ada's safety features.
+Make sure that your program doesn't depend on run-time checks before you
+use pragma Suppress.
+For example, don't try to handle an exception for
+dividing by zero if you might suppress that check - instead,
+check if a value is zero before using it as a divisor.
+<LI><A HREF="http://www.adahome.com/rm95/rm9x-13-12.html">Pragma
+Restrictions</A> restricts the Ada program from using selected Ada capabilities.
+In some cases, the Ada compiler may produce faster and/or smaller
+code if it knows (via this pragma) that certain capabilities won't
+be used, as discussed in the
+<A HREF="http://www.adahome.com/LRM/95/Rationale/rat95html/rat95-p3-d.html#7">Ada
+Rationale part III, D.7</A>.
+<LI><A HREF="http://www.adahome.com/rm95/rm9x-13-02.html">Pragma
+Pack</A> can be used to decrease the amount of space used by
+a compound type (i.e. array or record).
+Note, however, that on some machines pragma Pack can slow
+the execution of a program down (due to packing and unpacking of bit strings).
+<LI>Like all languages except Fortran, when using multi-dimension arrays, vary
+the last dimension fastest.
+If you want to vary the first dimension fastest (say, if you're
+transliterating Fortran code),
+use "pragma Convention(Fortran, X)" where X is the array type.
+<LI>Types whose sizes are known at compile time (called constrained types)
+can be passed around more quickly than types whose sizes are not known
+(these are called unconstrained types).
+This is because for unconstrained types the Ada compiler must pass around
+their bounds as well as their data.
+This is <EM>especially</EM> true when returning an unconstrained type
+as a function return value; for technical reasons this is a relatively
+expensive operation to perform.
+Examples of unconstrained types include type String and any array type
+that isn't given an explicit bound at compile time.
+Examples of constrained types include Integer, Float, any access type,
+fixed-size arrays, and fixed-size records.
+</OL>
+<P>
+Some performance improvement suggestions can be found in
+<A HREF="http://www.adahome.com/FAQ/programming.html#slow">the
+"Ada Programmer Frequently-Asked Questions (FAQ)"</A> file.
+<IFDEF BOOK>
+You can retrieve this file electronically from URL
+"http://www.adahome.com/FAQ/programming.html".
+<ENDIF>
+Many more suggestions
+can be found in the
+<IFDEF BOOK>
+Performance chapter of the AQ&amp;S guide.
+<ELSE>
+<A HREF="http://sw-eng.falls-church.va.us/AdaIC/docs/style-guide/95style/html/sec_10.html">Performance
+chapter of the AQ&amp;S guide</A>.
+<ENDIF>
+
+<QUESTION Type=Multiple-Choice>
+Which of the following techniques is likely to produce the most
+significant performance improvement?
+<CHOICES>
+<CHOICE ANS=1>Use pragma Optimize and compiler flags to increase optimization.
+<CHOICE ANS=2>Use pragma Suppress to turn off run-time checks.
+<CHOICE ANS=3>Change the way the problem is solved.
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN ANS=3>
+Right.
+It's easier to say this than to do it, of course, and sometimes
+there simply isn't a (known) better way.
+In that case, judicious use of these other techniques can usually improve
+performance with little cost and significant results.
+The best results are obtained with a combination of all of these
+techniques - good algorithms, compiler optimizations,
+various hints to the compiler (like pragma Inline), and suppressing
+selected checks (using pragma Suppress) where it's known that
+problems can't occur.
+</RESPONSES>
+
+<SECTION NAME="Safety and Ada">
+While Ada is used in applications where safety isn't a
+significant concern,
+many safety-critical applications are developed in Ada.
+Even if you're not planning to build safety-critical software
+today, it's good to know some basics.
+First we'll introduce some software safety concepts, then
+follow them with Ada-specific items.
+<P>
+<H2>Software Safety Overview</H2>
+<P>
+Software safety involves ensuring that software executes within a
+system context without resulting in an unacceptable system risk. Safety
+is a property of an entire system, not just software, but software
+components can be a determiner of a system's safety.
+Risk may be defined as a function of (1) the probability of a mishap and
+(2) the severity of a mishap's effects should the mishap occur.
+Few things in real life can be "perfectly" safe; instead, we try to reduce
+the risk to some very small, acceptable level.
+<P>
+One common misconception is that a well-tested, highly reliable
+software system is safe. It has been demonstrated experimentally that
+traditional verification (testing) techniques are grossly inadequate for
+detecting safety-critical faults even for a simple program
+<A HREF="biblio.htm#gowen1994">[Gowen 1994]</A>.
+Thus, simply testing a system is unlikely to result in a safe system.
+A reliable system isn't necessarily a safe system either; a
+system that works most of the time but occasionally kills everyone
+in a large radius would usually be considered unsafe.
+The moderated newsgroup
+<A HREF="news:comp.risks">comp.risks</A>
+provides a continuous stream of examples of
+software going awry and causing serious problems.
+<P>
+Personally, I think that if you're developing software that could
+cause death, serious injury, or significant property damage, you
+should be just a little afraid.
+If you aren't, you probably
+don't understand the issues involved.
+That small amount of fear is healthy, because it will motivate you
+to learn and use techniques to reduce the overall risk.
+<P>
+Some good survey papers that give an overview of the software safety
+field include
+<A HREF="biblio.htm#place1993">Place [1993]</A>,
+<A HREF="biblio.htm#leveson1991a">Leveson [1991a]</A>,
+and
+<A HREF="biblio.htm#leveson1986">Leveson [1986]</A>,
+Note that
+<A HREF="ftp://ftp.sei.cmu.edu/pub/documents/93.reports/tr05.93.ps">[Place 1993]
+is freely available through the Internet</A>.
+<P>
+There are a number of specialized hazard analysis techniques that help to
+identify safety problems.
+Here are two of them:
+<OL>
+<LI>Software Fault Tree Analysis (FTA)
+is a technique for identifying potential causes of safety
+hazards in a system.
+In software FTA, a list of safety hazards (conditions to be avoided) is
+first made.
+Then the analyst assumes that, for analysis purposes,
+that each hazard (in turn) has occurred.
+The analyst then works
+backwards from those hazards through the software,
+creating logic diagrams, to show that how the safety hazards can occur
+(ideally, the analyst should determine that they cannot occur).
+The technique is easy to understand and can be easily integrated
+with system safety work.
+<A HREF="biblio.htm#leveson1983">Leveson [1983]
+provides a general discussion on software FTA</A>, while
+<A HREF="biblio.htm#leveson1991b">Leveson [1991b]
+shows specifically how to apply software FTA to
+Ada programs</A>.
+<LI>Another set of safety-related techniques are
+called formal methods.
+Formal methods are the application
+of (formal) mathematical techniques for definition and possibly proof of
+program properties.
+Currently formal methods are a subject of a great deal of research,
+but they are not often used in practice due to the difficulty of
+applying them to realistic program sizes.
+Still, there are systems which have used formal methods to varying degrees,
+and there is reason to hope that their applicability will increase
+over time.
+<A HREF="http://www.yahoo.com/Science/Computer_Science/Formal_Methods/">The
+Internet directory YAHOO has several references to
+information relating to formal methods</A>.
+Well-known specification languages include VDM and
+<A HREF="http://www.cis.ohio-state.edu/hypertext/faq/usenet/z-faq/faq.html">Z
+(pronounced "zed")</A>.
+</OL>
+<P>
+One web server on safety is the
+<A HREF="http://www.comlab.ox.ac.uk/archive/safety.html">The
+World Wide Web Virtual Library: Safety-Critical Systems</A>.
+This web server emphasizes the formal methods aspects, but does cover
+others to some extent.
+<P>
+<H2>Ada and Software Safety</H2>
+<P>
+Ada is often used in safety-critical software because of its built-in
+capabilities.
+Here are some Ada capabilities specifically for safety-critical systems:
+<OL>
+<LI>In some circumstances it's important to check to see if a scalar
+value (such as an Integer or enumerated type) is in a legal
+range.
+For example, hardware errors and cosmic rays can cause values to change
+outside of software control, and foreign language interfaces can pass
+in out-of-range values.
+Ada 95 has an attribute named 'Valid to check if a value is out-of-range
+<A HREF="http://www.adahome.com/rm95/rm9x-13-09-02.html">('Valid
+is explained in RM 13.9.2)</A>.
+The expression
+X'Valid, where X is some scalar variable, is True if X is in-range
+and False otherwise.
+<LI>In safety systems the computer language is often restricted to constructs
+that are easier to show correct (either for formal methods or just to
+avoid potential problems).
+<A HREF="http://www.adahome.com/rm95/rm9x-13-12.html">Pragma
+Restrictions (see RM 13.12)</A>
+can be used to specify what parts of the language
+may not be used in a particular program.
+<LI>Ada 95 has an optional
+<A HREF="http://www.adahome.com/rm95/rm9x-H.html">"Safety and
+Security" annex</A>
+which, if implemented in the compiler, adds additional operations and features
+to support safe and/or secure program development.
+For example, this annex adds pragma Normalize_Scalars, which sets
+uninitialized values to out-of-range values where possible (this makes
+it easier to detect uninitialized values).
+</OL>
+<P>
+Here are two examples of safety-restricted Ada subsets:
+<OL>
+<LI>SPARK is a `safe' subset of Ada 83 designed to be
+susceptible to formal methods, accompanied with a set of approaches and tools.
+Using SPARK,
+a developer takes a Z specification and performs a stepwise
+refinement from the specification to SPARK code. For each refinement
+step a tool is used to produce verification conditions (VC's), which are
+mathematical theorems. If the VC's can be proved then the refinement
+step will be known to be valid. However if the VC's cannot be proved
+then the refinement step may be erroneous.
+<A HREF="http://daedalus.dra.hmg.gb/hewitt/swi/swi.html">More
+information about SPARK is available on the WWW</A>.
+<LI><A HREF="biblio.htm#pyle1991">Pyle [1991]</A>
+discusses and compares various restrictions for safety purposes in his book.
+</OL>
+
+<QUESTION Type=Multiple-Choice>
+Given the following two statements:
+<P>
+<OL>
+<LI>If a program is reliable and has been extensively tested, it's safe.
+<LI>The safety implications of software can be analyzed by itself,
+without examining how the software will be used.
+</OL>
+<P>
+Which is true?
+
+<CHOICES>
+<CHOICE ANS=1>Statement 1.
+<CHOICE ANS=2>Statement 2.
+<CHOICE ANS=3>Both statement one and statement two.
+<CHOICE ANS=4>Neither statement.
+</CHOICES>
+<ANSWER ANS=4>
+<RESPONSES>
+<WHEN ANS=1>
+Sorry, that's a common misconception but it's not true.
+A program can work most of the time (be reliable), be extensively tested,
+and yet be unsafe:
+<UL>
+<LI>
+Reliability does not imply safety.
+For example, if there were only a one in a million chance per hour that
+a program would do the wrong thing, but that wrong thing would kill
+a million people, most would agree that the software is "unsafe".
+It is notoriously difficult to quantify the probability of a piece of
+software doing the wrong thing, since such quantification usually leaves
+out important possibilities, so even when someone says "only one in a million"
+the actual probabilities are usually much greater.
+<LI>
+"Extensive testing" is always an illusion -
+it's impossible to test most real programs for all possible circumstances,
+so testing only handles a very small subset of the actual situations the program
+will encounter.
+Trivial programs that have only ten 16-bit integers have 2^160 different
+possible states; such a trivial program couldn't be totally
+tested in the lifetime of the universe.
+</UL>
+<WHEN ANS=2>
+No, software must be analyzed in the context of the system it is in.
+The same component can be perfectly safe in one environment (for example,
+be part of a system that cannot cause safety problems) yet be part of a
+deadly hazard in another system.
+<WHEN ANS=4>
+Right.
+If you are asked to develop a safety-critical system,
+<EM>please</EM> go and learn from the literature about the
+field of software and system safety,
+the software tools you'll be using to do the job,
+and the general system and environment you'll be a part of.
+<P>
+Ada provides some useful mechanisms to help, but they're only a small part of
+the total solution; to develop successful systems you'll need to
+understand software safety much more deeply.
+</RESPONSES>
+<SECTION NAME="Software Inspections/ Reading Bugs Out">
+While Ada can prevent a number of software defects,
+no language can remove them all.
+One approach to increasing software quality, and reducing development
+cost and development time, is called <EM>software inspection</EM>.
+A software inspection is a rigorous review of a product by a small group of
+peers for the purpose of detecting defects.
+The work products reviewed are small - for code, up to about 250 lines would
+be considered in one inspection.
+<P>
+<CENTER><IMG ALIGN=right SRC="inspect.gif" ALT="Inspection Process" WIDTH=263 HEIGHT=294></CENTER>
+In an inspection,
+each person ("inspector") is given a role during the initial planning stage,
+such as "moderator" (the moderator
+controls the inspection and is not the author).
+After an optional overview of the product given by the author,
+each inspector prepares by
+carefully reading the product so they completely understand it
+(this generally takes 1-4 hours).
+The inspectors then meet together for no more than
+two hours to detect defects together (the list is recorded for later use).
+Optionally, they may meet afterwards for a "third hour" to discuss
+possible improvements and other things not related to detecting defects.
+The author then goes off to fix ("rework") the defects.
+After the author is done, the moderator checks to make sure the fixes are
+okay and a reinspection may occur if necessary.
+Occasionally a "causal analysis" process should occur to determine common
+defects, their causes, and how to eliminate those causes.
+<P>
+Obviously, this is a pretty rigorous process.
+The amazing thing is that many people have documented that
+inspections actually reduced their total time and cost, as well as increased
+the resulting quality, because inspections can reduce the cost
+of errors and rework.
+Inspections aren't technically glitzy, but
+results are usually more important than glitz.
+<P>
+One good way to find more about inspections is to buy my
+book on inspections (how's that for a plug?).
+It's titled
+<A HREF="biblio.htm#wheeler1996"><EM>Software Inspection:
+An Industry Best Practice</EM>, by
+David A. Wheeler, Bill Brykczynski, and Reg Meeson [Wheeler 1996]</A>;
+it's published by IEEE.
+Many papers are available on inspections; one oft-referenced paper is by
+<A HREF="biblio.htm#fagan1986">Michael Fagan [1986]</A>.
+Some information on inspections is available on-line; of particular
+note is the <A HREF="http://www.ics.hawaii.edu/~johnson/FTR/">WWW
+Formal Technical Review Archive</A>
+and the
+<A HREF="http://www.ics.hawaii.edu/~siro/">Software
+Inspection and Review Organization (SIRO) home page</A>.
+<P>
+<H2>Ada and Reading Out Bugs</H2>
+<P>
+If you're part of an inspection of Ada code,
+or simply reading your own code looking
+for likely defects, it can help to know what are the "more common" errors
+of Ada programmers.
+In an inspection such a list is called a "checklist".
+Unfortunately, I'm not aware of any publically-distributable empirical
+data to support any specific Ada checklist.
+However, based on anecdotal information
+(such as John B. Goodenough's list of common Ada programming errors),
+<!-- "A Sample of Ada Programming Errors", John B. Goodenough, -->
+<!-- Wang Institute of Graduate Studies, Tyng Road, Tyngsboro, MA 01879 -->
+<!-- The only version I've found is dated March 6, 1986 Interim Draft -->
+<!-- and I got it via the Internet through machines that no longer exist. -->
+I've come up with the following checklist which you can use as a starting
+point.
+I strongly encourage you to update this checklist to your situation
+as you gain experience in determining common defects in your own code.
+<P>
+<B>Ada Checklist - Look For:</B>
+<P>
+<OL>
+
+<LI><I>Reading Uninitialized variables</I>.  Ada compilers often detect these,
+but <EM>not</EM> always. Access values are always initialized to null, and
+when creating your own types you can cause them to have initial values.
+However, for other types a variable that's not specifically given an
+initial value might have an arbitrary set of "garbage" bits set, and trying
+to use this "garbage" data later might cause problems.
+When declaring variables, it's often a good idea to give them a starting
+value where that makes sense.
+There's been much discussion on whether Ada should even permit
+uninitialized variables; the rationale permitting them is that
+unnecessary initializing can cause a performance hit.
+The safety and security annex adds pragma Normalize_Scalars, which sets
+uninitialized values to out-of-range values where possible (this makes
+it easier to detect uninitialized values).
+
+<LI><I>Off-by-one boundary conditions</I> (for loop conditions, array indexing,
+and comparisons). This is the error of having almost
+the right boundary. For example, did you use &lt; when you meant &lt;=?
+Check all your comparisons and loop boundaries.
+Ada will raise a run-time exception
+if you attempt to access out-of-bounds array element,
+which helps in certain circumstances but not in all cases.
+
+<LI><I>Access type (pointer) and storage management errors</I>
+(especially boundary conditions like null lists).
+Trying hiding access (pointer) values so only a small portion of your
+program has to deal with them, use initialization/finalization
+operations to manage your storage, and make sure you can handle "empty"
+cases where you should.
+
+<LI><I>Incorrect return values handling</I>.
+For example, if a function returns a range, make sure every value in the
+range will be handled appropriately by your program.
+
+<LI><I>Incorrect special condition handling</I>.  Have you handled all cases?
+If you're reading from a sensor, do you deal with bogus sensor values?
+Do you handle all appropriate exceptions?
+
+<LI><I>Incorrect array bound handling</I>.
+An array's lower bound is not always one, so use 'First, 'Last,
+'Length, and 'Range when you're passed an array.
+For example, passed strings may be slices, so the first element of
+a String might not have the index value 1.
+Do not assume that 'First and 'Last are equal for different parameters
+or that they're the same as the base type,
+and use S'Length (not S'Last) to find the length.
+
+<LI><I>Instantiated unconstrained arrays</I>. Arrays with large array
+indices (like Integer or Positive), or records containing them, must
+have their bounds set; few computers can have "Integer'Max" array elements.
+
+<LI><I>Missing "reverse" keyword in a backward "for" loop</I>.  You should say:
+<BR>
+<PRE>
+    for I in reverse 1..5
+</PRE>
+
+<LI><I>Tasks exposed to unexpected exceptions</I>.
+If a task does not catch exceptions the task will terminate on one.
+
+<LI><I>Invalid fairness assumptions in tasking</I>.
+Some tasking operations are not guaranteed to be "fair". For example,
+in a selective wait with several open alternatives, Ada is free to pick
+between any of them each time; it need not pick between them "fairly".
+</OL>
+<!-- Too complicated to explain: -->
+<!-- * When a generic library unit is instantiated inside a library -->
+<!-- unit or secondary unit, a pragma Elaborate should be used to ensure -->
+<!-- the generic unit body is elaborated before the instantiation. -->
+<!-- * Check uses of 'Val carefully if you use a -->
+<!--    representation specification; -->
+<!--    'Val doesn't return the -->
+<!--    representation specification value, but the position number. -->
+<P>
+
+<QUESTION Type=Multiple-Choice>
+What is the purpose of an inspection meeting?
+<CHOICES>
+<CHOICE ANS=1>Learn about a program and discuss possible improvements.
+<CHOICE ANS=2>Detect defects.
+<CHOICE ANS=3>Fix defects.
+<CHOICE ANS=4>Spend endless hours in useless meetings.
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, that's not the purpose of an inspection meeting.
+Those are often purposes of another review process called a
+<EM>walkthrough</EM>, which is not what we're talking about here.
+Inspectors certainly learn about a program, and improvements are often
+the result of an inspection, but that's not the primary purpose of
+an inspection.
+In fact, if you're spending a lot of time discussing possible improvements,
+you're not spending enough time to succeed at the
+primary purpose of an inspection.
+<WHEN ANS=2>
+Right.
+You may learn about a program, and possible improvements might be
+discussed in the "third hour" stage, but the primary purpose of an
+inspection meeting is to detect defects.
+<WHEN ANS=3>
+No, not quite, though the distinction is subtle.
+It's true that the <EM>result</EM> of the inspection process is a fixed product.
+However, fixing defects is considered the author's job; the inspectors do
+not try to figure out how to <EM>fix</EM> a given problem.
+You might say I'm really quibbling on this point, but there are serious
+problems with letting the inspectors try to fix the defects:
+<P>
+<OL>
+<LI>When a group tries to "fix" the problem it may focus on an obvious
+but not-quite-correct solution; solving problems is best left to the
+careful consideration of the original author.
+<LI>If time is spent trying to fix problems, there won't be time left
+to find defects in the first place.
+</OL>
+<P>
+If the inspectors have something to contribute to help fix the problem,
+it should be brought up during the "third hour" or after the main meeting
+as email or in a one-on-one session with the author.
+<WHEN ANS=4>
+Well, if the inspection is done poorly, that could very
+well be the result.
+That's not the purpose of an inspection meeting though.
+Inspectors should be gathering data to show that they're actually
+saving time and money; if they aren't showing that, something is wrong and
+the process needs to be fixed.
+</RESPONSES>
+
+<SECTION NAME="Other Ada Capabilities">
+Here are some other Ada capabilities that we haven't covered so far
+but which you may be interested in:
+<P>
+<OL>
+<LI>Ada 95 also provides a
+<A HREF="http://www.adahome.com/rm95/rm9x-03-05-04.html">"modular"
+type</A>, which is an integer that varies
+from zero up to some integer <EM>modulus-1</EM>.
+Unlike a normal integer, if you add or subtract a value and the result
+doesn't fit, the result <EM>wraps around</EM>.
+For example, a modulus 4 value can have the values 0, 1, 2, and 3.
+If you added one to 3, you'd get 0 (due to wrapping around).
+Modular types don't need to be powers of two, but if they are the
+Ada compiler will select especially efficient operations to implement them.
+Bit manipulation operations, such as <EM>and</EM> and <EM>or</EM> can
+be used on modular types.
+<LI>Ada provides a
+<A HREF="http://www.adahome.com/rm95/rm9x-03-05-09.html">"fixed
+point" type</A>; these are basically integers that
+the Ada compiler will automatically scale so that they can be used
+as though they were floating point numbers.
+This combines the exactness and speed of integers
+(which on many machines are faster than Floats)
+with the convenience of floating point numbers.
+<LI>Ada 95 has a number of predefined mathematical operations, including
+<A HREF="http://www.adahome.com/rm95/rm9x-A-05-02.html">a
+random number generator</A>,
+<A HREF="http://www.adahome.com/rm95/rm9x-A-05-01.html">trigonometric
+and logarithmic operations</A>, and
+<A HREF="http://www.adahome.com/rm95/rm9x-G-01.html">complex
+numbers</A>.
+<COMMENT Technically speaking only compilers implementing the numerics annex >
+<COMMENT need to support complex numbers, but since the source implementing >
+<COMMENT them is freely available from GNAT >
+<COMMENT I'd expect all Ada 95 compilers to support complex numbers. >
+<LI>Ada 95 has a number of predefined
+<A HREF="http://www.adahome.com/rm95/rm9x-A-03-02.html">Character
+handling</A> subprograms (to upper case, to lower case, etc) and
+<A HREF="http://www.adahome.com/rm95/rm9x-A-04-02.html">string
+mapping</A> subprograms (to create sets of characters for translation
+and word edge detection).
+<LI>Normally Ada only permits access values to reference information allocated
+by the <EM>new</EM> operator.
+As discussed in lesson 12, you can create a <EM>general access</EM> types
+that can access any value of the given type.
+Such a type can access anything of that value, as long as it is marked
+as <EM>aliased</EM>.
+You can even alias local variables, which in many cases is dangerous.
+Ada includes a set of <EM>accessibility rules</EM> that protect against
+dangerous uses, which can be overridden if necessary.
+This is explained with some examples in the
+<A HREF="http://www.adahome.com/LRM/95/Rationale/rat95html/rat95-p1-2.html#6">Ada
+Rationale, part I, section II.6</A>.
+<LI>Ada 95 compilers that support the information systems annex (annex F)
+also support
+<A HREF="http://www.adahome.com/rm95/rm9x-F-01.html">packed
+decimal types</A>, a type needed for many business
+programming problems.
+</OL>
+

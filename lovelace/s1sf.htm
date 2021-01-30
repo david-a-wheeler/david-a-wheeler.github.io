@@ -1,0 +1,145 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 1.4 - Simple Variable, Integers, Parameters and Exceptions</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 1.4 - Simple Variable, Integers, Parameters and Exceptions</FONT></H1>
+Let's create a program to show what a simple variable and
+parameter-passing look like.
+This program will print out powers of 2, starting with 1, ``forever''.
+We'll call this program procedure Compute.
+<P>
+Inside this procedure
+create a local procedure called Double which doubles any number given to it,
+and a local integer variable named `X'.
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+-- Demonstrate a trivial procedure, with another nested inside.
+with Ada.Text_IO, Ada.Integer_Text_IO;
+use Ada.Text_IO, Ada.Integer_Text_IO;
+ 
+procedure Compute is
+
+ procedure Double(Item : in out Integer) is
+ begin -- procedure Double.
+   Item := Item * 2;
+ end Double;
+
+ X : Integer := 1;   -- Local variable X of type Integer.
+
+begin -- procedure Compute
+ loop
+  Put(X);
+  New_Line;
+  Double(X);
+ end loop;
+end Compute;
+</PRE>
+<P>
+<P>
+Note that the local variable called `X'
+is of type Integer with an initial value of one.
+Integers are used when you want to store possibly signed integers,
+and you don't care what the minimum and maximum range is.
+As we'll see later, there are other things you should do if you
+<EM>do</EM> care what the minimum and/or maximum range is.
+<P>
+Inside this new procedure is a local procedure called `Double', which
+takes a value and doubles it.
+A local procedure, like a local variable, can only be used inside
+the procedure surrounding it.
+This capability to nest procedures inside other procedures
+is useful in larger programs and is a standard
+capability in Pascal (though not in C or C++).
+<P>
+The phrase `in out' means that the value is both received and changed
+in the procedure.
+<P>
+The phrase "with .. Ada.Integer_Text_IO" permits use of
+a predefined Ada 95 package for performing text input and output on Integers.
+It includes an operation named "Put" that will print an Integer sent to it.
+<P>
+The second `begin' statement defines the Compute procedure itself.
+Compute has an infinite loop, which prints the current value
+and doubles it repeatedly.
+`Put' prints out the number, and `New_Line' causes the text
+to go to the next line.
+<P>
+Computers can't really compute an infinitely large value; sooner
+or later they'll run out of space to store the number.
+What will happen in this case?
+Some programming languages (notably C) simply permit garbage to be computed.
+Ada has a better approach: when a computation (such as doubling)
+cannot be performed, Ada raises an `exception'. Thus, sooner or later
+this program will halt with a message explaining why and where it halted.
+As we'll learn later, these exceptions can be caught and handled
+inside the program.
+<P>
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+When a computation cannot be performed, what does Ada normally do?
+<OL>
+<LI><A HREF="s1sfr1.htm">Silently give the wrong answer</A>
+<LI><A HREF="s1sfr2.htm">Raise an exception</A>
+<LI><A HREF="s1sfr3.htm">Corrupt memory</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s1s3.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s2s1.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson1.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 1 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s1sf.htm">http://www.adahome.com/Tutorials/Lovelace/s1sf.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

@@ -1,0 +1,215 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 16.6 - A Larger Ada Applet</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 16.6 - A Larger Ada Applet</FONT></H1>
+Let's look at how to create a slightly larger applet called "Doodle".
+This applet will let you do simple freehand drawing in a window - just
+hold down the mouse button to draw.
+<P>
+When a "mouseDown" occurs we'll need to remember where on the screen
+it occurred.
+When a "mouseDrag" occurs we'll need to draw a line from the last screen
+position to the current one.
+That would be enough to permit scribbling, but if the doodling
+area was scrolled away or a window were placed on top we'd lose the scribbles.
+So, let's save the starting and ending points of the lines so we can
+redraw it later in the "paint" method.
+We can store the list of starting and ending points in a Java type
+called a "Vector".
+To set up these Vectors we'll use the "init" method on the Applet.
+We'll also use another Java type called a Point, which simply stores
+a combined x and y location.
+<P>
+Many Java library classes have special methods called "Constructors".
+A Constructor creates a new instance of an object.
+In the Java language, any method with exactly the same method
+name as the class it's in is a constructor.
+These constructors can be called by Ada; their Ada function names are simply
+"new_" followed by the name of the class.
+For example, class Vector has a method named Vector that takes two
+integer parameters.
+Since the class and method name are identical, this must be a constructor
+for creating new Vectors.
+To use that constructor from Ada, call "new_Vector" with those two parameters.
+In this example, the parameters are
+(1) how many points the Vector should initially
+hold, and (2) the amount of points to increase by every time the Vector runs
+out of space.
+I've set the Vectors so they'll store 100 points, and will add space for
+another 100 points each time the current limit is exceeded.
+Unlike other non-static methods,
+do <I>not</I> add an extra parameter in front of the list -
+a constructor creates a new object, so there'd be nothing to pass!
+<P>
+Here's the source code for Doodle.
+You needn't study it carefully unless you plan to develop Java programs,
+but skim it at least to see how things are done:
+<P>
+<PRE>
+
+-- "Doodle" by David A. Wheeler
+
+with java.applet.Applet; use java.applet.Applet;
+with java.awt.Graphics; use java.awt.Graphics;
+with java.awt.Event; use java.awt.Event;
+with java.util.Vector; use java.util.Vector;
+
+package Doodle is
+  type Doodle_Obj is new Applet_Obj with private;
+  type Doodle_Ptr is access all Doodle_Obj'Class;
+
+  procedure init(Obj : access Doodle_Obj);
+  function  mouseDown(Obj : access Doodle_Obj; e : Event_Ptr;
+                      x : Integer ; y : Integer) return Boolean;
+  function  mouseDrag(Obj : access Doodle_Obj; evt : Event_Ptr;
+                      x : Integer ; y : Integer) return Boolean;
+  procedure paint(Obj : access Doodle_Obj; g : Graphics_Ptr);
+
+private
+  type Doodle_Obj is new Applet_Obj with record
+     -- Last position drawn:
+     Last_X, Last_Y  : Integer := 0;
+     -- Store all lines drawn so they can be redrawn:
+     Starting_Points, Ending_Points : Vector_Ptr := null;
+  end record;
+end Doodle;
+
+
+
+with interfaces.Java;  use interfaces.Java; -- for "+" on strings
+with java.awt.Point; use java.awt.Point;
+with java.lang; use java.lang;  -- Defines "Object"
+
+package body Doodle is
+
+  procedure init(Obj : access Doodle_Obj) is
+  begin
+    -- Initialize applet by setting up vector of start and end points.
+    Obj.Starting_Points := new_Vector(100, 100); -- Constructor.
+    Obj.Ending_Points   := new_Vector(100, 100);
+  end init;
+
+  function mouseDown(Obj : access Doodle_Obj; e : Event_Ptr;
+                     x : Integer ; y : Integer) return Boolean is
+    -- Memorize where the button was pressed for later use.
+  begin
+    Obj.Last_X := X;
+    Obj.Last_Y := Y;
+    return True;  -- "true" means we've handled mouseDown.
+  end mouseDown;
+
+  function mouseDrag(Obj : access Doodle_Obj; evt : Event_Ptr;
+                     x : Integer ; y : Integer) return Boolean is
+    Graphic_Image      : Graphics_Ptr := getGraphics(Obj);
+    Starting_Point : Point_Ptr := new_Point(Obj.Last_X, Obj.Last_Y);
+    Ending_Point   : Point_Ptr := new_Point(x, y);
+    -- Draw a line from last to current point, then store information.
+  begin
+    drawLine(Graphic_Image, Obj.Last_X, Obj.Last_Y, x, y);
+    -- Store the ending position in case the dragging continues.
+    Obj.Last_X := x;
+    Obj.Last_Y := y;
+    -- Store the line drawn so it can be repainted.
+    addElement(Obj.Starting_Points, Object_Ptr(Starting_Point));
+    addElement(Obj.Ending_Points,   Object_Ptr(Ending_Point));
+    return True;  -- "true" means we've handled mouseDrag.
+  end mouseDrag;
+
+  procedure paint(Obj : access Doodle_Obj; g : Graphics_Ptr) is
+    Starting_Point, Ending_Point : Point_Ptr := null;
+      -- Redraw the doodling.
+  begin
+    for I in 0 .. size(Obj.Starting_Points) - 1 loop
+      Starting_Point := Point_Ptr(elementAt(Obj.Starting_Points, I));
+      Ending_Point   := Point_Ptr(elementAt(Obj.Ending_Points, I));
+      drawLine(g, Starting_Point.x, Starting_Point.y,
+                  Ending_Point.x, Ending_Point.y);
+    end loop;
+  end paint;
+
+end Doodle;
+
+</PRE>
+<P>
+If you're interested and have a Java-capable browser,
+<A HREF="doodle.htm">you can try out the Doodle applet</A>.
+<P>
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+In Java package "java.awt" there is a class named "Color".
+The documentation for it says that one of its methods is also named
+"Color" and is defined as follows in the Java language:
+<P>
+<PRE>
+  public Color(int r, int g, int b);
+</PRE>
+<P>
+How could you call this method in Ada?
+<OL>
+<LI><A HREF="s16s6r1.htm">Color(0, 255, 64)</A>
+<LI><A HREF="s16s6r2.htm">Color(C, 0, 255, 64) where C is something of type Color.</A>
+<LI><A HREF="s16s6r3.htm">new_Color(0, 255, 64)</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s16s5.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s16s7.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson16.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 16 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s16s6.htm">http://www.adahome.com/Tutorials/Lovelace/s16s6.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

@@ -1,0 +1,157 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 12.2 - Using Access Variables to Create Unbounded Types</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 12.2 - Using Access Variables to Create Unbounded Types</FONT></H1>
+Let's imagine that we want to create a long list of
+Integer values, and we don't know exactly how many Integer values
+will be in the list when we set up the list.
+A type that can store varying amounts of information with no fixed limit
+is called an <EM>unbounded</EM> type.
+Arrays can be used to create a list of values if you know
+how many (at most) could be in the list, but arrays alone are not
+enough for easily implementing unbounded types.
+<P>
+You can implement Ada types that handle unbounded amounts of information
+using access types (access types are useful for other situations too, but
+this is certainly one of their uses).
+The basic idea is to create a type called a "node" that stores both:
+<OL>
+<LI>a single piece of the data you want to handle and
+<LI>one or more access values referring to related nodes.
+You can use the access values to "connect" your pieces of data together.
+</OL>
+<P>
+Let's start simply and define something that could handle a list of
+Integers (technically this example is a singly linked list of Integers).
+Let's create a "Node" type that can hold one piece of data - an Integer - and
+a reference referring to the "Next" node in the list.
+<P>
+<PRE>
+  type List_Node is
+    record
+      Data        : Integer;
+      Next        : List_Node_Access;  -- Next Node in the list.
+    end record;
+</PRE>
+<P>
+To create a List_Node we'll need an access type; I'm calling it
+List_Node_Access.
+Here's the definition of List_Node_Access (you have to put this
+before the declaration of List_Node):
+<P>
+<PRE>
+  type List_Node_Access is access List_Node;
+</PRE>
+<P>
+Now we have a problem.
+Type List_Node depends on the definition of type List_Node_Access, but
+type List_Node_Access depends on the definition of type List_Node.
+Note the circularity - each type's definition depends on the other.
+This is a common situation when using access types.
+By Ada rules, you have to declare something before you can use it, and this
+would appear insoluable.
+The way to solve this is to first use an ``incomplete type declaration''
+for the node (this is the same thing you'd do in C or Pascal).
+An incomplete type declaration simply promises the Ada compiler that the
+given type with the given name will be defined later.
+An incomplete type declaration has the keyword "type", the name of the
+type that you plan to declare later, and an immediately following semicolon.
+For example, here's how you'd define the types List_Node and List_Node_Access:
+<P>
+<PRE>
+  type List_Node;  -- An incomplete type declaration.
+  type List_Node_Access is access List_Node;
+  type List_Node is
+    record
+      Data        : Integer;
+      Next        : List_Node_Access;  -- Next Node in the list.
+    end record;
+</PRE>
+<P>
+After defining an access type,
+you can then declare variables of access types using the normal
+variable declaration syntax.
+For example, you can create two
+access variables named Current and Root by declaring them as follows:
+<P>
+<PRE>
+  Current, Root : Tree_Access;
+</PRE>
+<P>
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Is the following true or false?
+<P>
+<EM>
+A way to implement unbounded types is to define a record (often
+called a "node") that stores
+(1) a piece of data and (2) one or more access values
+to connect that piece of data to another related piece of data.
+Thus, access types can be used to create data types that hold an "unbounded"
+amount of information.
+</EM>
+<OL>
+<LI><A HREF="s12s2r1.htm">True</A>
+<LI><A HREF="s12s2r2.htm">False</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s12s1.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s12s3.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson12.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 12 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s12s2.htm">http://www.adahome.com/Tutorials/Lovelace/s12s2.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

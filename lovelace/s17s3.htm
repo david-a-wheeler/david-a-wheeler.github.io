@@ -1,0 +1,162 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 17.3 - Efficiency</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 17.3 - Efficiency</FONT></H1>
+In many circumstances it's important to maximize program efficiency, i.e.
+your program's execution time and/or memory utilization.
+<P>
+A trivial way to improve efficiency (also called performance)
+is to set your compiler options to aggressively optimize your program.
+This is an easy way to gain efficiency, since it takes only a few
+moments, doesn't change your source code at all, and most compilers
+don't turn on their most aggressive optimizations unless you request them.
+<P>
+Before using any other efficiency improvement technique,
+<EM>measure</EM> to see what uses most of the current resources.
+Most programs spend most of their time in a very small portion of the
+entire program - thus, if you want to improve execution time, you must
+spend your time working on those small portions.
+It's important to measure, because
+programmers often guess incorrectly on where most of the time is being spent.
+<P>
+The <EM>most effective efficiency improvement method</EM> is
+usually changing the algorithm (approach) used to solve the problem.
+<P>
+Jon Bentley has written two good books on general efficiency
+improvement techniques, titled
+<A HREF="biblio.htm#bentley1982"><EM>Writing Efficient
+Programs</EM> [Bentley 1982]</A>
+and
+<A HREF="biblio.htm#bentley1986"><EM>Programming
+Pearls</EM> [Bentley 1986]</A>.
+<P>
+Here are some Ada-specific capabilities for improving efficiency (performance):
+<OL>
+<LI><A HREF="http://www.adahome.com/rm95/rm9x-06-03-02.html">Pragma
+Inline</A> specifies that the code for a particular subprogram should be
+included immediately inline
+rather than performing a normal subprogram call (with its associated overhead).
+This can be beneficial for simple subprograms with only a few lines of code.
+<LI><A HREF="http://www.adahome.com/rm95/rm9x-02-08.html#23">Pragma
+Optimize</A> lets you specify if you want to optimize for speed
+or memory space.
+<LI><A HREF="http://www.adahome.com/rm95/rm9x-11-05.html">Pragma
+Suppress</A> lets you suppress various run-time checks.
+It's best to make sure your program works <EM>before</EM> suppressing
+run-time checks.
+You may want to only suppress selected checks for selected types or
+subprograms, which will let you keep most of Ada's safety features.
+Make sure that your program doesn't depend on run-time checks before you
+use pragma Suppress.
+For example, don't try to handle an exception for
+dividing by zero if you might suppress that check - instead,
+check if a value is zero before using it as a divisor.
+<LI><A HREF="http://www.adahome.com/rm95/rm9x-13-12.html">Pragma
+Restrictions</A> restricts the Ada program from using selected Ada capabilities.
+In some cases, the Ada compiler may produce faster and/or smaller
+code if it knows (via this pragma) that certain capabilities won't
+be used, as discussed in the
+<A HREF="http://www.adahome.com/LRM/95/Rationale/rat95html/rat95-p3-d.html#7">Ada
+Rationale part III, D.7</A>.
+<LI><A HREF="http://www.adahome.com/rm95/rm9x-13-02.html">Pragma
+Pack</A> can be used to decrease the amount of space used by
+a compound type (i.e. array or record).
+Note, however, that on some machines pragma Pack can slow
+the execution of a program down (due to packing and unpacking of bit strings).
+<LI>Like all languages except Fortran, when using multi-dimension arrays, vary
+the last dimension fastest.
+If you want to vary the first dimension fastest (say, if you're
+transliterating Fortran code),
+use "pragma Convention(Fortran, X)" where X is the array type.
+<LI>Types whose sizes are known at compile time (called constrained types)
+can be passed around more quickly than types whose sizes are not known
+(these are called unconstrained types).
+This is because for unconstrained types the Ada compiler must pass around
+their bounds as well as their data.
+This is <EM>especially</EM> true when returning an unconstrained type
+as a function return value; for technical reasons this is a relatively
+expensive operation to perform.
+Examples of unconstrained types include type String and any array type
+that isn't given an explicit bound at compile time.
+Examples of constrained types include Integer, Float, any access type,
+fixed-size arrays, and fixed-size records.
+</OL>
+<P>
+Some performance improvement suggestions can be found in
+<A HREF="http://www.adahome.com/FAQ/programming.html#slow">the
+"Ada Programmer Frequently-Asked Questions (FAQ)"</A> file.
+Many more suggestions
+can be found in the
+<A HREF="http://sw-eng.falls-church.va.us/AdaIC/docs/style-guide/95style/html/sec_10.html">Performance
+chapter of the AQ&amp;S guide</A>.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Which of the following techniques is likely to produce the most
+significant performance improvement?
+<OL>
+<LI><A HREF="s17s3r1.htm">Use pragma Optimize and compiler flags to increase optimization.</A>
+<LI><A HREF="s17s3r2.htm">Use pragma Suppress to turn off run-time checks.</A>
+<LI><A HREF="s17s3r3.htm">Change the way the problem is solved.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s17s2.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s17s4.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson17.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 17 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s17s3.htm">http://www.adahome.com/Tutorials/Lovelace/s17s3.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

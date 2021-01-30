@@ -1,0 +1,138 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 12.4 - Using Access Values</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 12.4 - Using Access Values</FONT></H1>
+Once you have an access type, you can do all sorts of interesting
+things with it.
+<P>
+One common use of access types is to "walk" down a list of nodes to do
+something to each data item.  A subprogram that examines each node in
+turn is sometimes called an <EM>iterator</EM>.
+Here's an example that prints in order
+the value of every node in a list of List_Nodes:
+<P>
+<PRE>
+  -- Assume that "Start" accesses the first node in the list.
+  Current := Start;  -- Set current to the start of the list.
+  while Current /= null loop -- while there is data:
+    Put(Current.Data);       -- Print the value of the Current node.
+    Current := Current.Next; -- Go to the next node in the list.
+  end loop;
+</PRE>
+<P>
+You can have more complex data structures than the simple list we've
+had so far by storing more than one access value in a node.  For example,
+a binary tree is a set of nodes, where each node has a way to locate its
+"parent" node, its "left child" node, and its "right child" node.
+Each node also has data it contains (for example, an Unbounded_String).
+Defining a record for a binary tree node using access values is easy:
+<P>
+<PRE>
+  type Tree_Node; -- Incomplete type declaration.
+  type Tree_Access is access Tree_Node;
+  type Tree_Node is
+    record
+      Parent      : Tree_Access;
+      Left, Right : Tree_Access;
+      Data        : Unbounded_String;
+    end record;
+</PRE>
+<P>
+Here's an example of statements using this tree data structure, if
+A and B are of type Tree_Access:
+<P>
+<PRE>
+  A := new Tree_Node;
+  B := new Tree_Node;
+  A.Data := To_Unbounded_String("Hello!");   -- assign some data
+  B.Data := To_Unbounded_String("Goodbye!");
+  A.Left := B;                               -- connect them.
+  B.Parent := A;
+</PRE>
+<P>
+If a data component is an access value, you can use it as you would any
+other access value.
+As a result, you can find statements with multiple dots (.) in them.
+For example, after running the program above, the value of
+A.Left.Data is "Goodbye!".
+<P>
+It's easy to incorrectly use access types and connect things the wrong way.
+Therefore, it's best to create subprograms that "do it correctly" and
+then use the subprograms instead.
+For example, you might create a subprogram that automatically creates
+new nodes, sets their data value, and connects them up to an existing
+node in the correct place.
+The best approach is to use pre-created reusable components that meet your
+needs if they're available.
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+In the tree data structure example above, what is the value of B.Parent.Data?
+<OL>
+<LI><A HREF="s12s4r1.htm">An empty Unbounded_String.</A>
+<LI><A HREF="s12s4r2.htm">"Hello!" as an Unbounded_String.</A>
+<LI><A HREF="s12s4r3.htm">"Goodbye!" as an Unbounded_String.</A>
+<LI><A HREF="s12s4r4.htm">None; an exception would be raised.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s12s3.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s12s5.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson12.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 12 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s12s4.htm">http://www.adahome.com/Tutorials/Lovelace/s12s4.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

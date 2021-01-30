@@ -1,0 +1,121 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 7.5 - Standard Object-Oriented Format</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 7.5 - Standard Object-Oriented Format</FONT></H1>
+Ada has types, packages, and lots of other things; how do you use
+them all together?
+What I suggest is that, barring other information, you use a
+standard format for defining object-oriented types in Ada.
+<P>
+Here's a "standard format" that I use for an OO Ada type definition,
+which you can
+vary to meet your needs (capitalized italics are what you supply):
+<P>
+<PRE>
+  with <I>PACKAGE_NAME_OF_PARENT</I>;
+  use  <I>PACKAGE_NAME_OF_PARENT</I>;
+  package <I>PACKAGE_NAME</I> is
+    type <I>MY_TYPE</I> is tagged private; -- or, new Parent_Type with private
+    type <I>MY_TYPE</I>_Access is access all <I>MY_TYPE</I>'Access;
+        -- We'll talk about this in a later lesson; by adding this declaration
+        -- here you'll make certain operations easier to do later.
+    -- Dispatching operations go here.
+  private
+    -- Define the details of MY_TYPE here.
+  end <I>PACKAGE_NAME</I>;
+</PRE>
+<P>
+For the package name, I generally use the plural of the type name.
+Here's an example:
+<P>
+<PRE>
+  with Creatures;
+  use  Creatures;
+
+  package Players is
+    type Player is new Creature with private; -- Player is a type of Creature
+    type Player_Access is access all Player'Access;
+    -- Dispatching operations go here.
+    procedure Look(P : in Player);
+  private
+    type Player is new Creature with
+     record
+       Logged_In : Boolean;
+     end record;
+  end Players;
+</PRE>
+<P>
+Ada permits multiple OO types to be defined in a package, but that
+doesn't mean you <EM>must</EM> do so.
+As a general rule, put different type definitions in different
+packages unless the two types are strongly interrelated.
+<P>
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Given the example above, what is the name of the new tagged type defined above?
+<OL>
+<LI><A HREF="s7s5r1.htm">Creatures</A>
+<LI><A HREF="s7s5r2.htm">Players</A>
+<LI><A HREF="s7s5r3.htm">Player</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s7s4.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s7s6.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson7.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 7 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s7s5.htm">http://www.adahome.com/Tutorials/Lovelace/s7s5.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

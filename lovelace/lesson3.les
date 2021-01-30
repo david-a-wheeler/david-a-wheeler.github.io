@@ -1,0 +1,255 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic and other WWW browsers.>
+
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=3>
+
+<COMMENT $Id: lesson3.les,v 1.6 1995/05/17 21:25:18 wheeler Exp $ >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+
+<SECTION NAME="Ada Lexical Elements">
+Now that we've seen a little about the ``big picture'' of Ada structure --
+essentially Ada from the ``top down'' -- let's look at Ada from the
+other direction -- ``bottom up.''
+<P>
+Ada compilation units are, at the lowest level, composed of a sequence
+of <EM>lexical elements</EM>.
+Lexical elements include identifiers (such as the name of a procedure),
+reserved words, and various punctuation marks.
+Reserved words include ``procedure'', ``package'', ``end'', ``if'', and
+so on.
+<P>
+Ada is a free-form language like Pascal, C, and C++;
+line breaks and spaces can go essentially wherever you like between
+lexical elements.
+If identifiers or keywords are next to each other,
+they must be explicitly separated by
+one or more spaces and/or end-of-line markers.
+<P>
+Ada is also case-insensitive;
+except for the contents of strings (which are inside quotes),
+upper and lower case keywords and identifiers are equivalent.
+<P>
+Ada as a language permits a great deal of freedom, but some consistency
+of capitalization and indentation are helpful for reading later.
+The style used in this tutorial is the style suggested in the
+<A HREF="http://www.adahome.com/Resources/References.html#style">Software
+Productivity Consortia's (SPC)
+<I>Ada Quality and Style: A Guide to Professional Programmers</I></A>
+(which is the recommended style guide by the Ada Joint Program Office).
+In this style keywords are in lower case, identifiers
+have initial capitals, and there is at most one statement per line.
+If an identifier has more than one word in it, each word should have
+an initial capital letter and the words should have underscores
+(``_'') between them.
+<QUESTION Type=Multiple-Choice>
+From a compiler's point of view, are procedures 1 and 2 identical or not?
+<P>
+Procedure 1:
+<P>
+<PRE>
+ with Text_IO;
+ procedure Hello is
+ begin
+  Text_IO.Put("This is a test!");
+ end Hello;
+</PRE>
+<P>
+Procedure 2:
+<P>
+<PRE>
+ WITH TEXT_IO; PROCEDURE hello IS           BeGiN
+ TEXT_IO.put("This is a test!"); END hello;
+</PRE>
+<CHOICES>
+<CHOICE ANS=1>They are identical to the compiler.
+<CHOICE ANS=2>They are different to the compiler.
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right. Outside of a string, capitalization and indentation don't matter.
+<WHEN ANS=2>
+No, sorry.
+Remember, outside of a string, capitalization and indentation don't matter.
+</RESPONSES>
+<SECTION NAME="Identifiers">
+Ada requires names for procedures, packages, and many other constructs.
+These names are called <EM>identifiers</EM>.
+Sample identifiers include ``Hello'', ``Launch_Torpedo'', and ``X12''.
+Identifiers must begin with a letter, though after that
+initial letter they may also contain digits and underscores.
+As noted in the last section, upper and lower case are considered equivalent.
+<P>
+Here is the required syntax for an identifier
+<A HREF="bnf.htm">in BNF format</A>:
+<P>
+<EM>
+identifier ::= letter { [ "_" ] letter_or_digit }
+<BR>
+letter_or_digit ::= letter | digit
+</EM>
+<P>
+All characters of an identifier are significant, and Ada compilers must
+support lines and identifier lengths of at least 200 (!) characters.
+Hopefully you won't use that many, of course, but the idea is to be very flexible.
+<P>
+One implication of this syntax is that
+underscores must not be adjacent to each other.
+This was intentional, because on some
+printers two adjacent underscores look the same as one underscore.
+Underscores also can't begin or end an identifier.
+<P>
+You can use single letters as identifiers, but don't abuse this ability.
+If your program uses only single-letter identifiers it will be very difficult
+to decipher later.
+It's best to use identifiers that clearly state what they store or what
+they do.  Also, while the Ada language permits the single letters "L"
+and "O" to be identifiers, I recommend against it - a lower case letter "L" is
+nearly indistinguishable from the digit one (1), and an upper case
+letter "O" is nearly indistinguishable from the digit zero (0) on some systems.
+<QUESTION Type=Multiple-Choice>
+Here are some lists of identifiers:
+<OL>
+<LI> Hello, 2Run, Really_Quit
+<LI> Refresh_Screen, X22
+</OL>
+<P>
+Which of the preceding lists have only legal identifiers
+(ignoring the commas, which are there to separate the identifiers)?
+<CHOICES>
+<CHOICE ANS=1>List 1
+<CHOICE ANS=2>List 2
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry. Identifiers must start with a letter, and the `2' in
+`2Run' isn't considered a letter.
+<WHEN ANS=2>
+Right!
+</RESPONSES>
+
+<SECTION NAME="Numeric Literals">
+A number that is included in a program's source code
+is called a ``numeric literal''.
+There are two kinds of numeric literals: real literals and integer literals.
+A real literal includes a point (``.''), while an integer literal does not.
+Sample integer literals include ``2'' and ``400''.
+<!-- Removed "-7" from above list of integer literals -->
+Sample real literals include ``2.0'', ``400.0'', and ``3.14159''.
+<P>
+Traditional exponent operators (such as 1.0E9) are permitted in
+numeric literals.
+Exponents are even allowed for integer literals, though for integer
+literals the exponent must not be negative.
+<P>
+To make long numbers easier to read, underscores are permitted inside
+a numeric literal. For example, "1_000_000" is legal.
+This is similar to the way commas are used in the United States and periods
+are used in Europe.
+Underscores aren't allowed to be consecutive,
+numbers may not end in an underscore, and underscores don't
+change the value of a number.
+<P>
+A useful Ada capability is its ability to write out literals in
+other bases from 2 to 16 (C has this capability to a lessor extent as well).
+These are called, reasonably enough, <EM>based literals</EM>.
+To create a based literal, write out the desired base,
+a "#" sign, the number in the requested base, and another "#" sign.
+For example, "2#1001_1000#" is a base 2 number equal to 128+16+8 = 152.
+<P>
+For completeness, here's the <A HREF="bnf.htm">BNF</A> of numeric literals:
+<P>
+<EM>
+numeric_literal ::= decimal_literal | based_literal
+<BR>
+decimal_literal ::= numeral [ . numeral ] [ exponent ]
+<BR>
+numeral ::= digit { digit | "_" }
+<BR>
+exponent ::= "E" [ "+" | "-" ] numeral
+<BR>
+based_literal ::= base "#" based_numeral "#" [ exponent ]
+<BR>
+base ::= numeral
+<BR>
+based_numeral ::= extended_digit { extended_digit | "_" }
+<BR>
+extended_digit ::= digit | "A" | "B" | "C" | "D" | "E" | "F"
+</EM>
+<QUESTION Type=Multiple-Choice>
+Here are two lists of numbers:
+<OL>
+<LI> 5.5, 200_000.12, 2#1000_0100#, 8#123#
+<LI> 60, 12, 0x50
+</OL>
+<P>
+Which of those lists has only legal numeric literals?
+<CHOICES>
+<CHOICE ANS=1>List number 1.
+<CHOICE ANS=2>List number 2.
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right.
+<WHEN ANS=2>
+No, sorry, 'x' isn't allowed in numeric literals.
+In the programming languages C and C++,
+hexadecimal "50" is written as 0x50.
+The way to write the same literal in Ada is 16#50#.
+</RESPONSES>
+
+<SECTION NAME="Character and String Literals">
+Sometimes a literal of a single character is needed.
+A single character is represented using by enclosing it in single
+quotes ('). For example, 'a' represents the lower case letter A.
+This is true even if it's a single quote character, so <TT>'''</TT>
+represents a single quote character.
+<P>
+Strings are enclosed in double quote characters (").
+To include a double quote character in a string, type it twice ("")
+inside the larger string.
+Thus "Hello" is a string, as is "She said, ""How are you?""".
+An empty string is simply written as "".
+<P>
+We'll find out later how to represent control characters, but
+for now we'll note that C-like escape characters do <EM>not</EM> work.
+You can do the same thing in Ada but in a different way, and because of
+the way Ada works they aren't used as often.
+<QUESTION Type=Multiple-Choice>
+Given the following items:
+<OL>
+<LI>
+"Hello"
+<LI>
+'''
+<LI>
+"Please press ""RETURN"""
+<LI>
+""
+<LI>
+"wokka""
+</OL>
+<P>
+Which of the following is true?
+<CHOICES>
+<CHOICE ANS=1>Items 1, 3, and 4 are string literals, item 2 is a character literal, and item 5 is neither.
+<CHOICE ANS=2>Items 1 and 4 are string literals, item 2 is a character literal, and items 3 and 5 are neither.
+<CHOICE ANS=3>They are all legal string or character literals.
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Good job!
+<WHEN ANS=2>
+Nope. Inside a string, two double quotes in a row are used to denote
+a double quote character.
+<WHEN ANS=3>
+No, sorry.
+In particular, go back and look at item 5 -
+you'll notice that it has an uneven number of double quotation marks.
+</RESPONSES>

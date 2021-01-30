@@ -1,0 +1,162 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 8.5 - Unbounded_String Basics</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 8.5 - Unbounded_String Basics</FONT></H1>
+The Unbounded_String type is defined in the package
+Ada.Strings.Unbounded, so you'll need to ``with'' package
+Ada.Strings.Unbounded to use the Unbounded_String type.
+Package Ada.Strings.Unbounded also provides a number
+of useful basic operations on Unbounded_String.
+<A HREF="http://www.adahome.com/rm95/rm9x-A-04-05.html">The
+Ada RM section A.4.5
+provides a complete definition of package Ada.Strings.Unbounded.</A>
+<P>
+Here are a few important operations:
+<UL>
+<LI>
+Function To_Unbounded_String takes something of type String and converts
+it into type Unbounded_String.
+This is useful for a variety of purposes, for example, for
+setting Unbounded_String values to some constant value,
+as we'll show later.
+<LI>
+Function To_String is the reverse; it
+takes something of type Unbounded_String and converts it to type String.
+<LI>
+Function Length takes an Unbounded_String and returns
+the number of characters currently stored in the Unbounded_String.
+<LI>
+Procedure Append takes two arguments; it appends to the end of
+its first argument the contents of the second argument.
+The first argument has to be an Unbounded_String;
+the second argument can be a String or an Unbounded_String.
+<LI>
+Function Element extracts from a given Unbounded_String (its <EM>Source</EM>)
+the character at a given position (its <EM>index</EM>).
+The leftmost character has an index of 1, just like Pascal;
+C and C++ start their indexes at zero.
+Here's the official definition of Element:
+<PRE>
+  function Element (Source : in Unbounded_String; Index  : in Positive)
+                    return Character;
+</PRE>
+<LI>
+Procedure Replace_Element is the opposite of Element; it lets you
+modify a character at a given position.
+Here's the official definition of Replace_Element:
+<PRE>
+  procedure Replace_Element (Source : in out Unbounded_String;
+                             Index  : in Positive;
+                             By     : in Character);
+</PRE>
+<LI>
+Function Slice takes a given Unbounded_String and returns a ``slice''
+of it, i.e., all the characters between a given low and high index.
+Slice returns a String, so if you want to use its result as an
+Unbounded_String, use To_Unbounded_String on the result.
+<PRE>
+  function Slice (Source : in Unbounded_String;
+                  Low    : in Positive;
+                  High   : in Natural) return String;
+
+</PRE>
+<LI>
+Procedure Insert takes a New Item (of type String) and inserts it
+into an Unbounded_String before a given index.
+If the string isn't empty, this will change the Unbounded_String's length.
+This procedure's definition is:
+<PRE>
+  procedure Insert (Source   : in out Unbounded_String;
+                    Before   : in Positive;
+                    New_Item : in String);
+</PRE>
+<LI>
+Procedure Delete takes an Unbounded_String and two indexes, and deletes
+the characters between those two index positions (including the end points).
+Its definition is:
+<PRE>
+Procedure Delete
+  procedure Delete (Source  : in out Unbounded_String;
+                    From    : in Positive;
+                    Through : in Natural);
+</PRE>
+</UL>
+<P>
+Comparison operations (such as "=" and "&lt;") are defined in this package.
+There are other routines to modify or search Unbounded_Strings, including
+"&amp;" (concatenate two Unbounded_Strings together),
+Translate, Trim, Head, Tail, Index, and Find_Token.
+<P>
+You can use assignment (:=) as well to assign one value to another.
+Unlike type String, the lengths of the Unbounded_String's need not be equal.
+
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Given a variable ``Input'' of type Unbounded_String,
+what expression would return the value of the fourth character in Input?
+<OL>
+<LI><A HREF="s8s5r1.htm">Element(Input, 4)</A>
+<LI><A HREF="s8s5r2.htm">Replace_Element(Input, 4, 'L')</A>
+<LI><A HREF="s8s5r3.htm">Element(4, Input)</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s8s4.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s8sf.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson8.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 8 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s8s5.htm">http://www.adahome.com/Tutorials/Lovelace/s8s5.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

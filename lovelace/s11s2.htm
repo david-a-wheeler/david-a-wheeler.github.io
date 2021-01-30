@@ -1,0 +1,138 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 11.2 - Generic Formal Parameters</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 11.2 - Generic Formal Parameters</FONT></H1>
+We will only look a little bit at generics, just enough so you'll
+understand what they can do.
+However, it's difficult to read and use generics if you don't understand
+what can be used in a generic formal parameter
+(i.e. the stuff right after the keyword "generic").
+Here are the things that can be
+included in a generic formal parameter list:
+<UL>
+<LI>Values or variables of any type. These are called `formal objects'.
+For example, a maximum size might be a useful formal object.
+<LI>Any type. These are called `formal types'.
+<LI>Packages which are instances of other generic packages.
+These are called `formal packages'; we won't discuss them further here.
+</UL>
+<P>
+Here's an example of a formal_object_declaration:
+<P>
+<PRE>
+   Maximum_Size : Integer;
+</PRE>
+<P>
+Here's the syntax for defining a value or variable as a formal object
+in <A HREF="bnf.htm">BNF</A> format:
+<P>
+<PRE>
+  formal_object_declaration ::= identifier_list ":" [ "in" | "in out" ]
+                                type_name [ ":=" default_expression ] ";"
+</PRE>
+<P>
+We've already seen an example of a formal type declaration.
+Formal types specify the name of a type and what ``kind of type'' is permitted.
+A formal
+type declaration specifies the "minimum" or "worst case" kind of
+type that is required.
+The most minimal type in Ada is called a "limited private" type.
+This is the "worst case" because the keyword "private"
+means that you may not know anything about how it's implemented,
+and "limited" means that there might not be
+assignment or equality operations defined for it.
+<P>
+A formal type declaration has the following syntax (this is actually
+highly simplified; many more things are permitted):
+<P>
+<PRE>
+  formal_type_declaration ::= "type" defining_identifier "is"
+                              formal_type_definition ";"
+
+  formal_type_definition ::= ["tagged"] ["limited"] "private" | "(&lt;&gt;)"
+</PRE>
+<P>
+Let's look at some examples, with their meaning written beside them:
+<P>
+<PRE>
+  type Item is limited private;  -- Item can be any type.
+  type Item is private;          -- Item can be any type that has assignment
+                                 -- (:=) and equal-to (=) operation.
+  type Item is tagged limited private; -- Item can be any tagged type.
+  type Item is tagged private;   -- Item can be any tagged type with :=.
+  type Item is (&lt;&gt;);             -- Item can be any discrete type, including
+                                 -- Integer and Boolean.
+</PRE>
+<P>
+In the next section we'll look at an example that should make these
+things clearer.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+If you want to create a generic with a formal type named Unit
+that could be any type at all, how would you declare it?
+<OL>
+<LI><A HREF="s11s2r1.htm">type Unit is limited private;</A>
+<LI><A HREF="s11s2r2.htm">type Unit is private;</A>
+<LI><A HREF="s11s2r3.htm">type Unit is (&lt;&gt;);</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s11s1.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s11s3.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson11.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 11 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s11s2.htm">http://www.adahome.com/Tutorials/Lovelace/s11s2.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

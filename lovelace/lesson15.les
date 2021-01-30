@@ -1,0 +1,227 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<COMMENT  Edit the following lines. >
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=15>
+<COMMENT $Id$ >
+
+<COMMENT  You'll probably want to uncomment and edit these lines: >
+<COMMENT  <PREVIOUS_LESSON LOCATION="URL_of_directory/" >
+<COMMENT  <NEXT_LESSON LOCATION="URL_of_directory/" >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+<COMMENT Each section has a title; SECTION starts a new section.>
+
+<SECTION NAME="Ada Program Structure">
+Because this is a tutorial I've used very short programs and program
+fragments to demonstrate specific points.
+Real Ada programs are developed instead as a set of (many) Ada packages.
+Each package has a declaration that publicly declares the facilities
+it makes available, and each package has a body to implement that public
+declaration.
+<P>
+Packages are the principle structuring facility in Ada.
+Packages are intended to be used to directly support abstraction,
+information hiding, and modularization.
+For example, packages are useful for encapsulating machine dependencies.
+<COMMENT This is a quote from AQ&S chapter 4 >
+<P>
+It isn't easy to describe program structuring issues, because that's
+really a program design question, not just a language question.
+Some recommendations are given in
+<IFDEF BOOK>
+<EM>Ada Quality and Style: Guidelines for Professional Programmers.</EM>
+particularly in
+Chapter 4 ("Program Structure").
+<ELSE>
+<EM>Ada Quality and Style: Guidelines for Professional Programmers</EM>,
+particularly in
+<A HREF="http://sw-eng.falls-church.va.us/AdaIC/docs/style-guide/95style/html/sec_4.html">Chapter 4 ("Program Structure")</A>.
+<ENDIF>
+Here are some of those guidelines:
+<P>
+<UL>
+<LI>
+Packages should serve a single purpose.
+You should avoid creating packages that are
+simply collections of unrelated objects and subprograms.
+<LI>
+You should use a package to group together closely related types.
+For example, you might have a
+"vector" type (a one-dimensional list of numbers)
+and "matrix" type (a two-dimensional list of numbers).
+In this case, you could have a single package
+called <EM>Matrix_Manipulation</EM> with both types defined in it.
+<LI>
+Put only what is needed for the use of a package into its
+specification; hide the implementation details from the users.
+<LI>
+In general,
+avoid defining a variable in a package specification, since that
+creates a global variable visible to anyone who <EM>with</EM>s the package.
+<LI>
+Minimize the number of declarations in a package specification.
+<LI>
+Only use <EM>with</EM> clauses where they are needed.
+In particular, if you can move a <EM>with</EM> clause so that it's used by
+the package body instead of the package specification,
+you should do so.
+<LI>
+Don't use "use" clauses too liberally.
+</UL>
+<P>
+
+Note that Ada is different from some other languages.
+Ada separates the concept of <EM>type</EM> from
+the concept of <EM>module</EM> (package); some other languages
+merge the two concepts (particularly Eiffel, and to a lessor degree C++).
+Each approach has its advantages and disadvantages, which we
+won't delve into here.
+<P>
+
+<QUESTION Type=Multiple-Choice>
+Which of the following statements is <EM>false</EM>?
+<OL>
+<LI>Hide the implementation details from the users -
+Put only what is needed for the use of a package into its specification.
+<LI> You should avoid creating packages that are
+simply collections of unrelated objects and subprograms.
+<LI>Packages are rarely used in real Ada programs.
+</OL>
+<CHOICES>
+<CHOICE ANS=1>Statement 1.
+<CHOICE ANS=2>Statement 2.
+<CHOICE ANS=3>Statement 3.
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN ANS=1>
+No, that's the point of separating the package declaration (specification)
+from its body.
+<WHEN ANS=2>
+No, that will probably make the system hard to maintain later.
+Your system will become too dependent on that one package, so any changes
+are likely to cause massive recompilation times,
+and it's hard for people to understand your system that way.
+<WHEN ANS=3>
+Correct; packages are used all the time in real Ada programs.
+</RESPONSES>
+
+<SECTION NAME="Child Packages">
+Ada 95 has added a new capability called a "Child Package."
+A child package is a package that is conceptually part of its parent
+package, but a child package can be compiled
+separately (after its parent has been compiled)
+without recompiling or modifying the parent.
+<P>
+Child packages provide another mechanism for
+breaking a complicated system into components.
+Here are some uses for child packages:
+<OL>
+<LI>
+You can put "normal" operations in a package, and "special" operations
+that not everyone should use in a child package.
+That way, most customers will see the normal operations and only be
+able to use the "special" operations if they specifically request them.
+<LI>
+You can create a new set of operations in a child package without
+changing the parent package.
+That means that you don't have to recompile the parent package or anything
+that depends on the parent package, reducing recompilation time.
+</OL>
+<P>
+Child packages are especially useful if you define
+a private tagged type in a package.
+A child package can "see" the definition of a private tagged type,
+because conceptually the child package is part of the parent package.
+As a result, a child package can use ``inside information'' not available
+to just any package.
+Use this capability with care; don't abuse it.
+<P>
+We'll go over child packages briefly here, but feel free to skim this section
+and return later if you like.
+<P>
+To understand how child packages work, let's first repeat the fundamentals.
+Any package can have a declaration (specification) and a body, and the
+package declaration can have both a public part and a private part.
+Normally the private part of the package declaration can only be seen by
+the body of package X;
+anyone who "with"s package X may only see the public part.
+<P>
+A child package adds a few twists. First,
+a child package is considered to have "automatically with'ed" its parents.
+In the public part of a child package you can only see the public part of your
+ancestors, just as though the package had the statement
+"with Parent" at the top.
+The real difference, though, is what happens in the child package
+declaration (specification) private part and body - in those places,
+the <EM>private</EM> part of the child packages' ancestors
+are made visible.
+That's an important difference - normally packages do <EM>not</EM>
+at any time have visibility to the private parts of other packages.
+<P>
+Let's go through an example to make this clearer.
+Let's say you have a package named "X".
+Package X can have a declaration (specification) and a body.
+Package X's declaration can have a public part and a private part.
+Normally only package X's body can see the private part of the package
+declaration; anyone who "with"s package X may only use the public part.
+<P>
+<IMG ALIGN=right SRC="childp.gif" ALT="[Child Package]" WIDTH=283 HEIGHT=168>
+Now, let's define a child package of X, called "X.Y".
+Package X.Y's public part can see the public part of X automatically, and
+the private part of X.Y and the body of X.Y can automatically see the
+private part of package X.
+This isn't considered a violation of Ada's safety rules,
+because X.Y is considered to be part of X.
+<P>
+The syntax for declaring a child package is the same as ordinary packages,
+you just name the child package using dotted notation:
+<P>
+<PRE>
+  package X.Y is ....
+  end X.Y;
+</PRE>
+<P>
+<IMG ALIGN=right SRC="pchildp.gif" ALT="[Private Child Package]" WIDTH=283 HEIGHT=183>
+You can also have <EM>private</EM> children (the normal kind of children
+are called <EM>public</EM> children).
+Private children are intended for "internal" packages that should only
+be "with'ed" by a restricted number of packages.
+Private children can only be "with'ed" by the body of its parent or by
+descendents of the private child's parent.
+In exchange for such a restrictive requirement, a
+private child gets a new authority:
+a private child's specification automatically sees both the public and
+private parts of all of its ancestors' specifications.
+To declare a private package, just prepend the word "private":
+<P>
+<PRE>
+  private package X.Z is ....
+  end X.Z;
+</PRE>
+<P>
+You can <EM>with</EM> a child package by specifying its parents in dotted
+notation.
+Whenever you name a child package in a "with" statement, you
+automatically "with" all of its ancestors.
+For example, if package "Ada" has a child package
+named "Strings", which then has a child
+package named "Unbounded", you would say:
+<PRE>
+  with Ada.Strings.Unbounded;
+</PRE>
+<P>
+When you "with" Ada.Strings.Unbounded, you automatically "with" the
+packages "Ada" and "Ada.Strings".
+That doesn't mean that you automatically "use" them; you can then "use"
+whichever packages you wish.
+<P>
+<P>
+There's a lot more about child packages that we won't cover now.
+<A HREF="http://www.adahome.com/LRM/95/Rationale/rat95html/rat95-p1-2.html#7">The
+Ada Rationale section II.7</A> describes child packages
+(also called hierarchical libraries) in more detail if you are curious.
+

@@ -1,0 +1,237 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 16.4 - Java and Ada</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 16.4 - Java and Ada</FONT></H1>
+<P>
+Sun's Java technology has become a "hot" topic. Java makes it possible for
+users to run programs just by browsing the World Wide Web (WWW). Using Java,
+WWW users can use sophisticated user interfaces and handle arbitrary data
+formats (the data and the program to handle the data can be sent together!).
+Java can also be used to distribute computer platform independent software
+(i.e. the same software would run on an IBM-compatible PC, Apple Macintosh,
+and arbitrary Unix machine).</P>
+<P>It turns out that Java programs can be created using Ada. To understand
+what that means, we'll first need to define some terms.</P>
+<H2>Java Terminology</H2>
+<P>You can use Java to develop <I>applications</I> and <I>applets</I>:</P>
+<OL>
+<LI>An <I>application</I> is a traditional kind of program. Users install Java applications in a
+manner similar to any other application, and a Java application can read
+files, write files, and so on. It's possible for a single Java application
+to run on many different computer platforms. 
+<LI>An <I>applet</I> is a program that automatically starts running
+when a WWW user views a
+page containing the applet. The user does not install the applet; in fact,
+the user isn't even asked if he or she wants the applet to run. To keep
+this from becoming a security problem, applets are restricted from performing
+certain tasks.
+At this time, applets generally can't read or write to local
+disk files, they can't print, and they can only communicate over
+a network to the computer where they came from. 
+In some cases users may grant their applets additional privileges; the
+key is that applets are normally restricted to keep them becoming a
+security problem.
+</OL>
+<P>The Java Technology, as developed by Sun, can be divided into four components:</P>
+<OL>
+<LI><I>Specifications for the Java Virtual Machine (JVM) and class files</I>.
+The JVM is an abstract computer that executes programs stored in "class"
+files. The JVM can be implemented on real computers in many different ways,
+and that's the point: as long as your computer faithfully recreates this
+abstract computer, it can run programs stored in class files. For example,
+the JVM might be implemented as an interpreter built into a web browser,
+or as a separate program that interprets the class files. Your computer
+could implement the JVM by transforming the class files into an executable
+program specific for that machine just before running them (this is called
+a "just-in-time" compiler). In fact, your computer hardware might even use
+JVM directly. As long as you have an implementation of the JVM, you can run Java programs,
+because Java programs are stored in class files. Class files are also called J-code files.
+<LI><I>The Java language</I>. The Java language is an object-oriented computer programming language
+that resembles C++ and Objective-C in syntax. It resembles Ada in its emphasis
+on safety (for example, neither have pointers), and a strong Smalltalk influence
+is evident as well.
+<LI><I>A compiler that generates class files</I>. The JVM runs class files, so you need a way to create them. Sun has developer
+a compiler that takes programs written in the Java language and generates
+Java class files. Other vendors have also developed compilers that generate
+class files.
+<LI><I>The Java library</I>. The Java technology includes a set of components for simple platform-independent
+graphical user interface (GUI) handling as well as other useful components. 
+</OL>
+<P>Many people use the term "Java" for each of these different components and
+for the technology as a whole. You'll need to determine what they mean by
+its context.
+The key point is that when people "run a Java program", they're actually
+running a set of class files on their version of the JVM.
+</P>
+<P>An Ada compiler that accepts Ada code as its input and generates Java class
+files as its output makes it possible to generate Java programs using Ada.
+<A HREF="http://www.inmet.com/java.html">Intermetrics' Ada compiler, AppletMagic</A>,
+does this, and other Ada compilers may follow.</P>
+<P>Since programs only know about each other through their Java class files,
+programs written in the Java language and Ada language can freely communicate
+with each other. Java programs can easily call Ada programs just by looking
+at their class files. To permit Ada programs to call existing Java programs,
+Ada programs need an Ada specification. AppletMagic includes a tool called
+java2ada that generates Ada specifications from class files, and any other
+Ada-to-Java compilers would probably include similar tools.</P>
+
+<IMG SRC="java.gif" ALT="[Relationship of Java Technology Components]" WIDTH=300 HEIGHT=300>
+<H2>Java-Ada Correspondence</H2>
+<P>Many concepts in Ada and Java are quite close.
+Java's "primitive data types" generally have simple corresponding Ada
+types: Java "boolean" corresponds to Ada "Boolean", Java "float" to Ada "Float",
+Java "char" to Ada "Wide_Character", and Java "int" to Ada "Integer".
+All other Java data types are passed by reference, which corresponds to
+passing around Ada's access types.
+Both Ada and Java support hierarchical packages.
+<P>
+The Java library is a critical part of Java technology, so standard conventions
+are needed to define how an Ada program can call a Java library component.
+That way, when you read about a Java library component in a Java book, you
+can easily determine how to call it from Ada.
+The convention used by AppletMagic is that a Java class "C" in Java package
+"P" is translated to an Ada package named "P.C". Inside that Ada package is
+an Ada tagged type named <I>C</I>_Obj and an access type named
+<I>C</I>_Ptr. Java methods that return nothing (have "void" in front
+of their method name) become
+Ada procedures, while Java methods that return something
+(i.e. have some type name in front of the method name)
+usually become Ada functions.
+Java methods, unless they're defined as "static", have an implicit
+initial parameter identifying the object being handled;
+this translates to an Ada subprogram with an additional first parameter of type
+"access <I>CLASS_BEING_DEFINED</I>_Obj".
+All other parameters have the corresponding Ada type if they're a Java
+primitive type or <I>CLASS_NAME</I>_Ptr if they're a Java class.
+<P>
+For example, here's an abbreviated definition of Java class "Applet" in
+Java package "java.applet".
+Don't be confused by the use of the phrase "applet" in two different ways;
+Java package "java.applet" contains a number of classes, including
+the class "Applet".
+In the Java language, class Applet is defined as:</P>
+<PRE>
+ package java.applet;
+ public class Applet extends Panel {
+   public void init();  // initialize the Applet.
+   public boolean IsActive();
+   public void resize(int width, int height);
+   public Image getImage(URL url);
+   public void showStatus(String msg);
+ }
+</PRE>
+<P>This is translated into the following Ada package:</P>
+<PRE>
+ with java.awt.Panel; use java.awt.Panel;  -- Package with Parent Type.
+ with java.lang.String; use java.lang.String;  -- Java Strings.
+ with java.net.URL; use java.net.URL;
+
+ package java.applet.Applet is
+  type Applet_Obj is new Panel_Obj with null record;
+  type Applet_Ptr is access all Applet_Obj'Class;
+
+  procedure init(Obj : access Applet_Obj); -- initialize the Applet.
+  function isActive(Obj : access Applet_Obj) return Boolean;
+  procedure resize(Obj : access Applet_Obj; width : Integer; height : Integer);
+  function getImage(Obj : access Applet_Obj; url : URL_Ptr) return Image_Ptr;
+  procedure showStatus(Obj : access Applet_Obj; msg : String_Ptr);
+ end java.applet.Applet;
+</PRE>
+<P>
+Now that you know how they correspond, you can call or override
+the Java library routines from Ada.
+I suggest that you try to use the same conventions for your own packages
+if you're writing Java programs in Ada; while in many cases it's not necessary,
+it makes your program more uniform and easier to understand.
+The correspondence described here is from AppletMagic, but it's reasonable
+to expect that any other Ada compiler that generates Java would use the
+same conventions (these conventions were defined by the designer of Ada 95!).
+<P>
+More specific details of the correspondence between Java and
+Ada, including information on constructors, is described in a paper by
+<A HREF="biblio.htm#taft1996">Tucker Taft [1996]</A>.
+<A HREF="http://www.inmet.com/javadir/download/api/index.htm">Documentation
+on the Ada interface to the Java library is available</A>.
+More Ada/Java information can be found at the
+<A HREF="http://www.adahome.com/Resources/Ada_Java.html">Home
+of the Brave Ada Programmers' Java section</A> and
+the <A HREF="http://www.acm.org/sigada/wg/web_ada/index.html">SIGAda
+Web Working group page</A>. As noted above,
+<A HREF="http://www.inmet.com/java.html">information about
+Intermetrics' AppletMagic</A> is available as well. More
+information about Java in general can be found in the
+<A HREF="http://sunsite.unc.edu/javafaq/javafaq.html">Java FAQ</A>
+and <A HREF="http://www.javasoft.com/">Sun's Java site</A>. A
+large collection of sample Java applets is available at
+<A HREF="http://www.gamelan.com/">Gamelan</A>.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Let's say that you want to write a program that is automatically run when
+a user views a page on the World Wide Web (WWW). Which of the following
+kind of program do you want to create?
+<OL>
+<LI><A HREF="s16s4r1.htm">Application</A>
+<LI><A HREF="s16s4r2.htm">Applet</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s16s3.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s16s5.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson16.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 16 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s16s4.htm">http://www.adahome.com/Tutorials/Lovelace/s16s4.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

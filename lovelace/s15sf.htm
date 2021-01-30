@@ -1,0 +1,183 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 15.2 - Child Packages</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 15.2 - Child Packages</FONT></H1>
+Ada 95 has added a new capability called a "Child Package."
+A child package is a package that is conceptually part of its parent
+package, but a child package can be compiled
+separately (after its parent has been compiled)
+without recompiling or modifying the parent.
+<P>
+Child packages provide another mechanism for
+breaking a complicated system into components.
+Here are some uses for child packages:
+<OL>
+<LI>
+You can put "normal" operations in a package, and "special" operations
+that not everyone should use in a child package.
+That way, most customers will see the normal operations and only be
+able to use the "special" operations if they specifically request them.
+<LI>
+You can create a new set of operations in a child package without
+changing the parent package.
+That means that you don't have to recompile the parent package or anything
+that depends on the parent package, reducing recompilation time.
+</OL>
+<P>
+Child packages are especially useful if you define
+a private tagged type in a package.
+A child package can "see" the definition of a private tagged type,
+because conceptually the child package is part of the parent package.
+As a result, a child package can use ``inside information'' not available
+to just any package.
+Use this capability with care; don't abuse it.
+<P>
+We'll go over child packages briefly here, but feel free to skim this section
+and return later if you like.
+<P>
+To understand how child packages work, let's first repeat the fundamentals.
+Any package can have a declaration (specification) and a body, and the
+package declaration can have both a public part and a private part.
+Normally the private part of the package declaration can only be seen by
+the body of package X;
+anyone who "with"s package X may only see the public part.
+<P>
+A child package adds a few twists. First,
+a child package is considered to have "automatically with'ed" its parents.
+In the public part of a child package you can only see the public part of your
+ancestors, just as though the package had the statement
+"with Parent" at the top.
+The real difference, though, is what happens in the child package
+declaration (specification) private part and body - in those places,
+the <EM>private</EM> part of the child packages' ancestors
+are made visible.
+That's an important difference - normally packages do <EM>not</EM>
+at any time have visibility to the private parts of other packages.
+<P>
+Let's go through an example to make this clearer.
+Let's say you have a package named "X".
+Package X can have a declaration (specification) and a body.
+Package X's declaration can have a public part and a private part.
+Normally only package X's body can see the private part of the package
+declaration; anyone who "with"s package X may only use the public part.
+<P>
+<IMG ALIGN=right SRC="childp.gif" ALT="[Child Package]" WIDTH=283 HEIGHT=168>
+Now, let's define a child package of X, called "X.Y".
+Package X.Y's public part can see the public part of X automatically, and
+the private part of X.Y and the body of X.Y can automatically see the
+private part of package X.
+This isn't considered a violation of Ada's safety rules,
+because X.Y is considered to be part of X.
+<P>
+The syntax for declaring a child package is the same as ordinary packages,
+you just name the child package using dotted notation:
+<P>
+<PRE>
+  package X.Y is ....
+  end X.Y;
+</PRE>
+<P>
+<IMG ALIGN=right SRC="pchildp.gif" ALT="[Private Child Package]" WIDTH=283 HEIGHT=183>
+You can also have <EM>private</EM> children (the normal kind of children
+are called <EM>public</EM> children).
+Private children are intended for "internal" packages that should only
+be "with'ed" by a restricted number of packages.
+Private children can only be "with'ed" by the body of its parent or by
+descendents of the private child's parent.
+In exchange for such a restrictive requirement, a
+private child gets a new authority:
+a private child's specification automatically sees both the public and
+private parts of all of its ancestors' specifications.
+To declare a private package, just prepend the word "private":
+<P>
+<PRE>
+  private package X.Z is ....
+  end X.Z;
+</PRE>
+<P>
+You can <EM>with</EM> a child package by specifying its parents in dotted
+notation.
+Whenever you name a child package in a "with" statement, you
+automatically "with" all of its ancestors.
+For example, if package "Ada" has a child package
+named "Strings", which then has a child
+package named "Unbounded", you would say:
+<PRE>
+  with Ada.Strings.Unbounded;
+</PRE>
+<P>
+When you "with" Ada.Strings.Unbounded, you automatically "with" the
+packages "Ada" and "Ada.Strings".
+That doesn't mean that you automatically "use" them; you can then "use"
+whichever packages you wish.
+<P>
+<P>
+There's a lot more about child packages that we won't cover now.
+<A HREF="http://www.adahome.com/LRM/95/Rationale/rat95html/rat95-p1-2.html#7">The
+Ada Rationale section II.7</A> describes child packages
+(also called hierarchical libraries) in more detail if you are curious.
+
+<!-- No quiz question -->
+<P>
+<HR>
+<P>
+There is no quiz question for this section.
+<P>
+<IMG SRC="pright.gif" ALT="" HEIGHT="14" WIDTH="33">
+<A HREF="s16s1.htm">
+<FONT SIZE="+1"><STRONG>You may go to the next section.</STRONG></FONT></A>
+<P>
+<HR>
+You may also:
+<P>
+
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s15s1.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="lesson15.htm">
+<IMG SRC="barrowr.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to the outline of lesson 15</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s15sf.htm">http://www.adahome.com/Tutorials/Lovelace/s15sf.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

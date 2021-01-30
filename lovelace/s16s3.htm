@@ -1,0 +1,198 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 16.3 - Ada Bindings</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 16.3 - Ada Bindings</FONT></H1>
+The previous material should help you develop a "binding" (interface)
+between software components, where one component is written in Ada
+and another component is written in another language.
+Naturally, it's easier if someone else or a tool
+does the job for you.
+<P>
+Before you can evaluate what someone else has done, you need to
+understand the major types of bindings between an Ada program and another
+program.
+These types are called "direct" and "abstract":
+<P>
+<UL>
+<LI>A "direct" (also called "thin") binding
+provides a one-to-one mapping to Ada
+of whatever interface the foreign program provides.
+Direct bindings are easy to understand if you understand the foreign
+program's interface, and direct bindings for Ada are easy to create.
+In particular, you can use the existing documentation, which is a very
+important advantage for complex interfaces (like windowing systems).
+Unfortunately, direct bindings are often a little clumsy to work with and
+often don't provide the protection usually provided by Ada interfaces.
+Thus, it's often nicer to work with "abstract" bindings.
+<LI>An "abstract" (also called "thick") binding provide a more
+abstract, Ada-like view of the foreign program.
+Unfortunately, while "abstract" bindings are nicer to work with, it takes
+work and time to create the right abstractions.
+Thus abstract bindings are harder to create.
+</UL>
+<P>
+Here are some other things you need to know about bindings:
+<UL>
+<LI>"Direct" and "abstract" are really extremes on a continuum;
+there are bindings that are "mostly direct" but have been abstracted a
+little, and there are "abstract" bindings that have some direct
+one-to-one mappings.
+<LI>The terms "thick" and "thin" have other
+related meanings (involving how a standard is written),
+which is why I've used the terms "direct" and "abstract" here.
+</UL>
+<P>
+Now that you understand these basic issues, you can go hunt for
+ways to make this interfacing job easier.
+The Ada Information Clearinghouse maintains a
+<A HREF="http://sw-eng.falls-church.va.us/AdaIC/source-code/">list
+of source (including Ada bindings)</A> and a
+<A HREF="ftp://sw-eng.falls-church.va.us/public/AdaIC/tools/bindings/">document
+listing existing Ada bindings for other products and standards</A>.
+Their list is incomplete, but it's a good starting point, especially
+for common products or standards such as POSIX, X windows, Microsoft Windows,
+or SQL databases.
+<A HREF="http://www.adahome.com/Resources/Bindings.html">HBAP also
+maintains a list of existing Ada bindings</A>.
+If you're interfacing with a commercial product, ask the vendor
+to supply you with an Ada interface.
+You could also post a request to
+<A HREF="news:comp.lang.ada">comp.lang.ada</A>
+if you can't find what you're looking for.
+<P>
+Here are some commonly-requested bindings:
+<OL>
+<LI>
+<A HREF="http://sw-eng.falls-church.va.us/AdaIC/source-code/bindings/win32ada/win32ada.html">Win32 API</A>.
+This is an interface for Microsoft Windows NT, Microsoft Windows 95, and OS/2;
+a subset of Win32 works under Microsoft Windows 3.1.
+<LI>
+<A HREF="http://www.inmet.com/~mg/x11ada/x11ada.html">X11Ada</A>
+is an Ada 95 binding to Motif and X11 developed by Intermetrics.
+See the general listings given earlier for other X-related bindings and
+information.
+<LI>
+Relational databases generally use SQL as their query language.
+Although you can embed SQL queries in Ada as you can with other languages,
+a better approach is a specialized interface language that lets you
+really take advantage of both languages.
+There's an ISO standard (ISO/IEC 12227) of such a language, named SAMeDL.
+The
+<A HREF="http://www.sei.cmu.edu/products/publications/95.reports/95.sr.018.html">SAMeDL specification</A>,
+as well as a
+<A HREF="http://www.sei.cmu.edu/products/publications/92.reports/92.tr.016.html">rationale for SAMeDL</A>
+and
+<A HREF="http://www.sei.cmu.edu/products/publications/91.reports/91.tr.012.html">notes on applications</A>.
+<LI>
+An Ada binding to CORBA's IDL has been developed, enabling you to request
+and receive requests from other programs (written in arbitrary languages
+and located on arbitrary machines) via CORBA.
+You can learn more from the
+<A HREF="http://alsp.arpa.mil/corba-ada/abwg-omg.html">Ada
+bindings working group</A>, and you can download
+the
+<A HREF="http://www.omg.org/docs/1995/95-05-16.ps">specification
+from the Object Management Group (OMG)</A>.
+</OL>
+<P>
+There are also tools to automatically generate direct (thin)
+Ada bindings to C libraries.
+Here are three tools (there are others as well):
+<OL>
+<LI>C2Ada translates C into Ada; it can handle complete programs, but its
+primary use has been to
+translate C header files into Ada to create Ada bindings.
+C2Ada was created as a major upgrade to Cbind (below).
+C2Ada is easy to use to create simple bindings,
+but it also provides many "hooks" (in the form of a
+configuration file) to support control on the translation process.
+<A HREF="http://www.inmet.com/~mg/c2ada/c2ada.html">C2Ada is available via
+Intermetrics</A>.
+<LI>Cbind translates C declarations and C preprocessor definitions
+into Ada package(s).
+Its strength is in ease-of-use; just type:
+<PRE>
+   "cbind file.h &gt; file.ads".
+</PRE>
+Cbind is available via
+<A HREF="ftp://rational.com/public/tools/cbind">Rational</A>
+and
+<A HREF="http://www.cdrom.com/pub/ada/swtools/cbind">Walnut Creek.</A>
+<P>
+<LI><A HREF="ftp://cs.nyu.edu/pub/gnat/contrib/forest/">CtoAda
+translates declarations from C to Ada.</A>
+CtoAda's strength is that it provides many "hooks" to allow a programmer
+to control the translation.
+This gives more control at the expense
+of requiring more work by the programmer.
+</OL>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+If you want to quickly create a binding to another language
+and don't mind that it might be a little clumsy to use,
+what kind of binding would you create?
+<OL>
+<LI><A HREF="s16s3r1.htm">Direct ("thin") binding</A>
+<LI><A HREF="s16s3r2.htm">Abstract ("thick") binding</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s16s2.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s16s4.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson16.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 16 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s16s3.htm">http://www.adahome.com/Tutorials/Lovelace/s16s3.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

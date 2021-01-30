@@ -1,0 +1,236 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 7.1 - Object-Oriented Programming: Overview</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 7.1 - Object-Oriented Programming: Overview</FONT></H1>
+A major new capability of Ada 95 is the addition of direct support for
+object-oriented (OO) programming.
+Ada has always strongly supported a related approach to software development
+called the ``object-based'' approach.
+It's important to understand the basics of the OO approach
+before learning how Ada now supports OO programming, so this
+section provides a basic overview of the OO approach.
+If you already understand the OO approach well, feel free to skip to the
+next section.
+<P>
+
+<H2>Functional Decomposition</H2>
+First, some history.
+Software development has always involved using approaches to
+manage complexity.
+One well-known approach is called ``functional decomposition.''
+In this approach, the program's ``function''
+is divided (decomposed) into smaller component functions.
+These smaller functions are broken into still smaller functions, and so on.
+For example, the function ``eat_lunch'' might be decomposed into the
+functions ``remove_packaging'', ``eat_food'', and ``throw_away_trash.''
+Functional decomposition can be easily implemented in Ada using subprograms.
+Functional decomposition is still a useful technique for some problems,
+but it does not work well if the structure of the data is complex.
+Thus, other approaches have been developed for systems with nontrivial
+data structures.
+<P>
+
+<H2>Object-Based and Object-Oriented Approaches</H2>
+Two of these other approaches are strongly related to each other,
+and are called the
+``object-oriented'' (OO) approach and the ``object-based''
+approach (the latter is also called the ``abstract data type'' approach).
+Both are approaches to managing software complexity that are quite
+different from functional decomposition.
+In both approaches, a system is described in terms of ``objects'';
+each object contains data and has a set of operations that can be
+performed on that data.
+Objects represent real or abstract things important
+to the problem being solved.
+The object's structure and its set of operations are defined by
+the object's type (also called a <EM>class</EM>).
+For example, we might create a type called a <EM>vehicle</EM> with
+a data element <EM>amount_of_fuel_left</EM> and
+operations <EM>refuel</EM> and <EM>drive_to(location)</EM>.
+We could then create two objects of type <EM>vehicle</EM>
+called my_vehicle and your_vehicle.
+Each vehicle would have its own amount_of_fuel_left, and each
+would respond to the operations refuel and drive_to(location).
+Ada has always supported this approach with its packages and types.
+<P>
+
+The difference between the OO and object-based approaches is that
+the OO approach adds the concept of <EM>inheritance</EM>
+to mimic the way people normally think when they classify objects.
+Inheritance permits
+new types (also called classes) to be defined as extensions of other
+existing types, forming a hierarchy of type definitions.
+Inheritance represents the relation ``is a kind of''
+(as opposed to the relation ``is a part of'' or some other relation).
+To continue our example, we could create two new types called
+``motorcycle'' and ``bus'' as kinds of vehicles.
+Thus bus and motorcycle would <EM>inherit</EM> from vehicle.
+Note that a type called ``wheel'' should generally
+<EM>not</EM> inherit from type vehicle; a wheel
+is a part of a vehicle, but a wheel (by itself) is not a vehicle.
+<P>
+
+A type inherits all of the data structure and operations, so
+in our example a bus would also have a <EM>drive_to(location)</EM> operation.
+More importantly, once we create a new type,
+we can create additional operations that only apply to it, or
+redefine existing operations to perform special actions for this type.
+For example, we could add operations to a bus to allow it to
+<EM>accept_passengers</EM>, and this new operation would apply to
+buses, not to motorcycles or to all vehicles.
+We could also redefine the ``drive_to(location)'' operation of a bus
+so it would do something different with buses.
+<P>
+
+OO programming is an approach to implementing software using the OO approach.
+Grady Booch [1994] defined OO programming this way:
+``OO programming is a method of implementation in which programs
+are organized as cooperative collections of objects, each of which
+represents an instance of some class, and whose classes are all
+members of a hierarchy of classes united via inheritance relationships.''
+<P>
+
+It is difficult to use OO and object-based
+techniques if the underlying programming
+language does not support certain capabilities well.
+In particular, OO techniques are difficult to use if the
+programming language used does not directly support
+inheritance (and a related concept called polymorphism or dynamic dispatching,
+which will be explained later).
+Ada was explicitly designed from the beginning
+to support an object-based approach, and
+in 1995 Ada was extended to support OO programming.
+<P>
+
+<H2>Warning: Oversimplification</H2>
+It is important to understand that the discussion in this section
+is a vast oversimplification.
+In particular, defining the term ``object-oriented'' is not easy and has
+provoked a great deal of debate; I've chosen to use a ``classical
+languages'' kind of definition here.
+The document
+<A HREF="http://iamwww.unibe.ch/~scg/OOinfo/FAQ/">Object-Oriented
+Frequently Asked Questions (OO FAQ)</A> includes some discussion of
+various definitions and approaches along with various
+technical arguments about OO approaches and implementations.
+Note that Ada emphasizes safety and efficiency, while some OO languages
+emphasize other virtues (such as linguistic power, simplicity, or
+compatibility with an older language).  The OO FAQ also includes a
+bibliography of textbooks for more information on OO approaches.
+<P>
+
+The definition of ``functional decomposition'' given above is the
+usual approach when it is implemented in Fortran and Pascal, though
+again, definitions are not universally agreed upon.
+In particular, do not
+confuse this with ``functional programming languages'',
+which support an approach that is a very different extension of
+functional decomposition.
+There are other system decomposition approaches, such as logical programming,
+that are way beyond the scope of this tutorial.
+It can be argued that abstract data types and
+object-based approaches aren't identical;
+such arguments generally hinge on detailed definitions which have never
+had universal agreement.
+
+<!-- ?? Someday, provide a short list of recommended OO textbooks? -->
+<!-- Or better yet, an on-line OO course. -->
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Here are simplified descriptions of two different systems.
+Which one is described in a more OO manner?
+<P>
+<STRONG>System 1</STRONG>
+is an anti-missile system with 3 major types of components:
+a radar, a launcher, and a missile.
+A radar searches the portion of the sky defined
+by its area_of_search information.
+When a radar sees a target it sends a `target sighting' message
+to a launcher.
+When a launcher receives a `target sighting' message and that launcher's
+combat_state is `armed', it
+selects a missile to launch and sends that missile a launch command.
+A missile accepts a `launch command', which includes the launch time and
+the expected target location; it will then launch at the given time.
+There are two kinds of missiles, a long_range_missile and
+a short_range_missile.
+<P>
+<STRONG>System 2</STRONG> is a coin-operated soup dispenser.
+It accepts coins, then accepts a user's soup choice, and then dispenses soup.
+To accept coins it counts each coin's value until the total equals or
+exceeds the cost of a cup of soup.
+To accept a user's soup choice, the system waits for a selection
+button to be pressed.
+To dispense soup, it drops a cup into the
+user-accessible cup holder, dispenses the selected powdered soup into the
+cup, dispenses boiling water into the cup, and then stirs the soup.
+To stir the soup, a plastic stirrer is inserted into the cup,
+the stirrer is vigorously moved about inside the cup, and the stirrer
+is then removed.
+<P>
+Which system has been described in a more object-oriented manner?
+<OL>
+<LI><A HREF="s7s1r1.htm">System 1.</A>
+<LI><A HREF="s7s1r2.htm">System 2.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s6sf.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s7s2.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson7.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 7 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s7s1.htm">http://www.adahome.com/Tutorials/Lovelace/s7s1.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

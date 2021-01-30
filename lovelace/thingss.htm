@@ -1,0 +1,141 @@
+<HTML>
+<HEAD>
+<TITLE>Package spec Things</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com"></HEAD>
+<BODY>
+<B>Package spec Things</B><P><HR><P>
+<PRE>
+<I>--</I>
+<I>-- Copyright (C) 1996 Ada Resource Association (ARA), Columbus, Ohio.</I>
+<I>-- Author: David A. Wheeler</I>
+<I>--</I>
+
+<B>with</B> Ada.Strings.Unbounded, Ada.Finalization, <A HREF="directis.htm#9:9">Directions</A>;
+<B>use</B>  Ada.Strings.Unbounded, Ada.Finalization, <A HREF="directis.htm#9:9">Directions</A>;
+
+<B>package</B> <A NAME="9:9"></A>Things <B>is</B>
+
+ <I>-- "Thing" is the root class for all things in this small world.</I>
+ <I>-- Rooms, Players, Items, and Monsters are derived from Thing.</I>
+
+ 
+ type <A NAME="15:7"></A>Thing <B>is</B> <B>abstract</B> <B>new</B> Limited_Controlled <B>with</B> <B>private</B>;
+ type <A NAME="16:7"></A>Thing_Access <B>is</B> <B>access</B> <B>all</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+
+ type <A NAME="18:7"></A>Article_Type <B>is</B> (<A NAME="18:24"></A>A, <A NAME="18:27"></A>An, <A NAME="18:31"></A>The, <A NAME="18:36"></A>Some, <A NAME="18:42"></A>None);
+
+ <I>-- Public Dispatching operations.</I>
+
+ <B>procedure</B> <A NAME="22:12"></A>Put_View(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>; Agent : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>is</B> <B>abstract</B>;
+  <I>-- Put what Agents sees inside T.</I>
+
+ <B>function</B> <A NAME="25:11"></A><A HREF="thingsb.htm#name-29">What_Is</A>(From : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>; Dir : <B>in</B> <A HREF="directis.htm#11:7">Direction</A>) <B>return</B> <A HREF="thingss.htm#16:7">Thing_Access</A>;
+ <I>-- Returns what is at direction "Dir" from "From".</I>
+ <I>-- Returns null if nothing connected in that direction.</I>
+
+ <I>-- Public non-Dispatching operations:</I>
+
+ <B>procedure</B> <A NAME="31:12"></A><A HREF="thingsb.htm#name-36">Set_Name</A>(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class; Article : <B>in</B> <A HREF="thingss.htm#18:7">Article_Type</A>;
+                    Name : <B>in</B> Unbounded_String);
+ <B>procedure</B> <A NAME="33:12"></A><A HREF="thingsb.htm#name-35">Set_Name</A>(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class; Article : <B>in</B> <A HREF="thingss.htm#18:7">Article_Type</A>;
+                    Name : <B>in</B> String);
+ <B>function</B> <A NAME="35:11"></A><A HREF="thingsb.htm#name-26">Name</A>(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>return</B> Unbounded_String;
+ <B>pragma</B> Inline(Name);
+
+ <B>function</B> <A NAME="38:11"></A><A HREF="thingsb.htm#name-28">Short_Description</A>(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>return</B> Unbounded_String;
+ <I>-- Returns Article + Name, i.e. "the box", "a car", "some horses".</I>
+ 
+ <B>procedure</B> <A NAME="41:12"></A><A HREF="thingsb.htm#name-34">Set_Description</A>(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+                           Description : <B>in</B> Unbounded_String);
+ <B>procedure</B> <A NAME="43:12"></A><A HREF="thingsb.htm#name-33">Set_Description</A>(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+                           Description : <B>in</B> String);
+ <B>function</B> <A NAME="45:11"></A><A HREF="thingsb.htm#name-25">Long_Description</A>(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>return</B> Unbounded_String;
+ 
+ <B>procedure</B> <A NAME="47:12"></A><A HREF="thingsb.htm#name-30">Place</A>(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class; Into : <A HREF="thingss.htm#16:7">Thing_Access</A>);
+   <I>-- Place T inside "Into" (removing it from wherever it was).</I>
+   <I>-- Attempting to place T into itself will print an error message</I>
+   <I>-- and fail.</I>
+   <I>-- The second parameter is Thing_Access, not Thing'Class, because</I>
+   <I>-- "null" is a valid value for "Into".</I>
+ <B>function</B> <A NAME="53:11"></A><A HREF="thingsb.htm#name-20">Container</A>(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>return</B> <A HREF="thingss.htm#16:7">Thing_Access</A>;
+   <I>-- Return access value to the container of T.</I>
+ <B>function</B> <A NAME="55:11"></A><A HREF="thingsb.htm#name-23">Has_Contents</A>(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class) <B>return</B> Boolean;
+   <I>-- Does T have anything in it?</I>
+
+ <B>function</B> <A NAME="58:11"></A><A HREF="thingsb.htm#name-21">Find</A>(Agent : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+               Object_Name : <B>in</B> Unbounded_String) <B>return</B> <A HREF="thingss.htm#16:7">Thing_Access</A>;
+          <I>-- Find the given Object_Name in the same container as the agent.</I>
+          <I>-- Prints and error message and returns null if not found.</I>
+
+ <B>function</B> <A NAME="63:11"></A><A HREF="thingsb.htm#name-22">Find_Inside</A>(Agent       : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+                      Object_Name : <B>in</B> Unbounded_String)
+          <B>return</B> <A HREF="thingss.htm#16:7">Thing_Access</A>;
+          <I>-- Find the given Object_Name inside the agent.</I>
+          <I>-- Prints and error message and returns null if not found.</I>
+
+ <B>procedure</B> <A NAME="69:12"></A><A HREF="thingsb.htm#name-31">Put_Contents</A>(T : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+                        Ignore : <B>access</B> <A HREF="thingss.htm#15:7">Thing</A>'Class;
+                        Heading_With_Contents : <B>in</B> String;
+                        Heading_Without_Contents : <B>in</B> String := "");
+   <I>-- Put a description of the contents of T.</I>
+   <I>-- Act as though "Ignore" isn't there.</I>
+   <I>-- If there is something, print Heading_With_Contents;</I>
+   <I>-- If there isn't something, print Heading_Without_Contents.</I>
+
+ <B>procedure</B> <A NAME="78:12"></A><A HREF="thingsb.htm#name-37">Sorry</A>(Prohibited_Operation : String;
+                 Prohibited_Direct_Object : Unbounded_String);
+   <I>-- Put "Sorry, you may not XXX the YYY".</I>
+
+
+<B>private</B>
+
+ type Thing <B>is</B> <B>abstract</B> <B>new</B> Limited_Controlled <B>with</B>
+  <B>record</B>
+   <A NAME="87:4"></A>Name, <A NAME="87:10"></A>Description : Unbounded_String;
+   <A NAME="88:4"></A>Article           : <A HREF="thingss.htm#18:7">Article_Type</A> := <A HREF="thingss.htm#18:24">A</A>;
+   <A NAME="89:4"></A>Container         : <A HREF="thingss.htm#16:7">Thing_Access</A>; <I>-- what Thing contains me?</I>
+   <A NAME="90:4"></A>Next_Sibling      : <A HREF="thingss.htm#16:7">Thing_Access</A>; <I>-- next Thing in my container.</I>
+   <A NAME="91:4"></A>First_Containee   : <A HREF="thingss.htm#16:7">Thing_Access</A>; <I>-- first Thing inside me.</I>
+  <B>end</B> <B>record</B>;
+
+<B>end</B> Things;
+
+<I>--</I>
+<I>-- Permission to use, copy, modify, and distribute this software and its</I>
+<I>-- documentation for any purpose and without fee is hereby granted,</I>
+<I>-- provided that the above copyright and authorship notice appear in all</I>
+<I>-- copies and that both that copyright notice and this permission notice</I>
+<I>-- appear in supporting documentation.</I>
+<I>-- </I>
+<I>-- The ARA makes no representations about the suitability of this software</I>
+<I>-- for any purpose.  It is provided "as is" without express</I>
+<I>-- or implied warranty.</I>
+<I>-- </I>
+
+</PRE>
+
+<P><HR><P>
+You may also see <A HREF="thingsb.htm">the corresponding body</A>.
+<P>
+You may also see the <A HREF="pkglist.htm">list of program units</A>.
+<P>
+The following compilation units refer to ("with") Package spec Things:
+<UL>
+<LI><A HREF="occupans.htm">Package spec Occupants</A>
+<LI><A HREF="roomss.htm">Package spec Rooms</A>
+<LI><A HREF="parserb.htm">Package body Parser</A>
+<LI><A HREF="worldb.htm">Package body World</A>
+</UL>
+The following compilation units are referred to ("with"'ed) by Package spec Things:
+<UL>
+<LI><A HREF="directis.htm">Package spec Directions</A>
+</UL>
+You may return to the <A HREF="small.htm">Program Small Home Page</A>.
+<P>
+<!-- Do NOT delete my name or the tool name from below; -->
+<!-- giving me credit is a condition for use of ada2html -->
+<I>This hypertext format was generated by <A HREF="http://www.adahome.com/Ada/Tutorials/Lovelace/dwheeler.htm">David A. Wheeler</A>'s <A HREF="http://www.adahome.com/Ada/Resources/Tools/ada2html/ada2html.htm">ada2html</A></I>
+</BODY>
+</HTML>
+

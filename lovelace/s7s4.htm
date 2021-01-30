@@ -1,0 +1,174 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 7.4 - Encapsulation</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 7.4 - Encapsulation</FONT></H1>
+The ``Figures'' and ``Critters'' examples we've seen
+are excessively public.  What does that mean?
+Those examples permitted all their clients (the ``public'')
+to see exactly how their types were defined.
+Thus, any user of those packages can read or change any of the data
+in those types.
+Sometimes that's appropriate, but usually it isn't -
+this makes it more difficult to change things later.
+<P>
+
+Ada provides a number of mechanisms to ``hide'' information from
+the users (``clients'') of a given type.
+Making information inaccessible to others who should not use it
+is called <EM>encapsulation</EM>.
+Encapsulation improves a program's maintainability and reliability.
+<P>
+
+In the lesson on types we saw how Ada permits types to be
+declared as ``private.''
+This works with tagged types as well, so you can declare tagged
+types as ``private'' and then hide the implementation details
+from everyone who uses the type.
+Ada provides a number of variations on this theme
+to provide control over what information
+is visible and what is not.
+<P>
+
+The most common way to hide implementation details is to define a
+type publicly in a package declaration as
+``tagged private'' (if you don't want the user to know about its parent) or
+``new <EM>parent_name</EM> with private''
+(if you want the user to know what its parent is).
+Follow each type declaration with declarations of subprograms
+that operate on the type.
+In the ``private'' part of the package declaration, define the type.
+<P>
+
+Here's another example.
+Let's create a type called a `File' with a file name, and a derived
+type called an `Ada_File' which also stores whether or not the file
+has been compiled. Both have a ``View'' subprogram.
+Here's how that might look:
+<PRE>
+  package File_System is
+    type File is tagged private;
+    procedure View(F : File);
+
+    type Ada_File is new File with private;
+    procedure View(F : Ada_File);
+
+  private
+    type File is tagged
+     record
+       -- We'll discuss strings later in Lovelace
+       Name : String(1..20);
+     end record;
+
+    type Ada_File is new File with
+     record
+       Compiled : Boolean := False;
+     end record;
+  end File_System;
+</PRE>
+<!-- This example was inspired by Ada Rationale chapter II-4 -->
+<P>
+
+You would then create a package body to define the subprograms:
+<PRE>
+  package body File_System is
+    procedure View(F : File) is
+    begin
+      -- ...
+    end View;
+
+    procedure View(F : Ada_File) is
+    begin
+      -- ...
+    end View;
+  end File_System;
+</PRE>
+<P>
+
+In general, in Ada you'd define a package with a set of types
+inside it. The package declaration would contain a set of types
+declared as ``tagged private'' or ``new Parent_Type with private''.
+In the private part of the package declaration you'd define the
+type ``for real''.
+In the package body you'd define the subprograms.
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Given procedure Try_Stuff:
+<PRE>
+  with File_System;
+  procedure Try_Stuff is
+   My_Ada_File : File_System.Ada_File;
+  begin
+   -- To be done.
+  end Try_Stuff;
+</PRE>
+<P>
+Let's say that at the line labelled ``To be done''
+you'd like to set My_Ada_File's ``Compiled'' value to ``True''.
+How could you do this?
+<OL>
+<LI><A HREF="s7s4r1.htm">Replace the line with <EM>My_Ada_File.Compiled := True;</EM></A>
+<LI><A HREF="s7s4r2.htm">Replace the line with <EM>Compiled := True;</EM></A>
+<LI><A HREF="s7s4r3.htm">I couldn't - it can't be done using the material presented so far.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s7s3.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s7s5.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson7.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 7 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s7s4.htm">http://www.adahome.com/Tutorials/Lovelace/s7s4.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

@@ -1,0 +1,446 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<COMMENT  Edit the following lines. >
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=13>
+<COMMENT $Id: lesson13.les,v 1.4 1995/09/22 21:38:21 wheeler Exp wheeler $ >
+
+<COMMENT  You'll probably want to uncomment and edit these lines: >
+<COMMENT  <PREVIOUS_LESSON LOCATION="URL_of_directory/" >
+<COMMENT  <NEXT_LESSON LOCATION="URL_of_directory/" >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+<COMMENT Each section has a title; SECTION starts a new section.>
+
+<SECTION NAME="Tasking Basics">
+The Ada language includes built-in support for concurrent (parallel)
+processing with Ada <EM>tasks</EM>.
+Ada tasks run concurrently and can interact with each other using a few
+different mechanisms.
+In essence, each Ada task works as though it were running on
+a separate computer.
+Tasks are called by some people ``threads'' or ``light-weight processes''.
+More general terms for task-like behavior include ``process'',
+``agent'', and ``active object''.
+<P>
+Why would you want to use tasks?
+Well, here's one example - let's imagine you're developing a
+World Wide Web browser.
+Such a browser must download information through some (slow) communication
+device and then display the information.
+Now, you could wait until all the information was available and then
+display it, but that would make the user wait for a possibly long time.
+A better solution would be to have two tasks - one that downloads the
+information, and another that displays the information.
+As the first task gathers more information, it could pass portions of
+what it's downloaded along to the second task.
+The second task could work to display information to the user, even if
+the first task hasn't finished gathering its data yet.
+Both tasks could then work ``simultaneously''.
+<P>
+Tasks can be started up (activated) and stopped (terminated).
+There are a variety of ways tasks can communicate with each other
+once they are activated; the main ways are:
+<UL>
+<LI>
+Tasks can wait for other tasks to complete.
+<LI>
+Tasks can send messages between each other; this is called a
+rendezvous.
+<LI>
+Tasks can use `protected objects', which provide exclusive read-write access
+to data.
+Protected objects are new to Ada 95.
+<LI>
+Tasks can set global variables to communicate.
+This last method is efficient but dangerous, especially if you do not
+have a thorough understanding of concurrency issues.
+Ada permits this last approach because some real-time system developers
+really want this capability, but use this approach with great caution.
+</UL>
+<P>
+We'll discuss these different communication methods in the next few sections.
+<P>
+Some computing systems actually have several computers built into them.
+If the Ada compiler and/or operating system can do so, different tasks
+may be run on different machines, which may significantly speed up
+execution of a program.
+<P>
+There are some important caveats about tasks:
+<UL>
+<LI>
+Ada can't create what doesn't exist.
+On single-CPU machines, Ada must simulate 
+multiple computers on a single computer, and there
+is some overhead to doing that.
+This overhead is called the ``scheduling overhead,''
+and a significant portion of the scheduling overhead is something called the
+``context switching time''.
+Most compiler vendors provide information about these values.
+<LI>
+Tasks can be under-used or over-used.
+Some people create hundreds of unnecessary tasks,
+producing slow, terrible programs.
+Like any other tool, use tasks appropriately.
+As a rule of thumb, check what you're doing if you're using more
+than ten to twenty tasks on a single CPU, especially if more than a
+few of them are simultaneously active.
+Also, while there may be many low-level (hardware-level) tasks that
+do trivial work, tasks should generally not simply
+do a trivial operation and then send information on to yet another task.
+Do not follow these rules slavishly; think of these as naive
+guidelines until you understand tasking more completely.
+<LI>
+If there's an underlying operating system, the operating system
+must provide some reasonable support for Ada tasks to work well.
+Modern operating systems that support threads or light-weight
+processes generally work nicely; such
+operating systems include Windows NT, Windows 95, OS/2, Mach, and Solaris.
+Nearly all real-time operating systems provide mechanisms sufficient for
+implementing Ada tasks.
+Windows 3.1 and some old Unix systems do not provide such support, and
+this causes some minor but annoying limitations on those
+systems as we'll discuss later.
+MS-DOS doesn't directly support threads, but it's such a primitive operating
+system that tasks can be created by simply taking over the entire machine
+(old versions of GNAT didn't support tasking on MS-DOS; that has since been
+added by specially implementing tasks on top of MS-DOS).
+</UL>
+<P>
+Technically speaking, an Ada program always includes at least one
+task, called the <EM>environment</EM> task; the main (starting) subprogram
+runs in this environment task.
+
+<QUESTION Type=Multiple-Choice>
+Software XYZ is running on a single processor and has
+10,000 tasks.
+There's a task for every switch on an input panel
+and a task for every light on a display panel.
+Does this sound like a good design?
+<CHOICES>
+<CHOICE ANS=1>This is probably a good design.
+<CHOICE ANS=2>This is probably not a good design.
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, this is probably not a good design.
+Remember, the rule of thumb I gave earlier was to consider carefully
+what you're doing if there are more than a dozen tasks, or if each
+task is doing a trivial operation.
+<P>
+Now, this <EM>might</EM> be the best approach
+depending on information we don't have,
+but warning bells should go off in your mind, suggesting that you may
+have a significant performance problem with this system.
+<WHEN ANS=2>
+Right.
+Having this many tasks <EM>might</EM> be the best approach
+depending on other information that wasn't presented.
+However, warning bells should go off in your mind when a system has
+this many tasks - you're likely to have a performance problem
+with this system due to overuse of tasks.
+</RESPONSES>
+
+<SECTION NAME="Creating and Communicating with Tasks">
+Let's start by looking at an example of a trivial task.
+Let's create a type of task that waits for a "Start" request,
+prints a line of text for a number of times, and then terminates itself.
+<P>
+We'll wait a second between printing each line of text, which will
+help you see what it does.
+To make it more interesting, we'll include in the Start request
+the message to be printed and the number of times it's to print.
+<P>
+First, let's create a task type; the task type will be called Babbler,
+and we'll enclose it in a package called Babble.
+Its declaration could look like the following:
+<P>
+<TEXT TEMPLATE=compile FILE="babble.ads">
+<P>
+When declaring a task, an "entry" is somewhat analogous to a procedure
+declaration.
+An entry statement declares what requests may be made to the task, including
+what information may be sent to and from the task when the request is made.
+<P>
+Just like packages and subprograms, tasks have a declaration and a body.
+The task body could look like this:
+<P>
+<TEXT TEMPLATE=compile FILE="babble.adb">
+<P>
+A task body defines what the task will do when it is started up.
+This particular task simply sets up some local variables and then runs
+an "accept" statement.
+An "accept" statement waits for some other task to make a request via
+the corresponding "entry".
+When another other task makes the matching request, the accepting task 
+runs the accept statements between the word "do" and the "end" that matches
+the accept statement.
+When a task is running the accept statements between "do" and "end", it
+is said to be in a <EM>rendezvous</EM> with the other task;
+the requesting task will not run any instructions until the "end"
+of the accept statement is run.
+A common task done in a rendezvous is to copy the data sent by the
+sending task to a place where the receiving task can use it later.
+Once the rendezvous is complete, both tasks can run.
+<P>
+Here's a short procedure to demonstrate this task type; we'll call it
+the procedure Noise. Noise will create two tasks of the given task type
+and send them Start messages. Note how similar creating a task is to
+creating a variable from an ordinary type:
+<P>
+<TEXT TEMPLATE=compile FILE="noise.adb">
+<P>
+A procedure that declares a task instance, like procedure Noise,
+is called a <EM>Master</EM>.
+A master must wait for all its tasks to terminate before it can terminate,
+so Noise will wait until Babble_1 and Babble_2 have exited before
+it exits.
+<P>
+Note that when procedure Noise makes a ``call'' to Babble_1 and
+Babble_2's `Start' entry, it is performing a rendezvous.
+
+<QUESTION Type=Multiple-Choice>
+Should you see the lines of text from Babble_1 and Babble_2 interleaved
+(i.e., in an arbitrary mixed order) on your display when you run Noise?
+<CHOICES>
+<CHOICE ANS=1>Yes.
+<CHOICE ANS=2>No.
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=2>
+Sorry, you should see Babble_1 and Babble_2 interleaving their text
+(at least on a line-by-line basis, perhaps even more so).
+Babble_1 and Babble_2 will run concurrently, as though they
+were running on different machines (depending on your hardware, they
+may even run on different machines).
+</RESPONSES>
+
+
+<SECTION NAME="Protected Types">
+A protected type is a passive data object that provides protection
+of data consistency even when multiple tasks attempt to
+access its data.
+Protected types are very efficient, which is why they were added
+to Ada in 1995.
+Protected types can be considered to be a very advanced form of
+"semaphore" or "monitor".
+<P>
+A protected type contains data that tasks can access only through
+a set of protected operations defined by the developer. 
+There are three kinds of protected operations:
+<OL>
+<LI>
+Protected functions, which provide read-only access to the internal data.
+Multiple tasks may simultaneously call a protected function.
+<LI>
+Protected procedures, which provide exclusive read-write access to the
+internal data.
+When one task is running a protected procedure, no other task
+can interact with the protected type.
+<LI>
+Protected entries, which are just like protected procedures except
+that they add a "barrier".
+A barrier is some Boolean expression that must become true before
+the caller may proceed.
+The barrier would usually depend on some internal data value protected
+by the protected type.
+If the barrier is not true when the caller makes a request, the
+caller is placed in a queue to wait until the barrier becomes true.
+</OL>
+<P>
+Protected types tend to be very efficient, since
+high-overhead operations called "full context switches"
+aren't usually necessary to implement them.
+Protected types are often implemented using techniques such as
+interrupt disables,
+<A HREF="http://www.adahome.com/rm95/rm9x-D-03.html">priority
+ceiling locking</A>, or spin locks.
+In fact, protected types are often more efficient than using
+semaphores directly, which is a little surprising;
+see the
+<A HREF="http://www.adahome.com/LRM/95/Rationale/rat95html/rat95-p2-9.html#1">Ada Rationale (Part 2, section 9.1.3)</A>
+if you're curious why protected types can be so efficient.
+However, this also means that any protected operation should be
+short and fast; significant processing should be done elsewhere.
+Protected operations generally should do things like increment
+or decrement a value, set a flag, set an access value or two,
+or other similar quick operations.
+Lengthy operations may increase the maximum system latency (the time it
+takes for the system to respond to a new situation), which in many
+systems is a bad thing.
+<P>
+A protected type can be created as a single instance (i.e. a single
+protected variable) or as a full Ada type.
+As the latter you can do anything you would do with a regular type,
+including placing them in records or arrays.
+
+<QUESTION Type=Multiple-Choice>
+Let's say you're creating a protected type and you want to create an
+operation that changes the protected type's data.
+This operation can always occur - it doesn't need to wait for some
+special circumstance.
+Which of the following should this operation be?
+ 
+<CHOICES>
+<CHOICE ANS=1>Protected function.
+<CHOICE ANS=2>Protected procedure.
+<CHOICE ANS=3>Protected entry.
+</CHOICES>
+<ANSWER ANS=2>
+
+<SECTION NAME="Protected Types Part 2">
+Now that you know the different types of protected operations,
+declaring a protected type will make more sense.
+
+<P>
+Here's an example - this is a semaphore implemented using
+protected types.
+You can request to "Seize" the semaphore;
+once it is Seized no other task can Seize it until it is Released.
+<P>
+<PRE>
+  protected type Resource is
+    entry Seize;        -- Acquire this resource exclusively.
+    procedure Release;  -- Release the resource.
+  private
+    Busy : Boolean := False;
+  end Resource;
+ 
+  protected body Resource is
+    entry Seize when not Busy is
+    begin
+      Busy := True;
+    end Seize;
+ 
+    procedure Release is
+    begin
+      Busy := False;
+    end Release;
+  end Resource;
+</PRE>
+<P>
+Here's an example of creating a protected variable that
+is an instance of the protected type Resource:
+<P>
+<PRE>
+  Control : Resource;
+</PRE>
+<P>
+And here's an example of using it:
+<P>
+<PRE>
+  Control.Seize;
+  Diddle;
+  Control.Release;
+</PRE>
+<P>
+Here's the
+<A HREF="bnf.htm">BNF</A>
+for a protected (type) declaration and its corresponding
+protected body:
+<P>
+<PRE>
+  protected_declaration ::= "protected" [ "type" ] identifier "is"
+                            { protected_operation_declaration }
+                            [ "private" { protected_element_declaration } ]
+                            "end" [ identifier ]
+  protected_operation_declaration ::= subprogram_declaration |
+                                      entry_declaration
+  protected_element_declaration ::= protected_operation_declaration |
+                                    component_declaration
+  
+  protected_body ::= "protected" "body" identifier "is"
+                     { protected_operation_item }
+                     "end" [ identifier ] ";"
+</PRE>
+<P>
+I've shown how to implement a semaphore using protected types
+because semaphores are a well-known construct for concurrent programs.
+However, it's better to use protected types directly instead of
+trying to build task interaction constructs
+using semaphores as the building block.
+One reason is that semaphores are notoriously hard to use correctly
+for complex task interactions - once multiple semaphores are involved 
+it can be difficult to get the interactions correct for all cases
+(truly getting such interactions right may require developing a
+formal proof of a concurrent protocol, a really difficult thing to do).
+Also, when exceptions occur Ada can handle protected types automatically,
+which is easy to get wrong when doing it "by hand".
+Besides, the protected type may be more efficient.
+<P>
+One particularly useful use of protected types is to implement
+a buffered queue of messages between tasks.
+See the
+<A HREF="http://www.adahome.com/LRM/95/Rationale/rat95html/rat95-p2-9.html#1">Ada Rationale (Part 2, section 9.1.2)</A>
+for an example of this (the Mailbox_Pkg protected type).
+ 
+<SECTION NAME="Other Tasking Issues">
+
+The underlying operating system does affect tasking,
+particularly if the operating system does not provide
+certain minimal capabilities (i.e. thread support).
+Here are two effects that you need to be aware of:
+<OL>
+<LI>
+Some operating systems (such as Microsoft Windows 3.1 and many older
+Unixes) do not support threads (lightweight processes), but instead
+only support regular processes (sometimes called heavyweight processes).
+The difference is that threads can share memory, while processes
+generally do not.
+On systems which do not support threads,
+if any task makes an operating system request
+(say, to get input), <EM>all</EM> the Ada tasks are usually halted until the
+operating system completes the request.
+This is because most Ada compilers in such environments put all of the
+Ada tasks into a single operating system process and then simulate
+the tasking inside the process.
+The operating system can't distinguish
+between the different Ada tasks in the single process,
+so all Ada tasks get stopped.
+As more operating systems become more capable this is becoming
+less of a problem, and this is generally not a problem for
+embedded systems (where Ada has complete control over the system
+or is running on a real-time operating system).
+<LI>
+Some operating systems make it difficult or inefficient to automatically
+share time between tasks.
+The ability to automatically share time between tasks of equal
+priority is called ``pre-emptive multitasking'' or ``time slicing''.
+Operating systems that support
+pre-emptive multitasking are more convenient for programmers.
+Because some operating systems don't support it well,
+an Ada compiler is permitted to keep running one
+task until that task tries to communicate with another task or waits
+(using the delay statement).
+This kind of behavior is called "cooperative multitasking", because
+tasks of equal priority must cooperate to share the CPU.
+Most people prefer Ada implementations that have
+preemptive multitasking.
+If you have to deal with an Ada compiler that only supports cooperative
+multitasking, consider inserting "delay 0.0" statements in each task
+in various places to give other tasks a chance to run.
+Check your compiler documentation; some compilers permit you to choose
+between pre-emptive and cooperative behavior.
+Again, most of today's Ada compilers provide the (more general)
+pre-emptive multitasking behavior.
+</OL>
+<P>
+There's much more about tasking that Lovelace doesn't cover.
+For example:
+<UL>
+<LI>
+You can create tasks that exist for as long as the program runs, by
+declaring the task in a package declaration or body (the same
+way you can declare a global variable).
+<LI>
+Instead of creating a task type and then a task, you can create a task
+directly.
+<LI>
+Entries are queued in first-in-first-out order, and can be re-queued
+if desired.
+</UL>
+

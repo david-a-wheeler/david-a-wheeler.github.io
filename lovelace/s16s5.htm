@@ -1,0 +1,223 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 16.5 - Writing Ada Applets</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 16.5 - Writing Ada Applets</FONT></H1>
+<P>In this section we'll first describe event driven programming, the basic
+mindset of applets (and most other graphical user interface programs). We'll
+then examine a simple "Hello, World" applet in Ada. The section closes with
+a list of some other useful Applet methods.</P>
+
+<H2>Event Driven Programming</H2>
+<P>Most graphical user interface (GUI) programs do not run "top to bottom"
+in a simple linear way. Instead, most such programs are structured as components
+which wait for an "event" (such as a mouse button click) to occur. That
+event is processed, and then the component returns so that the next event
+can be processed. Events are queued up, so your program only needs to respond
+to one event at a time; later ones will not be lost. It's important that
+the component return, or no further event will be processed. This approach
+is called "event driven programming".</P>
+<P>To create an Ada applet, we'll need to create a new type that extends the
+Java "Applet" class in Java package "java.applet". We can then override
+various methods of Applet to process events we're interested in. The default
+reaction to events is to return immediately (i.e. do nothing), so any events
+we don't override will be ignored.</P>
+
+<H2>A Simple Ada Applet</H2>
+<P>Here is a simple Ada applet to show the basic idea of how to implement Java
+applets in Ada. Below is the canonical "Hello World!" program as written
+by Tucker Taft; it simply displays the phrase "Hello, world!" on the screen:</P>
+<PRE>
+with java.applet.Applet; use java.applet.Applet;
+with java.awt.Graphics; use java.awt.Graphics;
+package Hello is
+ type Hello_Obj is new Applet_Obj with null record;
+ procedure paint(Obj : access Hello_Obj; g : Graphics_Ptr);
+end Hello;
+
+
+with interfaces.Java; use interfaces.Java; -- for "+" on strings
+package body Hello is
+ procedure paint(Obj : access Hello_Obj; g : Graphics_Ptr) is
+ begin
+ drawString(g, +"Hello, Java world!", x =&gt; 10, y =&gt; size(Obj).height/2);
+ end paint;
+end Hello;
+</PRE>
+
+<P>So what does this program do? Let's break it down step by step:
+<OL>
+<LI>To create an applet we must extend the tagged type "Applet_Obj" defined
+in the package java.applet.Applet. Since we need package java.applet.Applet,
+we must "with" it. Note that standard Java package names have a very simple
+correspondence to Ada package names. 
+<LI>To handle graphics, we'll need package java.awt.Graphics.
+<LI>We'll create a new package named "Hello". 
+<LI>We'll create a new tagged type "Hello_Obj" that extends the Java library
+tagged type "Applet_Obj". This new type represents our new applet, per the
+conventions described earlier. 
+<LI>Almost any applet will override the default "paint" operation of Applet_Obj
+with something more interesting. The "paint" operation is called whenever
+the system determines that the graphical area controlled by the applet has
+been uncovered and needs to be drawn again. The parameters for the paint
+operation are an object representing the applet itself and an object representing
+the applet drawing surface (you could read the package specification of
+java.applet.Applet to see what other operations are defined). 
+<LI>The package body of Hello withs "interfaces.Java", an Ada package
+that provides
+useful operations when interfacing from Ada to Java. Of particular use is
+a "+" prefix operation that converts an Ada string into a Java string.
+<LI>Paint is implemented by making a call to subprogram "drawString"
+in java.awt.Graphics,
+which draws the text into graphical viewing area "g". Note the little "+"
+sign used to convert an Ada String into a Java string (String_Ptr).
+Note that more complex
+Ada expressions work as well, such as the expression giving the y-coordinate
+for drawing.
+</OL>
+<P>You'll need to compile the code above, but to see it execute you also need
+a web page that references the applet. The web page will need to include
+an APPLET command. Here's a simple web page that references the applet (you
+can type this text into a file using a text editor and call it "hello.html"):
+<PRE>
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;TITLE&gt;Hello World&lt;/TITLE&gt;&lt;/HEAD&gt;
+&lt;BODY&gt;
+&lt;H1&gt;Hello World&lt;/H1&gt;
+Below is the hello world applet.
+
+&lt;APPLET CODE="Hello.class" WIDTH=200 HEIGHT=100&gt;
+&lt;/APPLET&gt;
+
+&lt;/BODY&gt;
+&lt;/HTML&gt;
+</PRE>
+<P>The text beginning with "&lt;APPLET " tells the web browser to run
+a Java applet.
+The quoted text after "CODE" indicates which program to run. The "WIDTH"
+and "HEIGHT" parameters specify the width and height in pixels of the graphical
+area the applet may use. There are other possible parameters. In particular,
+if the class you wish to run is not in the same directory as the web page,
+you need to add a "CODEBASE=" parameter that gives the directory of the
+class to run.</P>
+<P>Any text between &lt;APPLET&gt; and &lt;/APPLET&gt; will be displayed by web browsers
+that don't handle Java, which is useful so you can handle such browsers
+(for example, you could give them a static picture or a form instead). You
+can also use that area to pass parameters to the applet.</P>
+<P>To view this applet, use a web browser that supports Java and view
+the web
+page, or run an applet viewing program (a program designed to run Java
+applets).
+If you're using a Java-capable browser,
+<A HREF="hello.htm">you can see the Hello applet right now</A>.
+Use the "back" key on your browser to return to this page.
+
+<H2>Other Applet Methods</H2>
+<P>A descendent of Java class Applet can override methods other than "paint"
+to do useful things. Here are some of those methods:</P>
+<OL>
+<LI>init is called when the applet starts up, before any other events
+are processed.  You can override this method to initialize some
+variables. Netscape also calls this method when an applet is
+reloaded or you return to the page containing the applet, so
+make sure it can handle being called multiple times.
+<LI>stop is called when the user is no longer looking at the page that contains
+the applet.
+<LI>start is called when a user brings their attention back to an applet, and
+is called after the init method.
+<LI>mouseDown is called whenever the mouse button is pressed. Typical uses are
+to highlight the item being pressed (like a button) to make it clear to
+the user what they're about to select.
+<LI>mouseUp is called whenever the mouse button is <I>released</I> in the
+applet's viewing area. In many cases you want to react to a mouse
+button being released (mouseUp), not when it's been pressed (mouseDown),
+so that users can change their mind by moving the mouse away without
+releasing the button.
+<LI>mouseDrag is called when the user moves the mouse while holding the mouse
+button down.
+<LI>keyDown is called when the user pressed a key while the applet is active.
+</OL>
+<P>
+The Java library is quite extensive; see
+<A HREF="http://java.sun.com/java.sun.com/doc/programmer.html">Sun's
+on-line Java documentation</A> or one of the
+<A HREF="http://lightyear.ncsa.uiuc.edu/~srp/java/javabooks.html">many
+books on Java</A>.</P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Which of the following statements is true?
+<OL>
+<LI>Most applets that use the mouse button should cause important actions
+to happen on mouseDown so that if the user changes his mind, he can move
+the mouse away.
+<LI>Most applets will override the "paint" operation to draw whatever it is
+that they want to draw.
+<LI>There's no way to provide alternative text or graphics
+for users with a Java-less web browser.
+</OL>
+<OL>
+<LI><A HREF="s16s5r1.htm">Statement 1.</A>
+<LI><A HREF="s16s5r2.htm">Statement 2.</A>
+<LI><A HREF="s16s5r3.htm">Statement 3.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s16s4.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s16s6.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson16.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 16 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s16s5.htm">http://www.adahome.com/Tutorials/Lovelace/s16s5.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

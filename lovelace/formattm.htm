@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<TITLE>Mklesson Template File Format Information</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF">
+<H1>Mklesson Template File Format Information</H1>
+The mklesson program uses an auxillary file called `template' to
+generate tutorials.
+Many changes to the format of the resulting tutorial can be made
+by merely changing this file
+(instead of modifying the program mklesson itself).
+<P>
+File 'template' is in turn a series of `chunks'.
+Each chunk starts with the following format:
+<P>
+<PRE>
+===== NAME =====
+</PRE>
+<P>
+The 5 equal signs before and after name, and the spaces, are required;
+the equal signs must begin the line.
+<P>
+Each chunk is used to generate the files.
+Here is a rough sketch of how mklesson generates each file from
+the contents of file "template":
+
+<PRE>
+A section, file sLESSON-SECTION.html is:
+ TEMPLATE-CHUNK section.head
+ LESSON-FILE section text
+ if (there's a question)
+  TEMPLATE-CHUNK section.question.head
+  LESSON-FILE question text
+  TEMPLATE-CHUNK section.question.tail
+  LESSON-FILE question choices
+ else
+  TEMPLATE-CHUNK section.no_question
+ end if
+  TEMPLATE-CHUNK section.tail
+
+A response file sLESSON-SECTIONrRESPONSE.html is:
+  TEMPLATE-CHUNK response.head
+  if correct-response then
+    TEMPLATE-CHUNK response.correct.head
+  else
+    TEMPLATE-CHUNK response.incorrect.head
+  end if
+  if reponse-defined then
+    LESSON-FILE response text
+  elsif not reponse-defined and this-is-correct-answer then
+    TEMPLATE-CHUNK response.correct.default
+  else (not reponse-defined and not this-is-correct-answer)
+    TEMPLATE-CHUNK response.incorrect.default
+  end if
+  if this-is-correct-answer then
+    TEMPLATE-CHUNK response.correct.tail
+  else (not this-is-correct-answer)
+    TEMPLATE-CHUNK response.incorrect.tail
+  end if
+  TEMPLATE-CHUNK response.tail
+
+The outline file lessonLESSON.html is:
+  TEMPLATE-CHUNK outline.head
+  generate a list of each section, linked to the sections.
+  TEMPLATE-CHUNK outline.tail
+</PRE>
+<P>
+The chunks have a set of macro variables like this:
+[AUTHOR_NAME].
+Each macro variable begins with `[', ends with `]', and
+has upper-case letters inside possibly separated by underscores.
+Case matters, and it must be an underscore, not a dash (-).
+These macro variables are replaced with real values when the
+program runs.
+Eventually the list of all possible macro variables should be
+documented here, but for the moment, look at the existing
+template file and the program 'mklesson', subroutine
+`substitute_and_append'.
+<P>
+As an example, [AUTHOR_NAME] is replaced with the (text)
+name of the author.
+<P>
+The default template requires graphics files
+up.gif (pointer up), previous.gif (pointer left), next.gif (pointer right),
+and tinyhome.gif (an image representing the tutorial home page)
+to be in the same directory as the generated tutorial files.
+<P>
+More information about mklesson is available in the
+<A HREF="userg.htm">mklesson user guide</A>.
+
+<!-- Copyright (C) David A. Wheeler 1994 -->
+<!-- Redistributable under the terms of the FSF General Public License -->
+
+<ADDRESS>David A. Wheeler (dwheeler&#64;dwheeler.com)</ADDRESS>
+</BODY></HTML>

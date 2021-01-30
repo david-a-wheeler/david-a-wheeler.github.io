@@ -1,0 +1,149 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 18.6 - Starting Implementation</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 18.6 - Starting Implementation</FONT></H1>
+
+Okay, let's start implementing program Small.
+I started by writing a version of procedure body Small, package Parser,
+package Thing, and package World, just enough to make it possible to
+run "look" and "quit".
+Rather than looking at everything in program Small, let's quickly
+examine some specific areas.
+For example, let's see how
+we can now define package Things more specifically:
+<P>
+<PRE>
+
+package Things is
+
+ -- "Thing" is the root class for all things in this small world.
+ -- Rooms, Players, Items, and Monsters are derived from Thing.
+
+ type Thing is abstract new Limited_Controlled with private;
+ type Thing_Access is access all Thing'Class;
+
+ -- Public Dispatching operations.
+
+ procedure Put_View(T : access Thing; Agent : access Thing'Class) is abstract;
+  -- Put what Agent sees inside T.
+
+  -- Public non-Dispatching operations:
+
+ procedure Set_Description(T : access Thing'Class;
+                           Description : in String);
+ function Long_Description(T : access Thing'Class) return Unbounded_String;
+ function Short_Description(T : access Thing'Class) return Unbounded_String;
+
+ -- ...
+end Things;
+
+</PRE>
+<P>
+We now have a root type called "Thing" defined in package "Things".
+We can set its description using procedure Set_Description,
+and retrieve descriptions using functions Long_Description
+or Short_Description.
+Any player who successfully looks at some thing will call procedure
+Put_View to print whatever that Thing looks like.
+Now we can implement procedure "Look" in package Occupants; it will
+figure out what you're looking at and call the corresponding Put_View.
+<P>
+
+For Get and Drop we'll add the corresponding operations to package Occupants.
+However, to implement Get and Drop we need to be able to move objects around.
+To do this, let's add this operation to package Thing:
+<P>
+<PRE>
+ procedure Place(T : access Thing'Class; Into : Thing_Access);
+   -- Place T inside "Into" (removing it from wherever it was).
+   -- Attempting to place T into itself will print an error message
+   -- and fail.
+</PRE>
+<P>
+Procedure Place doesn't need to dispatch, and we're passing access values
+around, so the first parameter is access Thing'Class (if we wanted
+this to dispatch, we could change it to "access Thing").
+The second parameter is Thing_Access, not Thing'Class, because
+"null" should be a valid value for "Into"
+(that would mean we'll move T so it will have no container).
+<P>
+
+I've added support for directions -
+that way players can go north, south, east, west, up, or down.
+To do so, I've added a "Direction" type that has the values
+North, South, East, West, Up, and Down.
+Rooms have data on what's at a given direction, Occupants
+have commands to go in a given direction, and the Parser recognizes
+those commands.
+Since different packages (Rooms, Occupants, and Parser) need to know about
+directions, I've added another package (Directions) to define
+this new type Direction.
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Between Look and Put_View, which would be called first?
+<OL>
+<LI><A HREF="s18s6r1.htm">Look</A>
+<LI><A HREF="s18s6r2.htm">Put_View</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s18s5.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s18sf.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson18.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 18 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s18s6.htm">http://www.adahome.com/Tutorials/Lovelace/s18s6.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

@@ -1,0 +1,142 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 8.1 - Type Character and Wide_Character</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 8.1 - Type Character and Wide_Character</FONT></H1>
+Many programs must manipulate text; these next few sections will
+present the basic Ada types used to manipulate text.
+<P>
+The basic element of text is represented as type <EM>Character</EM>.
+A variable of type character can hold, well, a character.
+More precisely, something of type Character can
+represent any one of the 256 possible characters in the ``Latin-1'' set.
+Type Character is sufficient for handling most languages written
+using Latin-based characters, such as English, French, and Spanish.
+Latin-1 is a superset of the ASCII character set (also called ISO 646),
+so Character is the right type for processing ASCII text files.
+<P>
+Ada 95 also defines a type called <EM>Wide_Character</EM>.
+If you need to handle non-Latin alphabets (such as
+Chinese or Arabic) you would use Wide_Character instead of Character.
+A Wide_Character can represent any character from the
+entire ISO 10646 character set.
+We won't discuss Wide_Character right now, but it's important to
+know that it's available if you need it.
+<P>
+Constants of type Character are written between single quotes
+(this is the same way it's done in C and C++).
+Thus, <EM>'a'</EM> is the constant ``lower-case A'', and <EM>'''</EM>
+is the constant ``single quote mark.''
+<P>
+Ada 95 defines a large set of predefined operations to help
+manipulate characters.
+Many of them are defined in the package Characters.Handling;
+if you're curious you can look at the
+<A HREF="http://www.adahome.com/rm95/rm9x-A-03-02.html">complete
+declaration of package Characters.Handling in the RM section A.3.2.</A>
+For example, Characters.Handling defines a function
+named <EM>To_Lower</EM> that accepts a single
+character and returns a lower case version of that character
+(if there is one - otherwise it just returns the character it was given).
+<P>
+Package Text_IO has a `Get' operation that can read a single
+character, and a `Put' operation that can write a single character.
+<P>
+Let's put these ideas together into a simple program that asks a yes-or-no
+question, gets a character as a response, and does something based on
+the user response:
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+with Text_IO; use Text_IO;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+
+procedure Yes_No is
+  Response : Character;
+begin
+  Put("Would you like me to say Hello?");
+  Get(Response);  -- Get first character.
+  if (To_Lower(Response) = 'y') then
+    Put("Hello!");
+  else
+    Put("Okay, I won't.");
+  end if;
+end Yes_No;
+</PRE>
+<P>
+<P>
+Ada's type Character is similar to C's ``char'' type, and
+package Characters.Handling is the Ada 95 equivalent of C's ctypes.h file.
+<P>
+Ada permits compilers to support additional ``local'' character sets as
+a compile-time option, but Ada compilers must support at least Latin-1
+and ISO 10646.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Which of the following is a Character constant?
+<OL>
+<LI><A HREF="s8s1r1.htm">"Hello"</A>
+<LI><A HREF="s8s1r2.htm">'n'</A>
+<LI><A HREF="s8s1r3.htm">Response</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s7sf.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s8s2.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson8.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 8 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s8s1.htm">http://www.adahome.com/Tutorials/Lovelace/s8s1.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

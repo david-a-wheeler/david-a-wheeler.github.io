@@ -1,0 +1,574 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<COMMENT  Edit the following lines. >
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=8>
+<COMMENT $Id: lesson8.les,v 1.4 1995/05/17 21:25:18 wheeler Exp $ >
+
+<COMMENT  You'll probably want to uncomment and edit these lines: >
+<COMMENT  <PREVIOUS_LESSON LOCATION="URL_of_directory/" >
+<COMMENT  <NEXT_LESSON LOCATION="URL_of_directory/" >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+<COMMENT Each section has a title; SECTION starts a new section.>
+
+<SECTION NAME="Type Character and Wide_Character">
+Many programs must manipulate text; these next few sections will
+present the basic Ada types used to manipulate text.
+<P>
+The basic element of text is represented as type <EM>Character</EM>.
+A variable of type character can hold, well, a character.
+More precisely, something of type Character can
+represent any one of the 256 possible characters in the ``Latin-1'' set.
+Type Character is sufficient for handling most languages written
+using Latin-based characters, such as English, French, and Spanish.
+Latin-1 is a superset of the ASCII character set (also called ISO 646),
+so Character is the right type for processing ASCII text files.
+<P>
+Ada 95 also defines a type called <EM>Wide_Character</EM>.
+If you need to handle non-Latin alphabets (such as
+Chinese or Arabic) you would use Wide_Character instead of Character.
+A Wide_Character can represent any character from the
+entire ISO 10646 character set.
+We won't discuss Wide_Character right now, but it's important to
+know that it's available if you need it.
+<P>
+Constants of type Character are written between single quotes
+(this is the same way it's done in C and C++).
+Thus, <EM>'a'</EM> is the constant ``lower-case A'', and <EM>'''</EM>
+is the constant ``single quote mark.''
+<P>
+Ada 95 defines a large set of predefined operations to help
+manipulate characters.
+Many of them are defined in the package Characters.Handling;
+if you're curious you can look at the
+<A HREF="http://www.adahome.com/rm95/rm9x-A-03-02.html">complete
+declaration of package Characters.Handling in the RM section A.3.2.</A>
+For example, Characters.Handling defines a function
+named <EM>To_Lower</EM> that accepts a single
+character and returns a lower case version of that character
+(if there is one - otherwise it just returns the character it was given).
+<P>
+Package Text_IO has a `Get' operation that can read a single
+character, and a `Put' operation that can write a single character.
+<P>
+Let's put these ideas together into a simple program that asks a yes-or-no
+question, gets a character as a response, and does something based on
+the user response:
+<P>
+<TEXT TEMPLATE=compile FILE="yes_no.adb">
+<P>
+Ada's type Character is similar to C's ``char'' type, and
+package Characters.Handling is the Ada 95 equivalent of C's ctypes.h file.
+<P>
+Ada permits compilers to support additional ``local'' character sets as
+a compile-time option, but Ada compilers must support at least Latin-1
+and ISO 10646.
+
+<QUESTION Type=Multiple-Choice>
+Which of the following is a Character constant?
+<CHOICES>
+<CHOICE ANS=1>"Hello"
+<CHOICE ANS=2>'n'
+<CHOICE ANS=3>Response
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry.  Something in double quotes is a <EM>string</EM> constant.
+Character constants are in <EM>single</EM> quotes.
+Here's a simple rule of thumb we'll describe later:
+single characters get single quotes.
+<WHEN ANS=2>
+You are correct.
+<WHEN ANS=3>
+No, sorry.  That looks like the name of a variable. Try again!
+</RESPONSES>
+<SECTION NAME="Types of Strings">
+Actually, single characters aren't all that useful.
+Characters are usually found in sequences, and these sequences
+are called ``strings''.
+<P>
+Ada 83 provided a built-in type for strings, called String.
+String is still a useful type, but many clamored for types which provided
+string-like capability but had different trade-offs between ease-of-use
+and performance for different tasks.
+Thus, Ada 95 provides a number of different ``string'' types, each
+best for a certain purpose.  All can be converted to and from the
+original type String, so you can easily use the different ``string''
+types together in a single program.
+Here's the list of ``string'' types provided by Ada:
+<P>
+<DL>
+<DT>String
+<DD>
+This is the basic Ada String type, and is also
+called a ``fixed length string''.
+This type (String) is simply an array of Characters.
+A String value must be given its length when it's created
+and its length will stay fixed.
+This isn't as bad as it sounds, since there are simple techniques to
+handle changing the length of values stored using Strings.
+For example, you can use an approach similar to the C programming language -
+use access values (pointers) to Strings, which would allow you to
+"free" a String and then create a new String with a potentially different
+length.
+However, if you change a string's length often, other ``string'' types
+(Bounded_String or Unbounded_String) are probably a better choice.
+<DT>
+Bounded_String
+<DD>
+Values of this type can vary in length up to a maximum length
+(which you supply).
+This is useful if you know at compile time what the maximum length
+of a string will be.
+<DT>
+Unbounded_String
+<DD>
+Values of this type can vary in length up to the largest value of
+type `Natural' (usually that's over 2 billion characters).
+If you have string variables whose length you want to vary, this is
+probably the best type to use.
+<DT>
+Other Language Strings: C.Strings.chars_ptr, COBOL.Alphanumeric,
+and Fortran_Character.
+<DD>
+Ada 95 includes some types that represent strings from other languages,
+namely C, COBOL, and Fortran.
+If you're interfacing to components written in these other languages,
+these types may be very useful to you.
+</DL>
+<P>
+Whenever you enclose characters inside double quotes, "like this", you
+are creating a constant of type String.
+Remember that a constant of type Character is inside single quotes,
+for example, 'L'.
+There's a simple rule of thumb to help remember the difference between
+constants of types Character and String:
+if you want a constant for a single character, use single quotes.
+The same symbols are used the same way in C and C++.
+
+<QUESTION Type=Multiple-Choice>
+Let's say you want to declare a ``string'' variable whose length will vary,
+and you don't really know exactly what its maximum length will be.
+What type would you probably use?
+<CHOICES>
+<CHOICE ANS=1>String
+<CHOICE ANS=2>Bounded_String
+<CHOICE ANS=3>Unbounded_String
+<CHOICE ANS=4>C.Strings.chars_ptr
+</CHOICES>
+<ANSWER ANS=3>
+<RESPONSES>
+<WHEN ANS=1>
+No, sorry; string isn't as good a choice when lengths vary.
+<WHEN ANS=2>
+No, Bounded_String is only a good choice if you know
+a string's maximum length.
+<WHEN ANS=3>
+Right!
+Because varying lengths is common in many applications, and
+because Unbounded_String is relatively easy to use, we'll
+use Unbounded_String quite a bit in this tutorial.
+However, since String is the ``basic'' string type in Ada, we will
+start by looking at how to use type String.
+<WHEN ANS=4>
+No,
+C.Strings.chars_ptr is intended for interfacing with C components,
+and the question didn't state that this type was an interface
+to C components.
+</RESPONSES>
+<SECTION NAME="Basics of Type String">
+Ada's type <EM>String</EM> can be considered
+a "primitive" type for handling sequences of text.
+It's simple and efficient, but some operations require a little work.
+<P>
+A String is simply an array of characters.
+The major "catch" with variables of type String is that,
+when you create a String variable, you must give Ada a way of determining
+its length - and the variable will stay fixed at that length from then on.
+There are two major ways for determining a string's length -
+you can explicitly state how long the string will be, or you can
+assign the variable a string value (Ada will determine how long the
+string value is and make the new variable that length).
+<P>
+Ada requires that at least the bounds or the initial string value be given;
+if both are given, they must match. The "low_bound" is usually 1, though
+Ada permits the low_bound to be a larger Integer.
+Here are some examples:
+<P>
+<PRE>
+A        : String(1..50);   -- Variable A holds 50 characters.
+Question : String := "What is your name?"  -- Ada will make String(1..18).
+</PRE>
+<P>
+<P>
+Here's a simplified <A HREF="bnf.htm">BNF</A>
+for declaring String variables:
+<P>
+<PRE>
+declare_string_variable ::= list_of_variable_names ":" [ "constant" ]
+                           "String" [ bounds ] 
+                                    [ ":=" initial_string_value ]
+bounds ::= "(" low_bound ".." high_bound ")"
+</PRE>
+Once you have a string, you can use predefined Ada operations on arrays
+(since a string is simply an array of characters).
+These include the following:
+<OL>
+<LI>You can read or overwrite a Character (an element of a String) at
+a given index position. For example, A(2) refers to the character
+in string A at index position 2.
+Any attempt to read or write a nonexistent index position will cause
+the exception Constraint_Error to be raised.
+To change the character at a given position,
+simply assign to it, for example:
+<PRE>
+    A(2) := 'f';
+</PRE>
+<LI>You can read or overwrite a <EM>slice</EM> (i.e., a substring).
+A slice refers to a portion of a string, from one index position
+to another, and is also considered a String.
+A slice from index position "low" to position "high" of some
+String variable B is written as "B(low..high)".
+You can write to a slice, too, but the source and destinations
+must have the same length.
+<LI>You can assign a whole string from one String to another the same
+way as any other variable, as long as their lengths are equal, like this:
+<PRE>
+    B := A;
+</PRE>
+<LI>You can concatenate (combine) strings together using the "&amp;"
+operator.
+</OL>
+<P>
+There are also predefined operations in Text_IO for printing
+Strings, namely Put and Put_Line.
+Let's look at an example:
+<P>
+<PRE>
+  with Text_IO; use Text_IO;
+  procedure String1 is
+    A : String := "Hello";
+    B : String(1..5);
+  begin
+    B := A;                      -- B becomes "Hello"
+    A(1) := 'h';                 -- A becomes "hello"
+    A(2..3) := A(4..5);          -- A becomes "hlolo"
+    A := B(1) &amp; A(2..3) &amp; "ol";  -- A becomes "Hlool"
+    Put_Line(A);
+    A(2..3) := B(2..3);
+    Put_Line(A);
+  end String1;
+</PRE>
+<P>
+
+<QUESTION Type=Multiple-Choice>
+What is the last line that program String1 will print?
+
+<CHOICES>
+<CHOICE ANS=1>Hello
+<CHOICE ANS=2>Hlolo
+<CHOICE ANS=3>hello
+<CHOICE ANS=4>Helol
+</CHOICES>
+<ANSWER ANS=4>
+<RESPONSES>
+<WHEN ANS=4>
+That's right.
+Granted, that was a pretty boring program, but hopefully it was
+a clear example.
+</RESPONSES>
+<SECTION NAME="Passing String Between Subprograms">
+Strings can be passed between subprograms just like any other
+variable type.
+Procedures and functions can have a type String as an in (or in out)
+variable, and those parameters will be set when the subprogram
+is called.
+In addition, functions can return variables of type String, just like
+any other type.
+<P>
+Beginning Ada developers often make an unwarranted assumption
+when writing subprograms that accept Strings - they assume that String
+indexes always begin with one.
+Not true.
+String indexes do not <EM>have</EM> to start at one - that's just
+the smallest possible starting index.
+In particular, if you pass in a string slice as an input parameter
+to a subprogram, the receiving subprogram will receive the slice's
+index values. This helps to keep String efficient, but it can be surprising.
+<P>
+The smallest index value of a String named A is written as
+A'First. Similarly, the largest index value is A'Last, and the
+string's length is A'Length.
+<P>
+Here's a simple rule of thumb: whenever you write a subprogram
+that accepts a String variable as an in parameter, 
+<EM>always</EM> use 'First, 'Last, and
+'Length - never assume that the String index begins with one.
+If you try to reference an out-of-range index, Ada will raise an
+exception - but it's better to not make the mistake in the first place.
+<P>
+Here is an example, which will hopefully make this clearer:
+<P>
+<PRE>
+  with Text_IO; use Text_IO;
+  procedure String2 is
+
+    procedure Print_Reverse( S : String ) is
+    begin
+      for I in reverse S'First .. S'Last loop
+        Put(S(I));
+      end loop;
+    end Print_Reverse;
+  
+    Demo : String := "A test";
+    
+  begin
+    Print_Reverse(Demo(3..Demo'Last));
+  end String2;
+</PRE>
+<P>
+
+<QUESTION Type=Multiple-Choice>
+When Print_Reverse is called, which is true?
+ 
+<CHOICES>
+<CHOICE ANS=1>S="test", S'First=3, S'Length=4
+<CHOICE ANS=2>S="test", S'First=1, S'Length=4
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right.
+<P>
+A number of times it's been emphasized that a String has
+a fixed length.
+What happens if you really want to vary a string's length?
+<P>
+One solution is to create a long string, long enough to
+hold the maximum number of characters in a String, and then
+use another variable to store the number of characters currently
+used in the String.
+This may be appropriate when actual string sizes are (on the average)
+close to the maximum string size and when maximum string sizes can
+be predetermined.
+That idea is the basis for the Bounded_String type we mentioned earlier.
+<P>
+Another solution is to create an "access (pointer) to string" variable
+(we haven't discussed "access" types yet, but Ada provides them).
+Such a variable would be very similar to C and C++'s
+<EM>char *</EM> type.
+Unlike C and C++, Ada provides a number of built-in protections for
+"access to String" types.
+Still, varying-length Strings occur often 
+enough that Ada 95 provides a predefined
+type, Unbounded_String, that does some additional housekeeping for us.
+Unbounded_String is usually implemented using String in some way,
+but it does a number of things automatically for us.
+Thus, we will talk about Unbounded_String next, and discuss
+"access to String" later.
+</RESPONSES>
+<SECTION NAME="Unbounded_String Basics">
+The Unbounded_String type is defined in the package
+Ada.Strings.Unbounded, so you'll need to ``with'' package
+Ada.Strings.Unbounded to use the Unbounded_String type.
+Package Ada.Strings.Unbounded also provides a number
+of useful basic operations on Unbounded_String.
+<A HREF="http://www.adahome.com/rm95/rm9x-A-04-05.html">The
+Ada RM section A.4.5
+provides a complete definition of package Ada.Strings.Unbounded.</A>
+<P>
+Here are a few important operations:
+<UL>
+<LI>
+Function To_Unbounded_String takes something of type String and converts
+it into type Unbounded_String.
+This is useful for a variety of purposes, for example, for
+setting Unbounded_String values to some constant value,
+as we'll show later.
+<LI>
+Function To_String is the reverse; it
+takes something of type Unbounded_String and converts it to type String.
+<LI>
+Function Length takes an Unbounded_String and returns
+the number of characters currently stored in the Unbounded_String.
+<LI>
+Procedure Append takes two arguments; it appends to the end of
+its first argument the contents of the second argument.
+The first argument has to be an Unbounded_String;
+the second argument can be a String or an Unbounded_String.
+<LI>
+Function Element extracts from a given Unbounded_String (its <EM>Source</EM>)
+the character at a given position (its <EM>index</EM>).
+The leftmost character has an index of 1, just like Pascal;
+C and C++ start their indexes at zero.
+Here's the official definition of Element:
+<PRE>
+  function Element (Source : in Unbounded_String; Index  : in Positive)
+                    return Character;
+</PRE>
+<LI>
+Procedure Replace_Element is the opposite of Element; it lets you
+modify a character at a given position.
+Here's the official definition of Replace_Element:
+<PRE>
+  procedure Replace_Element (Source : in out Unbounded_String;
+                             Index  : in Positive;
+                             By     : in Character);
+</PRE>
+<LI>
+Function Slice takes a given Unbounded_String and returns a ``slice''
+of it, i.e., all the characters between a given low and high index.
+Slice returns a String, so if you want to use its result as an
+Unbounded_String, use To_Unbounded_String on the result.
+<PRE>
+  function Slice (Source : in Unbounded_String;
+                  Low    : in Positive;
+                  High   : in Natural) return String;
+
+</PRE>
+<LI>
+Procedure Insert takes a New Item (of type String) and inserts it
+into an Unbounded_String before a given index.
+If the string isn't empty, this will change the Unbounded_String's length.
+This procedure's definition is:
+<PRE>
+  procedure Insert (Source   : in out Unbounded_String;
+                    Before   : in Positive;
+                    New_Item : in String);
+</PRE>
+<LI>
+Procedure Delete takes an Unbounded_String and two indexes, and deletes
+the characters between those two index positions (including the end points).
+Its definition is:
+<PRE>
+Procedure Delete
+  procedure Delete (Source  : in out Unbounded_String;
+                    From    : in Positive;
+                    Through : in Natural);
+</PRE>
+</UL>
+<P>
+Comparison operations (such as "=" and "&lt;") are defined in this package.
+There are other routines to modify or search Unbounded_Strings, including
+"&amp;" (concatenate two Unbounded_Strings together),
+Translate, Trim, Head, Tail, Index, and Find_Token.
+<P>
+You can use assignment (:=) as well to assign one value to another.
+Unlike type String, the lengths of the Unbounded_String's need not be equal.
+
+
+<QUESTION Type=Multiple-Choice>
+Given a variable ``Input'' of type Unbounded_String,
+what expression would return the value of the fourth character in Input?
+<CHOICES>
+<CHOICE ANS=1>Element(Input, 4)
+<CHOICE ANS=2>Replace_Element(Input, 4, 'L')
+<CHOICE ANS=3>Element(4, Input)
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right.
+What happens if there aren't four characters in the input?
+The answer, like most other such problems, is that an exception is raised;
+we'll find out later how to deal with exceptions.
+<WHEN ANS=2>
+No, that would change the value of the fourth character, not show
+you what its value is.
+<WHEN ANS=3>
+Very close, but not right. Try again.
+</RESPONSES>
+<SECTION NAME="Unbounded_String Input and Output">
+Ada 95 does not define input and output packages for
+Unbounded_String; instead, it defines operations on type String and
+operations to convert a String into an Unbounded_String.
+<P>
+Personally, I find that it's easier to use a package that defines Input-Output
+operations directly for an Unbounded_String.
+It's easy to define such a package, so I've provided one for you.
+<P>
+I call my package ``Ustrings'', which is a nice short name - I'll explain
+later why it has that name.
+It has a procedure Get_Line, which reads in a whole text line into
+an Unbounded_String. Procedure Put prints the Unbounded_String.
+Procedure Put_Line first Puts the Unbounded_String, and then
+starts a new line.
+Here's a shortened version of this package's declaration:
+<P>
+<PRE>
+package Ustrings is
+  procedure Get_Line(Item : out Unbounded_String);
+  procedure Put(Item : in Unbounded_String);
+  procedure Put_Line(Item : in Unbounded_String);
+end Ustrings;
+</PRE>
+<P>
+If you're curious you can see the complete
+<IFDEF BOOK>
+declaration (specification) and body of my package Ustrings
+in the back of this book, as part of the description of program "Small".
+<ELSE>
+<A HREF="ustrings.ads">declaration (specification)</A> and
+<A HREF="ustrings.adb">body</A>
+of my package Ustrings.
+<ENDIF>
+<P>
+Also, I also believe that
+``Unbounded_String'' is too long a name for
+such a widely-used type, so I define in package ``Ustrings'' a new
+name for Unbounded_String called ``Ustring''.
+You can declare variables of type ``Ustring'' and they'll simply be
+Unbounded_Strings.
+You do <EM>not</EM> need to use the type name "Ustring" instead
+of "Unbounded_String"; I simply find it convenient.
+<P>
+Let's look at a short Unbounded_String demonstration program
+named `Unbound'.
+It reads in text, one line at a time, and then does various things with
+the line of text.
+Study the following program and see if you can figure out what it does.
+<P>
+<TEXT FONT=PRE FILE="unbound.adb">
+<P>
+
+<QUESTION Type=Multiple-Choice>
+What does subprogram Unbound do
+after it prints the line showing the number of characters
+in the input string?
+
+<CHOICES>
+<CHOICE ANS=1>It prints the input string in reverse.
+<CHOICE ANS=2>It prints the input string as it was entered.
+<CHOICE ANS=3>Nothing.
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+Right.
+The big giveaway here is the ``reverse'' keyword.
+<IFDEF BOOK>
+<ELSE>
+<P>
+<HR>
+<P>
+<FONT SIZE=+1>
+At this point you've done a lot of reading on-line, and you
+have a good idea on how Lovelace is organized.
+You're welcome to continue to use the on-line version, but I recommend
+<A HREF="book.htm"><B>buying the book instead</B></A>.
+There's enough material left that it'd be faster to use the book version
+than the on-line version, and if you've made it this far
+you'll probably continue the rest of the way.
+So, if you'd like to buy the book,
+<A HREF="book.htm"><B>more information about the book form
+of this tutorial is available</B></A>.
+</FONT>
+<ENDIF>
+<WHEN ANS=2>
+No, it does that <EM>before</EM> it prints the length of the input string.
+Try again.
+</RESPONSES>

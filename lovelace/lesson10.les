@@ -1,0 +1,200 @@
+<COMMENT This is a lesson file for the Lovelace Ada tutorial>
+<COMMENT A program called genlesson is used to transform this file into a set>
+<COMMENT of useful HTML files for use by Mosaic & other WWW browsers.>
+
+<COMMENT  Edit the following lines. >
+<TUTOR NAME="Ada95 Lovelace">
+<LESSON NUMBER=10>
+<COMMENT $Id: lesson10.les,v 1.2 1995/05/17 21:25:18 wheeler Exp $ >
+
+<COMMENT  You'll probably want to uncomment and edit these lines: >
+<COMMENT  <PREVIOUS_LESSON LOCATION="URL_of_directory/" >
+<COMMENT  <NEXT_LESSON LOCATION="URL_of_directory/" >
+
+<COMMENT A lesson is divided into 1 or more "sections".>
+<COMMENT Each section has a title; SECTION starts a new section.>
+
+<SECTION NAME="Exception Basics">
+Errors and other exceptional situations must be handled by programs
+that work in the real world.
+Ada provides facilities to deal with these real problems which make
+handling them much easier.
+In Ada, an <EM>exception</EM> represents a kind of exceptional situation,
+usually a serious error.
+At run-time an exception can be <EM>raised</EM>, which calls attention
+to the fact that an exceptional situation has occurred.
+<P>
+The default action when an exception is raised is to halt the program.
+Usually the program will print out the name of the exception and where
+the problem took place, though this depends on your compiler.
+The next few sections will show how to override this default.
+<P>
+If you don't want to halt the program, you'll need to tell Ada what to do
+instead by defining an <EM>exception handler</EM>.
+An exception handler states what exceptions to handle and what
+to do when a given exception is raised.
+<P>
+Exceptions generally represent something unusual and not normally expected -
+reserve their use for things like serious error conditions.
+They shouldn't be used for ``expected'' situations, because
+they can be slower and if incorrectly handled can stop a program.
+The place where an exception is raised may be far away from where it is
+handled, and that makes programs with a voluminous number of different
+exceptions harder to understand.
+Instead, exceptions should be used when a subprogram cannot perform its job
+for some significant reason.
+<P>
+Ada has a number of <EM>predefined</EM> exceptions that are raised when
+certain language-defined checks fail.
+The predefined check you're most likely to see is
+<EM>Constraint_Error</EM>;
+this exception is raised when a value goes out-of-bounds for its type.
+Examples of this include trying to store a value
+that's too large or too small into that type,
+dividing by zero, or using an invalid array index.
+<P>
+Naturally, there is some run-time overhead in performing all these checks,
+though less than you might think.
+It is possible to suppress these language-defined checks;
+this should only be done after the program is thoroughly debugged, and
+many people think that it shouldn't be done even then.
+<P>
+Some packages define their own exceptions, for example, Text_IO
+defines the exception <EM>End_Error</EM> that is raised when you attempt to
+``Get'' something after you've reached the end of the file, and
+<EM>Name_Error</EM> is raised if try to open a file that doesn't exist.
+<P>
+In the next few sections we'll learn how to define exceptions,
+how to raise exceptions, and how to handle exceptions.
+
+<QUESTION Type=Multiple-Choice>
+If you're defining a package that displays the view from an airplane
+cockpit, should you
+raise an exception whenever the view changes from daytime to nighttime?
+<CHOICES>
+<CHOICE ANS=1>You should probably raise an exception.
+<CHOICE ANS=2>You should probably <EM>not</EM> raise an exception.
+</CHOICES>
+<ANSWER ANS=2>
+<RESPONSES>
+<WHEN ANS=1>
+Sorry, that's probably not a good approach.
+You should only use exceptions when serious problems arise, not
+just when some interesting state changes.
+It <EM>might</EM> be a good approach, but it probably isn't.
+</RESPONSES>
+<SECTION NAME="Declaring Exceptions">
+Before you can raise or handle an exception, it must be declared.
+Declaring exceptions is just like declaring a variable of
+type <EM>exception</EM>; here's an example:
+<P>
+<PRE>
+  Singularity : exception;
+</PRE>
+<P>
+To be complete, here's the syntax
+for defining an exception, describing using
+<A HREF="bnf.htm">BNF</A>:
+<P>
+<PRE>
+  exception_declaration ::= defining_identifier_list ": exception;"
+  defining_identifier_list ::= identifier { "," identifier }
+</PRE>
+<P>
+Exception declarations are generally placed in a package declaration.
+<P>
+Raising an exception is easy, too - just use the <EM>raise</EM>
+statement.
+A raise statement is simply the keyword "raise" followed by the name
+of the exception.
+For example, to raise the "Singularity" exception defined above, just say:
+<P>
+<PRE>
+  raise Singularity;
+</PRE>
+<P>
+The syntax in <A HREF="bnf.htm">BNF</A> is:
+<P>
+<PRE>
+  raise_statement ::= "raise" [ exception_name ] ";"
+</PRE>
+<P>
+You'll notice that the exception_name is optional; we'll discuss
+what that means in the next section.
+<QUESTION Type=Multiple-Choice>
+Which of the following would define an exception named No_Safety_Net?
+<CHOICES>
+<CHOICE ANS=1>No_Safety_Net : exception;
+<CHOICE ANS=2>Exception  : No_Safety_Net;
+</CHOICES>
+<ANSWER ANS=1>
+<RESPONSES>
+<WHEN ANS=1>
+That's right.
+<WHEN ANS=2>
+No, you've got it reversed.
+</RESPONSES>
+
+<SECTION NAME="Handling Exceptions">
+As we've noted many times, if an exception is raised and isn't handled
+the program stops.
+To handle exceptions you must define, reasonably enough, an
+<EM>exception handler</EM>.
+<P>
+When an exception is raised (by the raise statement) Ada will abandon
+what it was doing and look for a matching exception handler
+in the sequence of statements where the exception was raised.
+A sequence of statements is the set of statements between the
+keywords "begin" and "end".
+If Ada doesn't find a match, it returns from the current subprogram
+(cleaning up along the way) and tries to find a matching exception handler
+in the caller (from where it was called).
+If it doesn't find one there, it exits that subprogram
+(cleaning up along the way) and tries yet again.
+Ada keeps repeating this process until it finds a matching exception handler
+or until it exits the program.
+<P>
+An exception handler is defined just before the "end" statement
+that matches a "begin" statement.
+<P>
+For example, here's a procedure that "Open"s a file
+if it can, and if the file doesn't exist it "Create"s it.
+<P>
+<PRE>
+  procedure Open_Or_Create(File : in out File_Type;
+                           Mode : File_Mode; Name : String) is
+  begin
+    -- Try to open the file. This will raise Name_Error if
+    -- it doesn't exist.
+    Open(File, Mode, Name);
+  exception
+    when Name_Error =&gt;
+      Create(File, Mode, Name);
+  end Open_Or_Create;
+</PRE>
+<P>
+Here's a simplified <A HREF="bnf.htm">BNF</A> of an exception handler:
+<P>
+<PRE>
+  exception_handler ::= exception_choice { "|"  exception_choice } "=&gt;"
+                        sequence_of_statements
+  exception_choice  ::= exception_name | "others"
+</PRE>
+<P>
+The keyword "others" means all exceptions not explicitly listed
+in this exception handler; thus, you can handle all exceptions if you want to.
+<P>
+Inside an exception handler you can do any kind of processing you wish.
+If, after processing, you find you need to raise the same exception to
+a higher level, you can use the "raise" statement without the
+name of an exception.
+A raise statement without a named exception <EM>re-raises</EM> the
+exception being handled.
+Raise statements can only re-raise exceptions inside an exception handler.
+<P>
+You can pass information along with an exception,
+and there is a predefined package of exception-related operations.
+We won't go into that now, but if you're 
+interested, you can examine
+<A HREF="http://www.adahome.com/rm95/rm9x-toc-11.html">section 11
+of the Ada RM, which discusses exceptions</A>.

@@ -1,0 +1,79 @@
+#!/bin/sh
+# lcount - generate Lovelace statistics in HTML format.
+
+cat <<END_of_header
+<HTML>
+<HEAD>
+<TITLE>Lovelace Ada Tutor - Statistics</TITLE>
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF">
+<H1>Lovelace Ada Tutor - Statistics</H1>
+
+END_of_header
+
+echo "The following are statistics on version "
+cat version
+echo "of the Lovelace tutorial:"
+
+ls [a-z]* | grep -v "\.zip$" | grep -v "\.gz$" > ,filelist
+
+echo "<UL>"
+
+echo "<LI>Number of files in Lovelace: "
+cat ,filelist | wc -l
+echo " (ignoring zip and gzip files)"
+
+echo "<LI>Number of HTML files:"
+ls [a-z]*.htm | wc -l
+
+echo "<LI>Number of Ada source files:"
+ls [a-z]*.ad[sbap] | wc -l
+
+echo "<LI>Number of lesson files:"
+ls lesson*.les | wc -l
+
+echo "<LI>Number of sections in lesson files:"
+grep '^ *<SECTION' lesson*.les | wc -l
+
+echo "<LI>Lesson files contain: "
+cat lesson*.les | rmhtml | wc | wcout
+echo "(removing HTML marks)"
+
+echo "<LI>Number of locations WebAda can be invoked directly from a lesson"
+echo "(permitting automatic compilation via the Internet): "
+cat lesson*.les | grep -i '<TEXT.*TEMPLATE=compile' | wc -l
+
+echo "<LI>HTML files contain:"
+cat *.htm | rmhtml | wc | wcout
+echo "(removing HTML marks; this includes source code)"
+
+echo "<LI>The entire set of Lovelace files contain:"
+cat `cat ,filelist` | wc | wcout
+echo " (including source, ignoring zip and gzip files)"
+
+echo "<LI>The lovelace.zip file (with Lovelace, but without Cello) is:"
+wc -c < lovelace.zip
+echo "bytes long."
+
+echo "</UL>"
+
+cat <<END_of_included_text
+
+<P>
+If you're curious, you could also ask Digital's
+<A HREF="http://altavista.digital.com/">Alta Vista</A>
+to list for you
+<A HREF="http://altavista.digital.com/cgi-bin/query?pg=q&what=web&fmt=.&q=link%3A%2F%2Fwww.adahome.com%2FTutorials%2FLovelace%2Flovelace.htm">other
+locations with links to Lovelace</A>.
+<P>
+<A HREF="lovelace.htm">
+<STRONG>You can return to the Lovelace home page.</STRONG></A>
+<P>
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+</BODY>
+</HTML>
+
+END_of_included_text
+

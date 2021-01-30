@@ -1,0 +1,176 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 6.7 - Private and Limited Private Types</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 6.7 - Private and Limited Private Types</FONT></H1>
+If you simply declare types in a package specification
+in the way we've discussed so far,
+anyone who <EM>with</EM>s the package will be able to do anything
+to your new type that they could with the original types.
+In many cases this is bad, because these users (sometimes called
+<EM>clients</EM> or <EM>customers</EM>) will become dependent on the
+specific way the type was implemented.
+If the customers become dependent in this way, it will
+be very difficult to change the way the type is implemented
+(to improve performance, for example).
+<P>
+Ada provides several mechanisms to hide capabilities from customers.
+But first, it's important to understand the idea that, by removing
+capabilities, you gain more freedom.
+By <EM>removing</EM> capabilities from your customers, you (as the
+implementor of a type) gain more freedom to implement the type in any
+way that you choose. You also have more freedom to change the
+implementation later.
+Let's say that you declare a new type in a package specification in the
+way we've discussed so far. If you happen to base it on
+type Integer, your customers can still add, subtract, and so on.
+Even if you really want customers to only use the "less than" operation
+(as an "ordering" concept),
+the customers may not realize what limitations you had in
+mind and use all sorts of other operations that might not make sense
+in later revisions of the system.
+If you remove the ability to use the type as a normal Integer, the customers
+will be forced to use the type the way you intended -- and as a result
+you can change your implementation much more easily.
+<P>
+When declaring a type in a package declaration, you
+can declare the type as <EM>private</EM>.
+By declaring the type as "private" you disable the normal operations
+on that type (for example, "+" on Integers).
+After declaring a type as private, you then list the subprograms that
+you want to permit as publically-accessible operations on that type.
+If you declare a type as private, you must complete
+the type's definition in a section of the package declaration
+called the <EM>private</EM> part.
+If a type is declared as <EM>private</EM>, other packages can only
+use the operations that you provide and the
+assignment (:=) and equality (=) operations.
+<P>
+Here's an example.
+Let's say that you want to create a type called `Key', which
+uniquely identifies some resource; you only want people to be
+able to Request a key and determine if one key was requested
+before another (let's call that operation "&lt;").
+Here's one way to implement this
+(this example is inspired by the
+<A HREF="http://www.adahome.com/rm95/rm9x-07-03-01.html">Ada
+RM section 7.3.1</A>):
+<P>
+<!-- Form to permit compilation using WebAda removed. -->
+<P>
+<PRE>
+ package Keys is
+   type Key is private;
+   Null_Key : constant Key;         -- a deferred constant.
+   procedure Get_Key(K : out Key);  -- Get a new Key value.
+   function "&lt;"(X, Y : in Key) return Boolean; -- True if X requested
+                                                  -- before Y was
+ private                                -- start package's private part.
+   Max_Key  : constant := 2 ** 16 - 1;  -- A private constant.
+   type Key is range 0 .. Max_Key;      -- Completed type definition.
+   Null_Key : constant Key := 0;        -- Completed constant.
+ end Keys;
+</PRE>
+<P>
+<P>
+Note that the type declaration in the package declaration is
+declared as `private'.
+This is later followed by the word `private' introducing the
+`private part' of the package specification.
+Here the type must be completely defined, as well as any constants
+necessary to complete its definition.
+Although Key is actually a numeric type, other
+packages cannot use addition, multiplication, and other numeric
+operations because Key is declared as `private' - the only operations
+are those defined in the package (as well as := and =).
+<P>
+Notice the function "&lt;" in the example above.
+In Ada, you can redefine an infix operator such as "+", "*", and "&lt;".
+The way to do that is to define the operation as a function taking two values,
+and using as the number name the operation inside double quotes.
+Notice also that you can create a constant value without saying exactly what
+its value is; you declare it as a constant with the given type, but don't
+actually give it its value; you then give the complete constant definition
+in the private part.
+<P>
+What if we don't want the default assignment (:=) and equals-to (=)
+operations?
+The answer: we declare the type as a <EM>limited private</EM> type
+instead of a <EM>private</EM> type.
+A limited private type is a private type that doesn't even define
+the default assignment and equals-to operations.
+Think of "limited" as an adjective on the word private.
+Here's how Key would be defined as a limited private type:
+<P>
+<PRE>
+  type Key is limited private;
+</PRE>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+How would you define a type if you wanted <EM>only</EM>
+two operations on it called `up' and `down'?
+<OL>
+<LI><A HREF="s6sfr1.htm">private</A>
+<LI><A HREF="s6sfr2.htm">limited private</A>
+<LI><A HREF="s6sfr3.htm">non-private</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s6s6.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s7s1.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson6.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 6 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s6sf.htm">http://www.adahome.com/Tutorials/Lovelace/s6sf.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

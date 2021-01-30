@@ -1,0 +1,156 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 9.4 - Package Command_Line</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 9.4 - Package Command_Line</FONT></H1>
+There is a special kind of input and output between the
+operating system and the Ada program.
+This input is the information from the <EM>command line</EM>, and
+the output is what's called an <EM>exit status</EM>.
+This was easy to do in Ada 83 but there wasn't a standard way to do it.
+Ada 95 has added
+a standard package to perform this input and output called
+<EM>Command_Line</EM>.
+Command_Line is very similar to C's argc, argv, and exit.
+<P>
+Command_Line provides a few subprograms for input from the operating system.
+This package defines a function named <EM>Argument_Count</EM> that
+returns the number of arguments given to it (it will be zero or higher).
+It also provides a function called <EM>Argument</EM> that takes an
+argument number (an index) and returns that argument's value as a String.
+It also provides function Command_Name, which returns the name of the
+program as a String; some operating systems don't support this.
+<P>
+Command_Line provides subprograms for returning a <EM>Status_Code</EM>
+to the operating system, which is some sort of integer type.
+There are two predefined Status_Codes: Success and Failure.
+You can set the Status_Code using the procedure Set_Status; when the
+program ends, the last value set in Set_Status will be returned to the
+operating system.
+<P>
+Here's the definition of Command_Line
+(from the
+<A HREF="http://www.adahome.com/rm95/rm9x-A-15.html">RM
+section A.15</A>):
+<P>
+<PRE>
+  package Ada.Command_Line is
+    function Argument_Count return Natural;
+    function Argument (Number : in Positive) return String;
+    function Command_Name return String;
+
+    type Exit_Status is <EM>implementation-defined integer type;</EM>
+    Success : constant Exit_Status;
+    Failure : constant Exit_Status;
+    procedure Set_Exit_Status (Code : in Exit_Status);
+    -- ...
+  end Ada.Command_Line;
+</PRE>
+<P>
+Here's an example of Command_Line;
+program Show takes as arguments a list of files and prints them out,
+indented with one space:
+<P>
+<PRE>
+with Ada.Command_Line, Text_IO, Ada.Strings.Unbounded, Ustrings;
+use  Ada.Command_Line, Text_IO, Ada.Strings.Unbounded, Ustrings;
+
+procedure Show is
+-- Take each command line argument as a filename and display
+-- each file, indented.
+
+  procedure Show_File(Filename : String) is
+  -- Open "Filename" and display it, indented.
+    File : File_Type;
+    Input : Unbounded_String;
+  begin
+      Put("Printing file ");
+      Put_Line(Filename);
+      Open(File, In_File, Filename);
+
+      while (not End_Of_File(File)) loop
+        Get_Line(File, Input);
+        Put(' ');          -- indent.
+        Put_Line(Input);
+      end loop;
+      Close(File);
+  end Show_File;
+
+begin -- procedure Show
+  if Argument_Count = 0 then
+    Put_Line(Current_Error, "Error - No file names given.");
+    Set_Exit_Status(Failure);
+  else
+    -- Open each file and show it.
+    for Arg in 1 .. Argument_Count loop
+      Show_File(Argument(Arg));
+    end loop;
+  end if;
+end Show;
+</PRE>
+<P>
+Package Command_Line may not be useful if there's
+no operating system, since in that case there's nothing to communicate with.
+<!-- No quiz question -->
+<P>
+<HR>
+<P>
+There is no quiz question for this section.
+<P>
+<IMG SRC="pright.gif" ALT="" HEIGHT="14" WIDTH="33">
+<A HREF="s10s1.htm">
+<FONT SIZE="+1"><STRONG>You may go to the next section.</STRONG></FONT></A>
+<P>
+<HR>
+You may also:
+<P>
+
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s9s3.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="lesson9.htm">
+<IMG SRC="barrowr.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to the outline of lesson 9</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s9sf.htm">http://www.adahome.com/Tutorials/Lovelace/s9sf.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

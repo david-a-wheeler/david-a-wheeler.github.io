@@ -1,0 +1,134 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 13.3 - Protected Types</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 13.3 - Protected Types</FONT></H1>
+A protected type is a passive data object that provides protection
+of data consistency even when multiple tasks attempt to
+access its data.
+Protected types are very efficient, which is why they were added
+to Ada in 1995.
+Protected types can be considered to be a very advanced form of
+"semaphore" or "monitor".
+<P>
+A protected type contains data that tasks can access only through
+a set of protected operations defined by the developer. 
+There are three kinds of protected operations:
+<OL>
+<LI>
+Protected functions, which provide read-only access to the internal data.
+Multiple tasks may simultaneously call a protected function.
+<LI>
+Protected procedures, which provide exclusive read-write access to the
+internal data.
+When one task is running a protected procedure, no other task
+can interact with the protected type.
+<LI>
+Protected entries, which are just like protected procedures except
+that they add a "barrier".
+A barrier is some Boolean expression that must become true before
+the caller may proceed.
+The barrier would usually depend on some internal data value protected
+by the protected type.
+If the barrier is not true when the caller makes a request, the
+caller is placed in a queue to wait until the barrier becomes true.
+</OL>
+<P>
+Protected types tend to be very efficient, since
+high-overhead operations called "full context switches"
+aren't usually necessary to implement them.
+Protected types are often implemented using techniques such as
+interrupt disables,
+<A HREF="http://www.adahome.com/rm95/rm9x-D-03.html">priority
+ceiling locking</A>, or spin locks.
+In fact, protected types are often more efficient than using
+semaphores directly, which is a little surprising;
+see the
+<A HREF="http://www.adahome.com/LRM/95/Rationale/rat95html/rat95-p2-9.html#1">Ada Rationale (Part 2, section 9.1.3)</A>
+if you're curious why protected types can be so efficient.
+However, this also means that any protected operation should be
+short and fast; significant processing should be done elsewhere.
+Protected operations generally should do things like increment
+or decrement a value, set a flag, set an access value or two,
+or other similar quick operations.
+Lengthy operations may increase the maximum system latency (the time it
+takes for the system to respond to a new situation), which in many
+systems is a bad thing.
+<P>
+A protected type can be created as a single instance (i.e. a single
+protected variable) or as a full Ada type.
+As the latter you can do anything you would do with a regular type,
+including placing them in records or arrays.
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Let's say you're creating a protected type and you want to create an
+operation that changes the protected type's data.
+This operation can always occur - it doesn't need to wait for some
+special circumstance.
+Which of the following should this operation be?
+ 
+<OL>
+<LI><A HREF="s13s3r1.htm">Protected function.</A>
+<LI><A HREF="s13s3r2.htm">Protected procedure.</A>
+<LI><A HREF="s13s3r3.htm">Protected entry.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s13s2.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s13s4.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson13.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 13 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s13s3.htm">http://www.adahome.com/Tutorials/Lovelace/s13s3.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>

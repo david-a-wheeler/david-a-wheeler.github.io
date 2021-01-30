@@ -1,0 +1,145 @@
+<HTML><HEAD>
+<TITLE>Ada95 Lovelace Tutorial Section 18.5 - Parameter Types</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<LINK REV="made" HREF="mailto:dwheeler&#64;dwheeler.com">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1><FONT COLOR="#996600">Section 18.5 - Parameter Types</FONT></H1>
+
+Now, I haven't mentioned how to define parameter types for all these
+operations. Ada provides several different choices - you can use a specific
+type name or an entire type class, and you can use an "access mode" or
+a normal mode (<I>in</I>, <I>in out</I>, or <I>out</I>).
+If you want to
+dispatch on a specific parameter, you can define operations as either of:
+<P>
+<PRE>
+  procedure Look(Actor : in Occupant);      -- Option 1.
+  procedure Look(Actor : access Occupant);  -- Option 2.
+</PRE>
+<P>
+For option 1, you're passing the Occupant to Look; in option 2,
+you're passing an access-to-Occupant value.
+Both will dispatch, both can be overridden, and you
+can use both approaches in the same program (it's no big deal to convert
+between them).
+Personally, I find that option 2 closer to the way I think
+about the problem, so I've used it throughout program Small where appropriate.
+Why do I find it more natural?
+Well, I think of Things lying out there in the simulated
+world, and that these subprogram simply pass around references to them.
+You'll find that different people have different preferences depending on the
+circumstance.
+<P>
+
+If you do <EM>not</EM> need to dispatch on an operation, you can define
+operations as:
+<P>
+<PRE>
+  procedure X(Actor : in Occupant'Class);       -- Option 3.
+  procedure X(Actor : access Occupant'Class);   -- Option 4.
+  procedure X(Actor : in Occupant_Access);      -- Option 5.
+</PRE>
+<P>
+Option 3 basically says we can accept any type at all as long as that
+type is a member of the class Occupant.
+Option 4 says we can take any access value at all, as long as 
+it accesses a type that's a member of Occupant'Class.
+Option 5 uses an access type defined elsewhere, and if that type
+(Occupant_Access)
+is defined as access Occupant'Class it's quite similar to option 4
+except in one very important way - option 5 permits a null value to
+be passed in.
+<P>
+
+Thus, if we're passing around access values and we want to
+permit a null value, we should use "Occupant_Access" as the parameter type.
+Otherwise,
+if we don't need to pass a null value, we can use option 4 (so that
+it uses access values as well).
+<P>
+
+Generally, if you use option 1 you'll use option 3, and if you use
+option 2 you'll use options 4 and 5 (depending on whether or not
+you want to permit a null value).
+Which you choose depends mainly on how you think about your problem -
+are you thinking in terms of passing around specific objects, or
+are you thinking in terms of passing access (reference) values to those
+objects?
+Your answer suggests which you should use.
+<P>
+
+So what do we do about the function "Me" we mentioned earlier?
+Conceivably a future version might permit a Player to command a Monster
+or Item, so let's make
+function "Me" return an Occupant_Access.
+<P>
+
+At this point we have the basic idea on how to implement Look, Quit,
+Get, Drop, and Inventory.
+<P>
+
+<HR><P>
+<IMG SRC="q.gif" ALT="" HEIGHT="34" WIDTH="23">
+<A NAME="quiz"><FONT SIZE="+3" COLOR="#339900">Quiz:</FONT></A>
+<P>
+Could the actual accessed object function "Me" returns be of type Player?
+<OL>
+<LI><A HREF="s18s5r1.htm">Yes.</A>
+<LI><A HREF="s18s5r2.htm">No.</A>
+</OL>
+<HR>
+You may also:
+<P>
+<TABLE BORDER="0"><TR>
+<TH><A HREF="s18s4.htm">
+<IMG SRC="barrowl.gif" ALT="PREVIOUS " HEIGHT="31" WIDTH="31">
+Go back to the previous section</A>
+<P></TH>
+
+<TH><A HREF="s18s6.htm">
+<IMG SRC="barrowr.gif" ALT="NEXT     " HEIGHT="31" WIDTH="31">
+Skip to the next section</A>
+<P></TH>
+
+<TH><A HREF="lesson18.htm">
+<IMG SRC="barrowu.gif" ALT="OUTLINE  " HEIGHT="31" WIDTH="31">
+Go up to lesson 18 outline</A>
+<P></TH>
+</TR></TABLE>
+<P>
+
+<P>
+<FONT SIZE="2">
+<ADDRESS><A HREF="dwheeler.htm">David A. Wheeler (dwheeler&#64;dwheeler.com)</A></ADDRESS>
+<P>
+The master copy of this file is at
+"<A HREF="http://www.adahome.com/Tutorials/Lovelace/s18s5.htm">http://www.adahome.com/Tutorials/Lovelace/s18s5.htm</A>".
+</FONT>
+<!-- This text is part of the Ada95 Lovelace tutorial program. -->
+<!-- For the contents of lesson 18, the following applies: -->
+<!--  Copyright (C) 1996 Ada Resource Association -->
+<!--  Copyright granted to the ARA under the condition that this text -->
+<!--  will be redistributed to the public domain, without restriction; -->
+<!--  you may use this information in any way you with, commercially or not, -->
+<!--  without restriction. -->
+<!-- = -->
+<!-- For all other files in Ada95 Lovelace tutorial, the following applies: -->
+<!--  Copyright (C) 2002 David A. Wheeler -->
+<!--  This program is free software; you can redistribute it and/or modify -->
+<!--  it under the terms of the GNU General Public License as published by -->
+<!--  the Free Software Foundation; either version 2 of the License, or -->
+<!--  (at your option) any later version. -->
+<!--  This freedom only applies to the electronic version; the author -->
+<!--  and/or publisher retain all rights to non-electronic versions. -->
+<!-- = -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- = -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program; if not, write to the Free Software -->
+<!-- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. -->
+</BODY>
+</HTML>
