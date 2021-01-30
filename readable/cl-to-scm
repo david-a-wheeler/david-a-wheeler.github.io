@@ -1,0 +1,27 @@
+#!/usr/bin/env perl
+
+# "port" Common Lisp to Scheme.
+# Must do lots of fixups later, especially in defun to define.
+
+while (<>) {
+ s/\bdefun\b/define/g;
+ s/\bprogn\b/begin/g;
+ s/\bsetf\b/set!/g;
+ s/\beq\b/eq\?/g;
+ s/\beql\b/eqv\?/g;
+ s/\bequal\b/equal\?/g;
+ s/\bnumberp\b/number\?/g;
+ s/\bconsp\b/pair\?/g;
+ s/\bnull\b/null\?/g;
+ s/\bprinc\b/display/g;
+ s/\bprin1\b/write/g;
+ s/\bterpri\b/newline/g;
+ s/\bt\b/#t/g;
+ s/\bnil\b/NIL???/g;   # May be '() or #f
+ s/\bsymbolp\b/symbol\?/g;
+ s/\bchar= /char=\? /g;
+ s/\bfuncall //g;
+ s/\b#'/#/g;
+
+ print;
+}

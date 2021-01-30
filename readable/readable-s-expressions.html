@@ -1,0 +1,3748 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Readable s-expressions and sweet-expressions: Getting the infix fix and fewer parentheses in Lisp-like languages</title>
+<meta name="description" content="Discusses options for creating readable S-expressions for programming languages">
+<meta name="keywords" content="s-expression, s-expressions, Lisp, Common Lisp, Scheme, DSSSL, BitC, ACL2, IACL2, Emacs Lisp, M-expression, sweet-expression, sweet-expressions, infix, prefix, readability, readable, list, lists, David, Wheeler, David A. Wheeler, David Wheeler, Dylan, Logo, Arc, parentheses, parenthesis, silly parentheses, syntax, ZY-expression, I-expression, sweetexpr">
+<link rel="stylesheet" type="text/css" href="paper.css">
+<meta name="generator" content="vim">
+</head>
+<body>
+
+<h1 class="title">Readable s-expressions and sweet-expressions: Getting the infix fix and fewer parentheses in Lisp-like languages</h1>
+<center>by <a href="http://www.dwheeler.com">David A. Wheeler</a>, 2006-06-17 (revised 2008-09-04)</center>
+<br>
+
+<p>
+<center>
+<table border="1">
+<tr>
+<td>
+<font size="+3">
+This page is obsolete; see
+<a href="http://readable.sourceforge.net">http://readable.sourceforge.net</a>
+instead.
+</font>
+</td>
+</tr>
+</table>
+</center>
+<p>
+
+<i>
+Many people find Lisp s-expressions hard to read as a programming notation.
+This paper discusses various ways to extend/modify
+s-expressions so they can be more readable without losing their power
+(such as quasiquoting, macros, and easily-manipulated program fragments).
+The goal is a notation
+that can be trivially translated to and from traditional
+s-expression notation (both by computer and in people&#8217;s heads), and
+isn't dependent on a particular underlying semantic.
+The paper
+identifies and discusses three approaches that seem particularly promising:
+indentation, name-prefixing (so func(x y) is the same as (func x y)),
+and infix support.
+<p>
+It then defines a particular way of combining these approaches, called
+&#8220;<a href="#sweet-expressions">sweet-expressions</a>&#8221;,
+that can be viewed as an essentially backward-compatible extension
+of s-expressions.
+A sweet-expression reader can accept typical
+cleanly-formatted s-expressions without change, but it also supports
+various extensions (optional syntactic sugar)
+that make much clearer code possible.
+This is purely a matter of screen presentation; underlying systems can
+continue to use s-expressions, unchanged.
+For example, here&#8217;s a trivial Common Lisp program
+that takes advantage of sweet-expression&#8217;s formatting extensions
+(the Scheme version is similar):
+</i>
+<pre>
+ defun factorial (n)         ; Parameters can be indented, but need not be
+   if (n &lt;= 1)               ; Supports infix, prefix, &amp; function &lt;=(n 1)
+       1                     ; This has no parameters, so it's an atom.
+       n * factorial(n - 1)  ; Function(...) notation supported
+</pre>
+<i>
+<p>
+Sweet-expressions add the following abilities:
+<ol>
+<li><b>Indentation</b>. Indentation may be used instead
+of parentheses to start and end
+expressions: any indented line is a parameter of its parent,
+later terms on a line are parameters of the first term,
+lists of lists are marked with GROUP, and
+a function call with 0 parameters is surrounded or followed by a pair of
+parentheses.
+A &#8220;(&#8221; disables indentation until its matching &#8220;)&#8221;.
+Blank lines at the beginning of a new expression are ignored.
+A term that begins at the left edge and is immediately followed by newline
+is immediately executed, to make interactive use pleasant.
+<li><b>Name-prefixing</b>. Terms of the form &#8216;NAME(x y...)&#8217;, with no whitespace before
+&#8216;(&#8217;, are interpreted as &#8216;(NAME x y...)&#8217;;.
+If its content is an infix expression, it's considered one parameter.
+<li><b>Infix</b>.  Optionally,
+expressions are automatically interpreted as infix
+if their second parameter is an infix operator
+(by matching an &#8220;infix operator&#8221; pattern of symbols),
+the first parameter is not an infix operator,
+and it has at least three parameters.
+Otherwise, expressions are interpreted as
+normal &#8220;function first&#8221; prefix notation.
+Infix expressions must have an odd number of parameters with the
+even ones being binary infix operators.
+You must separate each infix operator with whitespace on both sides.
+You can chain the same infix operator, so (2 + 3 + 4) is fine; to mix
+infix operators, use parentheses.
+Thus "2 + (y * -(x)" is a valid expression, equivalent to (+ 2 (* y (- x))).
+Infix operators must match this pattern (and in Scheme cannot be =&gt;):
+<pre>
+    [+-\*/&lt;&gt;=&amp;\|\p{Sm}]{1-4}|\:|\|\|
+</pre>
+</ol>
+<p>
+For more information, see my website at
+<a href="http://www.dwheeler.com/readable">http://www.dwheeler.com/readable</a>.
+<p>
+This paper describes the rationale behind the
+older sweet-expressions version 0.1;
+see <a href="version02.html">Sweet-expressions: Version 0.2</a> for information
+on the changes made to sweet-expressions since this paper.
+</i>
+
+<h1>Introduction</h1>
+
+<p>
+S-expression notation is a very simple notation for programs,
+and programs in variants of the Lisp programming language
+have traditionally been written using s-expressions.
+In this notation,
+an operation and its parameters is surrounded by parentheses;
+the operation to be performed is identified first,
+and each parameter afterwards is
+separated by whitespace.  So &#8220;2+3&#8221; is written as
+&#8220;(+&nbsp;2&nbsp;3)&#8221;.
+As noted in the May 2006 Wikipedia, this syntax
+&#8220;is extremely regular, which facilitates manipulation by computer.
+The reliance on [s-]expressions gives the language great flexibility.
+Because Lisp functions are themselves written as lists,
+they can be processed exactly like data:
+allowing easy writing of programs which
+manipulate other programs (metaprogramming).&#8221;
+In short, s-expressions are a powerful and regular way to
+represent programs and other data.
+
+<p>
+I&#8217;ve written a lot of Lisp code,
+so I&#8217;ve learned to read s-expressions fairly well.
+(I wrote a <i>lot</i> of Lisp code in the late 1980s on a $120,000 system.)
+But I am never the only one who reads
+my programs -- I need to make sure others can read my programs too.
+
+<p>
+Here&#8217;s the problem: for most software developers,
+programs written solely using s-expressions are hard to read,
+and they will <i>only </i> voluntarily
+use programming languages that allow, at least optionally, a
+more common notation.
+This is particularly true for the usual infix operations
+(+, &lt;, and so on).
+People who use Lisp-based languages all the time eventually learn,
+but not everyone <i>wants</i> to use them all the time, and even developers
+who are comfortable with programs in s-expression notation
+need to share their work with others.
+Wikipedia notes that
+&#8220;the heavy use of parentheses in S-expressions has been criticized --
+some joke acronyms for Lisp are &#8216;Lots of Irritating Superfluous Parentheses&#8217;,
+&#8216;Let&#8217;s Insert Some Parentheses&#8217;, or &#8216;Long Irritating Series of Parentheses&#8217; &#8220;.
+
+<p>
+Yes, I know the arguments.
+&#8220;S-expressions are powerful and regular&#8221; !
+Of course they are.  They are a wonderful intermediate representation for
+lots of things, in fact.
+But they are a <i>terrible</i> user interface, especially
+if you are trying to share your results with others.
+People today -- even most programmers -- want systems that are
+&#8220;easy to use&#8221;, and one of the best ways to make something
+easy to use is to make it <i>familiar</i>.
+Most software developers have been trained for <i>many years</i> to use
+traditional infix mathematical notation, and S-expression notation
+fails to use it.
+Programming is often not a solo effort; development today is
+practically always a group effort, and readability for a large
+diverse group matters.
+
+<p>
+All the loud statements about the power of S-expressions cannot compete
+with time looking at real programs.
+Most software developers laugh at languages that are
+&#8220;obviously weak&#8221; (to them) because their default parser cannot
+handle &lt;, *, and - in conventional ways.
+Below is a trivial Common Lisp program to compute
+a factorial - now ask, &#8220;is this really the most readable format
+possible for other readers?&#8221;
+<pre>
+ (defun factorial (n)
+   (if (&lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+</pre>
+<p>
+Maybe you think so now, but I use this trivial program as an example to
+show some alternatives that I think many people would prefer.
+For example, here&#8217;s the same program, but exploiting the
+abilities of <a href="#sweet-expressions">sweet-expressions</a>;
+a reader for sweet-expressions could read both the previous expression
+and this one:
+<pre>
+ defun factorial (n)
+   if (n &lt;= 1)
+       1
+       n * factorial(n - 1)
+</pre>
+
+<p>
+The 1993 paper
+<a href="http://citeseer.ist.psu.edu/steele93evolution.html">
+&#8220;The Evolution of Lisp&#8221; by Guy L. Steele, Jr. and Richard P. Gabriel</a>
+section 3.5.1 discusses &#8220;Algol-style Syntax&#8221;,
+give a history, and slyly makes fun of efforts
+to try to use anything other than S-expressions:
+&#8220;Algol-style syntax makes programs look less like the data structures
+used to represent them.  In a culture where the ability to manipulate
+representations of programs is a central paradigm, a notation that
+distances the appearance of a program from the appearance of its
+representation as data is not likely to be warmly received...  it is
+always easy for the novice to experiment with alternative notations.
+Therefore we expect future generations of Lisp programmers to continue
+to reinvent Algol-style for Lisp, over and over and over again, and we
+are equally confident that they will continue, after an initial period
+of infatuation, to reject it.  (Perhaps this process should be regarded
+as a rite of passage for Lisp hackers.)&#8221;
+<a href="http://www.paulgraham.com/syntaxquestion.html">
+Paul Graham posts a longer version of this quote</a>.
+
+
+<p>
+Perhaps.  But it&#8217;s worth noting that thousands of languages have been
+invented over the years, but almost none decide to use
+S-expressions as their <i>surface</i> expressions.
+Smalltalk and
+Python took many ideas from Lisp
+(see <a href="http://www.norvig.com/python-lisp.html">Norvig&#8217;s
+&#8220;Python for Lisp programmers&#8221;</a> for more)... but
+not its surface syntax.
+Languages like ML and Haskell have strong academic
+communities... and do not use S-expressions for their surface
+syntax either.
+Logo was devised to have Lisp&#8217;s power, but intentionally
+chose to not use its syntax.
+Dylan actually <i>switched</i> from S-expressions to a more
+traditional syntax, when they wanted &#8220;normal&#8221; people to use it.
+<a href="http://yacas.sourceforge.net/codingmanual.html">Yacas</a>
+is intentionally Lisp-like underneath, but completely abandoned Lisp's
+surface syntax for normal user interaction
+(as have essentially all computer algebra systems, even though many
+have a Lisp underneath).
+<p>
+The fact that so many people are compelled to find a &#8220;fix&#8221;
+to Lisp syntax indicates to me that there is a <i>problem</i>...
+the fact that so many efforts fail suggests that
+it is a <i>hard</i> problem.
+<a href="http://www.norvig.com/Lisp-retro.html">Norvig&#8217;s Lisp retrospective</a>
+found that even in 2002, when comparing Lisp to Python and Java,
+Lisp was <i>far</i> faster and more extensible, and had many powerful
+properties... but it was gaining few users (it was mostly stagnant).
+I argue that one key reason is the syntax; Lisp's syntax looks
+genuinely hostile to most &#8220;normal programmers&#8221;.
+Instead of Lisp-like languages gaining converts who adjust to prefix syntax,
+many people are ignoring or abandoning Lisp-like languages
+to use languages designed to be <i>readable</i> by humans.
+John Foderaro correctly said, &#8220;Lisp is a programmable programming language&#8221;,
+but people expect standard notation to be <i>already available</i>.
+Obviously it&#8217;s easy to create a some kinds of front-end syntax for Lisp-like
+systems, but they generally don&#8217;t catch on -- in part because they
+usually don&#8217;t provide the full power of the system underneath
+(e.g., you often can&#8217;t do backquoting with comma-lifting, or insert new
+parameters in a control structure, or handle macros well).
+I prefer to use the best tool for the job; when it's not Lisp,
+don't use Lisp.
+But some jobs are naturals for Lisp-based langauges, yet their
+poor readability seriously interferes with that.
+I think there are ways to retain the power of Lisp-based languages,
+while improving their readability and retaining their flexibility.
+
+<p>
+Oh, and let&#8217;s debunk one claim here.
+Steele and Gabriel claim one problem with Algol-like syntax
+is that there are &#8220;not enough symbols&#8221;.
+Yet even if that were true, by combining characters
+lots of symbols can be created without resorting to fancy characters.
+Indeed, &lt;= is a common combined character for &#8220;less than or
+equal to&#8221;; nobody has trouble understanding that.
+
+<p>
+So below, I discuss a lot of past and current work to improve
+the syntax of Lisp-like languages.
+I then focus on a few especially promising areas that can make
+Lisp more readable while still accepting normal s-expression notation
+<i>and</i> having only minimal changes to it.
+These include:
+<ol>
+<li>
+<a href="#indentation">Indentation</a> for meaning (like Python and Haskell);
+there is already work on this, particularly with I-Expressions.
+<li>
+<a href="#name-prefixing">Name-prefixing approach</a>, so
+f(x) and (f x) mean the same thing.
+Norvig earlier experimented with this.
+<li>
+<a href="#infix">Infix approaches</a> - how in the world can we
+rationally add infix support?
+There are lots of options, which I explore.
+</ol>
+After looking at many of the possibilities, I then present
+&#8220;<a href="#sweet-expressions">sweet-expressions</a>&#8221;,
+which I believe is an approach that resolves these problems in
+a reasonable way.
+I then end with <a href="#conclusions">conclusions</a>.
+In an appendix I document BitC a little further, since it started the
+whole thing for me, and in a separate paper on
+<a href="alternative-s-expressions.html">alternatives for s-expressions</a>
+I document some of the alternatives I tried before I came up with
+s-expressions.
+
+<h1>Goals</h1>
+<p>
+My goals were originally for the BitC project, but now I think there might
+be ways to work more widely for any language that uses Lisp-like notations.
+Here were my goals for a programming notation for Lisp-like systems:
+<ol>
+<li>Readable. It should be more &#8220;readable&#8221; to the uninitiated,
+in particular, it should look like more traditional notation.
+For example, ideal format would support infix notation
+for operations that normally use infix (+, -, &lt;=, etc.),
+support having function names before parentheses, and not <i>require</i>
+as many parentheses.
+<li>Mappable. There needs to be an obvious
+mapping to and from current s-expression notation,
+which must work for both data and code.
+The key advantage of Lisp-like languages is that you can easily manipulate
+programs as data and vice-versa; that <i>must</i> remain for any
+modified syntax.
+Otherwise, there&#8217;s no point;
+there are lots of other very good programming languages that support infix
+and other nice notations.
+<li>General/Standardizable.
+It should be very general and standardizable across all systems that
+accept s-expressions (Lisp's original syntax);
+nobody wants to relearn syntax everywhere.
+It should be useful in Common Lisp, Scheme, Emacs Lisp, BitC, ACL2,
+DSSSL, AutoLISP (built into AutoCAD), ISLISP (standardized by ISO)
+<a href="http://brl.sourceforge.net/">BRL</a>,
+and so on.
+<a href="http://sourceware.org/ml/guile/2000-07/msg00160.html">A thread
+about guile noted this very need</a>.
+<li>Easily implemented (relatively speaking).
+It must not require tens of thousands of lines of code to do.
+However, if it takes a little extra code to produce nice results, that is fine;
+better to do things well once.
+It need not be easily implementable via a few tweaks
+of an existing reader, though that&#8217;d be nice.
+Yes, rewriting a reader is a pain, but those only have to be written once
+per implementation.
+Note that even among implementation of a particular language there
+is often much variance, so the format needs to be simple enough to
+support many implementations.
+<li>Quote well.  In particular, for both forward quote (&#8217;) and
+backquote/quasiquote (&#8216;), it must be easy to find the end of the quote,
+and for backquote/quasiquote,
+it would be very desirable to support initial comma (,)
+and friends
+to locally reverse the quoting (the whole point of quasiquoting).
+<li>Backward-compatible.
+Ideally, it should be able to read regular s-expressions (at least
+normally-seen formats of them) as well as the extensions.
+I&#8217;m willing to give a little on this one where necessary.
+<i>Note: Version 0.2 of sweet-expressions is not perfectly
+backward-compatible, but most typical s-expressions as people actually
+use them are also valid sweet-expressions</i>.
+<li>Work with macros.
+There will probably be some tweaks for indenting and infix notation
+(especially since infix reorders things!), but
+macro processing should continue to work in most cases.
+</ol>
+<p>
+My notion is that the underlying s-expression system would not change...
+instead, the system would support a reader that takes an extended notation
+and converts it into s-expressions.
+A printer could then redisplay s-expressions
+later in the traditional notation, or same kind of notation used to input it.
+It would also be nice if the notation was not confusing or led
+to likely errors.
+<p>
+<!--
+I found or came up with several ideas.
+To keep track of them, I created different names for the different formats;
+all the good names seem to be taken, so the names ended up being odd.
+-->
+
+<p>
+I&#8217;ve written this document to put at least a few ideas down in writing.
+In the long term, I suspect what needs to happen is for there to
+be some sort of &#8220;neutral&#8221; forum where ideas can be discussed, and
+code shared.
+For any syntax
+to be widely used, there must be trustworthy, widely-usable implementations.
+I think at least one FLOSS implementation
+with a generous license that permits use by proprietary programs and
+<a href="http://www.dwheeler.com/oss_fs_why.html">Free-libre /
+open source software (FLOSS)</a> programs.
+Note that the LGPL doesn&#8217;t work as intended with most Lisp implementations;
+Franz has created the
+<a href="http://opensource.franz.com/preamble.html">
+Lisp LGPL (LLGPL)</a> which is a specific clarification of the LGPL
+for use with Lisp.
+<a href="http://common-lisp.net/faq.shtml">Lisp code is typically licensed
+under the LLGPL instead of the LGPL</a>, since the LLGPL
+clarifies some otherwise sticky issues and ambiguities in the LGPL.
+Note that any FLOSS software should be
+<a href="http://www.dwheeler.com/essays/gpl-compatible.html">GPL-compatible</a>,
+since there is so much GPL&#8217;ed code.
+The implementations would need to be widely portable and modular,
+so that they can be widely depended on.
+
+<p>
+Scheme and Common Lisp aren&#8217;t really compatible at all.
+Translators like
+<a href="http://www.ccs.neu.edu/home/dorai/scmxlate/scm2cl.html">scm2cl
+(Scheme to Common Lisp translator)</a>
+could help initially, certainly to get started
+(suggesting that it'd be best to start with Scheme, and then transition
+at least an initial version to Common Lisp).
+But in the end, specialized implementations
+well-tuned to different environment will be necessary for an
+improved syntax to really work.
+
+<p>
+There are lots of Lisp code repositories and other
+Lisp-related sites, including
+<a href="http://common-lisp.net/">Common-Lisp.net</a>,
+<a href="http://lisp.org/">Lisp.org / Association of Lisp users (ALU)</a>,
+<a href="http://www.cliki.net/index">CLiki (Common Lisp Wiki)</a>,
+and
+<a href="http://schemers.org">schemers.org</a>.
+
+
+<h1>Past Work</h1>
+
+Here are some past efforts to try to make s-expressions more readable.
+
+<h2>Special syntax for various constructs</h2>
+<p>
+Most readability efforts focus on creating special syntax for every
+language constructs; these often end up unused (because they cannot
+keep modifying the grammar to match the underlying system),
+or end up creating a completely new language
+less suitable for self-analysis of program fragments.
+
+<p>
+<a href="http://citeseer.ist.psu.edu/steele93evolution.html">
+&#8220;The Evolution of Lisp&#8221;</a>
+lists many efforts to create "Algol-like notations for Lisp",
+which generally included infix notations and attempts to
+be more &#8220;readable&#8221;.
+Originally Lisp was supposed to be written in M-expressions,
+which were more traditional in format.
+Function calls were written as F[x;y...] instead of (F x y...), for example.
+One problem is that they kept adding new syntax, and never found a
+good &#8220;final&#8221; M-expression format, so it was never implemented... and
+it just receded into the never-finished future.
+Many other notations were developed, including those of LISP 2.
+These generally had if ... then ... else and other more
+traditional naming conventions.
+
+<p>
+For example,
+<a href="http://portal.acm.org/ft_gateway.cfm?id=1089393&type=pdf&coll=portal&dl=ACM&CFID=15151515&CFTOKEN=6184618">
+RLisp</a> (used by Reduce, among others) is a Lisp with an infix notation.
+<a href="http://gauguin.trin.cam.ac.uk/csl/util/r2l.y.old">
+A yacc grammar for RLisp by A. C. Norman (2002)</a> is available.
+Norman notes that the grammar is &#8220;ambiguous or delicate in several areas&#8221;:
+<ol>
+<li>It has the standard &#8220;dangling else&#8221; problem.
+<li>If R is a word tagged as RLIS, then R takes as its operands
+a whole bunch of things linked by commas. At present I have this
+grammar ambiguous on
+R1 a, b, c, R2 d, e, f;
+where R2 could (as far as the grammar is concerned) be being
+given one, two or three arguments. This problem arises if the
+operands of R may themselves end in an R. This is harded to avoid
+than I at first thought - one might well want conditionals in the
+are list of an R, but then
+R1 a, IF x THEN R2 b, c;
+comes and bites. I guess this is a &#8220;dangling comma&#8221; problem.
+The above two problems are resolved by the parser genarator favouring
+shift over reduce in the ambiguous cases.
+<li>&#8220;IN&#8221;, &#8220;ON&#8221; are both keywords, as used in
+for each x in y do ...
+and words with the RLISTAT property. This is sordid! Similarly
+&#8220;END&#8221; has a dual use. This is coped with by making special provision
+in the grammar for these cases.
+</ol>
+
+<p>
+One trouble of many of these notations is that it becomes
+difficult to see where the end of an expression is (e.g., there
+might be no way to indicate the &#8220;end&#8221; of the if statement); this can
+creates ambiguities and makes it harder to easily match
+the infix notation and s-expression if you need to.
+And, if you want to describe arbitrary Lisp s-expressions, not having
+an end-marker means that you may not able to access some of the
+capabilities of the underlying s-expressions
+(though that may not be an issue for all uses).
+
+<p>
+<a href="http://arxiv.org/abs/cs.PL/0409016">
+Using a hierarchy of Domain Specific Languages in complex software
+systems design</a> by V. S. Lugovsky
+discusses using Lisp to create domain-specific languages,
+including syntactic transformations.
+
+<p>
+The ACL2 language is Common Lisp-based, but it has a separate
+front-end for a more traditional interface including an infix processor;
+it is named
+<a href="http://www.cs.utexas.edu/users/moore/infix/printer/syntax.html">IACL2</a>.
+This is not often used, for several reasons:
+<ol>
+<li>ACL2 is only defined in s-expression form, so you cannot read any
+of the documentation or examples without knowing s-expression form anyway.
+<li>IACL2 is not as portable as ACL2, nor as supported.
+<li>IACL2 does not support all the capabilities as ACL2 -- and who wants
+to use a tool that is known to not work when you most need it?
+</ol>
+IACL2 has a &#8220;dangling else&#8221;, so it is not always trivial to see
+where something ends.
+
+<p>
+<a href="http://en.wikipedia.org/wiki/Logo_programming_language">Logo</a>
+is basically Lisp with an infix and more readable syntax.
+Instead of &#8220;(&#8221;...&#8221;)&#8221;, Logo uses &#8220;[&#8221;...&#8221;]&#8221;.
+Normally, all commands begin with the name of the function, just like
+Lisp, and Logo even has text names for math functions:
+sum, product, difference, and quotient.
+More interestingly, infix is also available... by using symbols,
+Logo automatically uses the infix forms instead.
+Logo knows the number of parameters for each function, so once the
+number of parameters is provided you can just provide another
+function call on the same line without any marking of the end of the
+call (see the &#8220;rt&#8221; call below). This is not as flexible as
+s-expressions, where you can always add another parameter.
+Here&#8217;s a sample Logo program:
+<pre>
+to spiral :size
+   if  :size &gt; 30 [stop] ; a condition stop
+   fd :size rt 15        ; many lines of action
+   spiral :size *1.02    ; the tailend recursive call
+end
+</pre>
+
+
+<p>
+<a href="http://dylanpro.com/DylanExchange.html">Dylan</a> is another
+Lisp with more conventional notation, including an infix format.
+<!--
+Dylan uses one.
+http://www.webcom.com/haahr/dylan/grammars.html
+http://www.double.co.nz/dylan/
+http://www.geocities.com/dylan_programmer/FAQ.html
+
+http://lemonodor.com/archives/001194.html
+LISP to Dylan.
+-->
+<a href="http://www.norvig.com/ltd/doc/ltd.html">Here&#8217;s a
+Lisp-to-Dylan translator, exploiting the Common Lisp pretty-printer</a>.
+<a href="http://people.csail.mit.edu/jrb/Projects/dexprs.pdf">
+D-Expressions: Lisp Power, Dylan Style</a> even shows it is possible
+to combine infix forms with Lisp&#8217;s abilities to manipulate programs.
+Dylan is a little
+wordy, in part because of namespace problems (types are in the same
+namespace, which is often not what you want), but it&#8217;s
+easy to read.
+It ends blocks with &#8220;end blockname&#8221;, e.g., &#8220;if (a) b else c end if&#8221;;
+a little long but clear.
+Here&#8217;s a simple example from the page
+<a href="http://www.webcom.com/haahr/procedural-dylan/1-distance.html">
+Procedural Dylan</a>:
+<pre>
+define method distance (x1 :: &lt;real&gt;, y1 :: &lt;real&gt;, x2 :: &lt;real&gt;, y2 :: &lt;real&gt;)
+  =&gt; distance :: &lt;real&gt;;
+   sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
+end method distance;
+</pre>
+
+
+<p>
+There is also
+<a href="http://www.cs.cmu.edu/afs/cs/project/ai-repository/ai/lang/lisp/code/syntax/cgol/0.html">CGOL (an Algol-like language that compiles into Common Lisp)</a>;
+this was developed originally by Vaughn Pratt, and written by
+a UC Berkeley graduate student, Tom Phelps.
+This program is a Common Lisp implementation of CGOL that is translated
+into Lisp before execution.
+I do not know what its license is.
+You can look more generally at the
+<a href="http://www-cgi.cs.cmu.edu/afs/cs/project/ai-repository/ai/lang/lisp/code/syntax/0.html">CMU archive</a>, though beware of
+licensing problems.
+
+
+<p>
+<a href="http://www.rojoma.com/~robertm/clike/">Clike</a>
+(see also <a href="">Clike on Sourceforge</a>) is
+a compiler which converts code written in a simple C-like language to Scheme.
+<a href="http://pico.vub.ac.be">Pico</a> is an educational Scheme with C-ish syntax.
+
+<p>
+<a href="http://twinlisp.nongnu.org/docs/TwinLisp%20for%20lisp%20users.html">
+TwinLisp</a> is a "new way of programming in Common Lisp"; it
+creates a new reader with a more conventional syntax, which it then
+translates to Common Lisp and executes.
+It predefines precedence - which unfortunately means that it is tied
+to a particular interpretation of all operations.
+It also defines special control structures;
+thus, like most past efforts to create "readable Lisp", it ends up
+sacrificing generality of the resulting format
+(the reader is rigged to a specific set of operators with special
+syntax - so creating new operators is not simply a matter of defining
+the meaning of the operator).
+
+<p>
+<a href="http://www.lisp.org/alu/res-lisp-tools">Lisp resources</a>
+gives pointers for where to go for more information.
+For extensions specifically focused on indentation, see the text below
+on indentation;
+for extensions specifically focused on infix notation, see the
+section on infix.
+
+
+<h2>Skill</h2>
+
+<p>
+<a href="http://portal.acm.org/ft_gateway.cfm?id=174185&amp;type=pdf&amp;coll=portal&amp;dl=ACM&amp;CFID=72577012&amp;CFTOKEN=50239143">
+Skill</a> from Cadence is
+a proprietary Lisp-based extension language.
+By examining that paper,
+<a href="http://www.thecwlzone.com/Professional/Programming/skill.html">
+this text</a>, and
+<a href="http://wrcad.com/manual/xicmanual/node451.html">this document</a>,
+a hint of its syntax can be inferred.
+Skill supports name-prefixing, where FUNC(x y) is treated as meaning (FUNC x y).
+Skill also supports infix processing, automatically translating
+infix operators into an internal prefix format.
+In Skill, it appears that all of the prefix functions have alphabetic names,
+e.g., "(plus 3 4)" adds 3 to 4.
+This means that infix operators can be unambiguously detected and used without
+surrounding whitespace; thus "3+4" is automatically translated to "(plus 3 4)".
+Skill does not consider indentation significant.
+
+<!--
+<a href="http://portal.acm.org/affiliated/citation.cfm?id=1040032.174185&amp;coll=GUIDE&amp;dl=ACM&amp;type=series&amp;idx=1040032&amp;part=Proceedings&amp;WantType=Proceedings&amp;title=Conference%20on%20LISP%20and%20Functional%20Programming&amp;CFID=15151515&amp;CFTOKEN=6184618">this paper</a> are supposed to
+have more information (pay-for).-->
+
+<p>
+I point out Skill specially because it does shows that it's possible to
+have a very general syntax that is easier to use.
+
+<h2>Ioke</h2>
+<a href="http://kenai.com/projects/ioke/">Ioke</a> is a language
+developed by Ola Bini, a core JRuby developer.
+An
+<a href="http://www.infoq.com/news/2008/11/ioke">
+interview with Ola Bini about Ioke</a>
+mentions homoiconicity as important.
+
+<h2>Arc and its influence: Syntax as Abbreviation</h2>
+
+<p>
+Paul Graham began devising a Lisp variant named Arc, and
+promulgated the term
+<a href="http://www.paulgraham.com/arcll1.html">
+Syntax as abbreviation</a> for his approach.
+Here&#8217;s what he said:
+<ul>
+<li>Common Lisp and Scheme only directly support s-expressions;
+&#8220;disadvantage: long-winded&#8221;.
+<li>Dylan and Python have s-expressions hidden underneath,
+&#8220;disadvantage: macros unnatural&#8221;.
+</ul>
+Instead, he wants Arc to have a syntax, because it makes programs
+shorter (a big win), but have additional notation as simply
+an abbreviation for the longer (still valid) syntax.
+He also would like to show structure by indentation instead of
+parentheses (which would become optional where no ambiguity results).
+His ideas sparked many others to re-investigate s-expression syntax,
+generally thinking in terms of &#8220;syntax as abbreviation&#8221;.
+
+<p>
+Arc has inspired many people to re-evaluate Lisp syntax, and
+see if there are ways it can be made more readable.
+Some
+<a href="http://www.archub.org/arcsug.txt">
+comments on Arc</a> made some interesting points:
+<ul>
+<li>Peter Norvig said,
+&#8220;For the Scheme I wrote for Junglee&#8217;s next-generation wrapper language, I
+allowed three abbreviations: (1) If a non-alphanumeric symbol appeared in
+the first or second element of a list to be evaled, then the list is in
+infix form.  So (x = 3 + 4) is (= x (+ 3 4)), and
+(- x * y) is (* (- x) y).  And (2), if a symbol is delimited by a &#8220;(&#8221;, then
+it moves inside the list.  So f(a b) is (f a b), while f (a b) is two
+s-exps.  And (3), commas are removed from the list after infix parsing is
+done, but serve as barriers to infix beforehand, so f(a, b) is (f a b),
+while in f(-a, b + c), each of -a and b + c gets infix-parsed separatly, and
+then they get put together as (f (- a) (+ b c)).  This seemed to satisfy the
+infix advocates (and annoy some of the Scheme purists).  You might consider
+something like this.&#8221; Here are some of my thoughts about this:
+<ul>
+<li>Rule 1 (the check on the first and second elements of the list) is
+a little hackish, and by having a check on the first element too, you
+can&#8217;t use usual Lisp notation at all for infix operators.
+<li>
+Rule 3 (removing commas) is simple. Amazingly enough, this doesn&#8217;t
+interfere with quasiquoting <i>as long as</i> commas are <i>always</i>
+required as function parameter separators; since you cannot have a
+null-length parameter, any parameter beginning with a comma has a
+comma for lifting!
+But that doesn&#8217;t mean that the resulting code is easy to read; all those
+extra commas can make it hard to find the comma that is doing the lifting,
+and unless prefix operators are allowed, they aren&#8217;t needed for
+parameter separation... they just create more syntactic noise.
+So I haven&#8217;t gone further with this, though others could.
+<li>
+Rule 2 is a neat idea; there&#8217;s the minor risk of bad spacing causing
+problems, but it is a trivial way to get more traditional functional
+notation without harming the syntax (functions cannot
+have &#8220;(&#8221; in their name anyway).
+Indeed, I think there&#8217;s a good idea here, as I discuss below
+in &#8220;Name-prefixing&#8221;.
+</ul>
+<li>Sudhir Shenoy&#8217;s &#8220;ideas from Perl&#8221; said:
+&#8220;Please don&#8217;t use parentheses for s-expressions (&#8217;[&#8217; and &#8216;]&#8217; or 
+even &#8216;{&#8217; and &#8216;}&#8217; would be preferable. The biggest complaint I have 
+about parentheses is that it makes infix mathematics (which you are 
+planning to introduce in Arc) really hard to read. e.g. (def interest 
+(x y) (expt (-r * (t2 - t1) / (days-in-year)))) reads really badly 
+when compared to [def interest (x y) [expt (-r * (t2 - t1) / 
+[days-in-year])]]. The overloading of meanings of parentheses 
+(grouping + s-expression) which isn&#8217;t a problem in Lisp may cause a 
+loss of readability in Arc.&#8221;
+</ul>
+
+<p>
+<a href="http://lists.canonical.org/pipermail/kragen-tol/2002-January/000666.html">Kragen Sitaker&#8217;s email &#8220;two-dimensional syntax for Lisp&#8221;</a>
+summarizes some ideas from Paul Graham and Arc,
+but the author seems to add his own points too.
+He says:
+<ul>
+<li>&#8221;Paul Graham notes that you can infer some parens
+in Common Lisp from indentation and newlines.
+In particular, if a line contains more than one
+s-expression, it must be a prefix of a list of
+those s-expressions.  If a sequence of lines is
+indented from the previous text line, it must be a
+continuation of that line&#8217;s s-expression...
+All of this leads to needing extra parens around
+invocations of parameterless methods.  Oh well.&#8221;
+He explicitly assumes that adding parentheses will
+<i>not</i> disable indentation processing.
+<li>&#8221;In general, infix-to-prefix transformation should
+be relatively simple, reversible, and allow mixing
+of infix and prefix expressions; infix operators
+can&#8217;t be infix if they&#8217;re the first element of a
+list anyway.  However, infix expressions could be
+valid prefix expressions; how about (reduce +
+mylist), for example?  OCaml solves this problem
+by adopting the infix interpretation where there
+is ambiguity, requiring parens around infix
+operators used as values.  This probably isn&#8217;t the
+best solution for a Lisp, but you could probably
+require (function +) instead of (+) and get away
+with it.
+I&#8217;d like to be able to use at least (+ - * ** /
+mod) infix, with their usual precedence; and a
+left-associative : for cons would shorten a heck
+of a lot of Lisp programs.&#8221;
+<li>
+&#8220;On multiline string syntax: it&#8217;s ridiculous to
+include the leading spaces on successive lines.
+Spaces to get subsequent lines of the string in to
+where the first line of the string started should
+not be included in the string; their absence
+should simply be a syntax error.&#8221;
+<li>
+&#8220;These syntax rules still don&#8217;t help cond much,
+either the Arc variant of cond or the traditional one.&#8221;
+He suggests borrowing McCarthy&#8217;s syntax from the 1960s:
+&#8220;condition =&gt; consequent&#8221;.
+I (Wheeler) think that
+using &#8220;=&gt;&#8221; this way would be a bad idea, at least in Scheme;
+Scheme already uses &#8220;=&gt;&#8221; for a completely different
+meaning inside &#8220;cond&#8221; constructs.
+Another operator could work, though finding a clear one may
+be more difficult.
+Often &#8220;-&gt;&#8221; means &#8220;implies&#8221;, and having to similar-looking
+operators with different semantics is a bad idea anyway.
+Actually, I think that when you add indentation (see below),
+constructs like &#8220;cond&#8221; actually look pretty reasonable, so
+this is may be best solved a different way.
+</ul>
+
+<p>
+<a href="http://programming.reddit.com/info/bstl/comments/">
+A conversation about Arc and related ideas is posted on reddit.</a>
+
+<p>
+BitC version 0.9 uses this &#8220;syntax as abbrevation&#8221; approach.
+You can indicate that &#8220;Value&#8221; has type &#8220;Type&#8221; using the quasi-function
+&#8220;the&#8221;, e.g., as (the Type Value),
+but the preferred form is &#8220;value : type&#8221;.
+It does not go far right now, though; + is still prefix (not infix).
+
+<p>
+<a href="http://folk.uio.no/jornv/infpre/infpre.html">
+Infpre</a> is a Common Lisp infix utility (LGPL license).
+
+<p>
+<a href="http://cvs.codeyard.net/Quack/">
+Quack</a> is yet another Lisp derivative.
+This adds two syntactic items.
+First, "postfix colon syntax" - colon with indentation as a shortcut for
+parentheses.
+Second, "infix colon syntax" - a colon without spaces around it are
+a shortcut for function/macro call, right-associative, so
+cdr:cdr:obj is (cdr (cdr obj))).
+He doesn't know if they're workable, and I don't find
+the examples convincing.
+Indentation has promise, but the colon ends up in a bad place and it's
+completely unnecessary.
+And while an infix operator like the infix colon is useful, making that
+the <i>only</i> infix operator is rather weak; where's 3 + 4?
+
+<p>
+<a href="http://web.mac.com/srikumarks/Site/programming/Entries/2006/7/29_Lisp_sans_(((paren-theses_((hell))))).html">Lisp sans parentheses hell</a>
+discusses some similar ideas:
+<pre>
+1. We use () to indicate grouping. ((((a)))) will mean the same thing as (a).
+2. We use right associative infix operator notation -
+        a * b + c  translates to (* a (+ b c)) in lisp.
+3. We use indentation (tab-size = 4) to convey grouping -
+        say hello          becomes  (say hello (to lisp))
+                to lisp
+4. We use square brackets notation to encode lists - for instance -
+           [a,b,c] means     (a b c)
+    The items in a list can also be separated by line breaks. So
+     [  one
+        two            means     (one two three)
+        three ]
+    Since indentation is significant,
+    [
+        one
+            two                    means ((one two) three)
+        three
+    ]
+
+There are a few special operators that help reduce the need for
+parentheses and aid readability -
+1.      a : b  translates to  (a . b) and due to right associativity,
+        a : b : c translates to (a b . c)
+2.     a :: b translates to (a b)
+3.     a := b translates to (define a b)
+
+Here are the cases where you won’t need parentheses -
+1.     Your expression starts on its own line. In this case,
+       the first term is the head term and the rest of the terms
+       on the same line are tail terms.
+2.    Your expression is the second argument to an infix operator.
+      For example -
+        mid :: quotient (low + high) 2
+            is equivalent to
+        mid :: (quotient (low + high) 2)
+
+Exceptions -
+1.    Use func() notation to indicate that you mean (func) (a function
+call) and not just the value of func.
+
+Limitations of current implementation -
+1.    Back-quoting not supported.
+2.    The use of comma separator outside of list expressions is not
+defined and handled well enough.
+
+Enjoy! ... and, for the record, I’ll stick to the parentheses,
+thank you :)
+</pre>
+This aids readability, but note the inability to handle all
+of Lisp's capabilities (like back-quoting), and that the
+creator won't use it (clearly a sign that it's not good enough).
+
+
+<p>
+So now, let&#8217;s turn to three areas that have great promise,
+and then see if we can combine them together.
+
+<h1><a name="indentation">Indentation (such as I-Expressions)</a></h1>
+
+<p>
+Lisp programs are normally presentated using indentation;
+the Common Lisp standard even includes a pretty printer!
+Experienced Lisp programmers eventually stop seeing the parentheses,
+and see the structure of a program instead as suggested by indentation.
+So why not use indentation to identify structure, since people do anyway,
+and eliminate many unnecessary parentheses?
+<p>
+Other languages, including Python, Haskell,
+Occam, Icon,
+use indentation to
+indicate structure, so this is a proven idea.
+Other recently-developed languages like
+<a href="http://cobralang.com/docs/python/">Cobra</a> (a variant of
+Python with strong compile-time typechecking) have decided to use
+indentation too, so clearly indentation-sensitive languages are considered
+useful by many.
+<a href="http://okasaki.blogspot.com/2008/02/in-praise-of-mandatory-indentation-for.html">In praise of mandatory indentation</a> notes that
+it can be <i>helpful</i> to have mandatory indentation.
+
+
+<h2>Past work on indenting to represent s-expressions</h2>
+<p>
+Paul Graham (developer of Arc)
+is known to be an advocate of indentation for this purpose.
+As I noted above,
+<a href="http://lists.canonical.org/pipermail/kragen-tol/2002-January/000666.html">
+Kragen Sitaker&#8217;s notes on Graham and Arc</a> discusses how
+indentation can really help (in this notation, functions with no
+parameters need to be surrounded by parentheses, to distinguish them
+from atoms - &#8220;oh well&#8221; ).
+Graham's
+<a href="http://en.wikipedia.org/wiki/RTML">RTML</a>
+is implemented using Lisp, but
+uses indentation instead of parentheses to define structure.
+RTML is a
+proprietary programming language used by Yahoo!&#8217;s Yahoo! Store
+and Yahoo! Site hosting products, though Yahoo are transitioning away from it.
+<a href="http://lib.store.yahoo.net/lib/paulgraham/bbnexcerpts.txt">
+Paul Graham&#8217;s comments about the RTML language design</a> and
+<a href="http://lib.store.yahoo.net/lib/ytimes/rtmlintro.pdf">
+this introduction to RTML by Yahoo</a>.
+<p>
+<a href="http://www.accesscom.com/~darius/">
+Darius Bacon's &#8221;indent&#8221; file</a>,
+includes his own implementation of
+a Python/Haskell-like syntax for Scheme using indentation
+in place of parentheses, and in that file he also includes
+Paul D. Fernhout's implementation of an indentation approach.
+Bacon's syntax for indenting uses colons in a way that is limiting
+(it interferes with other uses of the colon in various Lisp-like languages).
+I have not had a chance to examine Paul D. Fernhout's yet.
+(It also includes an I-expression implementation.)
+All of the files are released under the MIT/X license.
+(Darius Bacon also created mlish, an infix syntax front end listed
+earlier).
+<a href="http://www.lispin.org/">Lispin</a> discusses a way to
+get S-expressions with indentation.
+
+<h2>I-expressions</h2>
+<p>
+<a href="http://srfi.schemers.org/srfi-49/srfi-49.html">I-expressions</a>
+are an alternative method for presenting s-expressions
+(either program or data), using indentation.
+They are defined in SRFI ("surfie") 49; this has final status,
+making I-expressions a quasi-official part of Scheme.
+I-expressions have no special cases for semantic constructs of the language.
+SRFI 49 includes a sample implementation with an MIT-style license
+(based on the
+<a href="http://redhog.org/Projects/Programming/Current/Sugar/">
+Sugar</a> project).
+<p>
+Here&#8217;s an example, quoted from the
+Scheme Requests for Implementation (SFRI) number 49
+(this example uses Scheme&#8217;s &#8220;define&#8221; function, not
+Common Lisp&#8217;s &#8220;defun&#8221; function):
+<pre>
+ define
+   fac x
+   if
+     = x 0
+     1
+     * x
+       fac
+         - x 1
+</pre>
+<p>
+I-expressions can include traditional s-expression representation too;
+here's an example (using Scheme):
+<pre>
+  define (fac x)
+    if (= x 0) 1
+      * x
+        fac (- x 1)
+</pre>
+As you can probably guess, both of these are equivalent to this
+traditional s-expression representation:
+<pre>
+ (define (fac x)
+   (if (= x 0)
+     1
+     (* x (fac (- x 1)))))
+</pre>
+<p>
+The keyword &#8220;group&#8221; is used to begin a list of lists.
+(One minor drawback: it's more difficult to use a function
+named "group", so it's best to simply not create such a function.)
+You can drop back several indentation levels without dropping them all:
+<pre>
+  let
+    group
+      foo
+        + 1 2
+       bar
+        + 3 4
+     + foo bar
+</pre>
+<!--
+The term "group" is awkward, it means you can't easily have
+a function named "group".
+One possibility would be to use the term ":group"; this is very unlikely
+to be the name of a function, and in Common Lisp this would be a keyword
+(making it <i>really</i> unlikely to be a function name).
+But this is the opposite of Scheme conventions, where keywords END
+in a colon.  You can't win.
+-->
+<p>
+The SFRI permits both tabs and space characters.
+I-expressions can also be quoted (including being
+quasi-quoted); see the proposal for information.
+Note this means that &#8217; followed by whitespace is now the
+beginning of a quote, because the initial whitespace is significant,
+and newlines become important.
+<p>
+In any indentation system for s-expressions,
+you need to be able to express s-expressions such as
+(f a), (g (h 1)), and (j (k)).
+In the first case, the first parameter is simple symbol,
+in the second case, the first parameter is a call with at least one parameter,
+and in the third case, the call to k has no parameters at all.
+I-expressions represent 0-parameter function calls
+by having the parameter surrounded with (...) (or having () as a name-ender).
+Let&#8217;s see what the indentation rules by themselves look like:
+<pre>
+; Here is (f a):
+  f
+    a
+; or
+  f a
+
+; Here is (g (h 1)):
+  g
+    h
+      1
+; or
+  g
+    h 1
+; or
+  g (h 1)
+
+; Here is (j (k)), note the treatment of 0-parameter calls:
+  j
+    (k)
+; or
+  j (k)
+</pre>
+<p>
+The idea is simple, but it can be hard to reason about how it works -- so
+here is one way to think about it (if you're using this to write a program).
+On any line, the first term is the function to be called; the rest of the
+items on the line, and each indented line below, are its parameters.
+If a line has no other parameters (on the rest of the line or indented), then
+it's an atom; otherwise, it's treated as one expression and parentheses
+surround that line and its indents (if any).
+The &#8220;group&#8221; term creates an extra surrounding (...) in the
+resulting s-expression, so you can create lists of lists.
+
+<p>
+So how do you present computing a function and <i>then</i> calling it?
+Personally, I&#8217;d just switch to traditional s-expression
+notation in this case.
+But the I-expression representation actually isn&#8217;t bad;
+just use a &#8220;group&#8221; followed
+by how to compute the function to be called:
+<pre>
+; ((getfunction x) a b) can be represented as:
+   group
+     getfunction
+       x
+     a
+     b
+; or:
+   group (getfunction x)
+     a
+     b
+</pre>
+<p>
+The SFRI supplies Guile code (not fully portable Scheme code) to
+implement I-expressions (e.g., it uses define-public and not define).
+However, it should be easy to port.
+<p>
+In the I-expression sample implementation a
+&#8220;(&#8221; disables I-expression processing until its matching
+&#8220;)&#8221;, and this is an intended part of the definition
+of I-expressions.
+This has all sorts of wonderful side-effects:
+<ol>
+<li>I-expressions parsing becomes very safe to use with existing code -
+pre-existing oddly-indented code will almost certainly start each
+expression with an opening parenthesis, disabling indentation processing.
+<li>It supports dealing with text that is very
+close to running off the right-hand side; just use parentheses
+to disable indentation processing. Python does the same thing.
+</ol>
+Disabling indentation this way
+doesn&#8217;t interfere with the use of parentheses to invoke
+function calls with 0 parameters - such calls
+don&#8217;t take that much room on a line!
+<p>
+There are a few special cases where the reader with I-expressions
+enabled parsed a file differently.
+When two top-level s-expressions follow each other,
+either (1) on the same line or (2) on consecutive lines with
+the second expression indented, the lines will be combined by
+an I-expression reader.
+The first seems unlikely to me; the second is a little unfortunate.
+What's worse, though, is that in a read-eval-print loop, users
+have to enter return twice to see their results, and it's easy to
+end up trying to evalute an empty list.
+We'll discuss those below in possible extensions to I-expressions.
+
+<p>
+The mailing list discussion of I-expressions includes a
+<a href="http://srfi.schemers.org/srfi-49/mail-archive/msg00008.html">
+posting of an I-expression pretty-printer</a>; the author says
+"I just couldn't get to sleep, so I wrote one".
+Be warned: I believe this pretty-printer has a bug, because it
+does not handle (f (g)) correctly.
+The first pretty-printer I wrote for I-expressions in
+Common Lisp had the same error, too, so this is a common mistake
+when doing this task - be warned.
+The expression (f (g)) should print like this:
+<pre>
+  f
+   (g)
+</pre>
+
+<p>
+I believe that
+users who use indenting expressions should <i>only</i> use space characters,
+and never tabs, to indent.
+The R5RS Scheme specification doesn't even officially permit tab characters
+(though implementations generally do).
+The real problem is that tabs produce a varying number
+of spaces on real systems;
+experience with Python suggests that using tabs can cause a lot of problems.
+Most of today&#8217;s text editors can be configured to turn tabs into spaces
+automatically.
+
+
+<h2>Possible extensions to I-expressions</h2>
+<p>
+I-expressions and similar indentation approaches are a very nice approach.
+But there are several ways it could be extended or modified, now that I've
+had a chance to experiment with them.
+
+<h3>Immediate execution if begin on left-hand-edge</h3>
+<p>
+If you use indented I-expressions interactively
+(in a read-eval-print loop), you have to enter an extra
+a blank line (an extra "enter") before the expression is evaluated.
+That's because the system needs to know when an expression has ended;
+the system believes you might indent the next line and add more expressions.
+This is fine for multi-line expressions, but it's very annoying
+for simple single-line expressions.
+If you do a lot of simple one-line commands this becomes very annoying.
+And this is likely; few people type in long, multi-line definitions
+into a read-eval loop, because they would stick those into a file instead!
+<p>
+So how can we make indenting easy to use at a command line?
+We <i>could</i> create a special command for use at the beginning of
+a line, such as "! ", that means "at the end of the line, you're done" .
+Or we could create a special indicator that means "execute now" .
+But these don't seem any easier than entering a blank line, and they
+are yet something else to remember.
+<p>
+One simple modification could be to add a special case, based on
+whether or not text was entered in column 1.
+There are several obvious variants:
+<ol>
+<li>If leftmost edge has a "(" ,
+and the <i>entire expression</i> is immediately followed by a newline, then the
+expression is complete.
+This has lots of problems; this doesn't handle evaluating atoms,
+such as running "x" to see what x contains.
+So I'll reject that.
+<li>If text begins at the leftmost edge (no leading horizontal space), 
+and the following term is completely read, followed immediately
+by a newline, then the expression is complete and the read function returns.
+Thus, if these are entered at the leftmost edge, they will immediately return:
+<pre>
+  x
+  (load &#34;file&#34;)
+  load(&#34;file&#34;)
+  (3 + 4)
+</pre>
+However, the following will not (they will wait for a blank line)
+if entered on the leftmost edge:
+<pre>
+  load &#34;file&#34;
+  define x
+  3 + 4
+</pre>
+The system will wait for a blank line in these cases,
+because the first term is followed by a space, not a newline... so
+it is waiting to see if you'll add more parameters by indenting them.
+The 'define x' is an example of good news (probably), and the
+'load' command is an example of the bad news.
+Another problem is that the rule is a little complicated to explain.
+The good news is that 'define x' on the left edge
+will not trigger an immediate return.
+With these semantics, if you want to enter an indented expression,
+you'll need to indent the first line <i>or</i> include
+at least one parameter (expression) on the same line.
+If you indent at all on the command line, or enter one or more
+terms on one line, you must type an extra blank line to execute the sequence;
+this seems reasonable.
+<li>If text begins at the leftmost edge (no leading horizontal space), 
+and there are no unmatched parentheses,
+it is <i>immediately</i> completed at newline.
+In this approach, you <i>must</i> indent the first line to
+have an indented expression.
+This means that if these were entered on the left edge, they would
+be executed immediately:
+<pre>
+  load &#34;file&#34;
+  3 + 4
+  define x
+</pre>
+<p>
+The good news with this approach is that
+'load &#34;file&#34;' on the left edge works as a user might expect -
+it will trigger an immediate return.
+The same is true for 3 + 4 ... suddenly an interactive Lisp interpreter
+makes a plausible calculator!
+<p>
+The bad news is that 'define x' on the left edge followed by return
+will <i>also</i> trigger an immediate return of the read expression, which is
+almost certainly not what was intended.
+That is not such a big deal in an interactive command loop, since the user
+could try again.
+But more seriously, this would be a likely
+thing to do in a file, and it could cause very hard-to-detect bugs.
+<p>
+How can we counter the risks of not noting the change in semantics
+for text on the left edge?
+It might be possible to have a special loop for file-reading
+that detected the case of "unindented expression followed immediately
+by indented expression", and trigger a warning or error.
+Another variant would be to have two slightly different modes for read
+(or two different starting functions):
+one intended for interactive use, where unindented lines are ended on newline
+where possible, and one intended for file reading (where there is no
+such distinction).
+This does complicate
+reasoning and implementation, and
+it's quite normal to cut-and-paste into an interactive session.
+<p>
+One promising approach to countering the problem
+is to configure other tools to help detect such problems.
+Text editors, for example, could be colorize such constructs.
+Thus, if a left edge that would run immediately is followed by an
+indented line, it would be labelled with red lines.
+And special tools could be designed to detect this as well.
+<p>
+One good point is that the rule is simple: "if you want to indent,
+you must start by indenting the first line".
+When you indent, you enter a blank line or another expression at the
+same indentation level.
+Frankly, that's much simpler than the rules above.
+
+<li>If text begins at the leftmost edge (no leading horizontal space), 
+and there is exactly one term on the line <i>or</i> it is a legal
+infix expression, then the expression is complete and the read function returns.
+Thus, if these are entered at the leftmost edge, they will immediately return:
+<pre>
+  x
+  (load &#34;file&#34;)
+  load(&#34;file&#34;)
+  (3 + 4)
+  3 + 4
+  3 + (4 * 2)
+</pre>
+And these will not:
+<pre>
+  define x
+  load &#34;file&#34;
+  3 + 4 * 2
+  3 + 4 +
+</pre>
+
+</ol>
+<p>
+For sweet-expressions, for a long time I keep going back and forth between
+option 2 and option 3.
+Option 3 presents the risk of subtle bugs, and that is of great concern.
+However option 3 is a joy to work with interactively.
+I then said,
+"This is a hard choice to make, so I plan to experiment.
+Expressions like load(&#34;filename&#34;) and (3 + 4)
+seem particularly easy to explain,
+and do not have the drawbacks of this alternative, so they suggest
+using alternative 2."
+It was only in November 2007 that
+I finally realized that what I wanted was option 4.
+
+<p>
+Note that when activated these also partly eliminate one
+of the minor incompatibilities of I-expressions with traditional s-expressions.
+If there are two separate outermost s-expressions on consecutive lines, with
+the second expression indented from the first, as long as the first expression
+was not indented (a likely case) the lines will no longer be combined by
+the I-expression reader.
+Of course, this could be misleading, because the second line might
+<i>appear</i> to be combined with the first; this is a trade-off with
+no perfect answer.
+
+<h3>Ignoring excess blank lines</h3>
+<p>
+Excess blank lines get interpreted oddly, as '(), which the
+underlying system may then try to run (Scheme in particular
+complains about them).
+It can also cause confusion if interpretation gets "out of sync".
+
+<p>
+A plausible modification would be to ignore any additional
+blank lines before a (next) expression.
+In short, a blank line shouldn't <i>really</i> return '() to the system;
+if they want that, users should need to enter that directly.
+If there blank lines at the end of the file, the system should probably
+return the end-of-file marker (if it supports that) once it has
+consumed the final blank lines trying to read the next expression.
+
+<p>
+An alternative would be to ignore any additional
+blank lines after an expression, but you don't want to do that.
+Then you need to treat the beginning of a file specially (assuming that
+there was a beginning of file).
+
+<p>
+Also, should horizontal spaces followed by newline be treated the
+same as a blank line?
+Users cannot easily see the difference, especially on typical printouts.
+That isn't clear, so I leave that as a question for now.
+
+<h2>Indentation, a wrap-up</h2>
+I-expressions and their extensions are a real improvement.
+But they are not enough; let's keep looking.
+
+<h1><a name="name-ender"></a><a name="name-prefixing">Name-prefixing: Parentheses can be prefixed by a function name</a></h1>
+<p>
+Lisp&#8217;s standard notation is different from &#8220;normal&#8221; notation
+in that the parentheses <i>precede</i> the function name, rather than
+follow it.
+<a href="http://sourceware.org/ml/guile/2000-07/msg00155.html">
+Jorgen &#8216;forcer&#8217; Schaefer argues that this is a more serious problem
+than the lack of infix notation</a>;
+on July 2000 he said &#8220;I think most people would like Scheme a lot
+better if they could say lambda (expression) ...  instead of 
+(lambda (expression) ...&#8221;
+<p>
+Peter Norvig had some interesting ideas, as noted earlier.
+Let&#8217;s look at one of his rules, the rule that says
+&#8220;if a function name ends with an open parentheses, move it inside the list
+(when converting to an s-expression)&#8221;.
+This means that &#8220;(fact x)&#8221; and &#8220;fact(x)&#8221;
+will mean the same thing.
+<p>
+Obviously, this is trivial to parse.
+We don&#8217;t lose any power, because this is completely optional -- we only
+use it when we want to, and we can switch back to the traditional
+s-expression notation if we want to.
+It&#8217;s trivially quoted.. if you quote a symbol followed by &#8220;(&#8221;, just keep going
+until its matching &#8220;)&#8221; -- essentially the same rule as before!
+Technically,
+this <i>is</i> a change from some official Lisp s-expression notations
+and implementations.
+For example, entering &#8220;a(b)&#8221; into CLisp (a Common Lisp implementation) is
+the same as &#8220;a (b)&#8221; -- its parser tries to
+return the value of a, followed by running the function b.
+But it&#8217;s not clear it&#8217;s a big change in practice;
+<a href="http://www.lisp.org/table/style.htm">commonly accepted style</a>
+always separates parameters (including the first function call
+name) with whitespace.
+So normally, what follows a function call&#8217;s name is whitespace or &#8220;)&#8221;,
+and this is enforced by pretty-printers.
+Thus, many large existing Lisp programs could go through this kind of parsing
+without resulting in a change in meaning!
+<p>
+Does this help? Let&#8217;s rewrite the CL factorial example, but
+not make the infix operations do this:
+<pre>
+ defun(factorial (n)
+   if((&lt;= n 1)
+       1
+       (* n factorial((- n 1)))))
+</pre>
+<p>
+It looks slightly more familiar, but not that much.
+Let&#8217;s try again, but move the infix ops out too;
+the result is actually not bad:
+<pre>
+ defun(factorial (n)
+   if(&lt;=(n 1)
+       1
+       *(n factorial(-(n 1)))))
+</pre>
+<p>
+If we <i>really</i> wanted it to look conventional, we
+could use wordy names instead of symbols that are traditionally infix;
+that isn&#8217;t too horrible for + (use &#8220;sum&#8221;),
+but that is rather wordy for others (I don&#8217;t like it):
+<pre>
+ defun(factorial (n)
+   if(lessequal(n 1)
+       1
+       product(n factorial(subtract(n 1)))))
+</pre>
+<p>
+Note that as far as I can tell,
+you do <i>not</i> need any whitespace after the opening
+parentheses, because atoms (including function names) cannot have
+parentheses in their name in s-expressions.
+A variant of this idea would be to require whitespace after the
+opening paren if name-prefixing is used, but I see no need for that.
+<p>
+<a href="http://portal.acm.org/ft_gateway.cfm?id=174185&amp;type=pdf&amp;coll=portal&amp;dl=ACM&amp;CFID=72577012&amp;CFTOKEN=50239143">
+Skill</a> from Cadence,
+a proprietary Lisp-based extension language, also supports name-prefixing.
+<p>
+Mathematica does something similar.
+As noted in
+<a href="http://xahlee.org/UnixResource_dir/writ/notations.html">
+How Purely Nested Notation Limits The Language's Utility</a>,
+its FullForm notation can be transformed into Lisp using simple rules,
+starting with transforming f[a,b] into (f a b).
+But it isn't designed to be backward-compatible with existing Lisp
+notations; its use of "," to separate arguments would cause confusion
+since "," is also used in macro handling.
+
+<p>
+Name-prefixing can be combined with indentation (e.g., I-expressions).
+Let&#8217;s presume that
+if you indent further <i>and</i> begin the expression with a parentheses,
+or by a function name, no space, and a parenthesis, that parenthesis
+and its mate are silently ignored
+(they don&#8217;t add yet another subexpression in the s-expression).
+Furthermore, let&#8217;s presume that if you have a name-ender format
+(function name followed immediately by open paren), it does not switch
+to some &#8220;no more I-expression&#8221; mode.
+Then you could do this (using English names for operators):
+<pre>
+ defun factorial (n)
+   if lessequal(n 1)
+       1
+       product n factorial(subtract(n 1))
+</pre>
+Or this (using traditional symbols for operators):
+<pre>
+ defun factorial (n)
+   if &lt;=(n 1)
+       1
+       *(n factorial(-(n 1)))
+</pre>
+<p>
+It turns out that name-prefixing works well with indentation.
+Here are some examples:
+<pre>
+; Here is (g (h 1)) &lt;=&gt; g(h(1))
+  g
+    h(1)
+; or
+  g h(1)
+
+; Here is (g (h)) &lt;=&gt; g(h())
+  g
+    h()
+; or
+  g h()
+
+; Here is (g (a) (b 1) c): &lt;=&gt; g(a() b(1) c)
+  g
+    a()
+    b(1)
+    c
+; or
+  g a()
+    b(1)
+    c
+
+; Here is (g a (b 1) c()) &lt;=&gt; g(a b(1) c())
+  g
+    a
+    b(1)
+    c()
+; or
+  g a b(1)
+    c()
+</pre>
+<p>
+
+<p>
+This does introduce the risk of someone inserting a space
+between the function name and the opening &#8220;(&#8221;.
+But whitespace is already significant as a parameter separator, so
+this is consistent with how the system works anyway... this is
+not really a change at all.
+<p>
+I think this is slightly better for untrained eyes.
+It&#8217;s hard to argue that this is a major improvement, at least by itself,
+but the more I look at it the more I like it.
+What&#8217;s more, the pain is tiny, and that&#8217;s a good thing.
+This is a lower pain, lower gain approach, and it can be combined
+with SWP-expressions, which I&#8217;ll describe in a moment.
+
+<p>
+<!--
+I believe this is false:
+I've shown expressions as name( x ), because I like the look of the
+balanced space inside the parens, but only the space after the
+opening paren is actually necessary.
+Now, you might think "wait, this is dangerous, it's easy
+to forget the space after the opening paren!"
+That's true, but the likely result is a left paren "in the middle" of
+an atom's name - which is already not legal, and thus easily detected.
+-->
+
+<p>
+The article
+<a href="http://pschombe.wordpress.com/2006/03/17/improving-lisp-syntax-is-harder-than-it-looks/">Improving lisp syntax is harder than it looks</a>
+discusses name-prefixing, but I think it makes a number of errors.
+It first claims that this would be hard to integrate with macros -
+this actually isn't true if it's built into the reader
+(and the macros aren't doing reading themselves).
+If the reader transforms a(x) into (a x), then when the macro has a chance
+to run all it sees is (a x) - exactly what it was expecting to see.
+He also says that
+"Another disadvantage to this change of syntax is that it makes
+functional programming much more odd looking.
+Lets say you have a list containing functions and you want to call the
+first one. In Scheme you write ((car lst) params) and in Common Lisp
+(funcall (car lst) params). However in our new syntax it looks like:
+car(lst)(params) and funcall(car(lst) (params)). Neither of these is
+very elegant, and it only gets worse if that call in turn returns
+a function, which would look like: car(lst)(params)(params2) and
+funcall(funcall(car(lst) (params)) (params2))."
+But I find this remarkably elegant, and <i>better</i> than the
+traditional notation - to do functional programming, just cuddle
+up the parentheses.  It's <i>much</i> easier to understand sequential
+parentheses compared to a deeply nested list.
+
+
+<h1><a name="infix">Infix</a></h1>
+
+<p>
+Again, let&#8217;s continue the thought that we want to support
+a syntax that is maximally Lisp-like, generally accepting existing expressions.
+The biggest issue in making Lisp s-expressions easier to
+read are in whether or not to provide infix support, and if so, how.
+<p>
+The first question is, should you support infix at all?
+Because if we do, and we presume that
+the underlying s-expressions always have the operation first, this means
+that we are <i>changing</i> the external presentation of (some) data.
+Note that we are <i>only</i> changing the presentation for entering
+programs and program-like data,
+and possibly changing how they are externally displayed;
+the traditional s-expression would still be used internally.
+Thus, if &#8220;{3 + 4}&#8221; is interpreted as an infix expression,
+it will quietly be transformed to the s-expression &#8220;(+ 3 4)&#8221;,
+so the &#8220;car&#8221; (head) of &#8220;{3 + 4}&#8221; would be &#8220;+&#8221;.
+The
+<a href="http://people.csail.mit.edu/gregs/ll1-discuss-archive-html/threads.html#01641">ll1-discuss mailing list</a> includes
+discussions on the issues of infix.
+
+<p>
+The reality is that nearly everyone prefers infix notation;
+people will specifically avoid Lisp-based systems solely because they
+lack infix support built-in.
+Even <a href="http://paulgraham.com/popular.html">
+Paul Graham, a well-known Lisp advocate,
+</a>
+admits that
+"Sometimes infix syntax is easier to read. This is especially true
+for math expressions. I've used Lisp my whole programming life and
+I still don't find prefix math expressions natural."
+<a href="http://people.csail.mit.edu/gregs/ll1-discuss-archive-html/msg01571.html">Paul Prescod</a> remarked, &#8220;[Regarding] infix versus prefix...
+I have more faith that you could convince the
+world to use esperanto than prefix notation.&#8221;
+Nearly all developers prefer to read infix for many operations.
+I believe Lisp-based systems have often been specifically ignored even
+where they were generally the best tool for the job,
+solely because there was no built-in support for infix operations.
+After all, if language creators can&#8217;t be bothered to support the standard
+notation for mathematical operations, then clearly it isn&#8217;t
+very powerful (as far as they are concerned).
+So let&#8217;s see some ways we can support infix, yet with minimal changes
+to s-expression notation.
+<p>
+If we are willing to support infix, there are many options.
+The big issues are:
+<ol>
+<li>How do you determine when to use infix notation?
+Is this manually specified (if so, how, and how deep does it go?) -
+or is it automatic (if so, how, and how do you override it?).
+<li>What are the legal infix operators?
+<li>What are the semantics? (Do you do something trivial, like swap the
+first and second parameters, allow many parameters for the same operator,
+or go all the way to full infix with precedence?)
+</ol>
+For all of these, you also need to determine how to display them too.
+<p>
+There are some code samples that might be used as a starting point
+for implementations; after going over the issues, I identify
+some of them.
+
+<p>
+<a href="http://www.gamedev.net/community/forums/topic.asp?whichpage=7&pagesize=25&topic_id=383805">
+Nathan Baum (of Bournemouth, United Kingdom) posted on
+4/14/2006 8:19:16 PM</a> the idea of using [...] to surround infix notation
+(I&#8217;m sure he&#8217;s neither the first nor last).
+He said,
+&#8220;Lisp actually has a few syntactic shortcuts of its own.
+Essentially anything that isn&#8217;t part of a name is a character which
+triggers a specialised reader function.
+Strings, for example, don&#8217;t need to be built in to the Lisp core:
+a reader can be associated with the double quote character,
+and that&#8217;ll return a string object.
+This also means you can redefine it yourself to get
+shell/Perl/Ruby-style interpolated strings, for example.
+Even lists themselves are read using a reader function triggered by
+[parentheses].
+One simple shortcut is to have &#8216;normal&#8217; Lisp expressions
+delimited by [parentheses], and infix expressions delimited by brackets...
+<pre>
+  (print (+ x (- (/ y z) a)))
+  ; or
+  (print [x + [[y / x] - a]] &#8221;.
+</pre>
+
+<h2>How do you determine when to use infix notation?</h2>
+
+<p>
+There are several major options:
+<ul>
+<li><b>Not automatic (special syntax)</b>.
+If infix is not automatic,
+you add characters that say &#8220;make this infix&#8221; ,
+using pairs such as {...} or [...] around infix operators,
+or use single expressions before the first or second parameter.
+The single expression might be single characters, like ? or !, or
+multiple characters, like the dispatching macro characters (#...).
+I don&#8217;t recommend &#8220;!&#8221; because it looks too much like &#8220;not&#8221;
+in other langauges.
+Using something short is a good idea, because infix is very common.
+The
+<a href="http://www.faqs.org/faqs/lisp-faq/part2/">Lisp FAQ</a> mentions
+#I being used as the &#8220;Portable Infix Package&#8221; marker
+(I have searched and not found out more about this; suggestions would be
+appreciated).
+(<a href="http://discuss.fogcreek.com/joelonsoftware4/default.asp?cmd=show&ixPost=141120&ixReplies=25">This discussion</a>
+mentions an author using #I(3+4) to notate infix, and remarks that
+[3+4] would have been simpler.)
+<i>Requiring</i> a syntax marker
+is not as &#8220;pretty&#8221; as automatically notating infix operators, though
+it has the advantage of clarity if you process the resulting s-expressions
+often.
+<a href="#Kantrowitz">Kantrowitz&#8217;s infix macro package for Common Lisp</a>
+is an example of this approach.
+<p>
+Pairs of characters can force infix interpretation,
+and seem like the obvious idea, but they do have some disadvantages.
+Infix operations can work across a list, so it makes sense to mark the
+end of such a list and use a special pair of characters like {...}
+instead of (...) to mark an &#8220;infix list&#8221;.
+There are two pairs available: {...} and [...].
+Advantages of {...} is that they are more commonly used
+for statement blocks in other programming languages (Logo being an exception),
+and in particular users may want [...] for other purposes
+(such as identifying lists, like BitC).
+A disadvantage of using {...} is that in many fonts these characters
+look extremely similar to (...), making them harder to see;
+the characters [...] are more distinct.
+But in either case ({...} or [...]),
+using a pair means you have to match the correct closing pair,
+so inside many parens you have to make sure you use the right ones in the
+right place.  This can create much extra work, and it is debatable if
+they help much in error detection.
+Also, infix notation is really obvious when you see it... so there
+really isn&#8217;t a big need for a special marker to show its end.
+Combining this with name-prefixing does not seem hard; just accept 
+&#8220;{&#8221; for name-prefixing as well.
+<p>
+Combining the paired characters {...} or [...] with
+indented forms like I-expressions requires careful thinking about
+what you are doing.
+In particular, if you want to identify something as a parameter
+of a function f <i>and</i> switch to infix notation, do you
+indent inside function f?
+I think you should, so the system should only
+add <i>one</i> level of s-expression (from the indent)
+if the first character after the indenting whitespace is &#8220;{&#8221;,
+instead of the two that would otherwise be implied.
+In all other cases, other than the beginning of a line, a &#8220;{&#8221;
+would normally end up matching a &#8220;(&#8221; in the corresponding s-expression
+if you want to stay similar to usual s-expression syntax
+(if not, see the relaxed infix notation such as ZY-expressions, below).
+This means that you need to think carefully about the meaning of {...}
+(or [...]).
+Basically, don&#8217;t think that {...} create a matching s-expression (...).
+Instead, have the mindset that the <i>infix operators</i> (+, -, etc.)
+create the s-expressions, and that the surrounding characters {...}
+simply clarify that what&#8217;s inside has an infix interpretation.
+Also, do {...} disable I-expressions inside them (as I&#8217;ve proposed (...) do),
+or should a &#8220;{&#8221; at the beginning of a line only
+switch to infix without disabling I-expressions?
+I&#8217;m not sure what the <i>meaning</i> of indented sub-expressions would even
+be, if indentation still mattered.
+Thus, for the moment,  I&#8217;ll assume that {...} disable I-expressions
+inside them, as I&#8217;ve proposed (...) do, for the simple reason of simplicity:
+if an infix expression is so complicated that it goes beyond one line,
+indentation like I-expressions are more likely to harm than help.
+<p>
+Note that if it&#8217;s not automatic, there&#8217;s a follow-on question...
+how deep does infix go when it is enabled?
+Do the infix operators only work at one level (one list), or do they
+keep going down to lists contained inside?
+This question doesn&#8217;t come up if the detection is automatic,
+so let&#8217;s address that next.
+<li><b>Automatic</b>.
+To work automatically,
+if some parameters look infix, then an infix interpretation is used.
+E.G., if presented with &#8220;(3 * 4)&#8221;, it is automatically interpreted
+as &#8220;(* 3 4)&#8221; internally.
+<p>
+There are two major variants that I can see:
+(1) if the first <i>or</i> second parameter is an infix-type operator
+switch to infix notation (Norvig&#8217;s approach),
+or (2) only the second parameter can be infix to trigger infix processing
+(my approach).
+The first approach has the advantage that it can work
+with prefixed &#8220;-&#8221; traditionally, e.g., (- x * y) works, becoming
+(* (- x) y).
+But there are also many problems with that approach.
+For example, then it is <i>much</i> harder to use traditional
+Lisp notation (with the infix operator in front) at the same time,
+and it&#8217;s easier
+to get confused when looking at traditional s-expression notation.
+It is all too
+easy to accidentally trigger the infix notation when it wasn&#8217;t intended.
+And the traditional Lisp notation (- x) is not that hard to write or read;
+if you support traditional function notation, like -(x), it's even easier.
+Finally, if you <i>only</i> trigger on the second parameter, you can
+add a subtle safety check: the switch to infix notation can be made to <i>only</i>
+occur if there are three or more parameters.
+This safety check avoids unintentionally enabling infix in some cases,
+and makes it very simple to implement trivial quoting mechanisms:
+since expressions like &#8220;(self +)&#8221; will not be interpreted as
+being infix, using functions as parameters is simplified.
+In fact, you can go further on the safety check: You can say that
+infix lists have to have an odd number of parameters, and that the first
+parameter (as displayed) <i>cannot</i> be an infix operator (so a list of
+infix operators won't cause problems).
+I think the second approach is much better.
+For fully-traditional infix notation, the first is slightly better,
+and we&#8217;ll discuss that later, but for our purposes I don't think it's
+as useful.
+
+<p>
+If it&#8217;s automatic, now you need to determine the legal pattern of infix
+operators, since they will trigger the infix interpretation.
+This is probably some sort of regular expression;
+we&#8217;ll discuss this below.
+<p>
+You&#8217;ll also need a syntax to say when it is <i>not</i>
+infix at least (to disable the automatic part).
+Again, this can be identified using
+surrounding pairs such as {...} or [...] around non-infix operators,
+or using single expressions before the first or second parameter
+to declare that this is <i>not</i> infix.
+For functions, in many real-world use cases
+Common Lisp&#8217;s #&#8217; notation or simply &#8220;(function +)&#8221; would do.
+Indeed, if at least three parameters are required for infix,
+any function that simply returns its second parameter
+could do the escaping.
+As noted below, I'm currently using "as(+)" aka "(as +)" to do this escaping.
+<p>
+Automatic approaches, either way, are in some sense a little &#8220;hackish&#8221;..
+the second parameter determines the order of parameters in the
+resulting s-expression!
+Yet it produces very nice-looking results, and I suspect that over time
+it will become workable.
+After all, in all other languages you have to look for
+infix operators too, so this actually not that strange a requirement.
+And the results (shown elsewhere) are startlingly clear.
+<p>
+You might still have an optional &#8220;make this infix&#8221; syntax indicator
+as well, or at least a &#8220;warning, this is infix&#8221;,
+which can be used when printing.
+That way, when you <i>read</i>
+a result as infix, you&#8217;ll get warned that the expression is infix.
+If this is optional, you might still want to make it very short, since
+you may have to read a lot of them in printouts.
+For example, let&#8217;s say that #_ means &#8220;no infix&#8221; and is placed
+before the first parameter (mnemomic: &#8220;base case&#8221; ),
+while ? means &#8220;infix notation follows&#8221; is placed before the first
+(displayed) parameter (#^ might make a reasonable alternative).
+Thus, &#8220;(3 + 4)&#8221; , &#8220;(?3 + 4)&#8221;, and &#8220;(#_+ 3 4)&#8221;
+could all mean the same as &#8220;(+ 3 4&#8221;), and the &#8220;car&#8221; of all of them is &#8220;+&#8221; .
+Or, if [...] are the infix warnings, [x &gt;= 4] is a way to hint that
+the s-expression is actually (&gt;= x 4).
+</ul>
+<p>
+Of course, if the notation permits mixed infix and prefix notations,
+you can easily have a &#8220;manual&#8221; notation that just means
+&#8220;turn on autodetection all the way down from here&#8221; and end up having
+a combination of properties.
+Alan Manuel K. Gloria&#8217;s &#8220;infix notation macro&#8221; is a good example of a
+mixture - in this implementation,
+there must be an initial marker (nfx ...), but it then descends all
+the way down to all subexpressions.
+As a result, you could use the marker at a very high level, and
+have a result similar to automatic detection.
+A similar result could be had by having a function like
+&#8220;(enable-infix)&#8221; or &#8220;(sugar)&#8221;
+which you could insert at the beginning of a file as a top-level command
+(this could also enable indenting and the name-prefixing notation), which would
+then enable the infix operations (even at the
+topmost level) until specifically disabled.
+Using such a
+command would mean that everything below, for the rest of the file,
+would use automatic infix detection... but since there would
+be a specific a command to enable it first,
+it would be compatible with existing code (which didn&#8217;t enable infix).
+A command-line flag, or invoking a command with a different name
+(possibly via a different file extension), could enable automatic
+detection of infix notation.
+
+<h2>What are the legal infix operators?</h2>
+<p>
+If detection of infix operators is
+automatic, now you need to determine the legal pattern of infix
+operators, since they will trigger the infix interpretation.
+Even if it&#8217;s manually triggered, if you permit arbitrary expressions, or
+want error-checking of the operators
+(&#8221;you said this was infix but there were none&#8221;)
+you&#8217;ll need to detect infix operators.
+<p>
+There are several options:
+<ul>
+<li>You could support only a fixed list (+, -, etc.).
+That is very inflexible, though.
+<li>
+You could start with a fixed list, and allow the user to specify which
+ones to add/override.
+The additions would probably include information on precedence and direction
+(right or left),
+and if so, these additions would need to be made before they are used.
+One big risk is that if the infix expressions are read before the
+commands to make the additions,
+the infix expressions would be misinterpreted.
+<li>
+You could define some sort of pattern.
+The pattern needs to be simple, so humans can easily remember it.
+This has the advantage of not depending on proper setup of a
+table of operators.
+<li>
+You could support default patterns <i>and</i> allow additions
+as well, if you wanted to.
+Or define a pattern, but it's an error to USE the pattern before
+declaring it (and maybe its precedence).
+</ul>
+<p>
+If we use a pattern, what is the pattern?
+Patterns are often expressed as regular expressions (REs), and an
+obvious RE for this purpose is: [+-\*/&lt;&gt;=]+.
+Basically, it has to be a set of one or more special characters.
+(One alternative, which might be nice, would be that it has to <i>start</i>
+with a special character, but after that, other characters
+are allowed; be wary that +h1 is an infix operator but +1 is not).
+This is enough to cover the 4 arithmetic expressions (+, -, *, and /),
+and all the usual comparisons (&lt;, &lt;=, =, &gt;=, &gt;).
+It&#8217;s also enough to cover other operations that people like
+to have as infix, such as &#8220;**&#8221; (exponentiate),
+&#8220;-&gt;&#8221; (implies), &#8220;&lt;-&gt;&#8221; (if and only if), and so on.
+You can probably add &#8220;&amp;&#8221;, which is enough to represent common
+representations of &#8220;and&#8221;.
+But there are some issues, especially with the characters not noted here:
+<ul>
+<li>
+Adding &#8220;:&#8221; is tempting, because &#8220;:&#8221; and &#8220;::&#8221; are sometimes used as
+infix operators (BitC uses &#8220;:&#8221; for declaring types).
+On the other hand, &#8220;:&#8221; is sometimes used as filler, so there are
+pluses and minuses to including it in the pattern.
+In Common Lisp, a &#8220;:&#8221; by itself is not a problem (it&#8217;s illegal normally),
+but the &#8220;:&#8221; separates package names from their symbols.
+In addition, in Common Lisp a blank package name (e.g., :x) is a keyword...
+so anything with a colon at the beginning or middle is probably going
+to be a problem.
+Similarly,
+<a href="http://srfi.schemers.org/srfi-88/srfi-88.html">a Scheme
+proposal (SRFI 88)</a> proposed using
+names ending in &#8220;:&#8221; as keywords, with
+<a href="http://srfi.schemers.org/srfi-89/srfi-89.html">SFRI 89</a>
+using them for optional parameters.
+Thus, while a single colon (:) appears to be a fine name for
+an infix operator, more complex names with colons in them
+appear to be more problematic for backward-compatibility with existing Lisp-like
+systems.
+<li>
+One possible concession would be to say that &#8220;and&#8221;
+and &#8220;or&#8221; are specially
+recognized as infix operators; that&#8217;s a kludge, though <i>all</i> Lisp-like
+languages have &#8220;and&#8221; and &#8220;or&#8221; operators, so it would make sense.
+On the other hand, if infix operators automatically switch lists to
+infix notation, s-expressions of sentences like
+&#8220;(Jack and Jill)&#8221; would silently
+become &#8220;(and Jack Jill)&#8221; - and that
+seems dangerous.
+It especially seems dangerous if s-expressions are sometimes displayed
+with automatic infix notation without
+any indication that the parameter order has changed.
+So I think this is an unwise choice, even though at first it seems reasonable...
+but that still begs the question of how to represent "and" and "or", since these
+are incredibly common infix operations.
+<li>
+Many languages use &amp;&amp; or &amp; to represent "and", and
+use || or | to represent "or".
+Adding &#8220;|&#8221; or &#8220;||&#8221; is tempting
+because it is a common notation for &#8220;or&#8221;,
+and in Scheme the character is reserved for possible future extensions anyway.
+But simply adding it to the list of allowed symbols
+is more problematic, because in Common Lisp the &#8220;|&#8221;
+already has a meaning - it escapes symbol text until the next &#8220;|&#8221;.
+So if &#8220;|&#8221; keeps its usual meaning, then &#8220;|&#8221; as
+an operator has to be written as &#8220;\|&#8221; in Common Lisp (yuk).
+But there's a clever trick here - the syntax "||" can always be used to mean
+"or", whether or not "|" has the special role of escaping symbol text.
+This would mean that in Common Lisp, the function's name would actually be
+an empty string (!)... but since its name would print as "||", it would
+<i>look</i> quite clear and understandable.
+This wouldn't be combinable with "=", (e.g., "+=" is a fine atom, but "||=" would
+immediately simplify to "=")... but that seems liveable.
+It would be possible to force a literal | as the real symbol, but this would
+look ugly; \| or \|\| is hideous for code reading.
+In Scheme and many other LISPs this would be a non-issue; the || would just
+be interpreted as a two-character name for an atom, which is fine.
+The &amp; can be confusing in some contexts, too;
+it is sometimes interpreted specially in parameter lists.
+But as far as I can tell, &amp; is
+not normally interpreted in any special way outside of parameter lists, and
+even there, &amp;&amp; isn't normally accepted.
+It's certainly possible to use "^" to represent "and"
+(using ** for the power operator),
+but that still begs how to represent "or"; few keyboards provide the
+mathematical "or" symbol (an upside-down wedge).
+So &amp;&amp; and || are probably reasonable text representations
+for logical "and" and "or"... which
+is certainly consistent with typical practice.
+Note that "and" and "or" are special forms in Scheme (and many other Lisps),
+so that they can short-circuit; this means that redefining them is often
+more complicated.
+<li>
+An unfortunate oddity happens with Scheme:
+Scheme actually defines a &#8220;=gt;&#8221; syntactic marker in its &#8220;cond&#8221;
+processing, and it occurs <i>as the second parameter</i>.
+This means that if you are using the second parameter to automatically
+detect infix operations, you will almost certainly consider this
+construct to be an infix operation.
+Unfortunately, you cannot solve this by creating a new simple
+function =&gt; that can handle this (having only one form at this
+location changes the meaning of the construct).
+There are several solutions; two obvious ones are to require manual
+detection or to have a specific list of infix operations.
+Another solution is to specifically state that &#8220;=&gt;&#8221; is excluded from
+the pattern of allowable infix operators, at least for Scheme.
+You can partly justify
+this on the additional grounds that -&gt; and =&gt; are easily confused.
+It would probably be possible to solve this with a complex
+Scheme-unique macro for =&gt; that essentially restored its original
+meaning, though this will probably cause problems if an error occurs
+nearby; I think simply declaring that it's not an infix operator when
+processing Scheme is safer.
+<li>
+How do you represent assignment and field accessors,
+if the underlying language has them?
+The pattern supports "=", but
+if you use "=", then you have the problem that this is easily
+confused with equal-to.
+This is one of the big problems with C and C++
+(confusing = with ==), and it'd be unfortunate to duplicate that mistake.
+In addition, if the system maps any infix name directly to the identical
+prefix function names, then you may not have a choice... in most
+Lisp-like systems, "=" is already an equality operator.
+The term "&lt;-" is compelling for assignment, and "-&gt;" is
+compelling for field access, but the two do not go together well;
+just imagine deciphering
+"x&nbsp;-&gt;&nbsp;a&nbsp;&lt;-&nbsp;b&nbsp;-&gt;&nbsp;c".
+Parentheses help, e.g.,
+"(x&nbsp;-&gt;&nbsp;a)&nbsp;&lt;-&nbsp;(b&nbsp;-&gt;&nbsp;c)" - but
+it's still a little awkward.
+<p>
+One possibility is to use a different form for assignment, such as
+"&lt;--" or "&lt;==".
+The term "&lt;==" is actually fairly easy to distinguish, so
+"x&nbsp;-&gt;&nbsp;a&nbsp;&lt;==&nbsp;b&nbsp;-&gt;&nbsp;c" is easier to read,
+and
+"(x&nbsp;-&gt;&nbsp;a)&nbsp;&lt;==&nbsp;(b&nbsp;-&gt;&nbsp;c)"
+is actually especially nice.
+<p>
+Another
+possibility is to use "&lt;-" for assignment, and use [...] as a
+field accessor.  That looks nice:
+<pre>
+  x[a] &lt;- b[c]
+</pre>
+But if we use [...], we need to figure out
+what general function to map [...] to, <i>and</i> we just lost the phrase
+[...] for other purposes (such as describing special lists).
+(For sweet-expressions, I'll presume that the language or user will
+define the infix macros/functions, and not add [...] simply because
+it's easier and more general not to.)
+<li>
+Since Unicode/ISO 10646 is finally becoming widely available, and many
+systems can process them (e.g., using UTF-8 encoding), additional infix
+symbols could be accepted that are <i>not</i> in ASCII.
+This would certainly resolve the &#8220;and&#8221; and &#8220;or&#8221; issues, since there are
+standard mathematical symbols for them:
+&#8743; (&#8221;logical and&#8221;) is character U+2227 (decimal 8743) and
+&#8744; (&#8221;logical or&#8221;) is character U+2228 (decimal 8744). 
+See <a href="http://www.unicode.org/charts/symbols.html">Unicode
+symbols chart</a>, especially the mathematical operators chart,
+for more information.
+The character set from U+2200 through U+22FF is allocated to
+mathematical symbols.
+This will remind those of us who&#8217;ve been around a while of APL!
+Probable characters for infix operators include
+U+2227 (&#8221;and&#8221;),
+U+2228 (&#8221;or&#8221;),
+U+220A (&#8221;element of&#8221;),
+U+2209 (&#8221;not an element of&#8221;),
+U+220B (&#8221;contains as member&#8221;),
+U+220C (&#8221;does not contain as member&#8221;),
+U+2229 (&#8221;intersection&#8221;),
+U+222A (&#8221;union&#8221;),
+U+225D (&#8221;defined as&#8221;),
+U+2260 (&#8221;not equal to&#8221;),
+U+2254 (&#8221;colon equals&#8221;),
+U+2282 (&#8221;subset of&#8221;),
+U+2283 (&#8221;superset of&#8221;),
+U+2284 (&#8221;not a subset of&#8221;),
+U+2285 (&#8221;not a superset of&#8221;),
+U+2286 (&#8221;subset of or equal to&#8221;),
+U+2287 (&#8221;superset of or equal to&#8221;),
+U+2288 (&#8221;neither a subset of or equal to&#8221;),
+U+2289 (&#8221;neither a superset of nor equal to &#8220;),
+U+228A (&#8221;subset of with not equal to&#8221;),
+U+228B (&#8221;superset of with not equal to&#8221;),
+U+22C8 (&#8221;bowtie&#8221; - sometimes used for join),
+U+22BB (&#8221;xor&#8221;),
+and
+U+22BC (&#8221;nand&#8221;).
+But not everyone has good support for these yet, so while
+include a set of Unicode infix operators in the standard set might
+be a good idea (anticipating their use),
+it&#8217;s probably premature to <i>require</i> their use.
+</ul>
+<p>
+If the printing routines normally convert to infix,
+then you need to <i>not</i> have a pattern that is likely to be
+engaged unintentionally... which are good reasons to <i>not</i> have
+the terms &#8220;and&#8221; and &#8220;or&#8221; be infix operators, and certainly a
+good reason to stay away from anything other than an isolated &#8220;:&#8221;.
+You can probably limit the regular expression length, say up to 3-6 characters,
+to help limit unintentional conversions as well.
+I would not include &#8220;and&#8221; and &#8220;or&#8221;, instead
+add &amp; and | to the infix operators (and say that | has to be escaped),
+and limit it so it must be 1 through 4 characters in length.
+I would accept &#8220;:&#8221; alone (so it can be used for infix type declarations),
+but nothing else with colons.
+<p>
+These considerations suggest that &#8220;=&gt;&#8221; be quietly prevented from
+being an infix opreator, and then use
+this regular expression for infix operators;
+<pre>
+    [+-\*/&lt;&gt;=&amp;\|\p{Sm}]{1-4}|\:|\|\|
+</pre>
+where &#8220;\|&#8221; means match the &#8220;|&#8221; character, and \p{Sm} means
+&#8220;match mathematical symbols, Unicode range U+2200 through U+22FF&#8221;.
+<p>
+As a related matter, you need to decide how to separate infix operators
+from non-infix operators.
+In many other language families, &#8220;x-y&#8221; would be parsed as x minus y.
+Unfortunately, in many Lisp-like languages, names often
+include typical infix operator characters such as &#8220;-&#8221;.
+Both Common Lisp and Scheme would be unusable without the - symbol,
+because they have many functions with &#8220;-&#8221; in the name
+(in addition, Scheme has a convention
+where &#8220;-&gt;&#8221; embedded in the name indicates a conversion).
+The simplest and most obvious approach is to require that
+any infix operator be surrounded by whitespace;
+this is very easy for humans to remember, and is consistent with
+normal s-expression syntax anyway.
+You <i>could</i> require escaping such characters as part
+of a name, e.g. |simple-string-p| or simple\-string\-p, but this is
+both ugly and unnecessarily incompatible with common practice.
+If you&#8217;re devising a new language, you could simply forbid such
+characters in regular symbol names, and then you could automatically
+detect all the infix operators without requiring that they be surrounded
+by whitespace.
+However, for general-purpose parsing, sweet-expressions will require
+that infix operators be surrounded by whitespace
+(in cases where function names don't have such symbols,
+this requirement could be relaxed).
+
+<h2>What are the semantics of the infix operations?</h2>
+<p>
+Once we detect that we are using infix notation, what are the
+semantics of the &#8220;infix&#8221; notation?
+<ol>
+<li><b>Swap first two parameters</b>.
+An <i>extremely</i> easy-to-implement and general approach is
+to just swap the first two parameters.
+A good idea for this case would be to require exactly 3 parameters -- that
+way, we won&#8217;t accidentally screw things up, because when
+limited to exactly 3 parameters, there&#8217;s no
+difference between swapping and the normal interpretation of infix.
+This is trivial to implement,
+and yet it&#8217;s enough to implement basic infix operators in a way
+that looks nicer.
+This means that the presented expression is very similar to the
+actual s-expression, which has its advantages.
+If you want to add a fancier infix format later, this approach
+is a reasonable stepping-stone towards that.
+<li><b>Allow chaining (duplication) of identical operator</b>.
+This extends the previous option, but you can have an odd number of
+parameters, and the even ones much match.
+Thus, (3 + 4 + 5 + 6) becomes (+ 3 4 5 6).
+Trivial to implement (just swap the first two parameters and
+ensure the rest match).
+This approach makes it possible to fully use the capabilities of
+underlying functions that allow multiple parameters, and that's a good thing.
+Interestingly enough, Common Lisp&#8217;s definition of comparison operators
+would make expressions like
+(x &lt;= y &lt; z) work as it does in mathematics!
+<p>
+Note that this does <i>not</i> support precedence, so
+you have to surround different operators with parenthesis or indents,
+e.g., (3 + (5 * 6)).
+In one view, that's a disadvantage - you still have to indicate some
+information that would be automatic in other languages.
+On the other hand, this makes <i>when</i> there are new lists explicit,
+and that has some pretty big advantages.
+It also sidesteps the problems of defining precedence
+(either fixed or a way to add them).
+Those are pretty big advantages.
+<p>
+There are many options for determining when things aren't correct, and
+then deciding if that is an error or merely an indicator that infix was
+not intended.
+Note that this only supports an odd number of parameters, and obviously
+there shouldn't be an infix operator presented as the first parameter
+in the text.
+Doing otherwise could be an error, or could be an indicator that it
+should not be treated as infix.
+For the moment, I'll plan to consider both as an indicator that infix
+was not intended.
+This only permits all the operators to be identical - if they're different,
+but all infix operators, then the writer probably intended some sort
+of precedence (and so an error should be reported).
+Otherwise, infix was probably not intended, so again, I'd probably
+interpret that as "not infix".
+<li><b>Full infix of binary operations, with precedence rules</b>.
+Allow infix and add precedence rules (* before +, etc.).
+This would mean that &#8220;(3 + 4 * 5 ** 2)&#8221; would quietly transform into the
+s-expression &#8220;(+ 3 (* 4 (** 5 2)))&#8221;.
+In cases where it is
+important that you be able to clearly see the mapping between
+the surface presentation and the underlying s-expression, just
+don&#8217;t use precedence - instead, parenthesize
+(so those who do not need to see that representation don&#8217;t have to).
+This is trivial to implement in Lisp... the problem is what to
+do about the precedence of unknown operators.
+You&#8217;d need to either not support precedence of them,
+have a default for unknown operators,
+or have a way to set precedence values (and make sure the settings
+are read before processing the code).
+Setting precedence is easy enough, but its disadvantage is that
+it invites trouble - you need to make sure that the
+rules are set <i>before</i> the parameters are swapped, and mistakes
+could result in hard to find errors.
+Left association could probably be safely assumed
+for more than one instance of the <i>same</i> unknown operator.
+Alternatives are giving
+unknown operators a specific precedence relative to other operators...
+or simply <i>requiring</i> that other operator&#8217;s precedence be made
+clear with parentheses (or their equivalent).
+Predefining precedence for common functions, and
+requiring statements about the others, isn&#8217;t a bad thing;
+people usually don&#8217;t want
+to have varying precedence tables (it&#8217;s confusing), and they
+also don&#8217;t want to memorize large tables.
+Again, I suggest making duplicate operators (3 + 4 + 5) turn into one
+s-expression (+ 3 4 5); have the user override if they want something
+different.
+<p>
+Here, we don&#8217;t allow prefix/suffix operators,
+such as &#8220;- x&#8221;, or suffix operators, like &#8220;x !&#8221;.
+There is a trade-off here;
+prefix/suffix don&#8217;t work well with automatic detection or
+trying to also read traditional s-expressions correctly - it would
+be all too easy to misread such expressions.
+Using name-prefix notation for them, such as -(x), is a very reasonable
+alternative.
+<li><b>Full infix of binary and non-binary operations,
+with precedence rules</b>.
+This is like the above, only now we also allow prefix operators,
+such as as &#8220;- x&#8221;, or suffix operators, like &#8220;x !&#8221;.
+Allowing them adds a little extra flexibility, and might make sense
+if the specific expression is always manually marked as being infix.
+But it has many problems, as noted earlier.
+</ol>
+
+<h2>Precedence rules</h2>
+<p>
+If you have precedence rules, what are they, and are they controllable?
+It's not hard to add a command that sets precedence rules, but
+there's always the problem that you risk not getting
+that called at the "right time" (before reading).
+Worse, if there are global precedence rules that can be changed,
+setting them in one environment may manipulate another (unintended)
+environment, so now we have to have a parameter for (read), and that may
+be hard to pass down.
+This is particularly a problem for Lisp-like systems, where you may have
+multiple levels and meta-levels that you might not want to interact.
+Another big challenge is that if different developers set precedences, it's
+harder to combine their code.
+Different operations may have different meanings in different
+circumstances, so the lack of control over precedence can be a problem too.
+<p>
+A chain of the same operation can normally be combined into a
+single operation with all those parameters, e.g.,
+(a&nbsp;+&nbsp;b&nbsp;+&nbsp;c) should become (+&nbsp;a&nbsp;b&nbsp;c).
+This adds capability, without any problems or loss.
+<p>
+<i>Everyone</i> agrees that * and /
+should have the same precedence, both of which have
+greater precedence than the equal-precedence binary + and -,
+and that all of these are left-to-right.
+So in theory that, at least, could be implemented.
+Originally I thought that
+it may be best to just implement those universal rules,
+and normally use parentheses most everywhere else for controlling
+infix precedence (or at least discourage lots of precedence-setting).
+Chaining is fine, but as discussed below, precedence causes a lot of problems
+in many use cases, so in the end I decided against them for sweet-expressions.
+<!--
+It probabably won't hurt to have a function that sets the precedence, and
+discourage significant use (noting the issues above) - that way, it's there
+if you need it, but if it's used less, its problems are less of an issue.
+In any case, it'll take experience to learn what else to do.
+-->
+
+<h2>Printing expressions that might be infix-able</h2>
+<p>
+So far, I&#8217;ve primarily discussed how to read in expressions, but
+expressions need to be printed too.
+A likely answer is &#8220;just print s-expressions as usual&#8221; by default.
+That means that the output would be &#8220;(+ 3 4)&#8221;, even if the input was &#8220;(3 + 4)&#8221;.
+For debugging code, this is probably a Good Thing.
+There might be value in presenting expressions back with some
+infix operations &#8220;re-inserted&#8221;, at least as some sort of &#8220;pretty-printing&#8221;
+function or option.
+It might be wise to identify which lists are being interpreted as
+infix in these cases (e.g., by surrounding them with {...}).
+I think there is no reason to try to redo precedence when re-displaying;
+showing how the lists are actually stored is very clear and
+eliminates questions about precedence.
+Thus, if &#8220;(3 + 4 * 5)&#8221; is input, the resulting s-expression would be
+&#8220;(+ 3 (* 4 5))&#8221;, and the infix-printer might show this as
+&#8220;{3 + {4 * 5}}&#8221;.
+
+<h2>Combining infix with Name-prefixing</h2>
+<p>
+There is a subtlety when combining name-prefixing with automatic infix:
+I think people expect an infix expression to be considered a <i>single</i>
+expression, even though at first it appears to be a multi-parameter list.
+<p>
+For example, most people would accept this syntax for calling function f with two parameters, x and y:
+<pre>
+  f(x y)
+</pre>
+<p>
+However, if infix is normally done automatically, they would expect this to
+be computed with f given one parameter, not three:
+<pre>
+  f(x + y)
+</pre>
+<p>
+Note that this is actually a very nice thing; it means that in many cases,
+name-prefixing causes the number of parentheses that need writing to reduce.
+So the original Lisp:
+<pre>
+  (f (+ x y))
+</pre>
+becomes:
+<pre>
+  f(x + y)
+</pre>
+
+
+<h2>Infix control</h2>
+<p>
+There is likely to be a need to control infix processing.
+These should be a standard way
+of saying &#8220;disable infix&#8221; and &#8220;enable infix&#8221;.
+You'd like to be able to enable or
+disable infix at only one level, in particular,
+so that you could leave infix on as the default and yet disable it in
+one particular expression.
+It would be especially useful to have an
+&#8220;enable infix for this one level of expression&#8221; operation that
+<i>must</i> receive
+an expression that &#8220;looks like an infix expression&#8221;
+or it is in error.
+<p>
+The following text are some very early ideas on the topic;
+I include them here, but it's all very early, and at least some
+is likely to be very wrong.
+Still, you may find useful thoughts here.
+<p>
+One implementation issue is that macros work from outside in, and
+most macros will not expect special additional macros.
+In particular, it might be very useful to cuddle an infix operator
+with a macro that says do not use infix, like this (where "as"
+means "as-is"):
+<pre>
+  (define as(+) ...)
+</pre>
+However, the obvious solution will fail; typical implentations of
+"define" do not expect to be followed by another macro in the definition!
+This means that any such function reference will need to be removed at
+<i>read</i> time or very early on during <i>eval</i> time (e.g., by
+an outside cuddling nfx(...)),
+because other macros won't know what to do with this.
+<p>
+There should be a standard way of inserting at the
+beginning of a file or read-eval-print loop &#8220;please switch to and from
+special processing, and
+for setting some of its options (e.g., infix control).
+For debugging, you could just print s-expressions as now.
+However, a standard way to request printing these expressions
+that shows infix as such, but
+marking infix operators and non-infix, would be a good idea
+and each list which could be misinterpreted as an infix expression
+but is not has another marker.
+This implies a need for a marker that says &#8220;the following list <i>is</i>
+an infix expression and it&#8217;s an error if it is not&#8221;.
+If adding specific new infix operations is supported
+(such as &#8220;and&#8221; and &#8220;or&#8221;), a standard name and
+syntax for this add operation would be a good idea too.
+Ideally, the external interfaces for these operations
+be pseudo-standard across all Lisp-like notations.
+Bridging the gap between Common Lisp and Scheme might be challenging
+for a standard interface (in some cases string
+parameters might be needed; string syntax is now universal, but
+other syntax is not - e.g., the keyword syntax of
+Common Lisp is incompatible with the proposed keyword syntax for Scheme).
+<p>
+<!--
+ Idea: "nfx(...)" to turn on infix recursively, and unfx(...) to disable
+ recursively. "unfx(+)" also doubles as the disable-this-level by
+ surrounding the 2nd parameter, e.g.,
+ (defun unfx(+) ...).
+-->
+<p>
+The notation for controlling all this is to be determined.
+Here&#8217;s a start.
+Originally, I looked at implementing another # character option.
+If you want to do that, you might look for
+sharpsign options that no one one currently uses, examining sources such as
+the <a href="">Common Lisp Hyperspec</a>
+(particularly the
+<a href="http://www.lisp.org/HyperSpec/Body/sec_2-4-8.html">
+sharpsign section</a>),
+the <a href="http://www.schemers.org/Documents/Standards/R5RS/HTML">
+R5RS Scheme specification</a>,
+the
+<a href="http://www.gnu.org/software/emacs/elisp-manual/">
+GNU Emacs Lisp Reference Manual</a>,
+as well as less-common systems like
+<a href="http://www.newlisp.org/downloads/newlisp_manual.html">
+NewLisp</a>.
+Using #I for infix is tempting, but
+Scheme uses #i for inexact; it&#8217;s not clear if #I
+would get interpreted the same way on some systems, but it&#8217;s not worth risking
+and might be confusing to developers anyway.
+I especially considered using #/ to mean "infix".
+The #@ combination is used by Emacs Lisp, so we should avoid that.
+However, Scheme only supports one-character lookahead; if you want to
+be able to call the "ordinary" Scheme reader for other #-beginning
+constructs, there isn't an easy way to do that - because to read the
+character after #, you have to consume the #, making that more
+difficult to do.
+So I don't think beginning with # is a good idea.
+<p>
+I&#8217;ve looked for some possible notation, under the presumption that this
+is a future standard format common to Common Lisp and Scheme
+(so we need something unallocated by either).
+<p>
+A simple approach might this naming convention, with function-call-like
+macros:
+<ul>
+<li>nfx(...): Everything inside is interpreted as infix if it can, recursively.
+<li>unfx(...): Everything inside is NOT infix, recursively.
+<li>nfx1(...): The immediately contained inside is infix, and it is an
+error if it is not.
+<li>unfx1(...): The immediately contained expression is <i>not</i> infix.
+</ul>
+<p>
+Each of the above could either accept a single list (in which case it's the list that is being referred to), otherwise it is the expression itself as
+the rest of its parameters that is being referred to.
+Since any infix expression must have <i>at least</i> three parameters
+(2 if unary operators are used), this isn't ambiguous.
+<p>
+We could interpret unfx(...) around a second parameter to quietly
+disable infix processing.
+Alternatively, we could have a different function/macro name such as
+"as(...)".  This would Treat the inside (function) as-is, so it won't be
+considered an infix operation (use this if an infix operator is the
+second parameter, but you don't want the expression to be
+considered infix).
+Here's an example:
+<pre>
+  defun as(+) (left right) ...
+</pre>
+<p>
+One interesting challenge in doing this is recursion in the read function.
+I decided to implement much of the processing in the reader, and
+to have the processing go "as I go" in the reader,
+rather than have the reader automatically add nfx() in front of expressions
+and then have eval() fix it up by calling a macro.
+Since the reader is called on ordinary data in s-expression format,
+it is very inconvenient to automatically have the reader
+add nfx(), etc. calls!
+Yet if there is no outermost call to "fix up" the expression,
+then the outermost parameters would be defun, define, or other terms
+that would not handle these macro calls correctly.
+And you dare not remove things piecemeal - read can be called recursively,
+so if you call read, remove things partly, but then later all "fix up"
+all the way down again, you can "unfix" things.
+This is one reason to have a separate "as" function, so that these
+different forms can be differentiated.
+
+<!--
+<ul>
+<li>#/ means &#8220;next form is in infix notation&#8221;.
+Mnenomic: / is an infix operation.
+The character after this indicates the form syntax;
+"(" means that the form is the expression immediately contained by (..),
+whitespace means that the form is the expression contained in the line, and
+non-whitespace indicates a name-prefixing function name
+(it must end in an open parenthesis without whitespace).
+These rules for the character afterwards handle a number of awkward
+cases that would otherwise show up.
+If the list is only a 2-parameter list, its second parameter is 
+recursively followed until something other that a 2-parameter list is found,
+and that must meet infix rules.
+The 2-parameter recursion rule makes it easy to handle quotes and
+quasiquotes.
+On reading, if the following form is not in infix, it is an error.
+<p>
+This means that #/(3&nbsp;+&nbsp;4) is unambiguously interpreted
+as being infix, so in all cases
+the form (car&nbsp;#/(3&nbsp;+&nbsp;4)) evaluates to +.
+A printer that is aware of infix notation might be configured to
+show infix as such, but mark each such form with the infix notation.
+That way, when it prints (func&nbsp;#/(3&nbsp;+&nbsp;4)),
+you can tell quickly that
+the underlying s-expression is (func&nbsp;(+&nbsp;3&nbsp;4)).
+<p>
+Here are some examples:
+<pre>
+; (x (fact (+ 3 4))):
+  x
+    fact
+      #/ 3 + 4
+; or
+  x
+    fact #/(3 + 4)
+; or
+  x
+    #/fact(3 + 4)
+; or
+  x #/fact(3 + 4)
+; or
+  x (fact #/(3 + 4))
+</pre>
+Note the difference between:
+<pre>
+; "3 + 4" must be infix; the * (4 + 4) is not forced:
+  #/(3 + 4) * (4 + 4)
+; The whole line must be infix:
+  #/ (3 + 4) * (4 + 4)
+</pre>
+<li>#@ is &#8220;next expression is not infix&#8221;.
+Mnenomic: @ means &#8220;function name at beginning&#8221;.
+This is the reverse of &#8220;#/&#8221;, and interprets the character
+afterwards the same way.
+Thus #@(3&nbsp;+&nbsp;4) maps to the
+s-expression (3&nbsp;+&nbsp;4), not to the s-expression (+&nbsp;3&nbsp;4).
+The form (car&nbsp;#@(3&nbsp;+&nbsp;4)) always evaluates to 3.
+<p>
+A printer aware of infix notation might be configured to show any
+s-expression that <i>could</i> be misinterpreted as an infix expression,
+but is not, prefixed with #@.  Such s-expressions are expected to be fairly
+rare in practice.
+
+<li>#~ Controls the infix defaults for reading.
+If followed by
+&#8220;/&#8221; (infix) or &#8220;@&#8221; (not infix), then
+the default for the next form and all the forms it contains
+(recursively) is infix/not infix.
+The character after / or @ is interpreted just like #/ or #@, i.e.,
+if "(" , it continues until its matching ")".
+These can be embedded further to override in a more local fashion.
+If #~ is followed by g (global), and then by
+&#8220;/&#8221; (infix) or &#8220;@&#8221; (not infix), then
+this controls the infix default of the reader from then on, globally.
+I expect that languages will also have a better-looking
+way of doing this, such as "(nfx ...)" and "(nonfx ...)" for
+setting the default infix interpretation for all descendents.
+But the point is to have standard mechanisms that will
+work everywhere not matter what.
+This means that even if the default interpretation is no infix,
+#~/(3 + (4 * 5)) is still interpreted as the s-expression
+(+ 3 (* 4 5)).
+A printer aware of infix notation might be configured to show infix
+s-expressions that are embedded in others this way, to
+reduce the number of special clarifying markers.
+</ul>
+-->
+
+<p>
+Note that &#8220;(s (b))&#8221; is interpreted as you might expect during
+sweet-expression processing, but (s(b))
+is interpreted as the s-expression ((s b)), not (s (b)).
+In practice this is not a problem - <i>nobody</i> likes the
+format (s(b))
+for s-expressions, and not all s-expression processors would even accept them.
+More also needs to be done to describe their interaction with macros;
+this is a critical area and hard to get right, but since there is
+<i>relatively</i> little that is changing, this may not be so bad.
+
+<p>
+A simple program could transform an existing program
+to sweet-expression format, including its comments,
+and with any necessary markers to control infix interpretation.
+I expect that the need for
+controlling infix interpretation will be exceedingly rare, so
+the results should look very nice.
+
+
+<h2>Infix implementations</h2>
+<p>
+Many, many people have implemented infix processors.
+Here are some, not including the
+many larger notational systems (like IACL2) that have an infix notation
+built into them:
+<ol>
+<li>
+<a name="norvikinfix"></a>
+A
+<a href="http://www.cs.berkeley.edu/~russell/code/logic/algorithms/infix.lisp">
+simple Lisp program that converts infix to s-expression format</a> is
+available as part of
+<a href="http://www.cs.berkeley.edu/~russell/code/doc/overview.html">
+Peter Norvig&#8217;s book, &#8220;Artificial Intelligence: A Modern Approach.&#8221;</a>
+This code&#8217;s
+<a href="http://www.norvig.com/license.html">license</a>
+appears to be open source software. Besides the usual disclaimers,
+it says, &#8220;3.  The origin of this software must not be misrepresented,
+either by explicit claim or by omission&#8221; and
+&#8220;4. Altered versions must be plainly marked as such, and must
+not be misrepresented as being the original software.
+Altered versions may be distributed in packages under other licenses
+(such as the GNU license).&#8221;
+
+<li>
+<a name="gloria"></a>
+<a href="http://plaza.ufl.edu/lavigne/infix.lisp">
+Alan Manuel K. Gloria&#8217;s &#8220;infix notation macro&#8221;</a>
+is extremely promising.
+His approach is to create a macro &#8220;nfx&#8221;, and then put spaces
+around everything. From then on, everything <i>inside</i> transitively
+<i>can</i> use either infix or prefix notation.
+It detects which lists are infix by examining the second parameter,
+and determining if it is in a list of infix operators.
+At this time the license intends to allow arbitrary use, though
+not in a clear legal manner.
+<!-- Info about it: http://www.cl-user.net/asp/libs/gloria-infix -->
+
+<li>
+<a name="Kantrowitz">
+Mark Kantrowitz</a> wrote an infix reader macro that is typical of
+many such packages (dated Jan 18, 1995); his runs on Common Lisp.
+It is often mentioned, though its restrictive license makes it
+useless to many.
+It &#8220;allows the user to type arithmetic expressions in
+the traditional way (e.g., 1+2) when writing Lisp programs instead of
+using the normal Lisp syntax (e.g., (+ 1 2)).  It is not intended to be a
+full replacement for the normal Lisp syntax. If you want a more complete
+alternate syntax for Lisp, get a copy Apple&#8217;s MLisp or Pratt&#8217;s CGOL.
+Although similar in concept to the Symbolics infix reader (#&lt;DIAMOND&gt;), 
+no real effort has been made to ensure compatibility beyond coverage 
+of at least the same set of basic arithmetic operators. There are several 
+differences in the syntax beyond just the choice of #I as the macro 
+character. (Our syntax is a little bit more C-like than the Symbolics 
+macro in addition to some more subtle differences.) 
+It is not open source software; derivatives are allowed, but
+no fees or compensation may be charged for &#8220;use, copies,
+distribution or access to this software&#8221;, which probably forbids
+Linux distributors from distributing it
+(it is in Debian&#8217;s &#8220;non-free&#8221; section for this reason).
+<a href="http://www-cgi.cs.cmu.edu/afs/cs/project/ai-repository/ai/lang/lisp/code/syntax/infix/">Here it is</a>.
+<a href="http://www.cs.technion.ac.il/~shaulm/software/infix.lisp">
+Norvig extended it</a>.
+With this, you can write #I(3+4).
+It supports all sorts of precedence rules, etc.
+However, its restrictive license makes it useless to most people;
+it cannot be distributed by many FLOSS vendors, it cannot be used
+in commercial settings, and since there
+is no hope of commercial support for it, its code is unusable to most people.
+However, it is a good idea that
+with a fresh re-implementation might be practical for some
+(after all, this package is a re-implementation itself).
+
+<li>
+<a href="http://www.accesscom.com/~darius/">&#8221;mlish&#8221;</a> is an infix syntax frontend for Scheme (from the same person who made &#8220;indent&#8221; ).
+
+<li>
+The
+<a href="http://www.iro.umontreal.ca/~gambit/doc/gambit-c_17.html">
+Gambit Scheme implementation</a> reader includes the
+SIX (Scheme Infix eXtension).
+&#8220;The backslash character is a delimiter that marks
+the beginning of a single datum expressed in the infix syntax ...
+the backslash character escapes the prefix syntax temporarily
+to use the infix syntax.
+For example a three element list could be written as &#8216;(X \Y Z)&#8217;,
+the elements X and Z are expressed using the normal prefix syntax and
+Y is expressed using the infix syntax.
+When the reader encounters an infix datum, it constructs a
+syntax tree for that particular datum. Each node of this tree
+is represented with a list whose first element is a symbol
+indicating the type of node. For example, &#8216;(six.identifier abc)&#8217;
+is the representation of the infix identifier &#8216;abc&#8217; and
+&#8216;(six.index (six.identifier abc) (six.identifier i))&#8217; is the
+representation of the infix datum &#8216;abc[i];&#8217;. 
+
+
+<li>
+<a href="http://www.cl.cam.ac.uk/users/ig206/guile-arith/">guile-arith</a>
+is a module to demonstrate how to build a parser in the
+Guilde version of Scheme, but is very immature.
+Its web page says &#8220;this is not meant to be used.&#8221;
+It builds yacc/lex parsers into guile C modules.
+It has a demo, supporting notations like this:
+<pre>
+ (define (square x) #[ x ^ 2 ])
+ (square 2) ==&gt; 4
+ (define (cube x) #[ square(x) * x ])
+ (cube 2) ==&gt; 8
+</pre>
+
+<li>
+Note that
+<a href="http://www.cs.indiana.edu/scheme-repository/imp/siod.html">
+SIOD (Scheme in One Defun)</a> also included an infix module - again,
+not something that is standard across implementations.
+
+</ol>
+
+<h1>Putting it together: Sweet-expressions</h1>
+
+<p>
+Obviously, there are <i>lots</i> of different ways to try to make
+Lisp-like languages easier to read.
+So let&#8217;s combine them.
+In particular, I&#8217;ve identified a particular set of options that I
+think are tasty.
+
+<h2><a name="sweet-expressions"></a>Sweet-expressions: A basic definition</h2>
+<p>
+I have developed a combination I call &#8220;sweet-expressions&#8221;
+that I hope will be a good solution.
+In this notation, normally-styled s-expressions will typically
+work &#8220;as normal&#8221;,
+but various extensions are added that make it possible to create
+easier-to-read programs:
+<ol>
+<li>We&#8217;ll support indentations using augmented I-expressions.
+An indented parameter with no following parameters (on the same line or
+via indentation) is considered a symbol, so a function with no
+parameters must be invoked by surrounding it with &#8220;(...)&#8221;
+or terminating its name with &#8220;()&#8221;.
+We'll augment it by ignoring blank lines at the beginning of an
+expression, and by immediately executing a term that begins at the
+left edge and is immediately followed by newline
+(to make interactive use pleasant).
+<li>By default, any expression is an infix expression
+if the first term (the function name) is <i>not</i> an infix operator,
+its second term <i>is</i> an infix operator,
+and it has at least three terms;
+otherwise it is a traditional prefix expression.
+Infix expressions must have an odd number of 
+terms, and the even parameters must be the identical infix operators.
+So, (2 + 3 + 4) is okay, but (2 + 3 * 4) is not; you must use
+(2 + (3 * 4)).
+That way, you <i>only</i> need to look at the first two terms of any
+expression to see if something is infix or not.
+If all the (odd-numbered) infix operators are the same, they are chained
+into a single infix operator, so (2 + 3 + 4) becomes (+ 2 3 4).
+Note that in a name-prefix form, it's the parameters that are considered,
+so f(2 + 3) becomes (f (+ 2 3)).
+Lists where the even-numbered parameters are
+different are considered non-infix (at least if any of them aren't operators); that
+will mean that more "traditional" Lisp s-expressions will be read
+without meaning change, even if they have an operator in the second position.
+You must separate each infix operator with whitespace on both sides.
+<p>
+Previously I planned to use built-in precedence rules
+if the infix operators differ, but 
+after some experience I'm currently thinking that it'd be better to
+<i>not</i> support precedence at all.
+Precedence is nearly universal among programming languages;
+they're very useful, and only a few infix-supporting languages
+(such as Smalltalk) lack them.
+But in the typical use cases of a Lisp-like language, precedence has some
+significant downsides that are irrelevant in other languages.
+First, let's talk about a big advantage to <i>not</i> supporting
+precedence in sweet-expressions:
+It makes the creation of every new list obvious in the text.
+That's very valuable in a list processing language; the key advantage of
+list processing languages is that you can process programs like data, and
+data like programs, in a very fluid way, so having clear markers of new lists
+like parentheses and indentation is very valuable.
+<p>
+What's surprising is that precedence turns out to have a host of problems in
+specific context, leading me to believe that it's a bad idea for this usage.
+Precedence is very useful in general (and it could be added for
+special cases), but adding precedence rules to a general-purpose list expression
+processor creates a slippery slope of complexity.
+You can trivially create commands that create new infix operators, and
+express their precedence and direction - no problem.
+But you're using a Lisp-like language, the use case tends to be different,
+with objects shifting between being data and being code.
+Often you're working at multiple levels and meta-levels of input -
+and it's not likely that you'll want their precedences to be the same.
+Yet trying to handle that turns out to require very complex management of
+the reader routine.
+Also, combining code from different sources can be a nightmare if
+they have different precedence values.
+In short, having precedences vary by meta-level creates complexities
+you just don't want to deal with.
+That suggests moving to a completely static, pre-canned set of static
+levels is required.
+Okay, but someone has to predefine that set.
+That turns out to be really hard; the meanings of various infix operators
+are <i>not</i> cast in stone, so it's difficult to preset the precedence
+levels meaningfully (since you don't know what the operators mean).
+The one obvious case is that * and / have higher precedence than binary
++ and - basically everywhere.
+That particular rule <i>could</i> be built-in, but if that's <i>all</i> you
+build in, it's not clear that it's worth the trouble.
+Especially since the idea that completely forbidding mixing the operators
+means that we make the mapping between lists and the textual representation
+much clearer.
+It's easier to add precedence later, if that turns out to be important after
+more experimentation.
+But after the current experimentation
+it appears that precedence simply isn't worth it in this case;
+it creates complexity, and hides where the lists begin/end.
+Precedence is great in many circumstances, but not in this one.
+<p>
+Of course, you can write code in some Lisp dialect to implement a language that
+includes precedence.
+Many programs written in Lisp, including PVS and Maxima, do just that.
+But when you're implementing another language, you know what the operators
+are, and you're probably implementing other syntactic sugar too, so
+adding precedence is a non-problem.
+But sweet-expressions are intended to be a universal representation,
+just like S-expressions are, so their role is different... and in that
+different role, precedence causes problems that don't typically show up
+in other uses.
+Not supporting precedence turns out to be better in this different role.
+<p>
+This approach supports binary infix operators, but doesn't include any
+special mechanism for unary minus.
+For unary minus, you must use the name-prefixed
+form &#8220;-(x)&#8221; or the prefix form &#8220;(- x)&#8221; .
+<!--
+Doing this avoids some nasty ambiguities (in particular, having "-" be
+the first parameter in an expression), and makes it possible to have the
+"only odd number of parameters, operators on even positions" notion.
+-->
+By only handling binary infix operators,
+it is much less likely for an expression to be &#8220;accidentally&#8221;
+interpreted as an infix expression when we did not mean it to.
+For example, you can even have quoted lists of infix operators,
+and freely mix s-expressions that begin with infix operations, without trouble.
+But there are a few cases where automatic infix interpretation
+while reading can be troublesome, so there will be ways to control it.
+Note that an expression is <i>not</i> infix if you do
+just about anything with the second parameter, or if you use
+an infix operator as the first operator.
+This means that:
+<pre>
+  (2 + (3 * 5)) &lt;==&gt; (2 + (* 3 5)) &lt;==&gt; (+ 2 (* 3 5))
+</pre>
+<li>
+We&#8217;ll allow the use of name-prefixing, so NAME(x y) is the
+same as (NAME x y).  NAME must be followed
+<i>immediately</i> by a &#8220;(&#8221; without whitespace between them.
+For the infix rules purposes we&#8217;ll
+perform this transformation <i>after</i> doing infix expression handling,
+so if the cuddled expression is an infix expression,
+it's a single-parameter function
+with an expression in infix form (you can use parentheses to cause a
+multi-parameter interpretation).
+Here are some examples:
+<pre>
+ factorial(z)         &lt;==&gt; (factorial z)
+ foo(x y)             &lt;==&gt; (foo x y)
+ bar(x y z)           &lt;==&gt; (bar x y z)
+ factorial(x - 1)     &lt;==&gt; (factorial (x - 1)) &lt;==&gt; (factorial (- x 1))
+ f(g(y) h(y) a)       &lt;==&gt; (f (g y) (h y) a)
+ f((x + 2) y (z - 3)) &lt;==&gt; (f (+ x 2) y (- z 3))
+ f((x + 2) * (y - 3)) &lt;==&gt; (f (* (+ x 2) (- y 3)))
+</pre>
+</ol>
+<p>
+I call this combination &#8220;sweet-expressions&#8221; - by adding
+syntactic sugar (which are essentially abbreviations),
+I hope to create a sweet result.
+In the few cases where the sweet-expression is awkward, just use the
+usual s-expression notation (with infix escapes if necessary) --
+well-formatted s-expressions are still legal.
+The result supports quoting and backquoting, is very
+compatible with typical s-expressions, and should work well with most macros.
+<p>
+
+<h2>Controlling sweet-expression interpretation and next steps</h2>
+<p>
+There should be standard ways
+controlling this, particularly for infix interpretation.
+Here are some early ideas about this.
+<p>
+For the moment, I plan to just implement an "as(..)"
+expression that can be cuddled around the infix operator (the
+second parameter).
+This must be removed at <i>read</i> time or very early on during
+<i>eval</i> time, because other macros won't know what to do with this.
+In other words, to ensure that "(defun as(+) ...)" will work correctly,
+we need to process as(..) <i>before</i> we process "defun".
+(Alternatively, use name-prefixing: defun(+ ...) works as well).
+I plan to implement this at read time for now, so that all other macros
+will work perfectly normally.. by the time normal macros get the
+expressions, they only see standard s-expression format.
+(Instead of as(...), I could use some notation beginning with #, but this
+turns out to be awkward in Scheme (because handling # as a secondary reader
+is painful), and it also turns out to be awkward in Common Lisp
+(because functions have a different name space, so you have chained #
+operators that look confusing).
+<p>
+Controlling infix processing is probably the most troublesome issue.
+For new code, it's more convenient to presume infix unless disabled -
+you really only need the occasional "as".
+Yet for maximum compatibility with existing code, it's better
+to expressly turn it on and to have control over it, so you want
+default off, with various ways to enable it.
+I believe this is very solvable.
+<p>
+For now, I'll just implement the "as" version, which is enough to
+see how it works.
+<p>
+A related issue is defining what the infix operations are.
+It seems clear to me that = (equality), &lt;=, +, and so on should
+map to their prefix versions.
+I also think that &amp;&amp; should map to "and", and || should
+map to "or" -- these are common conventions in other languages, and
+thus should be easy to read.
+I think "**" should become "expt" (exponentiate).
+But there are many other prefix operations with text-based names that
+should be defined (by defining a function or macro) that aren't
+as obvious.
+All these mappings can be done using regular definitions, without
+anything special happening in the language.
+<p>
+First, assignment (setf in Common Lisp, set! in Scheme).
+Gloria suggests using "=" for setting values (setf in Common Lisp),
+but I think that's a bad idea.
+After all, "="... that's already the equality test, and having the same
+symbol mean different things is likely to be disastrous; C already has
+trouble simply because "=" and "==" look too similar.
+The phrase ":=" has its problems too; it'd be considered "=" in the
+keyword space (confusing!) in Common Lisp, and doesn't prefix well.
+A plausible alternative is "&lt;-", so "x &lt; 5" reads as
+"set x to the value 5".  This also combines well with C-like
+operators, e.g., "+&lt;-" could be "add to"... that means that
+"x +&lt; 5" would be the same as "(setf (+ x 5))" in Common Lisp
+or "(set! x (+ x 5))" in Scheme.
+<p>
+There are lots of other potential operators.
+Gloria suggests "@" become prefix "aref"
+(which accesses array "left" at element "right"),
+"-&gt;" become "slot-value-q" (though this conflicts with using it
+as "implies"), "%" become "mod",
+"===" become eq, "==" become equal, "&amp;" become logand,
+"|" become logor, and ":" become "values".
+I worry about using | and &amp; because they're easily mistaken
+for the double-character kind.
+Indeed,
+<a href="http://www.quut.com/c/dmr-on-o">Dennis Ritchie admits that
+the precedence values for bitwise and/or, vs. logical and/or,
+were a mistake</a> - made worse because of their visual similarity.
+<a href="http://leshatton.org/index_SA.html">Languages should designed
+so that people will be less likely to make obvious mistakes</a>,
+based on previous measured evidence that these mistakes occur... and
+this evidence certainly exists in the case of &amp;&amp; vs. &amp;.
+<p>
+What should ++ be... increment, string concatenation, something else?
+There should probably be a string concatenation infix operator,
+but I'm not sure what to name it.
+<p>
+I would use "-&gt;" for implies, and
+"&lt;-&gt;" for iff (if and only if).
+One danger is that mixing "-&gt;" and "&lt;-" in the same expression
+can be very confusing, but I don't see a simple alternative.
+<p>
+A "standard list" of common infix operations and their
+meaning would make it easier to read and understand such expressions.
+But this is difficult to do, and in case only makes sense once there's
+more experience with sweet-expressions.
+<p>
+What about writing a list back out?
+It'd be nice to have a written form that could always be read back
+in as a sweet-expression.
+An optional writer would be nice - one that added as(...) where needed,
+and which optionally showed infix as infix, or optionally used indenting.
+It could be made really obvious that it was the special writer by
+using name-prefixing where possible -- that would be a glaringly obvious
+difference from the traditional s-expression writer.
+So it would write stuff like:
+<pre>
+ if((x = 5) display("Five") display("Not five"))
+</pre>
+Alternatively, the writer could normally write <i>without</i>
+using name-prefixing:
+<pre>
+ (if (x = 5) (display "Five") (display "Not five"))
+</pre>
+It could also just write traditional s-expressions, but adding the as(...) in the
+few places where it's necessary; that'd be good for debugging:
+<pre>
+ (if (= x 5) (display "Five") (display "Not five"))
+</pre>
+
+ 
+<h2>Simple Example</h2>
+<p>
+Now, let&#8217;s look again at our sample Common Lisp program,
+using traditional s-expression notation:
+<pre>
+ (defun factorial (n)
+   (if (&lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+</pre>
+<p>
+The Scheme version is similar:
+<pre>
+ (define (factorial n)
+   (if (&lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+</pre>
+The two samples above are <i>also</i> legal sweet-expressions.
+Why?
+Well, the initial &#8220;(&#8221; disables I-expression processing, so even if
+the formatting is ruined, we&#8217;re simply processing as usual.
+There&#8217;s no function name ajoined to the right with &#8220;(&#8221;; normal
+formatting rules wouldn&#8217;t even consider that.
+As is usual for Lisp code, &#8220;infix&#8221; operators are listed first (not second)
+so there&#8217;s no infix operator as a second parameter to cause a change.
+<p>
+But what if we take advantage of the new capabilities of sweet-expressions?
+A pretty-printer could even do this automatically, as a way to start.. and
+the results look fantastic.
+Here's the Common Lisp version:
+<pre>
+ defun factorial (n)
+   if (n &lt;= 1)
+       1
+       n * factorial(n - 1)
+</pre>
+<p>
+And here's the Scheme version:
+<pre>
+ define factorial(n)
+   if (n &lt;= 1)
+       1
+       n * factorial(n - 1)
+</pre>
+<p>
+What&#8217;s even more interesting, we haven&#8217;t lost any power.
+We can still use quotes, or quasiquotes with comma-lifting.
+We can still have functions that return functions, and so on.
+We can also mix up regular s-expressions as part of sweet-expressions, or
+even mix things up back and forth:
+<pre>
+ defun factorial (n)
+   if (n &lt;= 1) 1 (* n (factorial (n - 1)))
+</pre>
+<p>
+<!--
+How should infix and indentation interact?
+
+Infix can be combined with indentation; if an infix expression is
+followed by indented parameters, the last-named expression is interpreted
+as a function and the indented values are its parameters.
+That means this is also an acceptable format for the factorial example:
+<pre>
+ defun factorial (n)
+   if (n &lt;= 1)
+       1
+       n * factorial
+         n - 1
+</pre>
+BUT that seems inconsistent...
+
+<p>
+This also means that complicated infix expressions can be
+spread out, just as if they were parenthensized:
+<pre>
+   n * factorial
+         n - 1
+</pre>
+-->
+<h2>Another example</h2>
+<p>
+Here's a trivial example derived from the
+<a href="http://www.notam02.no/internt/cm-sys/cm-2.2/doc/clt.html">
+Common Lisp Tutorial</a> (by Gordon, Haible, and Taube):
+<pre>
+(do ((x 1 (+ x 1))
+       (y 1 (* y 2)))
+      ((&gt; x 5) y)
+    (print y))
+</pre>
+<p>
+Again, the above is also a valid sweet-expression, but
+we can make it look much nicer instead:
+<pre>
+ do
+   group
+     x 1 (x + 1)
+     y 1 (y * 2)
+   group
+     x &gt; 5
+     y
+   print y
+</pre>
+
+<h2>Some patterns</h2>
+<p>
+More complex s-expression patterns turn out to have regular
+representations in sweet-expressions.
+For example, the typical structure:
+<pre>
+ (cond ((condition1) (result1)) ((condition2) (result2)) ...
+       (t (otherwiseresult)))
+</pre>
+can be expressed the same way in sweet-expressions.
+But if you use I-expression indentation, they can become
+staggeringly more obvious to the uninitiated:
+<pre>
+ cond
+  group (condition1)
+    result1
+  group (condition2)
+    result2
+  group t
+    otherwiseresult
+</pre>
+<p>
+Since the infix operations are &#8220;merged&#8221; if they are all the same,
+this works as it would in mathematics in a sweet-expression:
+<pre>
+  if (0 &lt;= x &lt;= 10)
+    (dostuff) ; x is between 0 and 10 inclusive.
+    (dontstuff) ; x is not between 0 and 10 inclusive.
+</pre>
+
+<h2>Discarded Variation: Initial "(" on block disabling more</h2>
+<p>
+In the definition of Sweet-expressions above,
+any "(" disables indentation processing, but name-prefix and
+infix process continue to work.  This is <i>mostly</i> compatible with
+existing Lisp code, but not completely.  Name-prefixing is unlikely to cause
+a problem in well-formatted code, but expressions that <i>look</i> like
+infix expressions can certainly occur, and that could be a problem.
+Basically, it'd be very nice to be <i>able</i> to disable infix
+processing in some reasonable way.
+
+<p>
+I thought of one variation, which I describe here.. but then explain
+its problems.
+
+<p>
+One solution is to modify sweet-expressions (as described above) so that,
+if the <i>first</i> non-whitespace character of a newly-read block
+is "(", more of sweet-expressions could be disabled.
+We could disable infix processing, at least.  Of course, once you do that,
+why not just disable everything and process it as a traditional s-expression?
+The advantage of doing this is that you can call the "original" read routine,
+with all of its local extensions.
+The rules would then get a little more complex to explain, but you also get
+massive backwards compatibility.
+If the first non-whitespace character is a special character
+(mainly ";", "'", and ","), process them and try again.
+Otherwise, after than initial character
+normal sweet-expression processing occurs... so an embedded "("
+in expressions like load("name") or if&nbsp;(n&nbsp;&lt;&nbsp;3)
+would work normally.
+
+<p>
+There are disadvantages to this approach, too.
+One sad thing is that parentheses-surrounded infix calculations would no
+longer work at the topmost level, e.g., "(3 + 4)" would work
+<i>inside</i> a block, but not as the topmost block.
+You could enter "3 + 4", but that would require two "Enters" if we
+keep the rule that "multiple terms on the initial line mean wait for more lines".
+The user could call using name-prefixing any function that
+returns its first parameter, e.g.,
+if "calc" is a function that returns its first parameter, then
+"calc(3 + 4)" could do the calculation.
+An alternative for the "usual case" would be to
+add one more rule: if there are 3 or more terms on the first line,
+and it matches the infix pattern, then return immediately after the first
+line is entered - so "3 + 4" now works on the command line.
+I like that idea; it seems unlikely to happen by accident, and it's even
+simpler than "(3 + 4)".
+You'd still need a "calc()" function if on the initial line
+you have an infix operation whose first parameter is also infix, e.g.,
+"(5 * 6) + 3" won't work - you'd have to use "calc(5 * 6) + 3".
+Such special-casing is not as "clean", unfortunately.
+The advantages in backwards-compatibility and ease-of-use are significant,
+though, so I'm leaning towards that change.
+
+<p>
+So here's how the rules would look:
+<ol>
+<li>If the first non-whitespace character of a new block is "(", it's
+a traditional s-expression; it may be prefixed by arbitrary numbers of
+blank lines (which may include spaces or tabs),
+";...." comments, quoting ('), quasiquoting (`), or
+comma-lifting (,).
+Any spaces or tabs after the expression will be consumed before returning,
+to increase compatibility with older systems
+(an s-expression, followed by a bare atom, will be processed like a traditional
+Lisp processor would process it).
+<li>Otherwise, if (after skipping content-free lines) the line begins
+<i>without any</i> space or tab, and the line is either
+one complete term like load("...") or one complete
+infix expression like 5 + 6 + 7, it's considered a one-line sweet-expression;
+it's returned (and run) immediately at the end of the line.
+This special rule makes interactive use much more pleasant.
+Without this special rule, we have to
+enter extra blank lines all the time for sweet-expressions,
+even when it's "obvious" that a new line isn't needed.
+Note that more lines will <i>always</i> be requested
+if there are any unclosed parens.
+<li>Otherwise, it's a multi-line sweet-expression.
+Basically, putting tabs/spaces at the beginning of a sweet-expression
+forces a "multiple lines" meaning.
+While there's an open paren, indenting is ignored.
+If there's not an open paren on the first line, the second line's tab/space indent
+sets the "smallest indent"; any the line with less
+indentation (including a blank line) ends the sweet-expression block.
+<p>
+The blank-line rule is needed to make interactive processing pleasant.
+I think a space-and-tab <i>only</i> line should be considered the same
+as an immediate-return blank line;
+you <i>could</i> make lines with only spaces and tabs have a different meaning,
+but that's certain to cause mysterious problems (since they'd <i>look</i>
+the same).
+Lines which include only a ;-prefixed comment should be completely
+ignored, even if they have less indentation, so that they
+can be included without ending the block.
+<p>
+Note: If the first line was indented, but the
+second line is not indented at all, then the
+previous line is processed and returned, with the second line unconsumed.
+This deals with weird formats like:
+<pre>
+   hello
+(more stuff....)
+</pre>
+Such formats were probably intended to be interpreted as traditional
+s-expressions (they make no sense as multi-line sweet-expressions),
+so we'll interpret the first line as a traditional format to increase
+backwards compatibility.
+</ol>
+<p>
+The rules are complex, though.
+What's disturbing is that "(3 + 4) * 5" works completely differently
+from "3 + (4 * 5)"; that's the sort of inconsistency that makes a
+notation a burden instead of a pleasure.
+One complication is that the "read" function needs
+to return when it's read an expression, and ideally doesn't store internal
+state of whitespace alrady read.
+That means that recording the indentation of the initial block should be
+avoided, if it's reasonable to do so... otherwise we have to record
+that information.
+
+<p>
+In short, striving for backwards-compatibility, ease-of-use at the
+command line, ease-of-use for programming, readability, and
+full list processing without special-casing a lot of syntax involves
+tradeoffs... my goal is to find the "best" trade.
+
+<h2>Variations: Using different grouping symbols</h2>
+<p>
+There are times when you don't want infix processing
+(or want to control it specially).
+Also, it's clearly <i>possible</i> that reading an existing s-expression,
+but using infix-interpretation, could occasionally <i>silently</i> change
+the meaning of that expression.
+And that is obviously of concern to some.
+<p>
+In discussions with Alan Manuel Gloria, another idea popped up:
+really using multiple different grouping/list markers.
+The original discussion noted
+using [] for grouping/list initialization instead of ().
+Basically, [...] would start a new list and
+turn off indentation, but continue name-prefix and infix processing.
+In contrast, () would at least disable infix processing.
+<p>
+Although the original discussions used [...], I tried out various
+experiments and think that {...} is a better choice.
+The problem is that [...] is used in mathematics, and many programming
+languages including Python and Haskell, to mean a literal list.
+But this is exactly what we <i>don't</i> mean - instead, we want a
+"grouping" symbol that means that we specially interpret what's inside
+(in particular, that we interpret infix operators).
+In contrast, all languages with C-like syntaxes (C, C++, Java, C#) have
+trained folks to read {..} as possibly meaning a block, and in mathematics
+{...} can denote sets (again, special interpretation used for what's inside).
+<p>
+So, for the moment, let's presume that unprefixed (...) will indicate
+"no infix" (since this is much more backwards-compatible with s-expressions).
+There are actually two alternative ways to interpret (), if it's to be
+distinct from {} grouping.
+One is to say that () disables only infix, but you still have name-prefixing,
+and you can switch back to infix inside by using {}.
+Another is that () switches to pure s-expression processing.
+<p>
+There's a big advantage to saying that
+() switches to <i>pure</i> s-expression processing
+(disabling both indentation and infix processing, as well as indentation).
+If you define it that way, the sweet-expression reader
+can immediately call the original built-in (read) routine instead.
+That's important - while implementing sweet-expressions, I've found that
+there's a lot of implementation-unique read processing that you have to
+try to simulate if you want ALL the functionality of the underlying system.
+(E.G., standard Scheme doesn't have |..| constants, but some implementations
+do, so to read stuff for their Scheme you have to implement these new
+oddities.)
+That makes it essentially impossible to write a portable implementation
+of sweet-expressions that retains the capabilities of the underlying system.
+As a side-benefit, most s-expression files would be just readable as-is...
+which I admit is NOT a 'most important' criteria, but it'd be nice to have.
+<p>
+On the other hand, sometimes you'd like to say "no infix or indent processing",
+but be able to use name-prefixing, and switch to infix inside it.
+Guess what - there's a symbol pair already with that meaning: [..].
+So [f g(x) + h(x)] is interpreted as (f (g x) + (h x)), without any
+infix operator in sight.
+Let's say that [..]
+has this meaning as long as it's <i>not</i> name-prefixed;
+that way, we can later give expressions like name[i]
+another meaning.
+If we use [...] to mean "list, no infix" and {...} to mean
+"list, with infix", you can then write sweet-expressions without (...) at all.
+This means that we could then give the reader a choice of how to handle
+(...)... as grouping, like {}, or as no infix, as [].
+The latter is more backwards-compatible, and so I'd expect that to be
+the default; the former is much more similar to other languages.
+<p>
+I think it'd be nicer to start with "infix as the default"
+(maybe a callable parameter if you want something else).
+That's a reasonable default simply because MOST people are more
+comfortable with it. Since ANY open paren disables the infix until its
+matching paren, users that use ordinary s-expressions might not
+even notice sweet-expressions.
+It's not like normal Lispers type in "3 + 4" and expect it to work :-).
+So it won't harm those who want s-expression prefix, but it
+will help those who want infix.
+That might make sweet-expressions more likely to be accepted;
+you could enable them, and yet for most people they wouldn't even
+notice the difference (except for the <i>addition</i> of new abilities).
+<p>
+The rules are simple: When unprefixed, use {} for grouping, which disables
+only indentation; use [...] to disable indentation and infix;
+use () to disable everything (infix, name-prefix, and indentation).
+A prefixed {} or () is a function call, and only disables indentation.
+We'll reserve prefixed [...] for future use.
+This use of {} instead of () for grouping infix operators like {4 + {3 * 2}}
+is _slightly_ nonstandard, but not terribly so, and lets us be
+completely backwards-compatible with s-expressions.
+That's pretty compelling.
+<p>
+What about name-prefixed forms?  Even if (f x) disables infix processing,
+that does not mean that f(x) must do the same.
+It's consistent in one sense if it does, but f{x} looks really funny while
+f(x) looks very conventional.
+I'm presuming, for the moment, that unprefixed (...) will really only be
+used for backwards-compatibility.
+<p>
+So now we're back to nice forms, without any calc()-like irregularities:
+<pre>
+3 + 4
+3 + {5 * 6}        ; just use {} instead of ().
+{3 + 5} * 6        ; just use {} instead of (). No special cases.
+{3 + 4} * f(x + y) ; Function calls work fine.
+(+ 3 4) * f{x + y} ; this works too (!)
+f{3 + 4}           ; Function calls support infix, is (f (+ 3 4))
+f(3 + 4)           ; Proposal: prefixed () keeps infix, so it's (f (+ 3 4))
+[1 + 2]            ; Here's a safe way to describe (1 + 2).
+[f 3 + 4]          ; Here's (f 3 + 4).
+(f 3 + 4)          ; Same thing.
+</pre>
+<p>
+There's another interesting benefit too. This would mean that
+sweet-expressions would be full of {...} when infix is used...
+which would make them even easier to tell apart from s-expressions.
+<p>
+Interestingly, this also makes it easy to use special "infix" macros
+(often written as "nfx").
+Just tell users that "for advanced infix processing, use (nfx ....)
+and then follow these infix rules (which can then support precedence
+levels, defining infix operators, etc.)".
+So now you can have a choice:
+(1) a built-in "base" system doesn't need to be told about operators,
+precedence, or associativity, but you have to group all different
+operators using [] and you can only use punctuation as infix operators... and
+(2) advanced "nfx-like" functions, but one where you have to
+define all that stuff.
+<p>
+In theory, a program written using Scheme RSR6 might use [...] to
+mean the same as (..). But I bet almost no one actually DOES that.
+<p>
+This switch to using {...} everywhere for grouping, and (...) for
+straight s-expressions, is very tempting.
+The factorial example becomes:
+<pre>
+ defun factorial {n}         ; Parameters can be indented, but need not be
+   if {n &lt;= 1}               ; Supports infix, prefix, &amp; function &lt;=(n 1)
+       1                     ; This has no parameters, so it's an atom.
+       n * factorial(n - 1)  ; Function(...) notation supported
+                             ; Function{...} okay too.
+</pre>
+<p>
+It's easy to accidentally use parens when you meant to use {...}, particularly
+in expressions like {4 + {3 * 2}}.
+But it's still tempting to make this change,
+since this makes the entire notation even more backwards-compatible,
+as well as giving it an easy (and clear) way to disable infix.
+<p>
+Since this gives an easy way to disable infix, this does raise the
+possibility of allowing "and" and "or" as built-in
+infix operators.  After all, now infix operators are easy to disable.
+On the one hand, it's horribly inconsistent to have "and" and "or" built-in
+as infix, since all other infix operators are punctuation.
+On the other hand, "and" and "or" are essentially supported by all major
+Lisps.
+Also, these two operators are often treated specially;
+provers often treat them specially, and some Lisps treat them as
+short-circuiting operations (so in some since they are <i>already</i>
+very special).
+A typical dilemma: You don't want many special cases, but if a special
+case <i>really</i> makes something easy to use, it may be worth it.
+And of course, once "and" and "or" are built-in, along with relational
+operators and + - * /, perhaps some built-in precedence <i>does</i> make sense.
+<p>
+In the end, the best approach may be to choose the "most easily changed"
+decision.
+If precedence is <i>not</i> supported at first, then adding it later is
+easy (since any written code won't use precedence).
+On the other hand, removing precedence (or fixing precedence levels)
+is hard/impossible.
+Similarly, if () disables sweet-expressions entirely, then code won't be
+written inside () that uses sweet-expressions... so it won't be a big deal
+to <i>add</i> that functionality later.
+<p>
+It's really too bad about (...).
+In any other language, (...) merely groups expressions, but if we're
+serious about backwards-compatibility, then an unprefixed
+(...) needs to turn off infix processing inside it.
+If you don't need backwards compatibility, accepting unprefixed (...) for
+simply grouping (without disabling infix) sure looks nicer.
+It's too bad that there is a big trade-off here, I'd like the benefits of both.
+
+
+<h1><a name="issues">Issues with Sweet-expressions</a></h1>
+Ideally, any data format would not be easily misread, and it would not
+be easy to make a small mistake with disastrous consequences.
+This is less likely if any minor change to an expression would make it
+illegal.
+Any format that can read both original S-expressions and a new format will
+have some issues in this regard, simply because there are many more
+expressions that were once illegal but are now legal.
+A particular problem is that in some cases, expressions could be interpreted
+as being infix but were not intended to be infix.
+However, I believe these are very rare.
+Conversely, expressions that are intended to be infix might not be
+(e.g., because of a failure to surround infix operators with spaces); I
+think that with experience this goes away.
+The indenting is a non-issue; since this is only meaningful outside of
+parentheses, any existing Lisp code will be inside parens, and
+indenting like this is common practice, there's no real issue.
+The prefixed names are unlikely to be in real code; there's a
+risk that people will accidentally put spaces between the name and the opening
+paren, but I think it's manageable.
+<p>
+If there's a really major risk that a misplaced space would immediately cause
+your deep space probe to crash, perhaps a Lisp-like notation isn't the
+best idea for your application.
+Even regular s-expressions have similar problems; a space anywhere in an
+s-expression separates parameters, and there's little compile-time checking
+of the kind expected for such circumstances.
+Lisp-like languages don't do a lot of compile-time checking in general
+(of the kind expected for an "any mistake is disastrous" application).
+Specialized notations that make it hard to make that kind of
+mistake, and easier to
+detect every mistake at compile time, might be better (Ada comes to mind).
+But in many circumstances, that's not the primary need; if you need to do a pile
+of list processing, including processing/analysis of language,
+a list processing language makes sense.
+For example, <i>analysis</i> of a critically-important program might be
+a perfectly fine use for sweet-expressions.
+<p>
+Another problem is when there are multiple ways to express something, it
+can be hard to choose between them.  In particular, you can use
+name-prefixing or indentation to implement a function call, as well as
+traditional s-expressions - which do you choose?
+And when displaying a list, which do you choose?
+I think "name-prefixing for short expressions, and indentation when their
+parameter lists get long", is a reasonable rule of thumb when writing code
+where you intend to use it as a function call.  If it's just a list of
+information, a traditional s-expression shows it clearly.
+I would probably use traditional s-expressions to write the list back out;
+that is clear, and can help people avoid misunderstandings and misuse.
+
+<h1><a name="conclusions">Conclusions</a></h1>
+<p>
+There are lots of other options, but I only have so much time.
+In any case, I&#8217;ve investigated a lot of options, and I think I&#8217;ve
+found a plausible combination.
+What I have here is a paper design that <i>looks</i> like it should work.
+<p>
+I think the next step is to establish a project where people can
+discuss this, and fix it based on those comments.
+Then, after a period of discussion, create some FLOSS code
+to implement it
+that is widely-usable (say under the MIT, BSD-new, or LLGPL license).
+One of the first things to implement are pretty-printers for this
+format, so we can see what <i>big</i> programs look like in this
+format (and see its problems).
+Once the format is updated through experience coding it, I would want
+the resulting programs would be available to all.
+Multiple implementations will be necessary (for Scheme, Common Lisp, etc.)
+and they will need to support several different usage scenarios:
+<ul>
+<li>the readers must accept sweet-expressions and use them to create
+s-expressions -- and must be able to work as
+a callable translation function, a preprocessor, and
+in a read-eval-print loop (supporting other macros).
+<li>the writers of sweet-expressions
+must support many pretty-printing options when taking s-expressions
+and generating a &#8220;pretty&#8221; version.
+</ul>
+<p>
+My current thought is to develop it in a subset of Scheme, which can then
+be easily translated to ACL2, Common Lisp, and so on
+(Scheme has far fewer operations, and is much stricter about types such as
+booleans, so it's easier to translate Scheme to something else instead of the
+other way around.)
+<p>
+Finally, after experimentation and testing in the real world,
+the final form of sweet-expressions could be set and released to the world.
+<p>
+I've created a SourceForge project named "readable" -
+the project's role is to discuss ways to make s-expressions more readable,
+create at least one (sweet-expressions), and promulgate FLOSS code
+to support readable representations of s-expressions.
+I could possibly create "sweetexpr" for specifically
+working on sweet-expressions, or work via the Scheme SFRI process.
+
+<h1>Appendix: BitC</h1>
+
+<p>
+I recently encountered the new language
+<a href="http://www.coyotos.org/docs/bitc/spec.html">BitC</a>,
+a language devised to support low-level programs
+(e.g., operating system kernels) that are easy to mathematically
+<i>prove</i> correct.
+(I learned about this while writing my paper
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and
+Free-Libre / Open Source Software (FLOSS)... with Lots on Formal Methods</a>.)
+BitC combines ideas from Scheme and ML, including an
+emphasis on functional programming and tail recursion,
+with low-level capabilities like those of C.
+In particular, it&#8217;s designed so that you do not need to
+do heap allocation (e.g., &#8220;malloc&#8221; or &#8220;new&#8221;) or garbage collection
+to create useful programs, a property that functional programming
+languages generally do not have.
+This is very interesting work, and BitC version 0.9+
+uses an S-expression-like notation.
+The reason it does, intead of a more common notation,
+is because the authors want to make it easy to prove them correct.
+One way to prove them correct is to use reasoning where program
+fragments are repeatedly replaced by other fragments -- and
+since s-expressions are very regular, s-expressions simplify the process.
+They hope to reuse some of ACL2&#8217;s capabilities, which is written in
+Common Lisp and expects s-expressions as input.
+
+<p>
+The problem is that s-expressions are still not easy for humans
+to read, and BitC&#8217;s creators are well aware of that.
+Also, while Lisp programmers routinely &#8220;write programs to write
+programs&#8221;, here the application is different -- generally
+a <i>theorem prover</i> is doing the rewriting, and displaying LOTS
+of output from text generated from a program.
+This means humans will be doing lots of reading, possibly of
+long, complicated structures;
+what you want is an input and output that is simple for the human to read
+<i>and</i> unambiguous.
+What&#8217;s more, this is a new language, not Lisp, so trying to stay
+compatible with Lisp for compatibility&#8217;s sake is not necessary.
+Indeed, the BitC folks had already strayed from the strict s-expression
+camp; they had included a few abbreviations, like an infix &#8220;:&#8221; to
+indicate types (the abbreviations quietly transform to regular
+s-expressions).
+Keeping the power of s-expressions (e.g., the regularity
+of processing) would be advantage for BitC.
+
+<p>
+In an email I received from Jonathan Shapiro, he noted that
+&#8220;I share your concern about using an [s-expression-based] syntax
+[that users may find it hard to use]. The problem is
+that we have a bunch of very nasty experience in Isabelle/HOL, TWELF,
+and friends with the alternative...&#8221;, in part because
+&#8220;All known examples for quoting programs so that they can be
+manipulated as terms in a prover are a complete disaster if the
+[programming language] is infix.&#8221;
+He continued,
+&#8220;When we get around to dealing with the logic language, it will become
+clear that treating program fragments as terms is vital. In LISP this is
+quite natural: &#8217;(eval 1).
+... ACL2 exploits a devious pun between applicative
+functions and logic terms... [defining a function]
+simultaneously [admits] admitting a procedure and a [mathematical pure]
+function...
+Because [this pun]
+is maintained so successfully, godelization requires no explicit syntax...
+Our experience with parsing infix languages as terms has been that (a)
+it is truly dismal, and (b) it is incomprehensible to the developer...
+even the people at UT could not make IACL2 work well...
+One reason that we did NOT adopt the &#8216;{&#8217; syntax for vectors was the
+anticipation that we might use it for infix terms in some future
+implementation. I&#8217;ve been very careful to preserve the possibility of an
+equivalent infix syntax. It doesn&#8217;t mean that we would have to drop the
+existing lisp-ish syntax.&#8221;
+He also doesn&#8217;t want to spend time devising syntax,
+since that is not the focus of his work.
+
+<p>
+Note that this application needs to be able to manipulate fragments
+of program code, repeatedly -- a traditional Lisp strength,
+and a traditional reason to use s-expressions.
+Yet, we want the s-expressions to be easier to read!
+
+<p>
+The power of metaprogramming is well-known, and there's a lot of
+literature about it.
+To cite just one example,
+<a href="http://homepages.cwi.nl/~paulk/dissertations/Vinju.pdf">
+Jurgen Jordanus Vinju's "Analysis and Transformation of Source Code
+by Parsing and Rewriting"</a> discusses some of the things you can
+do when you use programs to analyze/modify programs.
+There are a legion of other references.
+
+<p>
+Whether or not the BitC folks pick up these ideas immediately,
+I think finding a way to make s-expressions more accessible
+is an interesting puzzle, one that would be great to solve.
+I suspect there are many people who might be
+interested in picking up an improvement, if it really was an improvement.
+The ACL2 folks have the same issues, as do many others, too.
+So it'd be great to solve it once, and then anyone who wants to use
+the solution can do so.
+
+<p>
+<h1>Appendix: Other Notes</h1>
+<p>
+Of course, making programming languages readable is much more
+general topic, and there's a lot of literature on that.
+The literature on parsing is also extensive.
+One paper on parsing that I should mention is
+<a href="http://portal.acm.org/citation.cfm?doid=1411286.1411296">
+Haskell, do you read me?: constructing and composing efficient top-down parsers at runtime</a>,
+Proceedings of the first ACM SIGPLAN symposium on Haskell  table of contents
+Victoria, BC, Canada, pp. 63-74, 2008.
+This is implemented by "ChristmasTree":
+"Changing Haskell's Read Implementation Such That by
+Manipulating Abstract Syntax Trees it Reads Expressions Efficiently".
+
+<p>
+<hr>
+<p>
+You might want to look at my paper
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and
+Free-Libre / Open Source Software (FLOSS)... with Lots on Formal Methods</a>.
+<p>
+<a href="http://www.dwheeler.com">You can see David A. Wheeler&#8217;s home page, http://www.dwheeler.com</a>.
+
+</body>
+</html>
+
+
+<!--
+To be done:
+Rewrite front
+
+ZY-Exp: whitespace
+
+Steele page 351 - macro char syntax
+Add Summary?
+-->
+
+<!--
+To Examine:
+http://www.cs.yale.edu/homes/dvm/papers/ytdoc.pdf
+          YTools: A Package of Portable Enhancements to
+                                       Common Lisp
+                                       Version 2.1.9b
+                                       Drew McDermott
+                                          May 17, 2006
+Copyright (C) 1976-2006
+  Drew McDermott and Yale University. All rights reserved.
+This software is released under the terms of the Modified BSD License.
+See COPYING for details.
+
+http://www.faqs.org/faqs/lisp-faq/part6/section-2.html
+Common Lisp repository
+
+Pseudoscheme - runs Scheme on Common Lisp.  Unsupported? License UNKNOWN.
+http://mumble.net/~jar/pseudoscheme/
+http://www.cs.cmu.edu/afs/cs/project/ai-repository/ai/lang/scheme/impl/pseudo/readme.txt
+
+scm2cl
+LGPL
+http://www.ccs.neu.edu/home/dorai/scmxlate/scm2cl.html
+"Converts Scheme code to Common Lisp. Its goal is to remove the tedium of transcribing a large Scheme file into CL, not to avoid human intervention altogether. You may have to do some hand-tuning - scm2cl will assist you here too."
+understands R5RS Scheme.
+
+I don't see any translators the other way (Scheme to CL).
+
+??? Switch from Common Lisp to Scheme examples?
+
+http://pico.vub.ac.be/special.html
+Pico can be seen as a modern language that combines the power and elegance of Scheme with the readability of "infix languages" like C or Java. Unifying these two characteristics was a non-trivial exercise and resulted in some original language features:
+
+
+http://people.csail.mit.edu/gregs/ll1-discuss-archive-html/msg00145.html
+http://people.csail.mit.edu/gregs/ll1-discuss-archive-html/msg00145.html
+
+
+
+http://www.biglist.com/lists/dssslist/archives/199705/msg00085.html
+Subject: Infix syntax for DSSSL
+From: Paul Prescod <papresco@xxxxxxxxxxxxxxxxxxxxxxxxx>
+Date: Tue, 20 May 1997 10:59:49 -0400
+
+Here are my responses to the major issues that have been raised about my
+idea of an infix syntax for a DSSSL-based language.
+
+XML AS MARKETING
+================
+Netscape has been adamently against the very *concept* of SGML for
+years, without understanding it. Then we simplified it a little, put a
+Web "spin" on it and all of a sudden its the greatest thing since sliced
+bread. Microsoft may have come to XML honestly, having used and
+understood SGML before, but Netscape was actively *hostile* to the
+*concept* of generic markup until we put a different spin on it.
+
+SYNTAX CHANGES ARE COMMON
+=========================
+Let me cite several precedents. 
+
+* Two years ago Netscape was developing a language called "LiveScript".
+It was supposed to be a great tool for client-side scripting in end user
+products. Then the Java hype hit. "LiveScript" disappeared. A month
+later it was back, called "JavaScript" with exactly the same semantics
+but Java-syntax. 
+
+* Java *itself* had a completely different syntax when it was called
+"oak" and was rewritten with C++ syntax to appeal to the programers of
+the day. 
+
+* The same holds for Dylan: it was completely rewritten to get rid of
+the parentheses. I have an old Dylan book and the semantics are the same
+but ths syntax of the new and old languages are incomparable. 
+
+* Liam Quinn has mentioned that SoftQuad has also had trouble "selling"
+parenthesized languages.
+
+So I'm not the only one with this crazy idea that syntax matters when
+you are trying to "sell" a language. Sun (Java), Netscape (JavaScript)
+and Apple (Dylan) all agree.
+
+
+
+
+
+
+-->
+
+

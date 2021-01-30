@@ -1,0 +1,33 @@
+#!/bin/sh
+# This script automatically sets up for debugging.
+# Don't use this exec trick for debugging:
+# ":"; exec guile --debug -c "(use-modules (sweet)) (sweet-filter)"
+# Because you can't insert "trace" commands then.
+# We don't invoke sweet-filter for the same reason.
+
+guile --debug -L . << COMMANDS
+(use-modules (sweet))
+(trace sweet-rm-no-infix)
+(trace sweet-readitem)
+(trace readblock-clean)
+(trace readblock)
+(trace readblocks)
+(trace sweet-readitem)
+(trace sweet-readdatum)
+(trace sweet-skip-line)
+(trace sweet-skip-atmosphere)
+(trace indentationlevel)
+(trace indentation>?)
+(trace read-char)
+(trace sweet-auto-infix)
+
+(sweet-filter)
+ define factorial(n)         ; Parameters can be indented, but need not be
+   if (n < 1)                ; Supports infix, prefix, &amp; function &lt;=(n 1)
+       1                     ; This has no parameters, so it's an atom.
+       n * factorial(n - 1)  ; Function(...) notation supported
+COMMANDS
+
+#(3 + 4)    ; hi
+
+

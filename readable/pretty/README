@@ -1,0 +1,64 @@
+Pretty printer code
+
+XP. A Common Lisp Pretty Printing System
+http://dspace.mit.edu/handle/1721.1/6503
+
+ksi-pp.scm
+http://www.koders.com/scheme/fidCC0741CFED163962CC292611C3FBC33ABBF15DE1.aspx?s=pretty+printer#L3
+MIT license.
+https://sourceforge.net/projects/ksi/
+Ksi is a portable, embeddable Scheme implementation written in C.
+
+elk-pp.scm
+http://www.koders.com/scheme/fidE91F8C44979FEE7959603E5A70BB63E017CFD3BE.aspx?s=pretty+printer#L3
+https://sourceforge.net/projects/foo/
+LGPL (?)
+
+kelsey-pp.scm
+http://www.koders.com/scheme/fid96B579754FF5D0C0A210D0BEC007642C51D1A8D4.aspx?s=pretty+printer#L3
+https://sourceforge.net/projects/scsh/
+(Scsh - a scheme shell)
+BSD license.
+" It's too hairy, and it has unexploited internal generality.
+It really ought to be rewritten."  But it has discussion on options.
+
+gnu-scheme-pp.scm
+http://www.koders.com/scheme/fid53775BCA12996F02F8CDE78779C56C02ACCB04BF.aspx?s=pretty+printer#L28
+https://savannah.gnu.org/projects/mit-scheme/
+GPL
+
+bpp.scm
+http://www.koders.com/scheme/fid1BEE89DE7C4CF6043EA232F3779374A89335B844.aspx?s=pretty+printer#L8
+https://sourceforge.net/projects/bigloo4windows/
+Bigloo for Windows
+GPL/LGPL
+
+
+
+
+http://codeimmersion.i3ci.hampshire.edu/2009/10/09/memoization/
+
+(set! fibonacci (memoize fibonacci))
+
+Henceforth fibonacci will be memoized, meaning that it will first check to see if it has previously calculated the answer and return the previously-calculated answer if it has. If it hasn’t then it will calculate it from scratch (but using any previously-calculated answers that it needs in its recursive calls) and store the new value (and return it).
+
+To try this out first use my definition of memoize:
+
+(define memoize
+  (lambda (f) ;; returns a memoized version of function f
+    (let ((memo '()))
+      (lambda args
+        (let ((match (assoc args memo)))    ;; look up args
+          (if match
+              (cadr match)                  ;; return stored value
+              (let ((value (apply f args))) ;; or calculate if necessary
+                (set! memo                  ;; and store new value
+                      (cons (list args value) memo))
+                value)))))))
+
+
+
+
+
+http://community.schemewiki.org/?memoization
+

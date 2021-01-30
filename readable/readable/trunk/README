@@ -1,0 +1,88 @@
+This directory contains code to implement improvements in
+the readability of Lisp-like (s-expression-based) programming languages,
+including Common Lisp, Scheme (including guile), Emacs Lisp, BitC,
+ACL2, AutoCAD Lisp, etc.  There are several different approaches here,
+to support different needs and goals.
+
+ALL of the code is released under open source software / Free Software
+licenses approved by both the OSI (opensource.org) and FSF (fsf.org).
+Most are released under the MIT license, which permits practically any use.
+
+For more information, see:
+ http://sourceforge.net/projects/readable/
+ http://www.dwheeler.com/readable/
+
+File suffixes are:
+.cl   - Common Lisp
+.lisp - Common Lisp
+.scm  - Scheme
+
+This directory includes (in alphabetical order):
+
+* curly-infix.cl: A simple reader macro that implements infix operations
+in lists surrounded by {...}.  It can optionally be used along with
+a separate compile/execution-time macro (such as Gloria's).
+By David A. Wheeler. MIT license.
+
+* curly-infix-test: test suite/demo of curly-infix-test.  Requires
+Unix-like system and clisp. By David A. Wheeler.  MIT license.
+
+* iformat.cl: A simple pretty-printer that generates I-expressions
+(indented S-expressions) given an object. By David A. Wheeler. MIT license.
+
+* infpre.lisp: Common Lisp infix/prefix conversion utility (macro).
+By Joern Inge Vestgaarden (jivestgarden at gmail com). License LGPL.
+This is a copy from: http://folk.uio.no/jornv/infpre/infpre.lisp
+
+* gloria-infix.lisp: A macro that implements infix notation in Common Lisp.
+By Alan Manuel Gloria.  MIT license.
+
+* gloria-infixdemo.lisp: A demo of gloria-infix.lisp.
+By Alan Manuel Gloria.
+
+* modern.cl: "Modern Lisp" reader, Common Lisp.
+
+* modern.scm: "Modern Lisp" reader, Scheme.  "modern-scm-test.scm" is
+  a guile Scheme program you can run to test it.
+
+* spec-indent.txt: Detailed specification information on I-expressions.
+
+* sugar.scm: an implementation of an I-expression reader, defined in
+SFRI-49.  These use indentation to reduce the number of parentheses
+needed to represent S-expressions.
+By Egil Möller (modifications by David A. Wheeler).  MIT license.
+
+* sugar-original.scm: The original sugar.scm as presented in SFRI-49.
+This version has a number of bugs in it, but is included separately since
+this is the version defined in SFRI-49. MIT license.
+
+* sweet.scm: an implementation of a "sweet-expression" reader, a much
+easier-to-read format for S-expressions.  Implemented in the guile
+dialect of Scheme.  By David A. Wheeler.  MIT license.
+Currently a prototype, and only implements sweet-expressions version 0.1.
+
+* Eventually there will be a small assurance case demo, using ASCAD notation.  
+  For more on the ASCAD notation (goal / argument / evidence), see:
+  http://www.adelard.com/web/hnav/resources/ascad/ascad_download.html
+
+
+Some of this code uses guile's module capability.
+To use these in guile, you need to make sure that the %load-path
+includes the directory where the source code resides.  For example,
+to add searching the current directory "." to the end of the search path:
+  (set! %load-path (append %load-path '(".")))
+You could include this command in your ~/.guile file, and then it would
+be run each time.
+Alternatively, you can do this at a shell prompt (or ~/.bashrc or similar):
+  export GUILE_LOAD_PATH="."
+which will insert the given path(s) at the beginning of %load-path.
+Beware: the GUILE_LOAD_PATH has the highest precedence when setting
+up the %load-path, so while this is useful for testing,
+setting GUILE_LOAD_PATH to include "." can have security problems
+if used in "real" programs (an attacker might arrange for a malicious
+scheme file to be loaded instead of an intended one).
+
+Once the %load-path is set up, you can easily load modules, e.g.:
+  (use-modules (sugar))
+
+

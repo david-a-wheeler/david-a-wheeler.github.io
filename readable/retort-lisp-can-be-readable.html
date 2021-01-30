@@ -1,0 +1,618 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Retort: Lisp CAN be readable (I-expressions, sweet-expressions)</title>
+<meta name="description" content="Brief tutorial on sweet-expressions, a readable format for S-expressions for Lisp-like programming languages that adds indentation, name-prefixing, and infix support">
+<meta name="keywords" content="sweet-expression, sweet-expressions, tutorial, s-expression, s-expressions, Lisp, Common Lisp, Scheme, DSSSL, BitC, ACL2, IACL2, Emacs Lisp, M-expression, sweet-expression, sweet-expressions, infix, prefix, readability, readable, list, lists, David, Wheeler, David A. Wheeler, David Wheeler, Dylan, Logo, Arc, parentheses, parenthesis, silly parentheses, syntax, I-expression, sweetexpr, name-ending, name-prefixing, name-prefixed">
+<link rel="stylesheet" type="text/css" href="paper.css">
+<meta name="generator" content="vim">
+</head>
+<body>
+
+<h1 class="title">Retort: Lisp CAN be readable (I-expressions, sweet-expressions, and so on)</h1>
+<center>by <a href="http://www.dwheeler.com">David A. Wheeler</a>, 2007-01-26 updated 2008-09-04</center>
+<br>
+
+<p>
+<center>
+<table border="1">
+<tr>
+<td>
+<font size="+3">
+This page is obsolete; see
+<a href="http://readable.sourceforge.net">http://readable.sourceforge.net</a>
+instead.
+</font>
+</td>
+</tr>
+</table>
+</center>
+<p>
+
+<i>
+Some Lisp die-hards believe that Lisp notation descended from the gods,
+and thus cannot be improved on.
+I think that's nonsense - I believe Lisp notation can be improved, so that it
+retains its good properties (like homoiconicity) while being easier to read.
+Here's a retort, for those Lisp users willing to consider alternatives.
+</i>
+
+<p>
+While I respect many other long-time Lisp users, some of them are
+extremely hard-headed about Lisp notation - they seem to think that
+the current Lisp notation was handed down by gods.
+I believe they are grossly mistaken on this point; here
+is my technical rebuttal.
+
+<p>
+Thankfully,
+<a href="http://www.lispniks.com/faq/faq.html">
+their perspective on indentation and other notation improvements is
+well expressed in the Common Lisp FAQ</a>.
+So, here's a point-by-point rebuttal to that FAQ, as it
+existed on January 26, 2008, with the FAQ material in italics.
+The editor of the FAQ is Peter Seibel, who I respect personally; it's
+just that on this particular technical issue, I think he (and others)
+are completely wrong.
+Let's see why I believe that, with the point-by-point rebuttal below.
+<p>
+<hr>
+<p>
+<i>
+Q: What's up with all the parentheses?
+<br>
+<br>
+Lisp's most superficially obvious characteristic is its extensive use of
+parentheses to delimit expressions. Unfortunately many would-be Lispers
+get stuck on the parentheses and never get far enough into Lisp to
+see that they are a feature, not a bug.</i>
+
+<p>
+Hogwash.
+There's actually a simpler explanation - most developers quickly
+realize that this overuse of parentheses is a bug that is often
+worse than the advantages of Lisp.
+Even people like me, who have used Lisp for over 20 years, understand that
+it's a bug.
+I wrote my first Lisp program circa 1982, and professionally wrote
+Lisp code on $120,000 equipment.
+Lisp has advantages, which is why I used and use it.
+<p>
+But all the whining about it being "superficial" doesn't
+change the fact that most developers avoid Lisp-like languages, precisely
+because they're unreadable.
+There's a reason why Lisp is widely referred to as
+"Lots of Irritating Silly Parentheses" (and worse).
+<p>
+Lots of vendors have tried to tell me that a bug is a really feature.
+Let's call a spade, a spade, and call a bug, a bug.
+
+<p>
+<hr>
+<p>
+<i>.... Other folks figure that syntax is ultimately not
+that important and wonder why Lisp can't use a more "normal" syntax.
+It's not because Lispers have never thought of the idea—indeed, Lisp was
+originally intended to have a syntax much like FORTRAN,
+the predominant high-level language of the day,
+as John McCarthy describes in his history of Lisp3...
+</i>
+
+<p>
+In other words, even Lisp's creator understood that
+directly using s-expressions for Lisp programs was undesirable.
+<p>
+That's <b>disproving</b>, not proving the case - nobody can say that
+McCarthy didn't understand Lisp.
+Syntax is important if it significantly impedes readability,
+and Lisp notation is awful.
+
+<p>
+<hr>
+<p>
+<i>
+However it wasn't simply inertia that caused Lispers to
+prefer S-expressions to M-expressions.
+People have tried, numerous times to create a more Algol-like syntax
+for Lisp...
+</i>
+<p>
+In other words, this is such a serious problem that a large number
+of people have tried to fix it.
+Again, this is <b>disproving</b>, not proving, the case that Lisp's
+syntax is a serious problem.
+<p>
+Now, just because there's a problem, that does not mean there's a solution.
+It's actually true that lots of people have tried and failed, but I think
+there's a reason for it: People didn't really understand the requirements.
+Creating a new syntax is easy, but what people don't appreciate is that
+Lisp's syntax has some subtle advantages.
+For example,
+its syntax is generic (it does not imply a particular semantic)
+and homoiconic (the mapping of programming construct to syntactic
+tree is quite obvious).
+Previous efforts didn't realize that those were requirements, and so they
+failed.
+<p>
+But now that we understand the requirements better, we can fix it.
+
+<p>
+<hr>
+<p>
+<i>
+Guy Steele and Richard Gabriel recount the history of some
+of these attempts in their paper
+<a href="http://www.dreamsongs.com/NewFiles/HOPL2-Uncut.pdf">
+"The Evolution of Lisp"</a> ...
+</i>
+
+<p>
+Guy Steele?  The guy who helped developed both Common Lisp and Scheme, but
+has now moved on from Lisp to lead the development of Java and later
+Fortress?
+Java and Fortress, both of which decidedly do <i>not</i> have an
+s-expression-based surface syntax for programming?
+Oh, yeah, that guy.
+<p>
+To be fair, I agree with Guy Steele that no one language can be all
+things to all people.
+And Steele's a genius.
+But it's worth noting that although in this old paper he heaped
+scorn on those who
+tried to add Algol-like syntax to Lisp, his work for many years now
+has been primarily focused on making languages like Java and Fortress, which
+have a programmer-friendly syntax instead of Lisp's
+raw s-expression syntax.
+<p>
+So for many years Steele's primary work has not been
+on improving Lisp-based languages, because few people want to program
+directly using S-expressions.
+Even many Lisp experts mostly give up on Lisp, in part because
+its awful syntax causes other smart programmers to avoid Lisp.
+It's not power; Lisp has power.
+It's the hideous notation.
+
+<p>
+<hr>
+<p>
+<i>
+The idea of introducing Algol-like syntax into Lisp keeps
+popping up and has seldom failed to create enormous controversy
+between those who find the universal use of S-expressions
+a technical advantage (and don't mind the admitted relative
+clumsiness of S-expressions for numerical expressions)
+and those who are certain that algebraic syntax is more concise,
+more convenient, or even more natural (whatever that may mean,
+considering that all these notations are artificial).
+</i>
+
+<p>
+So even they admit that s-expressions are clumsy.
+This endorses the idea that s-expressions <b>need</b> to be improved on,
+not that they must never change.
+
+<p>
+<hr>
+<p>
+<i>
+We conjecture that Algol-style syntax has not really caught on in the Lisp community as a whole for two reasons.
+First, there are not enough special symbols to go around. When your domain of discourse is limited to numbers or characters, there are only so many operations of interest, and it is not difficult to assign one special character to each and be done with it. But Lisp has a much richer domain of discourse, and a Lisp programmer often approaches an application as yet another exercise in language design; the style typically involves designing new data structures and new functions to operate on them—perhaps dozens or hundreds—and it's just too hard to invent that many distinct symbols (though the APL community certainly has tried). Ultimately one must always fall back on a general function-call notation; it's just that Lisp programmers don't wait until they fail.
+</i>
+
+<p>
+This is nonsense.  You don't need hundreds of special symbols.
+Pretty much every language today accepts "&lt;=" as being
+"less than or equal to".
+We don't need hundreds of new symbols, we can just combine existing symbols
+to create compound symbols, just as occurs in any language.
+<p>
+More importantly, you don't need legions of special syntactic constructs -
+just a few turn out to be enough to fix s-expression's problems,
+without hoardes of special cases.
+See my <a href="sweet-expressions.html">sweet-expressions</a> proposal,
+which adds a few syntactic abbreviations that are <b>not</b> tied to
+any semantic.
+
+<p>
+<hr>
+<p>
+<i>
+Second, and perhaps more important, Algol-style syntax makes programs look less like the data structures used to represent them. In a culture where the ability to manipulate representations of programs is a central paradigm, a notation that distances the appearance of a program from the appearance of its representation as data is not likely to be warmly received (and this was, and is, one of the principal objections to the inclusion of loop in Common Lisp).
+</i>
+
+<p>
+Here Steele and Gabriel are <b>extremely</b> insightful - which given their
+massive brains, is hardly surprising.
+I think
+they're exactly right here, a syntax that makes programs look significantly
+less like the data structures used to represent them is a <b>problem</b>
+for a Lisp-like language.
+
+<p>
+This property is typically called "homoiconicity", and is very rare
+among programming languages.
+Lisps are one of the very few language groups that are homoiconic,
+and it's why Lisps are still used, decades after their development.
+
+<p>
+Steele and Gabriel are right; there have been many efforts to create
+readable Lisp formats, and they all failed because they
+did not create formats that accurately represented the programs
+as data structures.
+Instead, they just copied existing formats like Fortran or Algol, since
+they would be "easier to read".
+They all failed for the same basic reason:
+When the semantics changed underneath, their syntax failed to work,
+and the constant maintenance eventually caused the approach to fail.
+
+<p>
+The whole point of a Lisp-like language is that you <i>can</i> treat
+code as data, and data as code.
+Any notation that makes this difficult
+means that you lose Lisp's advantages, and then there are many other
+languages (which whip Lisp, frankly, once you take that away).
+Homoiconicity is critical if you're going to treat a program as data.
+To do so, you must be able to easily "see" the program's format.
+If you can, you can do amazing manipulations.
+
+<p>
+But what Gabriel and Steele failed to appreciate in their paper is that
+<i><b>it's possible to have both</b></i>.
+
+<p>
+At the time, no one understood why the previous efforts at
+readable Lisps failed.
+Now that we have a good diagnosis for why these previous efforts failed, we
+can avoid their mistakes!
+My thanks to Gabriel, Steele, and others, who had this key insight.
+This insight is absolutely necessary for any future effort to even
+have a chance to succeed.
+<p>
+Unfortunately, their paper presumed that this readability problem
+was unsolvable, and that strong claim
+has meant that people who <b>could</b> have
+solved this problem in the past didn't even try.
+After all, why work on an impossible problem?
+<p>
+But now that we know why past efforts failed, let's have a better
+chance at solving the problem. So let's do it.
+
+<p>
+<hr>
+<p>
+<i>
+On the other hand, precisely because Lisp makes it easy to play with program representations, it is always easy for the novice to experiment with alternative notations. Therefore we expect future generations of Lisp programmers to continue to reinvent Algol-style syntax for Lisp, over and over and over again, and we are equally confident that they will continue, after an initial period of infatuation, to reject it. (Perhaps this process should be regarded as a rite of passage for Lisp hackers.)
+</i>
+
+<p>
+<b>Software developers certainly do reject it.
+The "it" they reject is Lisp itself.</b>
+Even if they learn Lisp-based languages - and I heartily recommend learning
+them - almost all of them avoid using Lisp-based languages
+for "real" projects.
+You have to read code to change it, or determine if it's correct, so
+avoiding a hard-to-read notation is a wise decision.
+
+<p>
+<hr>
+<p>
+<i>
+When Steele and Gabriel are talking about manipulating representations of programs, they are, of course, talking about macros. This is where the s-expression notation really shines. An Algol-style syntax is all well and good for languages that have a finite number of basic constructs—one can define a grammar that specifies how various syntactic constructs get translated into an abstract syntax tree (AST) that can then be processed by an interpreter or compiler. Open any compiler textbook and you'll learn how to write a parser that can turn the infix syntax: 1 * 2 + 3 / 4 into the AST....
+according to the precedence of the operators *, +, and /. But in a language that supports macros we can't know, at language design time, all the possible legal language constructs. Thus we can't rely on having a grammar that knows how to translate all possible syntactic constructs into ASTs. Rather, we need a way to represent arbitrary ASTs. Which is what s-expressions are. Even if we know nothing about the precedence of *, +, and / this s-expression:
+(+ (* 1 2) (/ 3 4))
+unambiguously represents the same AST shown above.
+<br>
+<br>
+Likewise, when Lisp sees something like this:
+<br>
+(with-whatever (something)
+  (do-one-thing)
+  (do-another-thing))
+<br>
+it can parse it into an AST without knowing anything about the internal syntax of the with-whatever construct. If with-whatever is a macro, it will be passed the AST, represented as an s-expression, and is responsible for producing a new s-expression representing the AST that should be used in place of the original with-whatever form.
+</i>
+<p>
+This is accurate as far as it goes, but misses the point.
+I completely agree that when we can't know at language design time
+all the possible legal language constructs, we need to be able to
+cleanly represent arbitrary ASTs.
+And I agree that s-expressions can do that.
+<p>
+But I do <b>not</b> believe that the traditional textual form of
+s-expressions are the <b>best</b>
+way to represent the underlying data structures that Lisp-like languages
+are based on, at least for programs and program-like data.
+<p>
+The current notation for s-expressions was
+merely the <b>first</b> way that was created,
+one created in the 1950s.
+It wasn't even intended for use in programming, it's just that no one
+created a better one, and so the programming community
+quickly ossified on a notation from the 1950s.
+So, let's work to find better ways of representing these constructs.
+
+
+<p>
+<hr>
+<p>
+<i>Q: "I have this cool idea for a new Lisp dialect / Lisp syntax
+that doesn't involve so many parentheses!
+It uses indentation to show structure!"
+<br>
+<br>
+Since the advent of Python, this comes up on c.l.l. with some regularity.
+We've had 'sweet-expressions' and 'indented Lisp' and probably others.
+</i>
+<p>
+In other words, many people see the obvious: Lisp notation
+is hideously hard to read, and that simple things like the
+use of indentation would be a big improvement.
+I know of at least 4 implementations of this idea, many of them
+created independently.
+So, clearly a lot of people <b>do</b> see this as valuable.
+
+<p>
+<hr>
+<p>
+<i>Realize a few things:</i>
+<p>
+<i>* You should use an editor that makes writing Lisp easier, like Emacs or Vim. Both of these can indent based on parenthesis nesting, highlight matching parentheses, cut and paste entire blocks of code based on the parentheses, and so on. If your editor can't do all that, get a new editor.
+</i>
+<p>
+Yes, tools help, but tools don't fix bad notation.
+This answer misses the point, on two levels:
+<ol>
+<li>Tools can make ugly notations easier to manipulate, but they
+don't do much where it counts: helping the humans understand the code.
+Humans have to <i>read</i> code to understand it, and a
+notation that is difficult to read is a serious barrier.
+Tools can help readability somewhat (e.g., via character dimming, color-coding,
+etc.), but a good notation makes the workarounds unnecessary.
+<li>Tools can also help easy-to-read notations, so easy-to-read notations
+always have the advantage.
+The problem is that tools can help more readable notations as well, and
+so a traditional Lisp notation is always at a disadvantage.
+You're much better off starting with a readable notation, and
+then using tools to help it even further.
+The idea that ugly notations are <i>required</i>
+is false, and obviously so.
+Every other popular programming language has exotic support in tools
+like emacs, vim, and Eclipse.
+why settle with ugly when you can have readable <b>and</b> manipulable?
+To get a notation to be supported by tools, you need to have a common
+notation used by many programs; it does not have to be an ugly notation.
+</ol>
+
+<p>
+<hr>
+<p>
+<i>
+Emacs users should check out parenface.el, which de-emphasizes parentheses with a diminished font color (or "face" in Emacs-speak). For instance, if your normal face is black-on-white, it'll make parentheses a shade of gray, so that they're less "in your face" while still being visible.
+</i>
+<p>
+Again,
+this is evidence <b>against</b> traditional Lisp notation, not <b>for</b> it.
+Let's read that again:
+"Hey, look, with effort you can work to reduce the presence of those
+ugly parens!"
+If you have to use tools to reduce the problems of your notation,
+perhaps you should use a better notation.
+
+<p>
+<hr>
+<p>
+<i>* Lispers already read code based on indentation,
+but their editors indent and re-indent code automatically.
+Removing the parentheses makes that harder.</i>
+
+<p>
+I'm rolling on the floor!  This is <b>really</b> missing the point.
+<p>
+If indentation were actually
+syntactically meaningful, you wouldn't <b>need</b> tools to fix indentation
+in most cases - the indentation would <b>already</b> be correct.
+<p>
+Tools you don't need are the easiest tools to create and maintain!
+<p>
+But even when you <b>do</b> need reindentation, it's hogwash that
+it can't be done without parentheses.
+You just read it in, and pretty-print it out... just like
+notations that only support parentheses.
+There are pretty-printers for many languages that don't require
+users to enter programs as S-expressions.
+
+<p>
+<hr>
+<p>
+<i>* After you've written and read enough Lisp, you stop seeing the parentheses. (Reports vary from a few days to a few weeks.) They don't disappear in some magical way, but you start to see the structure of the code rather than just "lots of fingernail clippings".
+For example, you can view (+ (* 1 2) (/ 3 4)) as "(+ (* 1 2) (/ 3 4))"...</i>
+
+<p>
+This statement is partly true, but it's also misleading.
+Let me explain why.
+<p>
+I agree that after you've written and read enough Lisp, you can mentally
+work around the parentheses and get to the "meat" of code.
+And yes, it doesn't even take that long, I can do it quite well.
+But it's an effort that is not required by other languages at all,
+and that's the problem.
+Sure, if this was the <b>only</b> way to program a computer, or to
+manipulate symbols, you could put up with a lot - but other
+languages show conclusively that this is not true.
+<p>
+The biggest problem, though, is working with others.
+Today, most developers avoid using Lisp-based languages,
+even when they'd be appropriate.
+The notation is just too hard to read.
+Yes, many will learn the Lisps - they're interesting, and have some very
+nice properties.
+But their bad notation overcomes their other advantages, and unnecessarily so.
+<p>
+Lots of people will buy Lisp books, play with it, and go away with a better
+understanding of programming.
+But for the most part, they <b>will</b> go away.
+They will not choose to write serious programs in Lisp, even though
+mature tools and books are available, because they cannot easily work with
+others using an unreadable notation.
+<p>
+I've been writing Lisp code for over 20 years, and though I can read Lisp
+well, I still think Lisp's syntax is a serious problem.
+<a href="http://lemonodor.com/archives/001497.html">John Wiseman</a>
+(with 13 years experience) had the same experience.
+So clearly there are people with long experience with Lisp, who nevertheless
+don't find raw S-expressions all that loveable.
+
+<p>
+The FAQ hints at a quote, but it doesn't give the full quote nor
+who said it.
+Here's the full quote:
+"Lisp has all the visual appeal of oatmeal with
+fingernail clippings mixed in."
+What's funny is that this is by Larry Wall, the creator of Perl.
+Perl itself has a reputation for being an ugly, write-only language!
+If even the creator of <b>Perl</b> finds Lisp syntax too ugly,
+and Perl itself has a reputation for ugly code, that
+should tell you something - Lisp must be <i>really</i> ugly.
+<p>
+For example, in my 'curly infix' abbreviation included in my my
+proposed notations, I can represent:
+<pre>
+(+ (* 1 2) (/ 3 4))
+</pre>
+as this instead:
+<pre>
+{{1 * 2} + {3 / 4}}.
+</pre>
+This is a big deal, but why it's a big deal isn't immediately obvious.
+It's a big deal because this notation
+does <b>not</b> depend on any precedence rules, or registration,
+and it doesn't depend on knowing what the final language is (or which
+operators are infix).
+Instead, <b>all</b> operators will work the same way.
+So the fact that you don't know exactly what the final language will
+be like, or which operators are infix operators, doesn't matter...
+and you can change it without trouble.
+This notation exposes exactly where every list begins and ends, too.
+Curly infix adds only one abbreviation: if a list is surrounded by {...}, the
+operators are presented in infix order instead of in prefix order.
+This is just like the abbreviation 'x, which is actually (quote x)
+but happens often enough that an abbreviation makes life easier.
+<p>
+A few quotes are useful, I think:
+<ul>
+<li>"I've used Lisp my whole programming life and
+I still don't find prefix math expressions natural."
+- <a href="http://paulgraham.com/popular.html">Paul Graham</a>
+</li>
+<li>"I have more faith that you could convince the
+world to use esperanto than [to use] prefix notation."
+- <a href="http://people.csail.mit.edu/gregs/ll1-discuss-archive-html/msg01571.h
+tml">Paul Prescod</a>
+</li>
+</ul>
+
+
+<p>
+<hr>
+<p>
+<i>Adding or removing parentheses — or adding indentation — to the tree notation makes no sense. To a Lisper that has learned to recognize the () notation as the structure denoted by the tree diagram, it makes just as little sense.</i>
+
+<p>
+That's not true - essentially all Lisp code is <b>already</b> indented.
+Nobody would accept Lisp code today if it wasn't indented!
+Common Lisp even builds in a pretty-printer, specifically to indent code,
+and most major Scheme implementations (e.g., guile) include one too.
+<p>
+Indentation-based approaches basically say that "every time you indent,
+it's the equivalent of (, and every time you outdent, it's equal to )".
+In other words, since Lisp code <b>already</b> uses indentation, combined
+with ugly excess parens, why not get rid of the unneeded baggage?
+
+
+<p>
+<hr>
+<p>
+<i>
+Given all the above, if you go ahead and build or use an indentation-based Lisp ("IBL"), be prepared to abandon it after you get sufficiently into Lisp. And if you post about your IBL to c.l.l., be prepared for a less-than-welcoming response.</i>
+
+<p>
+Here we see the real problem.
+Almost all software developers have abandoned Lisp, correctly perceiving
+that Lisp notation is too ugly to be readable... and few want their
+resulting programs to be that hard to read.
+Hard-to-read programs are hard to improve later!
+<p>
+Most of the people left on newsgroups/mailing lists like c.l.l are die-hards
+who
+believe that no improvements or innovations can occur in Lisp notation, and are
+actively hostile to others who <b>are</b> interested in improvements.
+<p>
+This is not univerally true, thankfully.
+Paul Graham is a widely-respected advocate of Lisp, and
+yet he's willing to publicly say that "Common Lisp and Scheme only
+directly support s-expressions; disadvantage: long-winded".
+He recommends <a href="http://www.paulgraham.com/arcll1.html">
+Syntax as abbreviation</a>, specifically, that additional notation would
+be an abbreviation for longer still-valid syntax.
+This just like 'x is today.
+In particular, he is an advocate of showing
+structure by indentation instead of
+parentheses (which would become optional where no ambiguity results).
+He also admits that infix notation would be nice.
+<p>
+Peter Norvig, another well-known Lisper, developed a Lisp variant that
+allowed abbreviations so infix is automatically noted and used.
+In short, some <i>are</i> willing to acknowledge that there are problems,
+and hunt for a solution.
+
+<p>
+<hr>
+<p>
+<i>
+(We'd love to hear about an IBL-er abandoning it for parentheses, though. This would provide empirical evidence to which we could direct later newbies.)
+</i>
+<p>
+No doubt there will be several, but since documents like this
+will only report people abandoning indentation - and not those
+who <b>switch to</b> indentation -
+their reporting will be completely biased.
+It would be more interesting to see, as the alternatives become mature,
+what the numbers are in both camps.
+
+<p>
+If you can't accept that there is a problem,
+please stay in the Lisp ghetto.
+That's the ghetto where Common Lisp still
+doesn't have a standard way to access the network.
+That's the ghetto where Scheme didn't even
+have a standard way to have modules until 2007,
+and most Schemes don't implement that module system anyway... instead,
+they have numerous incompatible module systems.
+Emacs Lisp still hasn't gotten around to implementing lexical scoping.
+
+<p>
+Why all this stagnation?
+A fundamental problem with Lisp-based systems
+is that nearly all software developers have
+abandoned Lisp, because Lisp has an unreadable notation.
+Nobody wants to write code others can't read.
+The few who are left behind in Lisp-land tend to be
+those who are unable to see that it needs fixing.
+In contrast, Lisp's inadequate
+notation drives away that much larger set of people
+who could give it more life.
+
+<p>
+Those of us who can perceive the problem clearly are trying to fix it.
+If you use Lisp, and are willing to consider or create new ideas
+(like I-expressions, sweet-expressions, and standardized infix macros),
+you're welcome to join us.
+Help us move beyond the current state -
+please join the "readable" mailing list!  See my
+<a href="http://www.dwheeler.com/readable">Readable s-expressions</a>
+page for more information.
+
+</body>
+</html>
+

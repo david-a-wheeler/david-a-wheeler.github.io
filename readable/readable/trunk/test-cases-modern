@@ -1,0 +1,259 @@
+   testing123
+
+(hi)
+
+[hi ]
+
+{3 + 4 }
+
+; This is a comment.
+   ; Here's another comment.
+; Another comment.
+q
+
+a ; inline comment.
+b
+
+'x ; quoted
+
+
+`(x)
+
+(f x)
+
+f(x)
+
+f(a b)
+
+f()
+
+{3 + {4 * 5 } }
+
+
+`(,(x))
+
+`(,@(x))
+
+
+{3 + {4 * 5}}
+
+f[a]
+
+f{2 + 3}
+
+f(a)(b)
+
+{2 + 3}
+
+'{2 + 3}
+
+f(a b c)
+
+  f(a
+    b c)
+
+ fibup(n 2 1 0)
+
+ [if fibup(n 2 1 0)]
+
+ ; Check to make sure #-processing is delimited by closing curly brace,
+ ; in a variety of circumstances.
+
+ {c char=? #\space}
+
+ {#f and #t}
+
+ {c char=?-ci #\[}
+
+ {i = #xa}
+
+ .2
+
+ [a ... b]
+
+ +(5 6)
+
+ {-8 - +9}
+
+ {"\\a" string<? "\\b"}
+
+
+[define fibfast(n)
+  [if {n < 2}
+    n
+    fibup(n 2 1 0)]]
+
+[define fibup(max count n-1 n-2)
+  [if {max = count}
+    {n-1 + n-2}
+    fibup(max {count + 1} {n-1 + n-2} n-1)]]
+
+(define fibfast(n)
+  (if {n < 2}
+    n
+    fibup(n 2 1 0)))
+
+(define fibup(max count n-1 n-2)
+  (if {max = count}
+    {n-1 + n-2}
+    fibup(max {count + 1} {n-1 + n-2} n-1)))
+
+(a . b)
+
+(a . b)
+
+( . b)
+
+|hi|
+
+(. a123)
+
+; Try out tab as separator
+(x	y)
+
+#(0 1 2)
+
+()
+
+f(. b)
+
+; Common Lisp example
+
+(defun factorial (n)
+  (if {n <= 1}
+       1
+       {n * factorial{n - 1}}))
+
+(defun factorial (n)
+  (if (<= n 1)
+    1
+    (* n (factorial (- n 1)))))
+
+; Scheme example
+
+
+(define factorial(n)
+  (if {n <= 1}
+       1
+       {n * factorial{n - 1}}))
+
+(define (factorial  n)
+  (if (<= n 1)
+    1
+    (* n (factorial (- n 1)))))
+
+; BitC example (modified)
+
+(define fact{x : int32}
+  (cond
+   ({x < 0}     -(fact(-(x))))
+   ({x = 0}     1)
+   (otherwise   {x * fact{x - 1}})))
+
+(define (fact (: x int32))
+  (cond ((< x 0) (- (fact (- x))))
+        ((= x 0) 1)
+        (otherwise
+          (* x (fact (- x 1))))))
+
+{{1 <= x <= 10} and {x > 0}}
+
+(and (<= 1 x 10)  (> x 0))
+
+
+; Emacs Lisp example - first modern notation, then traditional notation.
+
+(defun replace-html-chars (start end)
+  "Replace '&lt;' to '&amp;lt;' and other chars in HTML.
+This works on the current selection."
+  interactive("r")
+  save-restriction(
+    narrow-to-region(start end)
+    goto-char(point-min())
+    (while search-forward("&" nil t) replace-match("&amp;" nil t))
+    goto-char(point-min())
+    (while search-forward("<" nil t) replace-match("&lt;" nil t))
+    goto-char(point-min())
+    (while search-forward(">" nil t) replace-match("&gt;" nil t))))
+
+(defun replace-html-chars (start end)
+  "Replace '&lt;' to '&amp;lt;' and other chars in HTML.
+This works on the current selection."
+  (interactive "r")
+  (save-restriction
+    (narrow-to-region start end)
+    (goto-char (point-min))
+    (while (search-forward "&" nil t) (replace-match "&amp;" nil t))
+    (goto-char (point-min))
+    (while (search-forward "<" nil t) (replace-match "&lt;" nil t))
+    (goto-char (point-min))
+    (while (search-forward ">" nil t) (replace-match "&gt;" nil t))))
+
+
+; AutoCAD Lisp - modern, then traditional.
+
+(DEFUN C:FIND ()
+  SETQ(SA GETSTRING(T "\nEnter string for search parameter: "))
+  SETQ(AR SSGET("X" LIST(CONS(1 SA))))
+  (IF {AR = NIL} ALERT("This string does not exist"))
+  SETQ(SB SSLENGTH(AR))
+  C:CONT())
+
+(DEFUN C:CONT ()
+  SETQ(SB {SB - 1})
+  SETQ(SC SSNAME(AR SB))
+  SETQ(SE ENTGET(SC))
+  SETQ(SJ CDR(ASSOC(1 SE)))
+  (IF {SJ = SA}
+    (PROGN
+      SETQ(H CDR(ASSOC(10 SE)))
+      SETQ(X1 LIST({CAR(H) - 50} {CADR(H) - 50}))
+      SETQ(X2 LIST({50 + CAR(H)} {50 + CADR(H)}))
+      COMMAND("ZOOM" "W" X1 X2))
+    C:CONT())
+  (IF {SB = 0} ALERT("END OF SELECTIONS"))
+  SETQ(A {SB + 1})
+  SETQ(A RTOS(A 2 0))
+  SETQ(A
+    STRCAT("\nThere are <" A "> selections Enter CONT to advance to next"))
+  IF({SB = 0} EXIT())
+  PRINC(A)
+  PRINC())
+
+
+(DEFUN C:FIND ()
+  (SETQ SA (GETSTRING T "\nEnter string for search parameter: "))
+  (SETQ AR (SSGET "X" (LIST (CONS 1 SA))))
+  (IF (= AR NIL) (ALERT "This string does not exist"))
+  (SETQ SB (SSLENGTH AR))
+  (C:CONT))
+
+(DEFUN C:CONT ()
+  (SETQ SB (- SB 1))
+  (SETQ SC (SSNAME AR SB))
+  (SETQ SE (ENTGET SC))
+  (SETQ SJ (CDR (ASSOC 1 SE)))
+  (IF (= SJ SA)
+    (PROGN
+      (SETQ H (CDR (ASSOC 10 SE)))
+      (SETQ X1 (LIST (- (CAR H) 50) (- (CADR H) 50)))
+      (SETQ X2 (LIST (+ 50 (CAR H)) (+ 50 (CADR H))))
+      (COMMAND "ZOOM" "W" X1 X2))
+    (C:CONT))
+  (IF (= SB 0) (ALERT "END OF SELECTIONS"))
+  (SETQ A (+ SB 1))
+  (SETQ A (RTOS A 2 0))
+  (SETQ A
+    (STRCAT "\nThere are <" A "> selections Enter CONT to advance to next"))
+  (IF (= SB 0) (EXIT))
+  (PRINC A)
+  (PRINC))
+
+(if eqv?(parent1 'f)
+  {eqv?(kibi 'f) and eqv?(kibi-lied? #t)})
+
+(if (eqv? parent1 'f)
+  (and (eqv? kibi 'f) (eqv? kibi-lied? #t)))
+
+
+

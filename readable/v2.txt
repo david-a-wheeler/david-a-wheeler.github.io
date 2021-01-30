@@ -1,0 +1,355 @@
+
+
+
+Potential changes for sweet-expressions version 0.2
+
+* Define grouping operators: unprefixed {}, [], and ().
+All disable indentation inside; {} only disables indentation,
+[] also disables infix in the immediate expression,
+and () normally disables sweet-expresssions entirely
+(everything inside is an s-expression, recursively).
+Name-prefixed f() and f{} accept infix inside.
+Normally infix expressions would be surrounded by {} if they're grouped;
+name-prefixing would be used for function calls, and [...] for
+straight "data" lists (and to deal with expressions that LOOK like
+infix operations).
+Callers can make (...) mean the same as {...}, if they want to provide
+a simple user language and don't need s-expression backwards compatibility.
+
+Rationale: This makes sweet-expressions even MORE backwards-compatible,
+and thus easier to use as a replacement reader.  (...) completely
+disables sweet-expressions, switching completely to s-expression reading.
+A negative is that this means that characters {} and [] aren't
+available for redefining, but frankly, many people don't do that because
+having program-specific nonstandard meanings is a pain.
+Better to predefine them with a useful meaning that means the same
+thing everywhere.  Another negative is that {3 + {4 * 5}} isn't quite as
+traditional as (3 + (4 * 5)), as in sweet-expressions version 0.1, but
+the ability to be more backwards-compatible is a big draw.  Also, this
+means that s-expressions and sweet-expressions are visually distinct, and
+that mapping statements like "f(a(x) + b) maps to (f (+ (a x) b))"
+are easy to explain.
+
+* Prefixed x[...] is reserved for mappings.
+Currently the idea is this becomes (bracketaccess x ...).
+Allow multiple 0+ parameters inside []; this makes x[], x[a], and
+x[a b] (a range) easy, as well as supporting optional parameters etc.
+("only evens" or other list comprehensions perhaps).
+
+* infix "and" and "or". These normally short-circuit, including in
+Common Lisp, Scheme, and emacs Lisp, so they're typically
+special forms. (Show email.) Lisp systems don't have same macro
+systems. Thus, make them infix.
+
+* Name-ending vs. term-ending. f(x) okay. But what does (x)(y) mean?
+If term-ending, an immediate () or {} after a term means the previous
+term is the initial parameter. Issue: term-ending is more
+flexible/general (esp. for functional programming) but mis-statements
+could produce harrowing mysteries. Name-ending is simpler, but the
+"obvious" extensions don't work.
+
+* Allow end-with <, >, or = as infix? (doubtful, but worth discussing.)
+Problem: Many Lisp systems have MANY different comparators.
+It wouldn't help with Scheme.  It would catch Common Lisp and ACL2's
+comparitors, but I think it's ugly anyway.  Bad idea; just use
+name-prefixing.
+
+* IGNORE anything NOT matching the "infix format" and pass it through
+unchanged.
+Advantage: Works more easily work with nfx() macros, when you WANT precedence,
+unary operations (pre or post), and alphanumeric infix operators.
+Disadvantage: miss some error-catching.  But Lisp doesn't do much
+of this kind of error-catching anyway, so this is nothing new.
+My proposed narrow rules for sweet-expression infix detection:
+1. Must have an odd number of parameters >= 3 (otherwise you don't have enough
+parameters to HAVE an infix operation)
+2. The second parameter matches the infix pattern ("and", "or", or only
+certain punctuation)
+3. The odd parameters do NOT match the infix pattern. So {a * - b} will NOT be
+processed by the sweet-expression built-in infix handler
+4. All even parameters are equal, e.g., {1 + 2 + 3 + 4} becomes (+ 1 2 3 4).
+So {2 + 3 * 4} will just become (2 + 3 * 4) which will hopefully be later
+processed by an infix macro.
+A list that doesn't meet these criteria are passed on as-is, without an error
+message (for possible later manipulation by a macro).
+
+
+* Change "one colon" to "one or more colons" as an infix operator,
+so :: is okay.
+
+* Infix... allow := as an infix operator (common notation for assignment).
+Note that +=, -=, etc. are already okay.  But since "=" is universally
+equality, there needs to be SOME reasonable infix operator for assignment
+in languages where that's sensible. Problem: that's still awkward for
+some Lisps.  I suppose "~" could be used, e.g., "A ~ 5", but that's certainly
+not a common symbol for assignment, and it's similar to "-" in many fonts.
+
+* Allow up to 5 chars, e.g., ==/== or ++/--
+
+* For the "command line" prompt niceties:
+If at left edge, and read in (1) a single term OR (2) a legal infix expression,
+execute it immediately.
+So this is executed immediately:
+3 + 4
+and this is not:
+define x
+
+
+* Examine variations.
+
++ Factorial, standard s-expressions (Common Lisp):
+ (defun factorial (n)
+   (if (<= n 1)
+       1
+       (* n (factorial (- n 1)))))
+
++ Sweet-expressions version 1:
+ defun factorial (n)
+   if (n <= 1)
+       1
+       n * factorial(n - 1)
+
++ Infix default, {..} for grouping, [...] disables infix, f(...) function call:
+ defun factorial (n)
+   if {n <= 1}
+       1
+       n * factorial(n - 1)
+
++ Non-Infix default, {..} around all infix:
+ defun factorial (n)
+   if {n <= 1}
+       1
+       {n * factorial({n - 1})}
+
++ Non-Infix default, {..} around all infix, use f{...} to abbreviate f({...}):
+ defun factorial (n)
+   if {n <= 1}
+       1
+       {n * factorial{n - 1}}
+
+
+* Here's a Scheme example from Wikipedia - specifically the article
+"Scheme (programming language)".  This example adds an arbitrary
+list of numbers, and if a non-numeric value is found in
+the list the procedure is aborted immediately and the constant value #f
+(false) is returned. This is achieved by capturing the current continuation in
+the variable exit and using it as an "escape procedure".
+
++ Original Scheme:
+(define (add-if-all-numbers lst)
+  (call/cc
+   (lambda (exit)
+     (let loop ((lst lst) (sum 0))
+       (if (null? lst) sum
+         (if (not (number? (car lst))) (exit #f)
+           (+ (car lst) (loop (cdr lst)))))))))
+
+
++ Sweet-expressions, version 1:
+ define add-if-all-numbers(lst)
+  call/cc
+   lambda (exit)
+     let loop ((lst lst) (sum 0))
+       if null?(lst)
+         sum
+         if not(number?(car(lst)))
+           exit(#f)
+           car(lst) + loop(cdr(lst))
+
+
++ Infix default, {..} for grouping, [...] disables infix, f(...) function call:
+ define add-if-all-numbers(lst)
+  call/cc
+   lambda (exit)
+     let loop ((lst lst) (sum 0))
+       if null?(lst)
+         sum
+         if not(number?(car(lst)))
+           exit(#f)
+           car(lst) + loop(cdr(lst))
+
++ Non-Infix default, {..} around all infix:
+ define add-if-all-numbers(lst)
+  call/cc
+   lambda (exit)
+     let loop ((lst lst) (sum 0))
+       if null?(lst)
+         sum
+         if not(number?(car(lst)))
+           exit(#f)
+           {car(lst) + loop(cdr(lst))}
+
+
+
+* Matrix multiply example from http://www.scheme.com/tspl2d/examples.html
+mat-mat-mul multiplies one matrix by another, after verifying
+that the first matrix has as many columns as the second matrix has rows.
+
++ Original Scheme:
+ (define mat-mat-mul
+    (lambda (m1 m2)
+       (let* ((nr1 (matrix-rows m1))
+              (nr2 (matrix-rows m2))
+              (nc2 (matrix-columns m2))
+              (r   (make-matrix nr1 nc2)))
+          (if (not (= (matrix-columns m1) nr2))
+              (match-error m1 m2))
+          (do ((i 0 (+ i 1)))
+              ((= i nr1) r)
+              (do ((j 0 (+ j 1)))
+                  ((= j nc2))
+                  (do ((k 0 (+ k 1))
+                       (a 0
+                          (+ a
+                             (* (matrix-ref m1 i k)
+                                (matrix-ref m2 k j)))))
+                      ((= k nr2)
+                       (matrix-set! r i j a))))))))
+
++ Sweet-expressions, version 1:
+
+
+ define mat-mat-mul
+    lambda (m1 m2)
+       let* ( (nr1 matrix-rows(m1))
+              (nr2 matrix-rows(m2))
+              (nc2 matrix-columns(m2))
+              (r   make-matrix(nr1 nc2)))
+          if not(matrix-columns(m1) = nr2) ; f(infix) handled automatically.
+              match-error(m1 m2)
+          do ((i 0 (i + 1)))
+             ((i = nr1) r)
+             do ((j 0 (j + 1)))
+                ((j = nc2))
+                do ((k 0 (k + 1))
+                    (a 0 (a + (matrix-ref(m1 i k) * matrix-ref(m2 k j)))))
+                   ((k = nr2) matrix-set!(r i j a))
+
+ Or, if you use groups:
+
+ define mat-mat-mul
+    lambda (m1 m2)
+       let*
+         group
+           nr1 matrix-rows(m1)
+           nr2 matrix-rows(m2)
+           nc2 matrix-columns(m2)
+           r   make-matrix(nr1 nc2)
+         if not(matrix-columns(m1) = nr2) ; f(infix) handled automatically.
+           match-error(m1 m2)
+         do
+           group
+             i 0 (i + 1)
+           group
+             (i = nr1) r
+           do
+             group
+               j 0 (j + 1)
+             group
+               j = nc2
+             do
+              group
+                k 0 (k + 1)
+                a 0 (a + (matrix-ref(m1 i k) * matrix-ref(m2 k j)))
+              group
+                (k = nr2) matrix-set!(r i j a)
+
+
++ Infix default, {..} for grouping, [...] disables infix, f(...) function call,
+(...) switches to regular s-expression reader:
+
+ define mat-mat-mul
+    lambda (m1 m2)
+       let* { {nr1 matrix-rows(m1)}
+              {nr2 matrix-rows(m2)}
+              {nc2 matrix-columns(m2)}
+              {r   make-matrix(nr1 nc2)}}
+          if not(matrix-columns(m1) = nr2)
+              match-error(m1 m2)
+          do {{i 0 {i + 1}}}
+             {{i = nr1} r}
+             do {{j 0 {j + 1}}}
+                {{j = nc2}}
+                do {{k 0 {k + 1}}
+                    {a 0 {a + {matrix-ref(m1 i k) * matrix-ref(m2 k j)}}}}
+                   {{k = nr2} matrix-set!(r i j a)}
+
+ Or, if you use groups:
+
+ define mat-mat-mul
+    lambda (m1 m2)
+       let*
+         group
+           nr1 matrix-rows(m1)
+           nr2 matrix-rows(m2)
+           nc2 matrix-columns(m2)
+           r   make-matrix(nr1 nc2)
+         if not(matrix-columns(m1) = nr2) ; f(infix) handled automatically.
+           match-error(m1 m2)
+         do
+           group
+             i 0 {i + 1}
+           group
+             {i = nr1} r
+           do
+             group
+               j 0 {j + 1}
+             group
+               j = nc2
+             do
+              group
+                k 0 {k + 1}
+                a 0 {a + {matrix-ref(m1 i k) * matrix-ref(m2 k j)}}
+              group
+                {k = nr2} matrix-set!(r i j a)
+
+
++ Non-Infix default, {..} around all infix, unprefixed [...] is like
+(...) but doesn't disable sweet-expressions, f{...} is f({infix}),
+(...) switches to regular s-expression reader:
+ define mat-mat-mul
+    lambda [m1 m2]
+       let* [ [nr1 matrix-rows(m1)]
+              [nr2 matrix-rows(m2)]
+              [nc2 matrix-columns(m2)]
+              [r   make-matrix(nr1 nc2)]]
+          if not{matrix-columns(m1) = nr2} ; f{infix}
+              match-error(m1 m2)
+          do [[i 0 {i + 1}]]
+             [{i = nr1} r]
+             do [[j 0 {j + 1}]]
+                [{j = nc2}]
+                do [[k 0 {k + 1}]
+                    [a 0 {a + {matrix-ref(m1 i k) * matrix-ref(m2 k j)}}]]
+                   [{k = nr2} matrix-set!(r i j a)]
+
+
+ Or, if you use groups:
+
+ define mat-mat-mul
+    lambda [m1 m2]
+       let*
+         group
+           nr1 matrix-rows(m1)
+           nr2 matrix-rows(m2)
+           nc2 matrix-columns(m2)
+           r   make-matrix(nr1 nc2)
+         if not{matrix-columns(m1) = nr2} ; f{infix} = f({infix}).
+           match-error(m1 m2)
+         do
+           group
+             i 0 {i + 1}
+           group
+             {i = nr1} r
+           do
+             group
+               j 0 {j + 1}
+             group
+               {j = nc2}
+             do
+              group
+                k 0 {k + 1}
+                a 0 {a + {matrix-ref(m1 i k) * matrix-ref(m2 k j)}}
+              group
+                {k = nr2} matrix-set!(r i j a)
+

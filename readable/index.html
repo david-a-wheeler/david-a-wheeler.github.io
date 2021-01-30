@@ -1,0 +1,514 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Readable s-expressions and sweet-expressions home page: Getting the infix fix and fewer parentheses in Lisp-like languages</title>
+<meta name="description" content="Page about s-expressions">
+<meta name="keywords" content="">
+<meta name="description" content="Home page for creating readable S-expressions for programming languages">
+<meta name="keywords" content="s-expression, s-expressions, Lisp, Common Lisp, Scheme, DSSSL, BitC, ACL2, IACL2, Emacs Lisp, CLIPS, M-expression, sweet-expression, sweet-expressions, infix, prefix, readability, readable, list, lists, David, Wheeler, David A. Wheeler, David Wheeler, Dylan, Logo, Arc, parentheses, parenthesis, silly parentheses, syntax, ZY-expression, I-expression, sweetexpr">
+<meta name="generator" content="vim">
+
+</head>
+<body bgcolor="#FFFFFF">
+<center><h1><font color="#339900">Readable s-expressions and sweet-expressions home page: Infix and fewer parentheses in Lisp-like languages</font></h1></center>
+
+<p>
+<center>
+<table border="1">
+<tr>
+<td>
+<font size="+3">
+This page is obsolete; see
+<a href="http://readable.sourceforge.net">http://readable.sourceforge.net</a>
+instead.
+</font>
+</td>
+</tr>
+</table>
+</center>
+<p>
+
+<br>
+<br>
+<br>
+
+<center>
+<i>I've used Lisp my whole programming life and
+I still don't find prefix math expressions natural.</i>
+- <a href="http://paulgraham.com/popular.html">Paul Graham</a>
+<br><br>
+<i>I have more faith that you could convince the
+world to use esperanto than [to use] prefix notation.</i>
+- <a href="http://people.csail.mit.edu/gregs/ll1-discuss-archive-html/msg01571.html">Paul Prescod</a>
+<br><br>
+<i>Lisp has all the visual appeal of oatmeal with fingernail clippings
+mixed in.</i> -
+<a href="http://www.linuxjournal.com/article/2070">Larry Wall</a>
+<br><br>
+<i>After 13 years of doing Lisp and 3 or 4 years of Python, I agree: I prefer writing Lisp, but Python is easier to read. </i> -
+<a href="http://lemonodor.com/archives/001497.html">John Wiseman</a>
+<br><br>
+<i>LISP: ... mythically from ‘Lots of Irritating Superfluous Parentheses’</i>
+<a href="http://www.catb.org/jargon/html/L/LISP.html">Jargon File</a>
+<br><br>
+<i>[If only] we could find characters or signs suited for expressing all our thoughts as clearly and as exactly as arithmetic expresses numbers...</i> - Gottfried Wilhelm Leibniz, 1677. <!-- Preface to the General Science, 1677. -->
+<br><br>
+<i>"A language should be designed in terms of an abstract syntax and it
+should have perhaps, several forms of concrete syntax: one which is
+easy to write and maybe quite abbreviated; another which is good to
+look at and maybe quite fancy... and another, which is easy to make
+computers manipulate... all should be based on the same abstract syntax...
+the abstract syntax is what the theoreticians will use and one or more
+of the concrete syntaxes is what the practitioners will use. </i>
+<a href="http://www.infoq.com/interviews/Steele-Interviews-John-McCarthy">John McCarthy, creator of Lisp</a>
+<!--   Response to: "I'd like to return now to the list of numbered questions that you have in front of you. At this point I'd like to start with question no. 5 and then we'll take them in forwards order. Should programming languages be designed for theoreticians to facilitate reasoning or for practitioners for getting systems built? Should there be different languages for each purpose? Are the skill sets of a language designers different?" -->
+</center>
+
+
+
+<p>
+<h1>The Problem</h1>
+<p>
+Many people find Lisp s-expressions hard to read as a programming notation.
+I've developed Lisp programs for decades, and though I can read s-expressions
+well, I remain dissatisfied with their syntactic limitations.
+Others, including Lisp luminary Paul Graham, feel the same way.
+(<a href="http://www.tbray.org/ongoing/When/200x/2009/12/01/Clojure-Theses">
+Tim Bray loves Clojure, but not its syntax</a>.)
+Yet s-expressions have a lot of benefits to them, and it turns out
+to be <i>very</i> hard to design a more readable notation
+that retains all the benefits of s-expressions.
+But I believe it <i>is</i> possible - so let's try!
+<p>
+This web page identifies some ways to extend/modify
+s-expressions so they can be more readable <i>without</i> losing their power
+(such as homoiconicity, generality, macros, quasiquoting,
+and easily-manipulated program fragments).
+A vast number of projects have tried to create "a more readable
+Lisp notation" and failed, including M-expressions, IACL2, and Dylan.
+In hindsight, it's clear that they failed because they didn't have some
+key advantages of S-expressions, in particular, that they are generic
+(they do not depend on some underlying semantic)
+and homoiconic (the underlying data structure is clear from the syntax).
+Since these old "readable Lisp" syntaxes weren't generic or homoiconic,
+they could not handle semantic change and metaprogramming - yet
+those are some of the very reasons someone would use a Lisp!
+Now that we know <i>why</i> those efforts failed, we can avoid their mistakes.
+<p>
+My goal is to spur work to create one or more readable, general-purpose,
+homoiconic notations for s-expressions that do a good job representing
+programs.  A good way to measure that is to see that it should be easy
+to translate back and forth between arbitrary S-expressions and this other
+notation (by computer and in people&#8217;s heads).
+<p>
+If you are unwilling to consider that there might be a better approach,
+<a href="retort-lisp-can-be-readable.html">read my retort/rebuttal that
+Lisp can be readable</a>.
+If you're still unwilling to consider alternatives, stop reading.
+But if you're interested in developing a better way, keep reading.
+After all, the quote operator ' did not fall from the sky - it was not
+in the original Lisps, and was added because that construct was so
+common that it was worth creating an abbreviation.
+We're just adding new abbreviations.
+On this page, I explain how to get involved, present my 3-layer approach
+(curly infix, modern-expressions, and sweet-expressions),
+and point to others' approaches to the problem.
+
+<h1>How to discuss solutions</h1>
+<p>
+Interested?
+Please
+<a href="https://lists.sourceforge.net/lists/listinfo/readable-discuss">
+join the readable-discuss mailing list</a> of
+<a href="http://readable.sourceforge.net">
+SourceForge project "readable"</a>.
+
+<p>
+This project exists to discuss options for taming s-expressions,
+and then develop and distribute open source software to implement those ideas.
+<a href="http://www.mail-archive.com/readable-discuss@lists.sourceforge.net/">
+See the mail-archive archives of the readable Lisp archive</a>
+to see what we've discussed so far.
+
+<h1>Curly Infix, Modern-expressions, and Sweet-expressions</h1>
+<p>
+I've developed a 3-layer approach to making Lisp more readable, which
+is all based on creating simple abbreviations that work on
+<i>any</i> S-expression:
+<ol>
+<li><i>Curly infix</i>: Any expression surrounded by {...} is merely
+an abbreviation for an infix expression.
+So {n&nbsp;&lt;=&nbsp;2} maps to (&lt;=&nbsp;n&nbsp;2),
+{2&nbsp;*&nbsp;3&nbsp;*&nbsp;4} maps to (*&nbsp;2&nbsp;3&nbsp;4), and
+{2&nbsp;+&nbsp;{3&nbsp;*&nbsp;4}} maps to (+&nbsp;2&nbsp;(*&nbsp;3&nbsp;4)).
+By intent there is <i>no</i> precedence and embedded infix expressions must use another {...}.
+<li><i>Modern-expressions</i>: This takes curly infix, and adds special meanings
+to the prefixed grouping symbols (), [], and {}.
+Thus, f(1&nbsp;2) maps to (f&nbsp;1&nbsp;2).
+<li><i>Sweet-expressions</i>: Includes modern-expressions, and adds the idea that
+indentation is meaningful (like Python, Haskell, and many other languages).
+</ol>
+<p>
+All of these can be used in <i>any</i> Lisp-like language
+(Common Lisp, Scheme, Emacs Lisp, ACL2, BitC,
+<a href="http://clipsrules.sourceforge.net/">CLIPS</a>, etc.).
+Curly-infix is 100% compatible with existing code; modern-expressions
+and sweet-expressions are 100% compatible with well-formatted code.
+
+<h2>Sweet-Expression Examples</h2>
+Let's do two quick examples -  we'll use sweet-expressions version 0.2
+to represent calculating factorials and Fibonacci numbers,
+in both cases using Scheme:
+
+<br>
+<br>
+<!-- <table cellpadding="4" border="1">-->
+<table cellpadding="4" border="1" rules="cols">
+<tr>
+<th align="center">(Ugly) S-expression</th>
+<th align="center">Sweet-expression 0.2</th>
+</tr>
+<tr>
+<td align="left" valign="top">
+<pre>
+(define (fibfast n)
+  (if (&lt; n 2)
+    n
+    (fibup n 2 1 0)))
+</pre>
+</td>
+<td align="left" valign="top">
+<pre>
+define fibfast(n)  ; Typical function notation
+  if {n &lt; 2}       ; Indentation, infix {...}
+    n              ; Single expr = no new list
+    fibup(n 2 1 0) ; Simple function calls
+</pre>
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<pre>
+(define (fibup max count n-1 n-2)
+  (if (= max count)
+    (+ n-1 n-2)
+    (fibup max (+ count 1) (+ n-1 n-2) n-1)))
+</pre>
+</td>
+<td align="left" valign="top">
+<pre>
+define fibup(max count n-1 n-2)
+  if {max = count}
+    {n-1 + n-2}
+    fibup max {count + 1} {n-1 + n-2} n-1
+</pre>
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<pre>
+(define (factorial n)
+  (if (&lt;= n 1)
+    1
+    (* n (factorial (- n 1)))))
+</pre>
+</td>
+<td align="left" valign="top">
+<pre>
+define factorial(n)
+  if {n &lt;= 1}
+    1
+    {n * factorial{n - 1}} ; f{...} =&gt; f({...})
+</pre>
+</td>
+</tr>
+</table>
+<p>
+Note that you can use traditional math notation
+for functions;
+<tt>fibfast(n)</tt> maps to <tt>(fibfast&nbsp;n)</tt>.
+Infix processing is marked with {...};
+<tt>{n&nbsp;&lt;=&nbsp;2}</tt> maps to <tt>(&lt;=&nbsp;n&nbsp;2)</tt>, and
+<tt>f{n&nbsp;*&nbsp;2}</tt> maps to <tt>(f&nbsp;(*&nbsp;n&nbsp;2))</tt>.
+Indentation is significant, unless disabled by (...), [...], or {...}.
+This example uses variable names with embedded "-" characters; that's
+not a problem, because the infix operators must be surrounded by whitespace
+and are only used when {...} requests them.
+<p>
+It's actually quite common to have a function call pass one parameter,
+where the parameter is calculated using infix notation.
+Thus, there's a rule to simplify this common case (the prefix {} rule).
+So factorial{n&nbsp;-&nbsp;1} maps to
+factorial({n&nbsp;-&nbsp;1}) which maps to
+(factorial&nbsp;(-&nbsp;n&nbsp;1)).
+<p>
+Credit where credit is due: The Fibonacci number code is loosely based on
+<a href="http://hansonchar.blogspot.com/2006/01/fibonacci-numbers-in-scheme.html
+">an example by Hanson Char</a>.
+
+<p>
+It's a joy to use at the command line; with sweet-expressions, you can
+type in simple-to-read expressions and have the system immediately respond.
+
+<h2>More information about Sweet-expressions</h2>
+<p>
+Interested? You can get:
+<ul>
+<li>
+<a href="tutorial-sweet-expressions.html">Tutorial on Sweet-expressions: A readable format for Lisp-like languages</a> gives a brief tutorial, and it focuses on actually trying out the demo code that implements this idea.
+You don't need to know much about Lisp-like languages; if you know how to program you should be able to follow along (though Lisp knowledge helps).
+<li>
+<a href="sweet-expressions.html">Sweet-expressions: A readable format for Lisp-like languages</a> is more in-depth, explaining the rules and why.
+It assumes you know something about Lisp-like languages.
+</ul>
+<p>
+From the SourceForge page (noted above) you can download implementations.
+There's a production-ready Common Lisp implementation of curly infix,
+and a reasonably complete (though work is still ongoing) Scheme implementation
+of Sweet-expressions.
+
+<h2>Analysis of alternatives</h2>
+<p>
+If you want even more detail, look here:
+<ul>
+<li><a href="version02.html">The Sweet-expressions version 0.2 page</a>
+shows examples and experimentation that led to sweet-expressions
+version 0.2, including the split into three layers and removing
+automatic determination of infix operators.
+The latter was a surprise; I thought automatically determining infix would
+be a big advantage, but the experiments suggested otherwise.
+It shows sweet-expressions using samples of <i>many</i> different
+Lisp-based languages - this shows that sweet-expressions are <i>not</i>
+tied to a particular semantic.
+<li>
+<a href="readable-s-expressions.html">
+My older paper
+"Readable s-expressions and sweet-expressions: Getting the infix fix and fewer parentheses in Lisp-like languages"</a>
+has <i>lots</i> more information.
+It's the original paper I used to
+identify and discuss various ways to make s-expressions to read.
+It identifies three approaches that seem particularly promising:
+indentation, name-prefixing (so func(x y) is the same as (func x y)),
+and infix support.
+In the process of creating sweet-expressions, I went through many
+alternatives, and wrote down in this paper what I learned as I went.
+It turns out that many people have tried to solve this problem but foundered;
+I think by learning from their problems I've got a better mousetrap.
+You may find my thoughts helpful!
+This resulted in the development of sweet-expressions version 0.1.
+</ul>
+
+<h2>Implementation approaches</h2>
+<p>
+I want to have final sweet-expression readers that
+work on Scheme, Common Lisp, emacs Lisp, and ACL2 at least,
+without having to implement it multiple times.
+Scheme is in some ways the most strict of the these,
+e.g., it's picky about the meaning of a boolean value,
+what is at the end of a list, and the legal names of parameters.
+Thus, I've been implementing sweet-expressions in
+a small subset of "easily translatable"
+Scheme, so that it can eventually be auto-translated to other Lisps.
+(It's easier to translate from more-picky Scheme to others than vice-versa.)
+<a href="http://www.cs.utexas.edu/users/moore/publications/hyper-card.html">
+ACL2 has a very short list of built-ins</a>, which are
+similar to Scheme's, so this seems plausible.
+Perhaps I could use
+<a href="http://www.ccs.neu.edu/home/dorai/">Dorai Sitaram's
+Scmxlate Scheme translate tool (LGPL license)</a> so that I could write
+a single implementation and have it be useful in Common Lisp (CL) and ACL2
+as well.
+<!-- There's also:
+http://www.cs.cmu.edu/afs/cs/project/ai-repository/ai/lang/scheme/impl/pseudo/0.html
+but I found no license info.
+-->
+The final program will be so small
+that a specialized program to do the translation might be enough.
+<p>
+One nastiness about this technique:
+In Scheme, recursion is how you do everything.
+In Common Lisp, tail recursion isn't guaranteed.
+However, tail recursion is
+a very common optimization in simple cases, e.g., where
+a function tail recurses into itself.
+In ACL2, mutually-recursive
+functions have to be declared, which is annoying -
+but they <i>can</i> occur.
+In fact, ACL2's only iteration technique is recursion.
+Emacs lisp doesn't optimize tail recursion at all, but since code doesn't
+require a deep stack that should be okay.
+<a href="http://www.accesscom.com/~darius/writings/scheme-for-lispers.html">
+Scheme for Common Lispers</a> discusses differences between Scheme and CL, as
+does the
+<a href="http://en.wikipedia.org/wiki/Common_Lisp">Wikipedia article on
+Common Lisp</a>.
+<a href="http://www.cs.utexas.edu/~novak/schemevscl.html">Here's a
+convenient table of Common Lisp/Scheme function "equivalences"</a>.
+<a href="http://www.ccs.neu.edu/home/cce/acl2/">DrACuLa combines
+ACL2 with DrScheme</a>, and
+<a href="http://lambda-the-ultimate.org/node/1343">this page discusses
+combining ACL2 with DrScheme</a> (basically, ACL2 builds on just a few
+primitives, so DrScheme just implemented those and ACL2 showed up!).
+<p>
+Ideally, an implementation should go both ways
+(translate text to S-expressions, and
+pretty-print S-expressions as indented with infix format).
+It should be absolutely rock-solid (maybe even proved).
+It should also provide a "check for change" tool, e.g., read in some
+text using the 'regular' read and the indented, and make sure there's
+no change.
+
+<h1>Why am I bothering?</h1>
+<p>
+I'm very interested in improving the security and safety of programs.
+Doing that well requires good program analysis tools.
+S-expressions have proven themselves, over many decades,
+to be a very good tool for creating programs to
+transform or analyze programs (or other symbolic systems).
+Many proving tools such as ACL2 and PVS are based on s-expressions,
+as well as existing computer alegebra tools like
+<a href="http://savannah.nongnu.org/projects/axiom">Axiom</a> and
+Maxima.
+<p>
+Sadly, traditional s-expressions are nearly unreadable to most people,
+making them difficult to use, and a notoriously poor way to communicate
+with a wider world.
+Its inability to properly support infix notation directly -
+a basic starting point for symbolic manipulation of mathematics -
+is laughable in the 2000s.
+By having a <i>readable</i> notation for s-expressions, I hope to be able to
+spur on better abilities for programs that analyze programs... resulting
+(perhaps) in more secure and safe programs.
+<p>
+Besides, I'm drawn like a moth to the flame of "impossible" problems.
+For more proof of this character flaw, see my
+<a href="http://www.dwheeler.com/trusting-trust">trusting trust
+web page</a>.
+
+<h1>Other resources</h1>
+<p>
+There are many programs available to aid s-expression readability;
+<a href="http://sourceforge.net/svn/?group_id=169247">You can use
+the Subversion SCM tool to quickly extract the latest versions of the
+whole set</a>.
+<a href="readable/trunk/README">This README (local copy) explains more</a>.
+<p>
+Other files on <i>this</i> web page
+that can improve s-expression readability are here:
+<ol>
+<li><a href="readable/trunk/gloria-infix.lisp">gloria-infix.lisp</a> - an infix macro for Common Lisp, MIT license
+<li><a href="readable/trunk/gloria-infixdemo.lisp">gloria-infixdemo.lisp</a> - demo of above
+<li><a href="readable/trunk/iformat.cl">iformat.cl</a> - an I-expression formatter in Common Lisp
+<li><a href="sugar-original.scm">sugar-original.scm</a> - Original Scheme implementation of I-expressions, from SRFI-40.
+<li><a href="sugar.scm">sugar.scm</a> - Scheme implementation of I-expressions, modified from SRFI-49.
+</ol>
+
+<p>
+Other web pages that might be of interest include:
+<ol>
+<li>
+<a href="http://www.accesscom.com/~darius/">Darius Bacon's page</a>
+(code to implement indenting and infix).
+<li>
+<a href="http://srfi.schemers.org/srfi-49/srfi-49.html">SRFI-49,
+I-expressions</a>
+are an alternative method for presenting s-expressions
+(either program or data), using indentation.
+I-expressions have no special cases for semantic constructs of the language.
+SRFI 49 includes a sample implementation with an MIT-style license.
+<li>
+<a href="http://www.cs.berkeley.edu/~russell/code/logic/algorithms/infix.lisp">
+Peter Norvig’s book, “Artificial Intelligence: A Modern Approach.” includes
+a simple Lisp program that converts infix to s-expression format</a>.
+It <a href="http://www.norvig.com/license.html">
+appears to be open source software</a>.
+<li>
+<a href="http://folk.uio.no/jornv/infpre/infpre.html">Infpre is
+A Common Lisp infix utility</a> (LGPL license).
+It converts between prefix and infix.
+"The intended use is for CL programs with long math formulas", and it
+contains the functions "infix-&gt;prefix" and "prefix-&gt;infix", as well
+as the macros "math" and "!!".  It supports precedence.
+
+<li>
+<a href="http://gnuvola.org/software/guile/doc/Reading-Infix.html">
+Guile's ice-9 infix module</a>.
+Infix expressions are surrounded by #[...]; precedence, infix, and
+prefix functions are supported (though you must declare each one before use);
+name-prefixed functions are used with comma-separated parameters.
+However, you can't mix ordinary Lisp code inside them (e.g., there
+doesn't seem to be support for quasiquotations); it switches to
+a completely different and incompatible language inside.
+
+<li>
+GEE/Infix and Guile-reader, part of
+<a href="http://www.gnu.org/software/guile/gnu-guile-projects.html">
+GNU Guile's projects</a>.
+
+<li>
+<a href="http://xkcd.com/297/">XKCD's cartoon about LISP and parentheses</a>.
+
+<li>
+<a href="http://groups.google.com/group/comp.lang.lisp/browse_thread/thread/15dda46fccb25159/1aafcab8cd435e93">comp.lang.lisp discussion/flamefest about this</a>
+<li><a href="http://people.csail.mit.edu/mikelin/ocaml+twt/">OCaml's
+"The Whitespace Thing" (twt)</a>
+
+<li>
+<a href="http://www.complang.tuwien.ac.at/anton/euroforth/ef08/papers/haley.pdf">
+"An infix syntax for Forth (and its compiler)"
+by Andrew Haley (Red Hat) (2008)
+</a>.
+Traditional Forth is exclusively postfix, and has many of the same
+readability problems as Lisp... so Haley is trying to fix that,
+by creating a reader that supports a more-readable syntax.
+
+<li>
+Lisp is not perfect.
+Those who think it is may want to look at essays like
+<a href="http://steve-yegge.blogspot.com/2006/04/lisp-is-not-acceptable-lisp.html">Lisp is not an Acceptable Lisp</a>.
+
+</ol>
+
+
+<p>
+To use this, of course you'll need a Lisp implementation.
+<a href="http://tuxdeluxe.org/node/199">
+The Road To Lisp</a> comments on some implementations.
+<a href="http://common-lisp.net/~dlw/LispSurvey.html">Common Lisp
+Implementations</a> is a great comparison of Common Lisp implementations.
+Other sources of information on Lisp include
+<a href="http://www.gigamonkeys.com/book/">Practical Common Lisp by
+Peter Seibel</a>
+(here's
+<a href="http://video.google.com/videoplay?docid=448441135356213813&q=engedu">
+Practical Common Lisp (video of Peter Seibel)</a>) and
+<a href="http://www.paulgraham.com/lisp.html">Paul Graham's Lisp page</a>.
+<a href="http://xkcd.com/c224.html">Humility about Lisp is good, though</a>.
+
+<!--
+Sadly, I doubt I have the time to take this further.
+But with a paper that lays out the ideas, and some code to
+get started, I hope others will be able to pick this up and move it forward.
+-->
+<p>
+There's probably room for a few different approaches, but in the end,
+I hope there will be a short list of useful approaches and freely-available
+tools to make Lisp-like systems easier to use.
+<p>
+<hr>
+
+<p>
+You can view the
+<a href="https://lists.sourceforge.net/lists/listinfo/readable-discuss">
+readable-discuss mailing list</a> or
+<a href="http://www.dwheeler.com">my home page</a>.
+</body>
+</html>
+
+<!--
+  (define (show) (write (read)) (show))
+-->
+

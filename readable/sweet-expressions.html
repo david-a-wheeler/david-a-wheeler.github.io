@@ -1,0 +1,751 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Sweet-expressions: A readable format for Lisp-like languages</title>
+<meta name="description" content="Briefly explains sweet-expressions, a readable format for S-expressions for Lisp-like programming languages that adds indentation, name-prefixing, and infix support">
+<meta name="keywords" content="sweet-expression, sweet-expressions, s-expression, s-expressions, Lisp, Common Lisp, Scheme, curly infix, modern-expressions, DSSSL, BitC, ACL2, IACL2, Emacs Lisp, M-expression, sweet-expression, sweet-expressions, infix, prefix, readability, readable, list, lists, David, Wheeler, David A. Wheeler, David Wheeler, Dylan, Logo, Arc, parentheses, parenthesis, silly parentheses, syntax, I-expression, sweetexpr">
+<link rel="stylesheet" type="text/css" href="paper.css">
+<meta name="generator" content="vim">
+</head>
+<body>
+
+<h1 class="title">Curly infix, Modern-expressions, and Sweet-expressions: A suite of readable formats for Lisp-like languages</h1>
+<center>by <a href="http://www.dwheeler.com">David A. Wheeler</a>, 2006-06-17 (Revised 2009-06-02)</center>
+<br>
+
+
+<p>
+<center>
+<table border="1">
+<tr>
+<td>
+<font size="+3">
+This page is obsolete; see
+<a href="http://readable.sourceforge.net">http://readable.sourceforge.net</a>
+instead.
+</font>
+</td>
+</tr>
+</table>
+</center>
+<p>
+
+
+<i>
+Many people find Lisp s-expressions hard to read as a programming notation.
+This paper briefly describes a suite of three approaches I've developed:
+curly infix, modern-expressions, and sweet-expressions.
+These are not tied to any particular semantic, and
+can do everything regular s-expressions can do.
+</i>
+
+
+<h1>The Problem</h1>
+<p>
+Lisp-derived systems normally represent programs as <i>s-expressions</i>,
+where an operation and its parameters is surrounded by parentheses;
+the operation to be performed is identified first,
+and each parameter afterwards is
+separated by whitespace.  So the traditional &#8220;2+3&#8221; is written as
+&#8220;(+&nbsp;2&nbsp;3)&#8221;.
+This is regular, but most people find them hard to read.
+Even if <i>you</i> are used to them, this is a problem when trying to
+work with others.
+<p>
+Early Lisp was even harder to read, because it lacked abbreviations like 'x
+for (quote&nbsp;x).  I believe that additional abbreviations and conventions
+can be created so that programs can be easily read <i>without</i> losing
+Lisp's capabilities.
+In particular, these are <i>not</i> tied to any particular semantic, so you
+can do metaprogramming and meta-meta-programming (and so on), all without
+problems.
+
+<h1>Curly Infix, Modern-expressions, and Sweet-expressions</h1>
+<p>
+I've developed a 3-layer approach to making Lisp more readable, which
+is all based on adding additional abbreviations to an S-expression reader
+that can work with <i>any</i> S-expression (and are not tied to any
+particular semantic).
+These layers are:
+<ol>
+<li><i>Curly infix</i>: Any expression surrounded by {...} is
+an abbreviation for infix,
+e.g., {n&nbsp;&lt;=&nbsp;2} becomes (&lt;=&nbsp;n&nbsp;2).
+No precedence is included, by design (see below).
+<li><i>Modern-expressions</i>: Includes curly infix, and adds special meanings
+to the prefixed grouping symbols (), [], and {}.
+Thus, f(1&nbsp;2) maps to (f&nbsp;1&nbsp;2).
+<li><i>Sweet-expressions</i>: Includes modern-expressions, and adds indentation
+as meaningful (like Python, Haskell, and many other languages).
+</ol>
+<p>
+All of these can be used in <i>any</i> Lisp-like language
+(Common Lisp, Scheme, Emacs Lisp, ACL2, BitC, etc.).
+Curly-infix is 100% compatible with existing Lisp code; modern-expressions
+and sweet-expressions are 100% compatible with existing well-formatted Lisp
+code.
+Yet they add additional abbreviations to the reader that make
+programming much more pleasant.
+Since they are automatically translated into s-expressions, yet
+maintain <i>all</i> their capabilities (quasiquoting, etc.), they
+lose no power.
+
+<h2>Sweet-Expression Examples</h2>
+<p>
+Here are two quick examples -  we'll use sweet-expressions version 0.2
+to represent calculating factorials and Fibonacci numbers,
+in both cases using Scheme:
+
+<br>
+<br>
+<!-- <table cellpadding="4" border="1">-->
+<table cellpadding="4" border="1" rules="cols">
+<tr>
+<th align="center">(Ugly) S-expression</th>
+<th align="center">Sweet-expression 0.2</th>
+</tr>
+<tr>
+<td align="left" valign="top">
+<pre>
+(define (fibfast n)
+  (if (&lt; n 2)
+    n
+    (fibup n 2 1 0)))
+</pre>
+</td>
+<td align="left" valign="top">
+<pre>
+define fibfast(n)  ; Typical function notation
+  if {n &lt; 2}       ; Indentation, infix {...}
+    n              ; Single expr = no new list
+    fibup(n 2 1 0) ; Simple function calls
+</pre>
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<pre>
+(define (fibup max count n-1 n-2)
+  (if (= max count)
+    (+ n-1 n-2)
+    (fibup max (+ count 1) (+ n-1 n-2) n-1)))
+</pre>
+</td>
+<td align="left" valign="top">
+<pre>
+define fibup(max count n-1 n-2)
+  if {max = count}
+    {n-1 + n-2}
+    fibup max {count + 1} {n-1 + n-2} n-1
+</pre>
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<pre>
+(define (factorial n)
+  (if (&lt;= n 1)
+    1
+    (* n (factorial (- n 1)))))
+</pre>
+</td>
+<td align="left" valign="top">
+<pre>
+define factorial(n)
+  if {n &lt;= 1}
+    1
+    {n * factorial{n - 1}} ; f{...} =&gt; f({...})
+</pre>
+</td>
+</tr>
+</table>
+<p>
+Note that you can use traditional math notation
+for functions;
+<tt>fibfast(n)</tt> maps to <tt>(fibfast&nbsp;n)</tt>.
+Infix processing is marked with {...};
+<tt>{n&nbsp;&lt;=&nbsp;2}</tt> maps to <tt>(&lt;=&nbsp;n&nbsp;2)</tt>.
+Indentation is significant, unless disabled by (...), [...], or {...}.
+This example uses variable names with embedded "-" characters; that's
+not a problem, because the infix operators must be surrounded by whitespace
+and are only used when {...} requests them.
+<p>
+It's actually quite common to have a function call pass one parameter,
+where the parameter is calculated using infix notation.
+Thus, there's a rule to simplify this common case (the prefix {} rule).
+So factorial{n&nbsp;-&nbsp;1} maps to
+factorial({n&nbsp;-&nbsp;1}) which maps to
+(factorial&nbsp;(-&nbsp;n&nbsp;1)).
+<p>
+Credit where credit is due: The Fibonacci number code is loosely based on
+<a href="http://hansonchar.blogspot.com/2006/01/fibonacci-numbers-in-scheme.html
+">an example by Hanson Char</a>.
+
+
+<h1>Rules for Curly Infix, Modern-Expressions, and Sweet-Expressions</h1>
+<p>
+I've devised three levels of notation and given them each names:
+Curly Infix, Modern-Expressions, and Sweet-Expressions.
+Each builds on the previous one, so let's take them in order.
+<p>
+<h2>Curly Infix</h2>
+<p>
+"Curly infix" adds one simple rule:
+<blockquote>
+<i>
+{...} contains an "infix list".
+If the enclosed infix list has (1) an odd number of parameters,
+(2) at least 3 parameters, and
+(3) all even parameters are the same symbol, then it is mapped to
+"(<i>even-parameter</i>&nbsp;<i>odd-parameters</i>)".
+Otherwise, it is mapped to "(nfx&nbsp;<i>list</i>)" &#8212; you'll need to
+have a macro named "nfx" to use it
+</i>
+</blockquote>
+<p>
+This rule means that
+{n&nbsp;=&nbsp;0} maps to (=&nbsp;n&nbsp;0),
+{3&nbsp;+&nbsp;4&nbsp;+&nbsp;5} maps to (+&nbsp;3&nbsp;4&nbsp;5),
+{3&nbsp;+&nbsp;{4&nbsp;*&nbsp;5}} maps to (+&nbsp;3&nbsp;(*&nbsp;4&nbsp;5)),
+and {3&nbsp;+&nbsp;4&nbsp;*&nbsp;5} maps to
+(nfx&nbsp;3&nbsp;+&nbsp;4&nbsp;*&nbsp;5).
+<p>
+This rule may seem arbitrary, but it isn't.
+The first 3 conditions define a "simple infix" expression, which is
+exactly the set of all infix expressions that can represent a single list
+(an expression like (+ 3) doesn't really have an infix operator,
+since by definition an infix operator is <i>between</i> its operands).
+At first I considered reporting an error if a simple infix expression
+isn't sent, but prepending "nfx" is much more flexible.
+<p>
+Consistently using {...} so infix operators are always equal in a particular
+list has the advantage that <b>all</b> macros will see the usual list form -
+with the function in the first position.
+If you want operator precedence, define an nfx macro
+to implement the precedence rules you desire.
+Or, if you <b>never</b> want precedence, define nfx to be an error.
+The even parameters must be exactly the same symbol; pointer equality such
+as Scheme's eq? is a good way to test this.
+Every infix operator must be surrounded by whitespace for this rule
+to work as designed.
+<p>
+Notice that this does <i>not</i> include any precedence system, by design.
+Many people have devised infix processing systems for Lisps, and of course,
+they implement various mechanisms for precedence.
+If you have a specific semantic in mind, that's useful.
+But people often choose Lisp-based languages so that they can do
+meta-programming (and meta-meta-programming) - so soon there is no
+<i>single</i> precedence set, making precedence handling more harmful
+than helpful.
+It also causes trouble with code-sharing - not everyone agrees on a precedence
+level.
+By intentionally <i>not</i> building in a precedence system, we make things
+amazingly simple - we don't need to register functions, decide their order,
+or anything like it - making programming much simpler and easier.
+There's no need to memorize a precedence system, code transfers easily,
+and code is generally easy to read too (again, because you don't have
+to memorize a precedence system).
+In cases where you <i>do</i> want a precedence system, you can implement
+an "nfx" macro.
+<p>
+This use of {...} is highly compatible with various Lisps.
+I think this rule would be a great backwards-compatible
+addition to the <i>standard</i> reader of any Scheme and Common Lisp
+implementation.
+Scheme specifically reserves {...} for future use
+(R5RS section 2.3, R6RS section 4.21).
+Common Lisp does not define {} (see section 2.4 of the
+Common Lisp Hyperspec, based on ANSI Common Lisp X3.226), but notes
+its potential use by users.
+BitC spec version 0.10 (June 17, 2006) section 2.4.3 also reserves {...}.
+<p>
+It's important to note that inside the infix expression you can do
+<i>anything you can do in normal Lisp</i>.
+This is different from nearly all Lisp infix systems, which have their own
+incompatible language inside that can't handle arbitrary s-expressions.
+You can use arbitrary s-expressions with quasi-quoting, unquote-splicing,
+or whatever inside, and all without "registering" anything.
+<p>
+Surprisingly, this simple mechanism is actually enough to do what
+people actually <i>want</i> in an infix mechanism for Lisp.
+You can add things, like {x&nbsp;+&nbsp;1}, or compare values,
+like {x&nbsp;&lt;=&nbsp;5}.
+<p>
+This is an unusually simple mechanism, but like much of Lisp, its
+power comes from its simplicity.
+
+<p>
+<h2>Modern-Expressions</h2>
+<p>
+Modern-expressions build on curly-infix's use of {...}.
+Modern-expressions also add the ability to use [...],
+as well as (...), to surround ordinary
+lists (Scheme R6RS does this too, and both Common Lisp and Scheme R5RS
+reserve [...] for future use).
+<p>
+What's more, if (...), {...}, or [...] are <i>prefixed</i> with a symbol
+or list (i.e., have no whitespace between them), they have a new meaning
+in modern-expressions:
+<ol>
+<li><b>Prefixed (...)</b>.
+Syntax of the form <b>e(...)</b> &#8212; with <b>no whitespace</b>
+between symbol or list e and the open parenthesis &#8212;
+are mapped to <b>(e&nbsp;...)</b>.
+Any parameters in "..." are space-separated.
+This produces another expression, so this can be repeated (left-to-right).
+&#8227;
+<i>
+This adds support for traditional function notation.
+For example, "cos(x)" maps to "(cos&nbsp;x)",
+"max(3&nbsp;4)" maps to "(max&nbsp;3&nbsp;4)",
+and "f(x)(a&nbsp;b)" maps to "((f&nbsp;x)&nbsp;a&nbsp;b)".
+Note that this is especially convenient for certain styles of
+functional programming, including lambda expressions;
+in Scheme, lambda((x)&nbsp;{x&nbsp;+&nbsp;x})(4) would compute as 8.
+</i>
+
+<li><b>Prefixed {...}</b>.  A prefixed expression f{...}, where f is a
+symbol or list, is an abbreviation for f({...}).
+&#8227;
+<i>
+This rule simplifies combining function calls and
+infix expressions when there is only one parameter to the function call.
+This is a common case; for example, "not" (which is normally given only
+one parameter) often encloses infix "and" and "or".
+Thus, f{n&nbsp;-&nbsp;1} maps to (f&nbsp;&nbsp;(-&nbsp;&nbsp;n&nbsp;&nbsp;1)).
+When there is more than one function parameter, use the normal term-prefixing
+format instead, e.g., f({x&nbsp;-&nbsp;1}&nbsp;{y&nbsp;-&nbsp;1})
+maps to (f&nbsp;&nbsp;(-&nbsp;&nbsp;x&nbsp;&nbsp;1)&nbsp;&nbsp;(-&nbsp;&nbsp;y&nbsp;&nbsp;1)).
+</i>
+
+<li><b>Prefixed [...]</b>.  Prefixed square brackets e[...],
+where e is a symbol or list,
+maps to (bracketaccess&nbsp;e&nbsp;...).
+&#8227;
+<i>Thus, "t[x]" maps to
+"(bracketaccess&nbsp;t&nbsp;x)".  This is intended to simplify use of
+indexed arrays, associative arrays, and similar constructs.
+You could even define bracketaccess as a macro that simply returns
+its arguments; in this case f[5] would eventually map to (f&nbsp;5).</i>
+</ol>
+
+<p>
+These combine well with curly-infix forms of {...}.
+For example, {-(x)&nbsp;*&nbsp;y} maps to
+(*&nbsp;(-&nbsp;x)&nbsp;y).
+
+<p>
+A common extension must be supported: (.&nbsp;x) must mean x.
+This provides a simple way to
+escape certain constructs, such as the "." or "group" symbols
+that have extra meaning in sweet-expressions.
+It turns out that in a typical implementation of a list reader, it takes
+extra effort to <i>prevent</i> this extension, so this is an easy
+extension to include.
+
+<p>
+Modern-expressions are very compatible with most existing text editors
+for Lisp.
+Editors not "understand" the code, but many work to match
+(...), {...}, and [...], and that is enough to be useful.
+After all, Scheme R6RS already requires support for [...] anyway, and
+Common Lisp readers are designed to allow {...} to be overridden, so
+many text editors are designed to support this.
+Modern-expressions are easy to use at the command line, too -
+for example, you don't need to enter a blank line to execute something.
+
+
+<h2>Sweet-expressions</h2>
+<p>
+Sweet-expressions start with modern-expressions and add
+indentation as meaningful:
+<blockquote>
+<i>
+Indentation is meaningful; the "I-expressions" of
+<a href="http://srfi.schemers.org/srfi-49/srfi-49.html">Scheme SRFI-49</a>
+are supported, with
+<a href="readable/trunk/spec-indent.txt">the 2008
+I-expression revisions </a>.
+An indented line is a parameter of its parent,
+later terms on a line are parameters of the first term, and
+lists of lists are prefixed with the term "group".
+A line with exactly one datum, and no child lines, is simply that item;
+otherwise that line and its child lines are themselves a new list.
+Indentation is disabled inside the grouping pairs (), [], and {}, whether
+they are prefixed or not.
+Lines with only leading whitespace and a ;-comment are completely ignored -
+even their indentation is irrelevant.
+Empty lines, possibly with tabs and spaces, are ignored during reading of
+the initial line of an expression; otherwise they end an expression.
+</i>
+</blockquote>
+<p>
+A blank line always terminates a datum, so once you've entered a
+complete expression, "Enter&nbsp;Enter" will always end it.
+The "blank lines at the beginning are ignored" rule eliminates a
+usability problem with the original I-expression spec, in which
+two sequential blank lines surprisingly return ().
+(The sample implementation <i>did</i> end expressions on a blank line -
+the problem was that the spec didn't capture this.)
+A function call with 0 parameters must be surrounded or immediately
+followed by a pair of parentheses: (pi) or pi().
+<p>
+Generally it's best to start each new expression on the left edge;
+if you choose not do to that, include a blank line between each new expression.
+
+
+<h1>Comments on the Rules</h1>
+<p>
+<p>
+Note that usual Lisp quoting rules still work,
+so 'a still maps to (quote&nbsp;a).
+But they work with the new capabilities, so 'f(x) maps to
+(quote&nbsp;(f&nbsp;x)).  Same with quasiquoting and comma-lifting.
+A ";" still begins a comment that continues to the end of a line, and
+"#" still begins special processing.
+<p>
+Implementations may call underlying implementations when they
+encounter "#"; in those cases, an expression begun by "#" will not
+continue to suport sweet-expressions.  For example, in Scheme,
+use vector(...) instead of #(...).
+Many Scheme implementations have nonstandard extensions for "#",
+so a portable sweet-reader can't easily reimplement the functionality of a
+local "#".
+Nor can the sweet-reader easily call on the underlying implementation of "#"
+on some implementations, e.g.,
+Scheme only supports a one-character peek with no unget character.
+
+<p>
+If an implementations called a "standard" s-expression reader when
+it encountered an open parenthesis, it would
+be extremely backward-compatible with essentially all existing Lisp files.
+However, this mode is hard to use; it would mean that you must use [...]
+for lists, and failure to do so would produce mysterious errors.
+After some experimentation, I found that it was a bad idea and dropped it.
+
+<p>
+The (.&nbsp;x) rule is a common extension in Scheme implementations;
+it's required here so that I-expression's "group" term can be easily escaped.
+Note that any "(" preceded by whitespace, "(", "{", or "[" is unprefixed.
+
+<p>
+Note that you <i>have</i> to disable indentation
+to use infix operators as infix operators.
+This doesn't seem to be a problem in practice.
+
+<p>
+With sweet-expressions, you can use the traditional Lisp read-eval-print loop
+as a calculator, as long as you remember to surround infix expressions
+with {...} and surround infix operators with whitespace.
+For example, "{3&nbsp;+&nbsp;4}" will be mapped to (+&nbsp;3&nbsp;4),
+which when executed will produce "7".
+Use normal function notation for unary functions, e.g.,
+"{-(x)&nbsp;/&nbsp;2}" maps to
+"(/&nbsp;(-&nbsp;x)&nbsp;2)".
+Nest {...} when you need to, e.g.,
+"{3&nbsp;+&nbsp;{4&nbsp;*&nbsp;5}}"
+will map to "(+&nbsp;3&nbsp;(*&nbsp;4&nbsp;5))".
+If you mix infix operators at the same level, you must have an "nfx"
+macro defined to handle precedence, and you must be careful about other
+macros you use.
+
+<p>
+Notice that since all the transforms happen in the <i>reader</i>,
+sweet-expressions are highly compatible with macros.
+Sweet-expressions simply define new abbreviations, just as 'x became
+(over time) a standard abbreviation for (quote&nbsp;x).
+As long as simple infix expressions are used (ones that don't create nfx),
+after reading the expressions <i>all</i> expressions are normal s-expressions,
+with the operator at the initial position.
+So macros defined by Common Lisp's macros, etc., will work as expected.
+Common Lisp has some hideously confusing terminology, though.
+Common Lisp has macros, but it also has a completely different
+capability: "macro characters", which introduce "reader macros" -
+i.e., hooks into the reader used during read time.
+The Common Lisp Hyperspec clearly states in its glossary
+on macro characters, "macro characters have nothing to do with macros",
+but I think they should have chosen a name that had nothing to do with
+macros as well.
+Obviously sweet-expressions <i>can</i> affect macro characters,
+since they implement a different reading syntax.
+This doesn't affect most real Common Lisp programs, which
+often avoid macro characters anyway.
+Common Lisp macro functions (e.g., defmacro and macrolet) work just fine
+with sweet-expressions.
+
+<!--
+<p>
+A sweet-expression pretty-printer would need to determine which functions
+should be used in infix expressions.
+I recommend that in Scheme,
+the sequence =&gt; should <i>not</i> be considered an infix operator.
+Otherwise, I recommend that the following default to being infix operators:
+<ul>
+<li>A sequence of 1-5 punctuation characters, namely, the Unicode math
+characters (U+2200 through U+22FF) and this set:
+    + - / * &lt; &gt; = &amp; |
+<li>One to five colons (:).  <i>The colon is often a namespace manipulator,
+as well an indicator of parameter keywords, so combining it with other characters can be problematic.</i>
+<li>Whatever is mapped by ||.  <i>This may be the "null" atom.</i>
+<li>The words "and", "or", and "xor", in upper or lower or initial-upper case.
+<i>The terms "and" and "or" are special forms in essentially all Lisps,
+since they typically short-circuit. Function xor essentially always means
+"exclusive-or" when used, so for consistency it makes sense to treat
+it the same way as "and" and "or".</i>
+</ul>
+-->
+
+<p>
+I know of a possible future extension to sweet-expressions: Splicing
+with "\".
+<a href="http://www.mail-archive.com/readable-discuss@lists.sourceforge.net/msg00124.html">
+I posted a splicing proposal on the readable mailing list</a>.
+When doing indentation processing, if the first character of a form is "\" followed by whitespace:
+<ol>
+<li>
+If it's the last character of the line (other than 0 or more spaces/tabs), then the newline is considered a space, and the next line's indentation is irrelevant. This continues the line. (Note that comments cannot follow, because that would be confusing.)
+<li>If it's between items on a line, it's interpreted as a line break to the same indentation level.
+<li>Otherwise, if it's at the beginning of a line (after 0+ spaces/tabs), it's ignored - but the first non-whitespace character's indentation level is used. 
+</ol>
+This is mainly to handle named parameters more gracefully, e.g.:
+<pre>
+  myfunction \
+    :option1 \ f(a)
+    :option2 \ g(b)
+</pre>
+could map to (myfunction :option1 (f a) :option2 (g b)).
+Note that f(a) or g(b) could be the beginning of a complex program
+using indentation, since \ does not turn off indentation.
+
+
+<h1>Programming with Sweet-expressions</h1>
+<p>
+<h2>General Rules</h2>
+<p>
+Mentally, this is pretty straightforward - on each line,
+write an expression; everything after the first term on the line, or
+all child lines, are parameters of the first term.
+You can use grouping operators (), [], and {}
+to put subexpressions on the same line, if you want.
+Use -(...) to negate something.
+<p>
+Whenever you have an infix expression, just surround it with {...}.
+You can use the form f(...) to call a function;
+if it has zero parameters, express it as f(),
+and if it has more than one parameter, separate the parameters with spaces.
+The f(...) form is especially handy for creating short expressions
+as a parameter on a line; for long expressions, use indentation instead.
+<p>
+The word "group" starts lists of lists in sweet-expressions
+(and I-expressions).
+This makes it easy to create lists of lists, without having to create
+special syntax for each variation.
+<p>
+This is all implemented by modifying the "read" function, so that it recognizes
+all these formats and generates s-expressions.
+Since macros operate on s-expressions, macros work just fine.
+You can have infix operators in macro definitions, and you can have
+infix operators in the expressions processed by macros.
+<p>
+Interactively, you can just type 'load("filename")' or {3 + 2},
+then Enter Enter.
+<p>
+Certain functions require groups, and you learn what they are (and their
+patterns) they're pretty easy to manage.
+
+<h2>Examples of specific constructs</h2>
+<p>
+Here are a few examples, using sweet-expressions.
+<p>
+The "cond" form is widely-used, and works beautifully.
+Here's an example:
+<pre>
+define f(x)
+  ; display negative, zero, or positive, and return -1, 0, or 1 respectively.
+  {x &lt; 0} display("negative") -1
+  {x = 0} display("zero")      0
+  #t      display("positive") +1
+</pre>
+If the condition gets long, or you have many operations, just make the
+operations child lines of the condition.
+<p>
+The "let" forms are a case where you need "group". E.G.:
+<pre>
+let
+  group
+    x 2
+    y 3
+  {x * y}
+</pre>
+<p>
+I actually don't like "let" all that much anyway, even when using
+traditional Lisp notation.
+You might find it more efficient to define a single-variable let.
+Here's a straight s-expression form of this, using the define-macro
+form supported by many Scheme implementations including guile
+(it's a valid sweet-expression too, of course):
+<pre>
+(define-macro let1
+  ; Simple single-variable "let"; lets "variable" to "value", then computes.
+  (lambda (variable value . computations)
+    `(let ((,variable ,value)) ,@computations)))
+</pre>
+<p>
+By the way, here's the same macro, shown as a sweet-expression:
+<pre>
+define-macro let1
+  ; Simple single-variable "let"; lets "variable" to "value", then computes.
+  lambda (variable value . computations)
+    `let ((,variable ,value)) ,@computations)
+</pre>
+<p>
+Now we can do the same thing this way:
+<pre>
+let1 x 2
+  let1 y 3
+    {x * y}
+</pre>
+
+<p>
+Here's a larger example, reformatted from the example in the
+Scheme Fixnum book:
+<pre>
+define solve-kalotan-puzzle
+  lambda []
+    let
+      group
+        parent1         amb('m 'f)
+        parent2         amb('m 'f)
+        kibi            amb('m 'f)
+        kibi-self-desc  amb('m 'f)
+        kibi-lied?      amb(#t #f)
+      assert
+       distinct?(list(parent1 parent2))
+      assert
+       if eqv?(kibi 'm)
+           not(kibi-lied?)
+      assert
+       if kibi-lied?
+          xor
+            {eqv?(kibi-self-desc 'm) and eqv?(kibi 'f)}
+            {eqv?(kibi-self-desc 'f) and eqv?(kibi 'm)}
+      assert
+       if not(kibi-lied?)
+          xor
+            {eqv?(kibi-self-desc 'm) and eqv?(kibi 'm)}
+            {eqv?(kibi-self-desc 'f) and eqv?(kibi 'f)}
+      assert
+       if eqv?(parent1 'm)
+          and
+            eqv?(kibi-self-desc 'm)
+            xor
+             {eqv?(kibi 'f) and eqv?(kibi-lied? #f)}
+             {eqv?(kibi 'm) and eqv?(kibi-lied? #t)}
+      assert
+       if eqv?(parent1 'f)
+          {eqv?(kibi 'f) and eqv?(kibi-lied? #t)}
+      list(parent1 parent2 kibi)
+
+solve-kalotan-puzzle()
+</pre>
+
+
+<h1>Is the World Ready for this?</h1>
+<p>
+I'm well aware that there are some who don't like any change in
+Lisp notation.
+Some of these people seem to believe that the current Lisp notation was
+handed down from on high, never to be changed.
+Well, you don't have to use improvements like this, or even agree that
+they are improvements.
+But most software developers have abandoned Lisp
+precisely because of Lisp's hideous,
+inadequate notation (and I say that as someone who has used Lisp for decades).
+Lisp notation was <i>not</i> handed down from on high, and it
+<i>has</i> changed over time.
+The
+<a href="http://www.softwarepreservation.org/projects/LISP/book/LISP%201.5%20Programmers%20Manual.pdf/view">
+"LISP 1.5 Programmer's Manual"
+(by John McCarthy, Paul W. Abrahams, Daniel J. Edwards, Timothy P. Hart
+and Michael I. Levin; The M.I.T. Press, 1962, second edition)</a>
+describes the parent of all modern Lisp-based systems.
+(Note that even LISP's creator didn't think much of using S-expressions
+as a programming notation.)
+LISP 1.5 did <i>not</i> have a ' operator - you had to say (QUOTE X).
+It didn't have abbreviations for quasiquoting (`) or comma-lifting (,) either.
+Today, people would not accept a Lisp that didn't at least have the common
+abbreviation for QUOTE.
+Indeed, Tony Hasemar's book "A Beginner's Guide to Lisp" (1984) says in the
+second page of the Foreward, "do NOT buy a Lisp which does not allow
+the single-quote sign in place of the word QUOTE, unless you have
+absolutely no alternative".
+Lisp notation has been stagnant for a while; it's time to add modern
+conveniences as abbreviations.
+<!-- Its syntax allowed commas (as well as spaces) for function parameter
+separators.-->
+
+<p>
+Some objections don't seem to realize that this proposal is different.
+It's true that there have been many abandoned efforts of the past to
+improve on S-expressions, but I think all those efforts
+failed to realize that any replacement for S-expressions must be
+<i>completely general</i>, just as S-expressions are,
+and <i>not</i> tied to a particular semantic.
+Practically all past efforts, such as M-expressions and similar work,
+failed precisely because they weren't general enough.
+It's true that tooling support is necessary for any notation like this
+(e.g., in program editors), but that's why a <i>standard</i>
+format needs to be defined so tools can implement it
+(and not 1000 application-unique reader macros).
+There's no reason tools can't support sweet-expressions as well as they
+support s-expressions today.
+
+<p>
+I think most software developers will <i><b>not</b></i>
+agreeably use a Lisp-based language unless that language
+has better built-in support for an easy-to-read programming notation.
+Programs must be read by others, and if the programming notation is
+odious to read, then the language has a key flaw.
+Most developers think Lisp is odious to read, even <i>after</i>
+they've used it for a while.
+If the Lisps won't provide an easy-to-read notation,
+those developers will just use another language that's
+more user-friendly (even when it's less appropriate for their problem) -
+<i>and that is precisely what they are doing</i>.
+Here, we try to learn from the past, keep all of S-expression's benefits,
+but provide a better notation that <i>others can read</i>.
+
+
+<h1>Closing Remarks</h1>
+<p>
+Sweet-expressions can take a few minutes to learn how to use,
+just like anything else new.
+But I think they won't take long for people who already know how to
+use s-expressions, and they are far more readable in my opinion.
+Something impenetable can be written using sweet-expressions, of course,
+but at least the basics of the notation don't get in the way.
+There is a risk that the notation could deceive the reader into confusion;
+I think after using the notation for a little bit this is unlikely, but
+that's sometime that an experiment should test.
+In any case,
+in an era where developers must read a lot of code, thinking about
+ways to improve readability is important.
+I hope that this is, or is the beginnings of, a way to improve
+readability for s-expressions.
+
+<p>
+<hr>
+<p>
+For more information, see my website page at
+<a href="http://www.dwheeler.com/readable">http://www.dwheeler.com/readable</a>.
+I've also set up a SourceForge project where options like
+sweet-expressions can be discussed, and code can be shared.
+If you're interested, please join!
+
+</body>
+</html>
+
+

@@ -1,0 +1,77 @@
+------------------------------------------------------------------------
+Time: Fri, 2 Jun 2006 23:19:57 +0800
+From: "Alan Manuel Gloria"
+To: dwheeler@dwheeler.com
+CC: Subject: Re: Infix license, and broader "making Lisp readable" (xyzzy)
+
+On 5/31/06, David A. Wheeler <dwheeler@dwheeler.com> wrote:
+> Hi - I have been hunting for an open source software infix package,
+> and read your infix package with great interest:
+> http://plaza.ufl.edu/lavigne/infix.lisp
+>
+Hi! Thanks for the interest! Sorry for the somewhat late reply - we
+were having problems with our Internet connection. Dang the ISP.
+I've copy pasted the license (this little project was built on a lark,
+anyway, and I haven't looked at licenses at all - if I did, I might
+have spent more time researching about licenses than actually writing
+code ^^).
+
+The attached file is the licensed version, which is also somewhat
+later than the version on lavigne's site, including a structure
+accessor -> :
+(defclass foo () (bar nitz))
+#n(x = (make-instance 'foo))
+#n(x -> bar = 42)
+
+...although I seem to have some bugs regarding the following:
+improper list conses can't be used in an nfx notation. Has to do with
+my reduction of fungible functions (e.g. reducing x + y + z from (+ x
+(+ y z)) to (+ x y z)). My reduction uses the built-in mapping
+function that rejects improper lists like (foo . bar). Discovered it
+when I was writing a (loop...) form that ran over an associative list.
+mixing right and left associativty has problems. This works fine:
+#n(x = y = z = 42) properly gives (setf x (setf y (setf z 42))). This
+doesn't: #n(x -> bar = y @ 0 = 42) => yields (setf (setf (slot-value x
+'bar) (aref y 0)) 42)
+
+Hmm. I don't have that much time to work on it, but I'll see what I
+can hack together. Might need to write my own mapping function that
+just skips the improper lists. The other problem probably means I
+have a logical error somewhere. Oh wow.
+
+>More broadly: I've been trying to figure out how to make Lisp-like
+languages
+>(Common Lisp, Scheme, ACL2, BitC, etc.) more readable. Some
+>kind of support for an infix notation is a great start. I'm hoping to start
+>a project on SourceForge where like-minded people can discuss this,
+>and point to programs that do it. Would you be interested?
+Yes, I support that. Although I haven't programmed Lisp in a while (I
+found that my girlfriend is a lot less irritating than current
+versions of Lisp - LOL, been trying to get CLisp run a mod_lisp based
+server on a WinXP machine, failing, and finally giving up).
+
+I would think that infix notation would be a pretty good thing.
+However, there are some caveats:
+(= ..) compares two numbers with appropriate conversions between
+numeric types such that (= 0.5 1/2) is T, but my syntax's = is setf
+assignment. Worse, I can't quite decide what my == sign means - which
+equality? = equality? eq equality? eql equality? equal equality?
+string= equality???
+
+BTW some people (Rubyists) are of the opinion that Ruby is a "more
+readable" LISP.
+
+In any case, I'd like to have a Lisp language where infix and prefix
+notation are quite mixable. If you like at my infixdemo file, you'll
+see that it contains both notations with no problems. I particularly
+like the tconc function definition, which strikes me as pretty clear
+in its intent. Certainly writing x = y = z = 0 is a lot easier (if
+less consistent) than (setf x (setf y (setf z 0)))
+
+...
+
+Sincerely,
+AmkG
+
+------------------------------------------------------------------------
+

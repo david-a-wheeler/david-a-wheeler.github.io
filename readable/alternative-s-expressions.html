@@ -1,0 +1,615 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Alternatives to Sweet-expressions</title>
+<meta name="description" content="Discusses alternatives to Sweet-expressions">
+<meta name="keywords" content="s-expression, s-expressions, Lisp, Common Lisp, Scheme, DSSSL, BitC, ACL2, IACL2, Emacs Lisp, M-expression, sweet-expression, sweet-expressions, infix, prefix, readability, readable, list, lists, David, Wheeler, David A. Wheeler, David Wheeler, Dylan, Logo, Arc, parentheses, parenthesis, silly parentheses, syntax, ZY-expression, I-expression, sweetexpr">
+<link rel="stylesheet" type="text/css" href="paper.css">
+<meta name="generator" content="vim">
+</head>
+<body>
+
+<h1 class="title">Alternatives to sweet-expressions</h1>
+<center>by <a href="http://www.dwheeler.com">David A. Wheeler</a>, 2006-06-07</center>
+<br>
+
+<p>
+I separately wrote a paper on how to
+<a href="readable-s-expressions">make s-expressions more readable,
+including a proposal called sweet-expressions</a>.
+While creating sweet-expressions, I came up with some alternatives.
+I don't like them as much, but I didn't want to lose the ideas,
+so here they are (below).
+
+<h1>An alternative: Using explicit infix markers</h1>
+<p>
+The biggest area of concern, I suspect, is the infix operations
+swapping parameters.
+You can simply set the infix default to "off" above, and carry on.
+But what if you think everyone would always want to
+identify infix like that?
+<p>
+Well, if you prefer clearer identification of where the infix
+operations are occurring, that could be done instead.
+Here&#8217;s a version of the manual approach, or a printout warning that
+infix is occurring, using {...} around the infix list (without changing
+lists inside):
+<pre>
+ defun factorial (n)
+   if {n &lt;= 1}
+     1
+     {n * factorial{n - 1}}
+</pre>
+<p>
+Here&#8217;s an alternative with &#8220;?&#8221; indicating infix to follow (without
+changing lists inside):
+<pre>
+ defun factorial (n)
+   if (? n &lt;= 1)
+       1
+       ? n * factorial(? n - 1)
+</pre>
+<p>
+Here&#8217;s yet another, using #I(...):
+<pre>
+ defun factorial (n)
+   if #I(n &lt;= 1)
+     1
+     #I(n * factorial( #I(n - 1)))
+</pre>
+<p>
+But I suspect that having it done automatically, though it makes
+people nervous at first, is the better way to go.
+Simply have all printouts give normal s-expressions, or mark
+when infix is being used or must not be used,
+with the usual (...) lists in the structures
+where it cannot possibly be infix under any interpretation.
+
+
+
+<h1>Other approaches</h1>
+<p>
+Below I&#8217;ve documented some of my earlier approaches to the problem.
+They&#8217;re more abandoned thinking, and probably have other problems
+not noted below.
+I include this so that the ideas won&#8217;t be lost.
+
+<h2>My early attempts</h2>
+<p>
+My initial forays for creating an easier-to-read syntax
+travelled down the same road of most people.
+For example, I defined languages with
+infix operations (a+b), function names followed by parens
+(f(a,b)), and control structures with special rules (if, defun, etc.).
+I ended up re-learning the reasons these were not widely accepted
+by Lispers, though some past works
+made other mistakes that I could avoid.
+<p>
+One problem is that people sometimes add new parameters in
+the s-expression notation.
+The obvious way to devise a surface structure does not take this
+into account, and so some of these simple approaches have to keep re-modifying
+the grammar to handle this.
+And as a result, simple grammars tend to be
+unable to represent the full underlying language at any time.
+I think IACL2 ran into this very problem, for example;
+the infix notation is always inferior to the s-expressions, because it
+cannot access all the functionality the s-expression system can.
+That is not acceptable... and the problem is avoidable.
+<p>
+If constructs have a clear marking for the
+the end of the expression and permit extensions at the end,
+this problem mostly goes away.
+If you also have an escape hatch to s-expressions that works inside
+your other notation, the problem is solved.
+One solution I found was to use
+many different keywords map to the s-expression for &#8220;)&#8221;.
+You can use things like if.. then.. else.. fi,
+case.. esac, do.. od, def*.. end, begin.. end.
+(At first I thought it would be good to have () always map to nothing
+in the s-expression, but functions traditionally use () to enclose those
+parameters, and I believe they should use them and map to s-expression
+parentheses).
+This <i>should</i> make it easy to see the mapping to s-expressions, and
+since different keywords match different things it <i>should</i> be
+good at detecting mistakes.
+By ensuring that you allow &#8220;excess&#8221; parameters
+before the ending marker,
+you can also handle many syntax changes, e.g.,
+&#8220;if a then b else c :no-exceptions fi&#8221;.
+But most importantly, there needs to be
+some sort of general-purpose escape mechanism that can handle
+arbitrary s-expression cases, at any point inside the other notation --
+this eliminates the risk of not being flexible.
+For example, in the syntax below, {..} allows developers to create
+arbitrary s-expressions using thus not lose any functionality.
+You can quote these expressions by doing &#8217;(...) around them.
+Taking this approach produces a very traditional surface syntax, yet
+one that can access the full power of the s-expression system underneath.
+<p>
+Here&#8217;s an example of what the rules might look like, taking this approach:
+<table border="1">
+<tr><th>Infix Statement</th><th>S-expression equivalent</th></tr>
+<tr><td>A OP B</td><td>(OP A B)</td></tr>
+<tr><td>FUNCTION(A , B..)</td><td>(FUNCTION A B ...)</td></tr>
+<tr><td>(A)</td><td>A ; now we can control precedence.</td></tr>
+<tr><td>{ X , Y ... [,]}</td><td>(X Y ...)</td></tr>
+<tr><td>if X then Y else Z ... fi</td><td>(if X Y Z ...)</td></tr>
+<tr><td>if A then B elsif C then D else E fi</td><td>(if A B (if C D E))</td></tr>
+<tr><td>defun F (LIST) = ... end</td><td>(defun F (LIST) ...)</td></tr>
+<tr><td>def* ... end</td><td>(def* ... )   ; Catch unknown def functions.</td></tr>
+<tr><td>X</td><td>X  ; just copy if not special.</td></tr>
+</table>
+
+<p>
+OP is a set of symbol characters matching RE [:+-\*/&lt;&gt;=&amp;|]+.
+
+The &#8220;if&#8221; expression is slightly more complicated; it&#8217;s really:
+<pre>
+if ::= if A then B &lt;iftail&gt; fi      =&gt; (if A B &lt;iftail&gt; )
+iftail ::= elsif C then D &lt;iftail&gt;  =&gt; (if C D &lt;iftail&gt; )
+iftail ::= else Z {, ZZ}*           =&gt; Z { , ZZ}*
+</pre>
+<p>
+The { ... } form is a statement block, which has a statement list inside.
+This is an escape clause -- if all else fails, you can use this to
+create any s-expression you need (a failure of IACL2).
+Presumably, the top level is a statement list.
+<p>
+For example, using this kind of approach, you could transform
+this Common Lisp definition:
+<pre>
+ (defun factorial (n)
+   (if (&lt;= n 1)
+       1
+       (* n (factorial (- n 1)))))
+</pre>
+<p>
+Into this kind of traditional infix notation:
+<pre>
+ defun factorial(n) =
+   if (n&lt;=1) then 1
+   else n*factorial(n-1)
+   fi
+ end
+</pre>
+<p>
+By using <i>only</i> commas, semicolon can continue its old
+uses (e.g., for comments).  One problem is that if you quote things
+and use comma to indicate &#8220;don&#8217;t quote here&#8221; (&#8221;lifting&#8221;), you&#8217;ll need to pick
+another character for one or the other uses (to keep them conflicting),
+or use a whitespace rule to disambiguate them.
+<p>
+I think many would like this look, if they had to read a lot of it.
+But this takes more work to close up than regular
+s-expressions (look at the end of the function factorial),
+and text editors can&#8217;t &#8220;bounce&#8221;
+between matching beginning and end markers.
+Also, in this approach
+there will also be a lot of rules, one for each construct that
+looks like a traditional language... and that can grow pretty quickly.
+IACL2 gets hairy because of this very problem... the list becomes
+disturbingly long.
+<p>
+Another problem is knowing &#8220;where the end is&#8221;
+for interactive use; if you enter &#8220;5&#8221;
+a simple expression might worry that &#8220;newline + 3&#8221;
+would follow, which is nasty.
+A trivial (and most user-friendly)
+approach is to presume that if the levels are all closed,
+and there&#8217;s a newline, you&#8217;re done.
+You could require that the user press something special
+(say a blank line, control-D, or ;;) to force evaluation.
+Or you could presume that the outermost level is the list inside a block,
+so the expression would end in a &#8220;,&#8221;.
+The same problem occurs for quoting; you need to quote by surrounding it
+with parens, as well as a preceding quote mark, to be clear.
+<p>
+Quoting gets funny; now you need to look to see if the first &#8220;atom&#8221; ends in
+&#8220;(&#8221; and if it does, move them out... so *( 3 4) is quoted
+as &#8217;(* 3 4).
+<p>
+If you only look at the this form, and never at the s-expressions
+that result, this may not be a bad way to go.
+Dylan, Python, and others go this route.
+But if you have to look at lots of s-expressions, or handle
+a constantly-changing language, maybe this isn&#8217;t the best way.
+Perhaps there is another way, a road that is not as obvious
+and thus less travelled.
+So, let&#8217;s try to find some simple ideas that
+are general -- perhaps they will help.
+<p>
+I think there are two basic approaches:
+<ol>
+<li>Keep as close to Lisp as you can
+<li>Abandon Lisp notation.
+</ol>
+Let&#8217;s start with the first, staying as close to Lisp as possible.
+We can use I-expressions to reduce the number of parentheses, add
+&#8220;name-prefixing&#8221; to make a more common function call notation, and
+some sort of infix approach.
+Or we can abandon Lisp s-expression-like notation altogether; I
+show one approach below, which I call ZY-expressions.
+
+<h2><a name="zy-expressions">ZY-Expressions: Simple rules</a></h2>
+
+<p>
+I have another approach, where I abandon Lisp s-expression formatting
+entirely in parts.
+I don&#8217;t think these are needed, but since I thought about them,
+I thought I should document them.
+I call these ZY-expressions.
+<p>
+Of course, we can abandon trying to keep things looking just like
+s-expressions, and see if that helps.
+I would like a simple notation, and one where I can &#8220;bounce&#8221;
+between the beginning and end of an expression in my text editor
+(e.g., &#8220;%&#8221; in vim) -- since many text editors know that
+{} and () are matching pairs.
+Most of the other approaches I&#8217;ve seen (e.g., IACL2)
+that try to be &#8220;readable&#8221; yet to handle the full language they
+seem to explode into a long list of rules.
+And they tend to be fragile; they can&#8217;t handle changes to
+the syntax underneath.
+Indeed, the folks trying to develop M-expressions started, but
+never finished defining them or implementing them... they
+seemed to keep getting stuck on what the rules might be.
+Simple seems to be really necessary for a practical result.
+<p>
+How about this as a set of simple rules, and making these basically it:
+<pre>
+Infix Statement       S-expression equivalent
+a OP b                (OP x y)
+FUNC(a,b..)           (FUNC a b ...) ; NO SPACE ALLOWED after FUNC.
+(a)                   a    ; () for priority, not s-exp.
+{a, b..}              (a b...)  ; force s-exp lists using {,,}.
+a                     a  ; otherwise, things translate to themselves
+</pre>
+<p>
+We could add just a very few more rules, e.g., support
+leading &#8220;-&#8221; as well
+as infix &#8220;-&#8221; (it&#8217;s well-known how to do this).
+But if we keep things to a very short list of rules, and don&#8217;t
+try to redo all constructs, what have we gained?
+
+<p>
+In principle, this is actually not that different in
+appearance from some previous options.
+Most Algol-like alternatives of the past several decades
+start with the first two rules, including the original M-expressions
+(which used FUNCTION[x,y] instead).
+<p>
+But usually alternatives keep making MORE changes; the M-expression
+notation was never completed in part because they couldn&#8217;t decide
+where to stop.
+What happens if we stop here?
+Look at the gain: the transformation rules are VERY simple.
+The resulting notation is not identical to &#8220;traditional&#8221; notation, but
+it&#8217;s very close.
+In particular, it looks identical to spreadsheet user notation, and
+since many have used spreadsheets, it should be much easier to explain.
+<p>
+The same discussion earlier about infix operations still applies.
+I think any infix operation OP will need to have whitespace around it,
+to distinguish from names that have operations in their name.
+Repeating the same operation should translate into one s-expression,
+that is, the presentation (a OP b OP c ...) should translate
+into the s-expression (OP a b c ...).
+If you don&#8217;t want that, add parentheses, i.e., infix presentation
+(a OP (b OP c)) would become the s-expression (OP a (OP b c)).
+<p>
+Here&#8217;s the factorial program for Common Lisp, again, using this notation:
+<pre>
+defun(factorial, {n},
+   if(n &lt;= 1,
+      1,
+      n * factorial(n - 1)))
+</pre>
+<p>
+Notice that the infix operators make this simpler, and we have
+fewer parentheses to close.
+The commas unambiguously separate parameters, eliminating problems in
+figuring out when infix operations end --
+now prefix minus and infix minus are well-solved issues.
+The &#8220;)&#8221; characters unambigously end what they start, so it&#8217;s easy
+to see where things end.
+For the entire expression we do need to add (...), so we can tell
+where the entire expression ends, but only at the outmost level.
+<p>
+You now need to create a list of infix ops, their precedences,
+and their S-expression equivalents (possibly always the same name).
+You can do this indirectly by specifying a regular expression of them
+(e.g., [:+-\*/&lt;&gt;=&amp;|]+) -- that&#8217;s enough for the 4 mathematical
+operators, the usual comparison operators, and typical representations
+for &#8220;and&#8221; and &#8220;or&#8221;.
+Perhaps &#8220;^&#8221; should be added (for &#8220;power&#8221;), though &#8220;**&#8221; has a distinguished
+history as this operator.
+The &#8220;?&#8221; could be added, but some systems have that in their function names;
+other possibilities include &#8220;!&#8221;, &#8220;%&#8221;, and &#8220;~&#8221;.
+Notice that this is more than enough for other operators like
+&#8220;-&gt;&#8221; (often &#8220;implies&#8221;),  &#8220;&lt;-&gt;&#8221; (often &#8220;iff&#8221;), &#8220;=&gt;&#8221;, and so on.
+Note that this means that the underlying language <i>should not</i>
+define names that embed these characters, or, you&#8217;ll need to
+enforce rules that disambiguate between them.
+If you&#8217;re developing a new language (like BitC), then you can avoid
+defining function names with those characters, and then you don&#8217;t
+need the whitespace.
+But Common Lisp (for example)
+defines all sorts of functions with embedded &#8220;-&#8221;,
+so a disambiguation rule would be needed if this were used for Common Lisp.
+The obvious disambiguation rule is
+&#8220;must surround both sides of an infix operator with whitespace&#8221; .
+<p>
+How do you figure out when you&#8217;re done with a ZY-expression?
+After all, if &#8220;a OP b&#8221; is allowed, when you see &#8220;a&#8221; and whitespace
+you can&#8217;t know if you&#8217;re done!
+One way is to simply declare that infix operations (x OP y) cannot occur
+in an outermost expression... you have to surround them with something
+(e.g., parenthesis or make them a parameter).
+Thus, once you hit the final closing &#8220;)&#8221;, if the next character is
+whitespace, you&#8217;re done.
+<p>
+So how do you quote such ZY-expressions?
+In LISP, you quote s-expressions by adding &#8216; in front (or using the
+quote macro), and you can do the same for ZY-expressions.
+You can quote any subexpression by doing
+&#8217;( ZY-expression ), that is,
+adding one more parenthesis around the whole thing (which would
+handle potential infix operations).
+One unfortunate thing about this notation is that the comma is used up
+(which is useful inside quoted expressions to &#8220;unquote&#8221; it).
+Even for function calls you need to add the outer paren, because
+this form is legal:
+f(5) + 3
+<!--
+Though I guess you could claim that "when I hit the last paren I'm done" -
+harder than expected to implement though.
+-->
+<p>
+This can handle the extensions that Lisp-like languages
+often accrue.  For example, it&#8217;s common for
+Lisp systems to &#8220;extend&#8221; the syntax because it&#8217;s easy, e.g.,
+maybe &#8220;if&#8221; or &#8220;defun&#8221; has optional parameters afterwards.
+IACL2 had trouble with this; you had to keep fiddling with the grammar
+to handle new parameters, and thus it could not handle
+&#8220;advanced&#8221; uses.
+Not a problem here -- just add the parameter.
+<p>
+You could use &#8220;;&#8221; instead of &#8220;,&#8221;, or allow both.
+I hate to waste a character on options, so I would pick just one.
+Here, I use &#8220;,&#8221; since that is more common; I would then
+use the semicolon for something else (e.g., begin comment
+to end of line, like Lisp).
+<p>
+You could use different bracketing characters.
+The original M-expression notation used FUNCTION[..]
+instead of FUNCTION(..).
+I figure it&#8217;d be nice to leave [..] for other uses, and (..)
+are commonly used for this purpose.
+You could use {..} for overriding precedence, and restore (..)
+(other than FUNCTION() uses) for its use for S-expressions.
+<p>
+How do you handle computed functions?
+For many programs
+I think the best approach is to use a special function
+(like funcall, apply, or mapcar) that calls the function as a parameter,
+because this is often clearer to readers.
+So what you want is the s-expression (funcall (findfunction x) y z),
+which transforms to ZY-expression funcall(findfunction(x), y, z).
+But if you want to use a direct notation, just use {..} in this case...
+that&#8217;s simple!
+So s-expression ((whichfunction x) param1 param2)
+would be described in ZY-expression notation as
+{whichfunction(x), param1, param2} -- it looks weird,
+but it works and can handle the entire expressiveness of s-expressions.
+Here are some bad alternatives:
+<ol>
+<li>Do not use parentheses
+to force computation of the function first, followed by its parameters.
+I.e., (whichfunction(x))(param1, param2).
+That can cause trouble with quoting (e.g., &#8216;);
+you can&#8217;t have a simple
+rule like &#8220;when you reach the first closing outermost
+paren you are done.&#8221;
+<li>Adding an extra pair of parens around
+the ZY-expression enclosing <i>the function and its parameters</i>, when
+this occurs, doesn&#8217;t help if you&#8217;re quoting...
+because as soon as you break the expression apart, the
+same problem re-occurs.
+Originally I thought differently, because
+parens don&#8217;t add depth to the equivalent s-expression
+when they&#8217;re not performing function calls, they only control precedence.
+So I thought the s-expression ((whichfunction x) param1 param2)
+could become ZY-expression (whichfunction(x)(param1, param2)).
+That means that the expression (x) above needs to permit after it
+an optional &#8220;function call parameters&#8221; set.
+But since {..} works, and is clearer too, just use that.
+</ol>
+So clearly ZY-expressions can be as expressive, even when
+handling computed functions.
+There is a risk of doing it wrong with computed functions, but
+the solution is to remember that you must add parens that surround
+both the computation of the function <i>and</i> its parameters.
+The extra syntax could be helpful in warning the reader that
+something different is happening.
+<p>
+I could add a &#8220;prettying&#8221; rule that
+if an atom began with a colon (i.e., it was a Common Lisp keyword), then it
+could optionally be followed by another expression.
+Then you could say &#8220;f(a, :option b)&#8221; .
+Obviously you can&#8217;t do this in a context where the whitespace might
+end the expression, so you might have to surround it with
+parentheses.
+This does cause complications, though.
+What is &#8216;f(a, :option ,b)  - is that an &#8220;:option&#8221;
+followed by the optional expression &#8220;,b&#8221; (which happens to be lifted),
+or is &#8220;:option&#8221; followed by another parameter, whose value is b?
+In this case it does not matter, the s-expression would be the same...
+but then &#8216;f(a, :option ,b + 2)  shows up.
+I suspect these can be dealt with, but now we have complications
+getting imposed on the parser.
+Further thinking in this area might be valuable.
+A trivial rule that would stop this is requiring that all commas used
+as parameter separators <i>must</i> follow the text of their expressions
+for the commas between parameters in function calls, so that
+but then &#8216;f(a, :option, b + 2) has 3 parameters, while
+&#8216;f(a, :option ,b) has 2 parameters... but now we are imposing
+addition rules for an odd case.
+<!--
+It's conventional for named options to begin with ":"; to make that
+prettier, you could add a rule that said that after a :name, you could add
+an optional space and another statement.
+-->
+<p>
+A nifty bonus: if you have a parser that was expecting only
+s-expressions, such as a current Lisp implementation or
+BitC&#8217;s current parser,
+a &#8220;{...}&#8221; pair could switch to this mode
+(I suggest that it just switch modes -- it
+would not create a new sub-expression just by changing modes).
+This means you could have a mixed parser, if you wanted to.
+Here&#8217;s the Common Lisp factorial, if {..} switched to ZY-expressions:
+<pre>
+ (defun factorial (n)
+   (if {n &lt;= 1}
+       1
+       {n * factorial(n - 1)}))
+</pre>
+<p>
+One quibble: if you use this interactively, how do you know
+when an expression is done?  I.e., is &#8220;3 (newline) -4&#8221; the same as &#8220;3-4&#8221;?
+Here&#8217;s one answer: If you see a newline, and there is no
+open expression, you&#8217;re done. So &#8220;3 (newline) -4&#8221; is two expressions,
+&#8220;3&#8221; and &#8220;-4&#8221;.
+That may not be so easy with traditional parsers, which will have
+multiple options and no way to say &#8220;quit&#8221; easily.
+One approach for interactive use is to use a special symbol, like &#8220;;;&#8221;,
+to signal &#8220;I&#8217;m done, please evaluate&#8221;... though that is very hokey.
+<p>
+At first, I though quoting things, like &#8216;factorial(5),
+was no issue... just move on to the closing paren.
+But if you can also quote individual names (atoms) that won&#8217;t fly,
+becuase &#8216;a has no closing paren.
+But quoting isn&#8217;t much harder.
+A ZY-expression can be safely quoted by surrounding the whole
+expression with parens and then adding &#8216; in front.
+The parens are only for precedence and won&#8217;t
+add to the equivalent s-expression.
+So &#8217;(a) and &#8217;(factorial(5)) should work.
+I thought this would also solve the interactive issue, by adding
+another parens around everything, but it doesn&#8217;t;
+(defun ...)
+could still be completed by another (..) after it, if we allow
+computed functions.
+Nothing is perfect, it seems.
+If you require the use of apply, etc. there&#8217;s no issue.
+<p>
+Basically, this means that you can switch to infix whenever it&#8217;s
+convenient to you.
+If you like this format, or it&#8217;s especially useful for
+what you are doing, you can just surround entire files with {..}.
+This has no ambiguity issues, because the closing &#8220;}&#8221; unambiguously
+stops everything.
+<p>
+The &#8220;:&#8221; could be an operator too, for typing.
+<p>
+Let&#8217;s see how this works elsewhere.  Given this Lisp s-expression:
+<pre>
+ (cond ((&gt; temp 100) 'hot)
+       ((&gt; temp 60) 'okay)
+       ((&gt; temp 40) 'cool)
+       (t 'cold))
+</pre>
+We end up with:
+<pre>
+(
+ cond( {temp &gt; 100, 'hot },
+       {temp &gt; 60, 'okay },
+       {temp &gt; 40, 'cool },
+       {t, 'cold} )
+)
+</pre>
+<p>
+This does hint that a possible &#8220;optimization&#8221; might be to
+omit the &#8220;,&#8221; after a closing &#8220;}&#8221;.
+It&#8217;s not clear that this is a good idea, though;
+regularity has its own rewards.
+So I&#8217;m not doing that.
+
+<p>
+One problem with this is that you need a way to identify the
+end of the entire expression.
+E.G., &#8220;5&#8221; and &#8220;5 + 4&#8221; are expressions, so
+given &#8216;5, you wouldn&#8217;t know if there&#8217;s more expression or not (same problem).
+So to quote a fragment, you need to have something ELSE indicate the end.
+E.G., enclose it in {...} (if the exterior is s-expression format,
+enclose it in (...) (if the exterior is in ZY-expression format),
+or something else (e.g., end-of-file).
+You can surround with parens to solve that
+But I think the idea of an intentionally simple transform STILL makes sense.
+
+<p>
+I&#8217;m naming this limited notation &#8220;ZY-expressions&#8221;, because all the
+good (simple) names for expressions seem to be taken.
+
+<h2><a name="restricted-zy-expressions">Another approach: Restricted ZY-expressions (rigid parens around infix operators)</a></h2>
+
+<p>
+If you really want to keep the notation identical with program
+fragments (instead of adding enclosing parens at the outmost level),
+try this restricted version of the above -- always
+put parens around infix ops, and
+always have the opening paren IMMEDIATELY after a function name:
+
+<pre>
+ZY-Expression             S-expression equivalent
+(a OP b)           <=>   (OP x y)  ; require whitespace around OP in ZY-expr
+FUNC(a,b..)        <=>   (FUNC a b ...) ; NO whitespace before open paren.
+{a, b..}           <=>   (a b...)  ; force s-exp lists using {,,}.
+</pre>
+
+<p>
+Again, an infix operation OP will need to have whitespace around it,
+to distinguish from names that have operations in their name.
+
+<p>
+This is a <i>much</i> more rigid format, but it resolves the
+problem above.
+
+Given the Common Lisp:
+<pre>
+ (defun factorial (n)
+    (if (&lt;= n 1)
+           1
+	   (* n (factorial (- n 1)))))
+</pre>
+
+<p>
+You can rewrite it this way, like a spreadsheet:
+<pre>
+defun(factorial, {n},
+   if( (n <= 1),
+      1,
+      (n * factorial( (n - 1) ))))
+</pre>
+<p>
+This format is a lot more rigid, unfortunately;
+all the parentheses around the infix form make it harder to read.
+But it&#8217;s certainly easy to find the end of anything.
+
+
+
+<p>
+<hr>
+<p>
+You might want to look at my paper
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and
+Free-Libre / Open Source Software (FLOSS)... with Lots on Formal Methods</a>.
+<p>
+<a href="http://www.dwheeler.com">You can see David A. Wheeler&#8217;s home page, http://www.dwheeler.com</a>.
+
+</body>
+</html>
+
