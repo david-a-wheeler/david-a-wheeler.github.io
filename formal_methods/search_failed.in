@@ -1,0 +1,25 @@
+% Demo how to declare in prover9 that the terms in a list are distinct.
+% David A. Wheeler
+% Released to the public domain.
+% Usage:
+%   prover9 -f *.in > *.out
+
+% Use prolog naming format (initial uppercase is variable):
+set(prolog_style_variables).
+
+formulas(assumptions).
+% Define distinct(List): Each item in List is not equal to all the others.
+distinct([First, Second : Rest]) ->
+ ( (First != Second) &
+   distinct([First : Rest]) &
+   distinct([Second : Rest])).
+
+man(X) -> mortal(X).
+man(socrates).
+
+end_of_list.
+
+% Simple demonstration, to show that it works:
+formulas(goals).
+ mortal(socrates).
+end_of_list.

@@ -1,0 +1,462 @@
+============================== Prover9 ===============================
+Prover9 (32) version Aug-2007, Aug 2007.
+Process 3626 was started by dwheeler on localhost.localdomain,
+Tue Sep 25 00:38:48 2007
+The command was "prover9 -t 60 -f sqrt2.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file sqrt2.in
+
+
+formulas(assumptions).
+1 * x = x.
+x * 1 = x.
+x * (y * z) = (x * y) * z.
+x * y = y * x.
+x * y = x * z -> y = z.
+divides(x,y) <-> (exists z x * z = y).
+divides(2,x * y) -> divides(2,x) | divides(2,y).
+a * a = 2 * (b * b).
+x != 1 -> -(divides(x,a) & divides(x,b)).
+2 != 1.
+end_of_list.
+
+============================== end of input ==========================
+
+% From the command line: assign(max_seconds, 60).
+
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+
+% Formulas that are not ordinary clauses:
+1 x * y = x * z -> y = z # label(non_clause).  [assumption].
+2 divides(x,y) <-> (exists z x * z = y) # label(non_clause).  [assumption].
+3 divides(2,x * y) -> divides(2,x) | divides(2,y) # label(non_clause).  [assumption].
+4 x != 1 -> -(divides(x,a) & divides(x,b)) # label(non_clause).  [assumption].
+
+============================== end of process non-clausal formulas ===
+
+============================== PROCESS INITIAL CLAUSES ===============
+
+% Clauses before input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+1 * x = x.  [assumption].
+x * 1 = x.  [assumption].
+x * (y * z) = (x * y) * z.  [assumption].
+x * y = y * x.  [assumption].
+x * y != x * z | y = z.  [clausify(1)].
+-divides(x,y) | x * f1(x,y) = y.  [clausify(2)].
+divides(x,y) | x * z != y.  [clausify(2)].
+-divides(2,x * y) | divides(2,x) | divides(2,y).  [clausify(3)].
+a * a = 2 * (b * b).  [assumption].
+x = 1 | -divides(x,a) | -divides(x,b).  [clausify(4)].
+2 != 1.  [assumption].
+end_of_list.
+
+formulas(demodulators).
+end_of_list.
+
+============================== PREDICATE ELIMINATION =================
+
+No predicates eliminated.
+
+============================== end predicate elimination =============
+
+Auto_denials:  (non-Horn, no changes).
+
+Term ordering decisions:
+Predicate symbol precedence:  predicate_order([ =, divides ]).
+Function symbol precedence:  function_order([ 2, 1, a, b, *, f1 ]).
+After inverse_order:  (no changes).
+Unfolding symbols: (none).
+
+Auto_inference settings:
+  % set(paramodulation).  % (positive equality literals)
+    % set(paramodulation) -> set(back_demod).
+  % set(binary_resolution).  % (non-Horn)
+  % set(positive_inference). % (non-Horn)
+    % set(positive_inference) -> assign(literal_selection, maximal_negative).
+  % set(neg_ur_resolution).  % (non-Horn, less than 100 clauses)
+
+Auto_process settings:
+  % set(factor).  % (non-Horn)
+  % set(back_unit_deletion).  % (non-Horn)
+    % set(back_unit_deletion) -> set(unit_deletion).
+
+% Operation * is commutative; C redundancy checks enabled.
+
+============================== end of process initial clauses ========
+
+============================== CLAUSES FOR SEARCH ====================
+
+% Clauses after input processing:
+
+formulas(usable).
+end_of_list.
+
+formulas(sos).
+5 1 * x = x.  [assumption].
+6 x * 1 = x.  [assumption].
+8 (x * y) * z = x * (y * z).  [copy(7),flip(a)].
+9 x * y = y * x.  [assumption].
+10 x * y != x * z | y = z.  [clausify(1)].
+11 -divides(x,y) | x * f1(x,y) = y.  [clausify(2)].
+12 divides(x,y) | x * z != y.  [clausify(2)].
+13 -divides(2,x * y) | divides(2,x) | divides(2,y).  [clausify(3)].
+15 2 * (b * b) = a * a.  [copy(14),flip(a)].
+17 1 = x | -divides(x,a) | -divides(x,b).  [copy(16),flip(a)].
+19 1 != 2.  [copy(18),flip(a)].
+20 -divides(2,x * x) | divides(2,x).  [factor(13,b,c)].
+end_of_list.
+
+formulas(demodulators).
+5 1 * x = x.  [assumption].
+6 x * 1 = x.  [assumption].
+8 (x * y) * z = x * (y * z).  [copy(7),flip(a)].
+9 x * y = y * x.  [assumption].
+        % (lex-dep)
+15 2 * (b * b) = a * a.  [copy(14),flip(a)].
+end_of_list.
+
+============================== end of clauses for search =============
+
+============================== SEARCH ================================
+
+% Starting search at 0.01 seconds.
+
+given #1 (I,wt=5): 5 1 * x = x.  [assumption].
+
+given #2 (I,wt=5): 6 x * 1 = x.  [assumption].
+
+given #3 (I,wt=11): 8 (x * y) * z = x * (y * z).  [copy(7),flip(a)].
+
+given #4 (I,wt=7): 9 x * y = y * x.  [assumption].
+
+% Operation * is associative-commutative; CAC redundancy checks enabled.
+
+given #5 (I,wt=10): 10 x * y != x * z | y = z.  [clausify(1)].
+
+given #6 (I,wt=10): 11 -divides(x,y) | x * f1(x,y) = y.  [clausify(2)].
+
+given #7 (I,wt=8): 12 divides(x,y) | x * z != y.  [clausify(2)].
+
+given #8 (I,wt=11): 13 -divides(2,x * y) | divides(2,x) | divides(2,y).  [clausify(3)].
+
+given #9 (I,wt=9): 15 2 * (b * b) = a * a.  [copy(14),flip(a)].
+
+given #10 (I,wt=9): 17 1 = x | -divides(x,a) | -divides(x,b).  [copy(16),flip(a)].
+
+given #11 (I,wt=3): 19 1 != 2.  [copy(18),flip(a)].
+
+given #12 (I,wt=8): 20 -divides(2,x * x) | divides(2,x).  [factor(13,b,c)].
+
+given #13 (A,wt=11): 21 x * (y * z) = y * (x * z).  [para(9(a,1),8(a,1,1)),rewrite([8(2)])].
+
+given #14 (F,wt=5): 42 x * 2 != x.  [ur(10,b,19,a),rewrite([6(2)]),flip(a)].
+
+given #15 (F,wt=5): 49 2 * x != x.  [para(9(a,1),42(a,1))].
+
+given #16 (F,wt=7): 51 b * b != a * a.  [para(15(a,1),49(a,1)),flip(a)].
+
+given #17 (F,wt=9): 48 x * (y * 2) != x * y.  [ur(10,b,42,a)].
+
+given #18 (T,wt=3): 28 divides(x,x).  [resolve(12,b,6,a)].
+
+given #19 (T,wt=3): 29 divides(1,x).  [resolve(12,b,5,a)].
+
+given #20 (T,wt=5): 26 divides(x,y * x).  [resolve(12,b,9,a)].
+
+given #21 (T,wt=5): 31 divides(x,x * y).  [resolve(12,b,6,a(flip)),rewrite([9(3),5(3)])].
+
+given #22 (A,wt=8): 22 x * y != x | 1 = y.  [para(6(a,1),10(a,1)),flip(a)].
+
+given #23 (F,wt=9): 50 x * (2 * y) != x * y.  [ur(10,b,49,a)].
+
+given #24 (F,wt=9): 54 x * (2 * y) != y * x.  [para(9(a,1),48(a,1)),rewrite([8(3)])].
+
+given #25 (F,wt=9): 55 x * (y * 2) != y * x.  [para(9(a,1),48(a,2))].
+
+given #26 (F,wt=9): 70 2 * (x * y) != y * x.  [para(9(a,1),50(a,1)),rewrite([8(3)])].
+
+given #27 (T,wt=5): 37 divides(2,a * a).  [resolve(15,a,12,b)].
+
+given #28 (T,wt=3): 83 divides(2,a).  [resolve(37,a,20,a)].
+
+given #29 (T,wt=5): 59 f1(1,x) = x.  [resolve(29,a,11,a),rewrite([5(4)])].
+
+given #30 (T,wt=6): 32 divides(x,y) | x != y.  [para(6(a,1),12(b,1))].
+
+given #31 (A,wt=14): 23 x * (y * z) != x * (y * u) | z = u.  [para(8(a,1),10(a,1)),rewrite([8(4)])].
+
+given #32 (F,wt=3): 86 -divides(2,b).  [ur(17,a,19,a,b,83,a)].
+
+given #33 (F,wt=3): 104 b != 2.  [ur(32,a,86,a),flip(a)].
+
+given #34 (F,wt=5): 105 -divides(2,b * b).  [ur(20,b,86,a)].
+
+given #35 (F,wt=5): 106 2 * x != b.  [ur(12,a,86,a)].
+
+given #36 (T,wt=6): 57 b = 1 | -divides(b,a).  [resolve(28,a,17,c),flip(a)].
+
+given #37 (T,wt=7): 43 divides(x,y * (x * z)).  [resolve(21,a,12,b)].
+
+given #38 (T,wt=5): 122 divides(b,a * a).  [para(15(a,1),43(a,2))].
+
+given #39 (T,wt=7): 58 x * f1(x,x) = x.  [resolve(28,a,11,a)].
+
+given #40 (A,wt=10): 24 x * y != z * x | z = y.  [para(9(a,1),10(a,1)),flip(a)].
+
+given #41 (F,wt=5): 109 b * b != 2.  [ur(32,a,105,a),flip(a)].
+
+given #42 (F,wt=5): 115 x * 2 != b.  [para(9(a,1),106(a,1))].
+
+given #43 (F,wt=5): 116 a * a != b.  [para(15(a,1),106(a,1))].
+
+given #44 (F,wt=7): 108 x * b != x * 2.  [ur(10,b,104,a)].
+
+given #45 (T,wt=5): 124 f1(x,x) = 1.  [resolve(58,a,22,a),flip(a)].
+
+given #46 (T,wt=6): 135 x != y | y = x.  [para(5(a,1),24(a,1)),rewrite([6(2)])].
+
+given #47 (T,wt=7): 61 divides(x,y * (z * x)).  [para(8(a,1),26(a,2))].
+
+given #48 (T,wt=7): 62 divides(b * b,a * a).  [para(15(a,1),26(a,2))].
+
+given #49 (A,wt=10): 25 x * y != z * x | y = z.  [para(9(a,1),10(a,2))].
+
+given #50 (F,wt=7): 111 -divides(2,b * (b * b)).  [ur(13,b,86,a,c,105,a)].
+
+given #51 (F,wt=7): 112 b * b != 2 * x.  [ur(12,a,105,a),flip(a)].
+
+given #52 (F,wt=7): 117 x * (2 * y) != b.  [para(21(a,1),106(a,1))].
+
+given #53 (F,wt=7): 126 b * x != x * 2.  [ur(24,b,104,a),flip(a)].
+
+given #54 (T,wt=7): 85 2 * f1(2,a) = a.  [resolve(83,a,11,a)].
+
+given #55 (T,wt=5): 195 divides(f1(2,a),a).  [para(85(a,1),26(a,2))].
+
+given #56 (T,wt=5): 201 divides(2,x * a).  [para(85(a,1),43(a,2,2))].
+
+given #57 (T,wt=5): 210 divides(2,a * x).  [para(9(a,1),201(a,2))].
+
+given #58 (A,wt=9): 27 divides(x * y,x * (y * z)).  [resolve(12,b,8,a)].
+
+given #59 (F,wt=3): 200 b != a.  [para(85(a,1),106(a,1)),flip(a)].
+
+given #60 (F,wt=5): 194 f1(2,a) != a.  [para(85(a,1),49(a,1)),flip(a)].
+
+given #61 (F,wt=5): 205 b * b != a.  [para(85(a,1),112(a,2))].
+
+given #62 (F,wt=5): 206 x * a != b.  [para(85(a,1),117(a,1,2))].
+
+given #63 (T,wt=6): 192 divides(2,x) | a != x.  [para(85(a,1),12(b,1))].
+
+given #64 (T,wt=7): 88 divides(x * y,y * x).  [resolve(32,b,9,a)].
+
+given #65 (T,wt=7): 204 divides(f1(2,a),x * a).  [para(85(a,1),61(a,2,2))].
+
+given #66 (T,wt=7): 209 divides(2,x * (y * a)).  [para(8(a,1),201(a,2))].
+
+given #67 (A,wt=12): 33 divides(x * y,z) | x * (y * u) != z.  [para(8(a,1),12(b,1))].
+
+given #68 (F,wt=5): 237 a * x != b.  [para(9(a,1),206(a,1))].
+
+given #69 (F,wt=3): 259 -divides(a,b).  [ur(11,b,237,a)].
+
+given #70 (F,wt=7): 132 2 * x != x * b.  [ur(24,b,104,a(flip)),flip(a)].
+
+given #71 (F,wt=7): 151 x * (y * 2) != b.  [para(8(a,1),115(a,1))].
+
+given #72 (T,wt=7): 212 divides(2,x * (a * y)).  [para(21(a,1),210(a,2))].
+
+given #73 (T,wt=7): 218 divides(2 * b,a * a).  [para(15(a,1),27(a,2))].
+
+given #74 (T,wt=7): 221 divides(x * 2,x * a).  [para(85(a,1),27(a,2,2))].
+
+given #75 (T,wt=7): 245 divides(f1(2,a),a * x).  [para(9(a,1),204(a,2))].
+
+given #76 (A,wt=8): 34 divides(x,y) | z * x != y.  [para(9(a,1),12(b,1))].
+
+given #77 (F,wt=7): 168 b * (b * b) != 2.  [ur(32,a,111,a),flip(a)].
+
+given #78 (F,wt=7): 176 b * b != x * 2.  [para(9(a,1),112(a,2))].
+
+given #79 (F,wt=7): 188 b * x != 2 * x.  [para(9(a,1),126(a,2))].
+
+given #80 (F,wt=7): 222 a * x != x * b.  [ur(25,b,200,a),flip(a)].
+
+given #81 (T,wt=7): 279 divides(2 * x,x * a).  [para(9(a,1),221(a,1))].
+
+given #82 (T,wt=7): 280 divides(x * 2,a * x).  [para(9(a,1),221(a,2))].
+
+given #83 (T,wt=7): 308 divides(2 * x,a * x).  [para(9(a,1),279(a,2))].
+
+given #84 (T,wt=8): 41 divides(2,x) | a * a != x.  [para(15(a,1),12(b,1))].
+
+given #85 (A,wt=15): 35 -divides(2,x * (y * z)) | divides(2,x * y) | divides(2,z).  [para(8(a,1),13(a,2))].
+
+given #86 (F,wt=7): 223 b * x != x * a.  [ur(24,b,200,a),flip(a)].
+
+given #87 (F,wt=7): 225 x * b != x * a.  [ur(10,b,200,a)].
+
+given #88 (F,wt=7): 236 x * (y * a) != b.  [para(8(a,1),206(a,1))].
+
+given #89 (F,wt=7): 238 b * (b * b) != a.  [ur(192,a,111,a),flip(a)].
+
+given #90 (T,wt=8): 66 x * y != y | 1 = x.  [para(9(a,1),22(a,1))].
+
+given #91 (T,wt=8): 196 a != 2 | f1(2,a) = 1.  [para(85(a,1),22(a,1)),flip(b)].
+
+given #92 (T,wt=8): 286 divides(f1(2,a),x) | a != x.  [para(85(a,1),34(b,1))].
+
+given #93 (T,wt=9): 63 divides(x * y,x * (z * y)).  [para(21(a,1),26(a,2))].
+
+given #94 (A,wt=14): 36 -divides(2,x * (y * (x * y))) | divides(2,x * y).  [factor(35,b,c)].
+
+given #95 (F,wt=7): 261 x * (a * y) != b.  [para(21(a,1),237(a,1))].
+
+given #96 (F,wt=7): 267 b * f1(2,a) != a.  [para(85(a,1),132(a,1)),rewrite([9(6)]),flip(a)].
+
+given #97 (F,wt=7): 305 b * x != a * x.  [para(9(a,1),222(a,2)),flip(a)].
+
+given #98 (F,wt=9): 110 -divides(2,b * (b * (b * b))).  [ur(20,b,105,a),rewrite([21(8),9(7)])].
+
+given #99 (T,wt=9): 120 divides(x,y * (z * (x * u))).  [para(8(a,1),43(a,2))].
+
+given #100 (T,wt=7): 372 divides(b,x * (a * a)).  [para(15(a,1),120(a,2,2))].
+
+given #101 (T,wt=7): 375 divides(b,a * (a * x)).  [para(9(a,1),372(a,2)),rewrite([8(5)])].
+
+given #102 (T,wt=7): 376 divides(b,a * (x * a)).  [para(21(a,1),372(a,2))].
+
+given #103 (A,wt=13): 38 2 * (b * (b * x)) = a * (a * x).  [para(15(a,1),8(a,1,1)),rewrite([8(4),8(9)]),flip(a)].
+
+given #104 (F,wt=9): 114 x * (2 * y) != x * b.  [ur(10,b,106,a)].
+
+given #105 (F,wt=9): 125 2 * (x * y) != y * b.  [ur(24,b,106,a),rewrite([8(5)]),flip(a)].
+
+given #106 (F,wt=9): 131 b * x != x * (2 * y).  [ur(24,b,106,a(flip)),flip(a)].
+
+given #107 (F,wt=9): 143 b * (b * x) != x * 2.  [ur(24,b,109,a),rewrite([8(6)]),flip(a)].
+
+given #108 (T,wt=9): 162 divides(x,y * (z * (u * x))).  [para(8(a,1),61(a,2,2))].
+
+given #109 (T,wt=9): 163 divides(b * b,x * (a * a)).  [para(15(a,1),61(a,2,2))].
+
+given #110 (T,wt=9): 215 divides(x * y,y * (x * z)).  [para(9(a,1),27(a,1))].
+
+given #111 (T,wt=9): 216 divides(x * y,y * (z * x)).  [para(9(a,1),27(a,2)),rewrite([8(3)])].
+
+given #112 (A,wt=13): 39 b * (b * (x * 2)) = x * (a * a).  [para(15(a,1),8(a,2,2)),rewrite([21(6),9(5)])].
+
+given #113 (F,wt=9): 145 x * (b * b) != x * 2.  [ur(10,b,109,a)].
+
+given #114 (F,wt=7): 517 a * a != 2 * 2.  [para(15(a,1),145(a,1))].
+
+given #115 (F,wt=9): 146 2 * x != x * (b * b).  [ur(24,b,109,a(flip)),flip(a)].
+
+given #116 (F,wt=9): 147 x * (2 * y) != y * b.  [ur(24,b,115,a),rewrite([8(5)]),flip(a)].
+
+given #117 (T,wt=9): 217 divides(x * 2,x * (a * a)).  [para(15(a,1),27(a,2,2))].
+
+given #118 (T,wt=9): 244 divides(f1(2,a),x * (y * a)).  [para(8(a,1),204(a,2))].
+
+given #119 (T,wt=9): 247 divides(2,x * (y * (z * a))).  [para(8(a,1),209(a,2,2))].
+
+given #120 (T,wt=9): 274 divides(2,x * (y * (a * z))).  [para(8(a,1),212(a,2))].
+
+given #121 (A,wt=12): 40 a * a != 2 * x | b * b = x.  [para(15(a,1),10(a,1))].
+
+given #122 (F,wt=7): 552 a * a != 2 * a.  [ur(40,b,205,a)].
+
+given #123 (F,wt=9): 149 x * (y * 2) != x * b.  [ur(10,b,115,a)].
+
+given #124 (F,wt=9): 150 b * x != x * (y * 2).  [ur(24,b,115,a(flip)),flip(a)].
+
+given #125 (F,wt=9): 171 b * (b * b) != 2 * x.  [ur(12,a,111,a),flip(a)].
+
+given #126 (T,wt=9): 282 divides(f1(2,a),x * (a * y)).  [para(21(a,1),245(a,2))].
+
+given #127 (T,wt=9): 309 divides(a * a,a * (b * b)).  [para(15(a,1),279(a,1)),rewrite([9(8)])].
+
+given #128 (T,wt=9): 343 divides(x * y,z * (y * x)).  [para(9(a,1),63(a,2)),rewrite([8(3)])].
+
+given #129 (T,wt=9): 346 divides(x * f1(2,a),x * a).  [para(85(a,1),63(a,2,2))].
+
+given #130 (A,wt=14): 44 x * (y * z) != y * u | x * z = u.  [para(21(a,1),10(a,1))].
+
+given #131 (F,wt=9): 177 b * b != x * (2 * y).  [para(21(a,1),112(a,2))].
+
+given #132 (F,wt=7): 643 b * b != x * a.  [para(85(a,1),177(a,2,2))].
+
+============================== PROOF =================================
+
+% Proof 1 at 0.51 (+ 0.06) seconds.
+% Length of proof is 31.
+% Level of proof is 10.
+% Maximum clause weight is 12.
+% Given clauses 132.
+
+1 x * y = x * z -> y = z # label(non_clause).  [assumption].
+2 divides(x,y) <-> (exists z x * z = y) # label(non_clause).  [assumption].
+3 divides(2,x * y) -> divides(2,x) | divides(2,y) # label(non_clause).  [assumption].
+4 x != 1 -> -(divides(x,a) & divides(x,b)) # label(non_clause).  [assumption].
+7 x * (y * z) = (x * y) * z.  [assumption].
+8 (x * y) * z = x * (y * z).  [copy(7),flip(a)].
+9 x * y = y * x.  [assumption].
+10 x * y != x * z | y = z.  [clausify(1)].
+11 -divides(x,y) | x * f1(x,y) = y.  [clausify(2)].
+12 divides(x,y) | x * z != y.  [clausify(2)].
+13 -divides(2,x * y) | divides(2,x) | divides(2,y).  [clausify(3)].
+14 a * a = 2 * (b * b).  [assumption].
+15 2 * (b * b) = a * a.  [copy(14),flip(a)].
+16 x = 1 | -divides(x,a) | -divides(x,b).  [clausify(4)].
+17 1 = x | -divides(x,a) | -divides(x,b).  [copy(16),flip(a)].
+18 2 != 1.  [assumption].
+19 1 != 2.  [copy(18),flip(a)].
+20 -divides(2,x * x) | divides(2,x).  [factor(13,b,c)].
+21 x * (y * z) = y * (x * z).  [para(9(a,1),8(a,1,1)),rewrite([8(2)])].
+37 divides(2,a * a).  [resolve(15,a,12,b)].
+40 a * a != 2 * x | b * b = x.  [para(15(a,1),10(a,1))].
+83 divides(2,a).  [resolve(37,a,20,a)].
+85 2 * f1(2,a) = a.  [resolve(83,a,11,a)].
+86 -divides(2,b).  [ur(17,a,19,a,b,83,a)].
+105 -divides(2,b * b).  [ur(20,b,86,a)].
+112 b * b != 2 * x.  [ur(12,a,105,a),flip(a)].
+177 b * b != x * (2 * y).  [para(21(a,1),112(a,2))].
+190 2 * (f1(2,a) * x) = a * x.  [para(85(a,1),8(a,1,1)),flip(a)].
+643 b * b != x * a.  [para(85(a,1),177(a,2,2))].
+646 a * a != 2 * (x * a).  [ur(40,b,643,a)].
+647 $F.  [resolve(646,a,190,a(flip))].
+
+============================== end of proof ==========================
+
+============================== STATISTICS ============================
+
+Given=132. Generated=2151. Kept=638. proofs=1.
+Usable=127. Sos=485. Demods=56. Limbo=1, Disabled=35. Hints=0.
+Weight_deleted=0. Literals_deleted=0.
+Forward_subsumed=1513. Back_subsumed=15.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=58 (2 lex), Back_demodulated=9. Back_unit_deleted=0.
+Demod_attempts=18123. Demod_rewrites=1480.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=1506. Nonunit_bsub_feature_tests=528.
+Megabytes=0.43.
+User_CPU=0.51, System_CPU=0.06, Wall_clock=1.
+
+============================== end of statistics =====================
+
+============================== end of search =========================
+
+THEOREM PROVED
+
+Exiting with 1 proof.
+
+Process 3626 exit (max_proofs) Tue Sep 25 00:38:49 2007

@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Formal Methods Page</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="David A. Wheeler's Page on Formal Methods">
+<meta name="keywords" content="formal methods, security, safety, math, mathematics, prover9, PVS, David, Wheeler, David A. Wheeler">
+
+</head>
+<body bgcolor="#FFFFFF">
+<center><h1><font color="#339900">Formal Methods</font></h1></center>
+Formal methods are basically methods for applying mathematics to the
+development of software (or systems).
+I've used a number of formal methods tools, so here are some interesting
+files related to them.
+<p>
+Most importantly, take a look at
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)</a> - it specifically discusses a number of
+formal methods tools.
+<p>
+You may also want to take a look at my essay
+<a href="how-to-prove-stuff.html">How to prove stuff</a>.
+<p>
+<h1>First-Order Logic (FOL)</h1>
+<p>
+There are lots of different languages for formally expressing things,
+just like there are lots of programming languages.
+You should try to choose the language that most easily represents your needs,
+but there's a twist: Some of the more expressive languages are harder to
+automate, so there's a real reason to chose the "least expressive" language
+so that you can maximally automate.
+<p>
+Many provers are based on "first-order logic" (FOL).
+If you can express your requirements using some version of FOL, then
+you can probably use lots of highly-automated tools that actually
+<i>create</i> the proof (instead of just checking it).
+<a href="http://en.wikipedia.org/w/index.php?title=First-order_logic&amp;printable=yes">
+Wikipedia's
+"First-order logic" entry has some useful information</a>.
+<p>
+Here are some external pages on how to convert specs into FOL:
+<ul>
+<li><a href="http://www.earlham.edu/~peters/courses/log/transtip.htm">
+"Translation Tips" by Peter Suber</a>
+<li><a href="http://pages.cs.wisc.edu/~dyer/cs540/notes/fopc.html">
+"First-Order Logic" by C. R. Dyer</a>
+<li><a href="http://cs.nyu.edu/faculty/davise/guide.html">
+"Guide to Axiomatizing Domains in First-Order Logic" by Ernest Davis</a>
+</ul>
+<p>
+Unfortunately, FOL has some real weaknesses that are easily extended, but
+many mathematicians don't seem to <i>realize</i> that they are weaknesses.
+For example, you can't define "if-then-else" easily in FOL.
+FOL has two "types": formula (essentially booleans) and terms
+(everything else).  You can define a multi-parameter object that returns
+a boolean (Predicate) or a term (function), but <i>all</i> parameters have
+to be terms (non-booleans) - and if-then-else inherently takes a boolean!
+<a href="http://www.cs.nyu.edu/pipermail/smt-lib/2003/000018.html">This
+email notes why it's important to add if-then-else for practical
+languages</a>.
+SMT-LIB version 2.0 does add support for an "ite" function of form
+(ite Bool U U) that returns a U
+(if Bool is true, it returns the first U, else it returns the second).
+<p>
+<h1>Prover9 Stuff</h1>
+<a href="http://www.cs.unm.edu/~mccune/mace4/">Prover9/Mace4</a>
+(GPLv2+ license) is a really neat combination.
+Prover9 can be used to search for a proof, and mace4 can be used to search
+for a counter-example, which is an interesting combination.
+Prover9's language is very limited
+(technically, it's just FOL), but if you
+can express your problem using its language, it's extraordinarily good at
+automatically finding proofs or counter-examples.
+<p>
+Prover9's documentation is a bunch of HTML files; if you want a nice
+PDF (e.g., to print) with page numbers, table-of-contents, etc.,
+download my scripts
+<a href="make_book">make_book</a> and
+<a href="setup_book.pl.txt">setup_book.pl</a> (make sure you name the file
+setup_book.pl), install them in the HTML
+directory files, and run make_book
+(it presumes Unix-like system; must have htmldoc and perl installed).
+It will produce a file named "finalbook.pdf".
+<!-- finalbook.pdf -->
+<p>
+The prover9 documentation doesn't describe its input format very clearly;
+here's my attempt at documenting the
+<a href="prover9-bnf.txt">prover9 formula syntax (in BNF)</a>.
+In the long term, I might switch to
+<a href="http://www.cs.miami.edu/~tptp/TPTP/SyntaxBNF.html">
+TPTP syntax</a>
+(as
+<a href="http://mally.stanford.edu/cm/">Stanford's Computational
+Metaphysics project</a> has done), since this is a standard format accepted
+by many tools... but prover9/mace4 include tools to translate to/from
+TPTP, so I can delay doing that (knowing that I <i>can</i> escape from
+the unique format of the tool).
+
+<p>
+There's a paucity of small, simple examples of prover9 in use.
+Here's the proof that the square root of 2 is irrational, as
+<a href="sqrt2.in">prover9 input that sqrt(2) is irrational</a>, and
+here's
+<a href="sqrt2.xml">prover9 output that sqrt(2) is irrational</a>.
+I created this file, but it's merely a translation of
+the Otter proof from Larry Wos, by Michael Beeson and William McCune,
+as published in
+<a href="http://www.cs.ru.nl/~freek/comparison/">
+"The Seventeen Provers of the World"
+compiled by Freek Wiedijk</a>.
+I think my translation is <i>much</i> easier to read than the original,
+because I used traditional first-order operators instead of the lower-level
+clausal form.
+Here's the
+<a href="sqrt2.pdf">square root of 2 proof, as a graphic</a>.
+
+<p>
+You can use graphviz to make pretty displays of proofs (see above).
+My script <a href="gvizify">gvizify</a> takes the XML format that
+prover9 can create, and generates a graphfiz ".dot" file.
+You can then run this through "dot" to generate Postscript, PDF, etc.
+Unfortunately, there seems to be some sort of problem generating PDF files;
+on my system they often get cropped badly (I'm guessing it's
+<a href="http://www.graphviz.org/bugs/b1192.html">bug 1192</a>, though
+I don't know if the fault is graphviz, ps2pdf, or somewhere else).
+For now, to create PDF files I generate Postscript,
+use "eps2eps" to fix up the Postscript,
+and then use ps2pdf to create cleaned-up Postscript.
+That works!
+You'll need to have graphviz and ghostscript installed.
+You can use other tools, like
+<a href="http://sourceforge.net/projects/auber/">Tulip</a>, on the results
+of graphviz
+(note: Tulip depends on <a href="http://glew.sourceforge.net/">glew</a>).
+
+<p>
+<h1>Other</h1>
+<p>
+My
+<a href="http://www.dwheeler.com/essays/minisat-user-guide.html">
+MiniSAT user guide</a> is short, but it's much more than the MiniSAT
+deveopers provide.
+<p>
+For larger software projects, I like the tools
+<a href="http://pvs.csl.sri.com/">PVS</a> (based on higher-order logic,
+with types) and
+<a href="http://www.cs.utexas.edu/users/moore/acl2/">ACL2</a>
+(based on lambda/LISP) (both GPL licenses).
+Their languages are more capable than prover9, but in contrast, it
+can be more work to prove things using them.
+<p>
+ACL2 is intended to be highly automated, and has lots of clever heuristics
+to handle recursion.
+ACL2 really shines in dealing with programs that can be easily
+expressed as pure LISP programs; it's beguiling, really!
+<a href="http://www.cs.utexas.edu/users/sandip/technical/acl2-tidbits.html">
+ACL2 can handle quantifiers ("there exists..." and "for all...")</a>, but
+quantifiers are at the edge of ACL2's capabilities and are
+<a href="http://www.cs.utexas.edu/users/moore/acl2/v3-2/QUANTIFIERS.html">
+not well-supported by ACL2's automatic proving mechanisms.</a>
+It's quite a contrast; ACL2 handles recursion well and in many cases
+automatically (many other systems don't do as well), programming constructs
+like if-then-else are built-in, and so on... but quantifiers (the
+basis of most notations) are not ACL2's strength.
+Also, ACL2 uses LISP notation; a few people like this notation, but
+the vast majority of people hate this notation as being absurdly hard to read.
+The LISP notation issue is very solveable; see my
+<a href="http://www.dwheeler.com/readable">readable s-expressions</a> stuff
+for more about how to solve this.
+<p>
+PVS has a delightfully easy-to-read notation.
+It supports types and subtypes, and its types are extraordinarily flexible
+(it's not just "1..10"; you can define "prime numbers" as a type).
+While PVS wasn't originally intended for directly generating programs,
+it's been extended so that in certain cases you can generate programs
+from the specs!
+It's based on higher-order logic (HOL), which has its plusses and minuses.
+Its notation is very powerful for <i>expressing</i> things, and that's a plus.
+But it's not good at automatically proving most things;
+instead, you have to do much of it "by hand" and it will check/record your work.
+<p>
+See
+<a href="http://en.wikipedia.org/w/index.php?title=Automated_theorem_proving&amp;printable=yes">
+automated theorem proving</a>
+for general information on that topic.
+<p>
+There are lots of mathematical notations/languages;
+if you're interested you might look up
+<a href="http://en.wikipedia.org/w/index.php?title=Second-order_logic&amp;printable=yes">
+Second-order logic</a>,
+<a href="http://en.wikipedia.org/w/index.php?title=Higher-order_logic&amp;printable=yes">
+Higher-order logic</a>,
+<a href="http://en.wikipedia.org/w/index.php?title=Type_theory&amp;printable=yes">
+type theory</a>,
+<a href="http://en.wikipedia.org/w/index.php?title=Lambda_calculus&amp;printable=yes">
+Lambda calculus</a> and its variant
+<a href="http://en.wikipedia.org/w/index.php?title=Typed_lambda_calculus&amp;printable=yes">
+Typed lambda calculus</a>.
+<p>
+I really want to see powerful notations that can easily describe problems,
+yet are supported by highly automated tools (so that most of the time,
+you can quickly determine that a claim is true or find a refutation).
+I think many of the FOL tools should add capabilities (like if/then/else)
+that don't make the provers any slower (they often make them faster),
+but make it much easier to <i>use</i> the tools - that's one immediate
+way to help.
+Longer-term, I have high hopes for the various efforts to connect
+systems with more powerful notations (e.g., higher-order logics like PVS)
+with first-order logic (FOL) systems.
+There are lots of papers on such efforts (it's an active area of research).
+<a href="http://www.ags.uni-sb.de/~chris/ESHOL-05/final-versions/1-Hurd.pdf">Hurd points to some such work</a>), as does
+<a href="http://www.ags.uni-sb.de/~chris/ESHOL-05/final-versions/4-BenzmuellerEtAl.pdf">
+"Combining Proofs of Higher-Order and
+First-Order Automated Theorem Provers" by
+Christoph Benzuller1, Volker Sorge2, Mateja Jamnik3, and Manfred Kerber</a>.
+<a href="http://www.gilith.com/research/talks/strata2003.pdf">Hurd
+separately mentions an interest in translating PVS to an FOL</a>.
+<a href="http://users.rsise.anu.edu.au/~jiameng/papers/translations.pdf">
+Meng and Paulson discuss 3 translations.</a>
+The <a href="http://www.cs.miami.edu/~geoff/Conferences/IWIL-6/IWIL-6Proceedings.pdf">
+Proceedings on the 6th International Workshop on the Implementation
+of Logics</a> is interesting and discusses many efforts to combine approaches
+(among other things).
+FOL is more limited, but easier to automate; other notations are
+easier to use for many problems, but harder to automate in general.
+In cases where you <i>can</i> convert to FOL, you'll probably be able
+to do much more automatically, so this appears to me to be a
+worthy direction.
+<p>
+
+I hope to get a chance to learn more about
+<a href="http://goedel.cs.uiowa.edu/smtlib/">SMT-LIB</a>.
+
+<p>
+<hr>
+<p>
+You might want to look at my
+<a href="http://www.dwheeler.com/secure-programs">Secure Programming HOWTO
+web page</a>,
+<a href="http://www.dwheeler.com/essays/oss_software_assurance.pdf">
+Open Source Software and Software Assurance (Security)</a>,
+and
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)</a>.
+<p>
+You can also view
+<a href="http://www.dwheeler.com">my home page</a>.
+</body>
+</html>
+

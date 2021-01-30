@@ -1,0 +1,31 @@
+% Here are some alternative ways to declare similar concepts:
+
+% Query: self_or_descendsfrom(Subclass,Superclass)
+% self_or_descendsfrom(Subclass, Superclass) <- Subclass = Superclass.
+% self_or_descendsfrom(Subclass, Superclass) <- descendsfrom(Subclass,Superclass).
+
+% If two classes (types) descend from DIFFERENT parents, yet those
+% parents have a common ancestor, then those types are different.
+% descendsfrom(Class1, Intermediary1) & descendsfrom(Class2, Intermediary2) &
+% (Intermediary1 != Intermediary2) &
+% descendsfrom(Intermediary1, Superclass) &
+% descendsfrom(Intermediary2, Superclass) ->
+%   (Class1 != Class2).
+
+
+% This works with multiple hierarchies but is more complicated.
+% I.E., if "mammal" and "bird" are not equal yet both descend from "animal",
+% the subclasses & their instances of "bird" != those of "mammal".
+% This is a complex rule, and is only true if the hierarchies are partitioned.
+% If they ARE partitioned, enable this rule.
+% Basically, it says that
+% If class1 != class2, yet have a common ancestor, then
+% anything that isa class1 != anything that isa class2,
+% and all subclasses of class1 are != the subclasses of class2.
+%
+% ((Class1 != Class2) &
+%   descendsfrom(Class1, Superclass) & descendsfrom(Class2, Superclass)) ->
+%     (((isa(Instance1,Class1) & isa(Instance2,Class2)) ->
+%                                      (Instance1 != Instance2)) &
+%      self_or_descends_from(Subclass1, Class1) != 
+%              self_or_descends_from(Subclass2, Class2) ).

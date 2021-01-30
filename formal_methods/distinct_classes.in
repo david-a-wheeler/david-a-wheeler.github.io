@@ -1,0 +1,203 @@
+% Demo how to declare distinct subclasses in prover9 classes/subclasses.
+% David A. Wheeler
+% Released to the public domain.
+% Usage:
+%   prover9 -f *.in > *.out
+
+
+% Use prolog naming format (initial uppercase is variable):
+set(prolog_style_variables).
+
+formulas(assumptions).
+
+% Here we define a simple hierarchical class system, where there are
+% instances of "types" and a hierarchy of classes (types may be classes):
+% * There may be instances with a specific "type".
+%   We can use typeof(Instance, ImmediateType) to declare these instances.
+%   For example: typeof(abraham_lincoln, human).
+%   Instances with different types are automatically not equal.
+% * There is a hierarchy of "classes"; a type can be a class.
+%   We can use subclassof(Class, Superclass) to declare such relations.
+%   For example: subclassof(penguin, bird).
+%   To create partitioned classes, use distinct_subclassesof(List, Superclass)
+%   For example: distinct_subclassesof([mammal, bird], animal).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Make it easy to define distinct subclasses and instances.
+% When you invoke a typeof() declaration directly, that doesn't
+% promise that other instances of the same type are different.
+% Similarly, when you invoke subclassof() directly, that doesn't
+% promise that other subclasses of the same superclass are different.
+% These predicates make it easy to declare distinctness.
+
+% distinct([List]) declares that each term in List != all the others.
+distinct([First, Second : Rest]) ->
+ ( (First != Second) &
+   distinct([First : Rest]) &
+   distinct([Second : Rest])).
+
+% incompatible_list([List]) declares that each term incompatible with others
+incompatible_list([First, Second : Rest]) ->
+ ( incompatible(First,Second) &
+   (Rest = $nil |
+    (incompatible_list([First : Rest]) &
+     incompatible_list([Second : Rest])))).
+
+% Define a list of not-necessarily-distinct subclasses.
+% Used by distinct_subclassesof.
+subclassesof([First : Rest], Superclass) ->
+  (subclassof(First, Superclass) & subclassesof(Rest, Superclass)).
+
+% Define a list of subclasses; each are distinct from the others.
+distinct_subclassesof(List, Superclass) ->
+  incompatible_list(List) & subclassesof(List, Superclass).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% General queries: descendsfrom() for classes, and isa(Instance, Class).
+
+% Query: descendsfrom(Subclass,Superclass)
+descendsfrom(Subclass, Superclass) <- subclassof(Subclass,Superclass).
+descendsfrom(Subclass,Superclass) <- (descendsfrom(Intermediary,Superclass)
+                                      & subclassof(Subclass,Intermediary)).
+
+% Query: isa(Instance, Class)
+isa(Instance, Class) <- typeof(Instance, Class).
+isa(Instance, Class) <- typeof(Instance, Type) & descendsfrom(Type, Class).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Simple deductions - we can automatically determine facts about
+% such things as inequality, incompatibility, and descendsfrom.
+% Note that within a hierarchy, if all the subclasses are distinct
+% incompatible subclasses, then every type in the hierarchy is
+% related by either "descendsfrom" or by "incompatible".
+
+% Note also that if we want to prove that something is FALSE, then we
+% have to give many rules that determine that.  This isn't Prolog, so we
+% can only prove something is false if we have a rule that says so.
+
+% If you don't need some of these rules, feel free to remove them.
+% In particular, statements that certain things are NOT true may not
+% be needed in many contexts, and they may cause the generation of a lot
+% of useless facts that interfere with finding the proof.
+
+
+% First, let's figure out what is a type or class.
+typeof(Instance,Type) -> istype_or_class(Type).
+subclassof(Subclass,Superclass) -> istype_or_class(Subclass).
+subclassof(Subclass,Superclass) -> istype_or_class(Superclass).
+
+
+% Deductions proving one constant != another:
+
+% Anything that is an instance != anything that is a type/superclass/subclass.
+(typeof(Instance,Type1) & istype_or_class(Type2)) -> Instance != Type2.
+
+% An alternative way to do this, instead of creating the intermediate
+% statement about "istype_or_class":
+% (typeof(Instance1,Type1) & typeof(Instance2,Type2)) ->
+%   (Instance1 != Type2).
+% (typeof(Instance,Type) & descendsfrom(Subclass, Superclass)) ->
+%   (Instance != Superclass).
+% (typeof(Instance,Type) & descendsfrom(Subclass, Superclass)) ->
+%   (Instance != Subclass).
+
+% Any class/type != any of its ancestors, inc. parent (loops aren't allowed!)
+descendsfrom(Subclass, Superclass) -> (Subclass != Superclass).
+
+% Anything a class is incompatible with isn't itself.
+incompatible(Class1, Class2) -> Class1 != Class2.
+
+% Any instance of one type != any instance of another type.
+% NOTE: You may not want to include this claim in your model.
+% It's a strong claim, which is useful, but only if it's true :-).
+ (typeof(Instance1,Type1) & typeof(Instance2,Type2) & Type1 != Type2) ->
+   Instance1 != Instance2.
+% A weaker alternative would be to claim that two instances are != if
+% they have incompatible types:
+% (typeof(Instance1,Type1) & typeof(Instance2,Type2) &
+%   incompatible(Type1, Type2)) -> Instance1 != Instance2.
+
+
+% Deductions proving incompatibility:
+
+% Incompatibility is bi-directional. 
+incompatible(C1,C2) -> incompatible(C2,C1).
+
+% Incompatibility descends through descendents (this recurses down the tree).
+incompatible(Class1,Class2) & subclassof(Subclass,Class1) ->
+  incompatible(Subclass, Class2).
+
+
+% Deductions proving something -isa() or -subclassof():
+
+% If types are incompatible, the isa relationship can be proven FALSE.
+typeof(Instance, Type) & incompatible(Type, Class) -> -isa(Instance, Class).
+
+% If classes are incompatible, then there's no subclass relationship.
+% (Since incompatibility is bi-directional, this is also bi-directional.)
+incompatible(Class1,Class2) -> -subclassof(Class1, Class2).
+
+% If c is a subclass of d, and d descends from e, then is c a subclass of e?
+% Presumably not (subclass is only a DIRECT relationship), so let's say so.
+% If we want to say "descendsfrom", use "descendsfrom" instead.
+subclassof(Subclass, Parent) & descendsfrom(Parent, Ancestor) ->
+ -subclassof(Subclass, Ancestor).
+
+% You can't be a subclass of your descendent.
+descendsfrom(Subclass, Superclass) -> -subclassof(Superclass, Subclass).
+
+
+% Deductions proving something -descendsfrom():
+
+% descending is NOT bi-directional.
+descendsfrom(Subclass, Superclass) -> -descendsfrom(Superclass, Subclass).
+
+% You don't descend from yourself; this only matters for types/classes.
+% We could simply say "-descendsfrom(X, X).", but that would
+% expand to include every instance; if there are many instances, that might
+% seriously interfere with finding the proof.  So we'll limit it this way.
+istype_or_class(Class) -> -descendsfrom(Class, Class).
+
+% Here's an alternative way of declaring this, without istype_or_class():
+% typeof(Instance, Class) -> -descendsfrom(Class, Class).
+% subclassof(Subclass, Superclass) -> -descendsfrom(Subclass, Subclass).
+% subclassof(Subclass, Superclass) -> -descendsfrom(Superclass, Superclass).
+
+% You can't descend from a class you're incompatible with.
+incompatible(Class1,Class2) -> -descendsfrom(Class1, Class2).
+
+ 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Now, declare specific relationships, as a demonstration.
+% (You may want to replace these with your own.)
+
+% Declare class relationships with subclassof(Class, Superclass):
+distinct_subclassesof([bird,mammal], animal).
+subclassof(penguin, bird).
+subclassof(emperor_penguin, penguin).
+subclassof(human, mammal).
+
+% Declare instances with typeof(Instance, ImmediateType):
+
+typeof(abraham_lincoln, human).
+typeof(tux, emperor_penguin).
+
+end_of_list.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Simple demonstration, to show that it works...
+formulas(goals).
+  % "Abraham Lincoln is not a penguin":
+  % Note: This proves something is NOT true, so to do this, we need to
+  % have rules to prove when something is NOT true.
+  -isa(abraham_lincoln, emperor_penguin).
+
+  % Here's a simpler one - "Abraham Lincoln is an animal".
+  %  isa(abraham_lincoln, animal).
+end_of_list.
+
+

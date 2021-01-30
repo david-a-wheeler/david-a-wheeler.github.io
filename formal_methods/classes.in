@@ -1,0 +1,53 @@
+% Demo how to declare in prover9 classes/subclasses.
+% David A. Wheeler
+% Released to the public domain.
+% Usage:
+%   prover9 -f *.in > *.out
+
+% Use prolog naming format (initial uppercase is variable):
+set(prolog_style_variables).
+
+formulas(assumptions).
+
+% We'll presume that we can have one or more hierarchies of "classes".
+% Use subclassof(Class, Superclass) to declare such relations.
+
+% An instance has a specific "type"; a type is also a class.
+% Use typeof(Instance, ImmediateType) to declare these instances.
+
+% Note that different subclassof() and typeof() declarations
+% don't promise that the classes and instances are different from each other.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% First, let's define general queries.
+
+% Query: descendsfrom(Subclass,Superclass)
+descendsfrom(Subclass, Superclass) <- subclassof(Subclass,Superclass).
+descendsfrom(Subclass,Superclass) <- (descendsfrom(Subclass,Intermediary)
+                                      & subclassof(Intermediary,Superclass)).
+% Query: isa(Instance, Class)
+isa(Instance, Class) <- typeof(Instance, Class).
+isa(Instance, Class) <- typeof(Instance, Type) & descendsfrom(Type, Class).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Now, declare specific relationships using subclassof() and typeof().
+
+% Declare class relationships with subclassof(Class, Superclass):
+subclassof(bird, animal).
+subclassof(penguin, bird).
+subclassof(mammal, animal).
+subclassof(human, mammal).
+
+% Declare instances with typeof(Instance, ImmediateType):
+
+typeof(abraham_lincoln, human).
+typeof(tux, penguin).
+
+end_of_list.
+
+% Simple demonstration, to show that it works:
+formulas(goals).
+ isa(abraham_lincoln, animal).
+end_of_list.
+

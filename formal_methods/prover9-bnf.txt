@@ -1,0 +1,55 @@
+Prover9/Mace4 BNF
+David A. Wheeler, 2007-09-21
+
+The following attempts to document prover9's syntax for formulas, in BNF
+format.  Note that symbols can be changed and added, including whether they are
+prefix, infix, and so on; this BNF only describes the default.
+A formulas(sos), formulas(assumptions), and formulas(goals) contains
+a list of zero or more "top_level_formula"s.  This is based on the
+Aug 2007 version of prover9.  There may be errors.
+A "formula" is essentially the 'type' of a built-in boolean, while
+"term" is essentially the 'type' of everything else.
+
+
+top_level_formula ::= formula "."
+
+formula ::= formula binary_operation formula | "-" formula |
+            quantifier variable formula | "(" formula ")" |
+            predicate | term equality_related_ops term |
+            "$T" | "$F" |
+            formula "#" attribute
+
+equality_related_ops ::= "=" | "!="
+
+binary_operation ::= "|" | "&" | "->" | "<-" | "<->"
+
+quantifier ::= "all" | "exists"
+
+predicate ::= predicate_name "(" term { "," term }* ")"
+
+
+
+term ::= function_name { "(" term { "," term }* ")" } |
+         term binary_term_operation term |
+         prefix_term_operation term |
+         term postfix_term_operation | list
+
+binary_term_operation ::= "==" | "<" | "<=" | ">" | ">=" |
+                          "+" | "*" | "@" | "/" | "\" | "^" | "v"
+% Note: Lacks infix "-".
+
+prefix_term_operation ::= "-"
+% Note that prefix "-" can form either a formula or a term.
+
+
+postfix_term_operation ::= "'"
+
+list ::= "[]" |
+         "[" term { "," term}* [":" term] "]"
+% list notation is shorthand for $cons(...).
+
+attribute ::= "label" "(" string ")" |
+              "answer" "(" term ")" |
+              "action" "(" term ")"
+              "bsub_hint_wt" "(" integer ")"
+

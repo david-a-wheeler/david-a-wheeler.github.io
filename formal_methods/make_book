@@ -1,0 +1,50 @@
+#!/bin/sh
+# make_book - create a PDF book of the prover9 manual.
+# by David A. Wheeler.
+
+# Must place in, and run, in the directory with the prover9 HTML files.
+# Depends on having htmldoc
+# and perl installed, and the associated file "setup_book.pl" must
+# also be installed in the same directory.
+# Generates "finalbook.pdf".
+
+# Create subdirectory, so we can change the HTML we generate, and go there.
+rm -fr tempdir
+mkdir tempdir
+cp -p *.html *.gif setup_book.pl tempdir
+cd tempdir
+
+# First, clean up HTML errors in the HTML manual.
+# General - character quoting errors.
+perl -p -i -e 's/&([^#A-Za-z0-9&])/&amp;\1/g;' *.html
+perl -p -i -e 's/&&amp;/&amp;&amp;/g;' *.html
+perl -p -i -e 's/<->/&lt;-&gt;/g;' *.html
+perl -p -i -e 's/<-/&lt;-/g;' *.html
+perl -p -i -e 's/([^-])->/\1-&gt;/g;' *.html
+perl -p -i -e 's/([^-])->/\1-&gt;/g;' *.html
+perl -p -i -e 's/"<"/"&lt;"/g;' *.html
+perl -p -i -e 's/"<="/"&lt;="/g;' *.html
+perl -p -i -e 's/">"/"&gt;"/g;' *.html
+perl -p -i -e 's/">="/"&gt;="/g;' *.html
+perl -p -i -e 's/ < / &lt; /g;' *.html
+perl -p -i -e 's/ > / &gt; /g;' *.html
+perl -p -i -e 's/<=/&lt;=/g;' *.html
+# Don't do: perl -p -i -e 's/>=/&gt;=/g;' *.html
+# In others.html, fix <h3>...</h2> into <h3>...</h3>:
+perl -p -i -e 's!<h3><a name="tptp_to_ladr">TPTP_to_LADR</a></h2>!<h3><a name="tptp_to_ladr">TPTP_to_LADR</a></h3>!' others.html
+perl -p -i -e 's!<h3><a name="ladr_to_tptp">LADR_to_TPTP</a></h2>!<h3><a name="ladr_to_tptp">LADR_to_TPTP</a></h3>!' others.html
+
+
+# We could try running tidy (htmltidy), but that is unhappy with the HTML:
+# tidy -m *.html
+
+# Create list of filenames, and invoke htmldoc to complete the work.
+htmldoc --book -f finalbook.pdf --size letter -t pdf14 --no-strict \
+        --numbered --duplex --title --titleimage prover9-5a-256t.gif \
+        `./setup_book.pl < nav.html`
+
+# Move the results back up, since we're in a temporary subdirectory.
+mv finalbook.pdf ..
+
+# We'll leave the temporary subdirectory results behind, in case they're
+# needed for debugging the document.

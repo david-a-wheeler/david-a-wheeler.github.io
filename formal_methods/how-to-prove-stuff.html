@@ -1,0 +1,532 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>How to Prove Stuff Automatically</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="David A. Wheeler's Page how to prove that claims are true using automated tools">
+<meta name="keywords" content="proof, prove, stuff, things, claims, formal methods, security, safety, math, mathematics, prover9, PVS, David, Wheeler, David A. Wheeler">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+</head>
+<body bgcolor="#FFFFFF">
+<center><h1 class="title"><font color="#339900">How to Prove Stuff Automatically</font></h1></center>
+<h2 class="author">David A. Wheeler</h2>
+<h2 class="date">2010-10-29</h2>
+<p>
+The real world is a complicated place;
+in many cases we don&#8217;t even know the probability of something happening.
+Nevertheless, there are a variety of circumstances where
+it is important to prove that, given certain reasonable assumptions,
+certain conclusions necessarily follow.
+<p>
+The desire to conclusively prove claims is an ancient desire.
+Euclid showed (in geometry) that it was possible to start with a short
+list of reasonable assumptions, called axioms,
+and then prove an astonishing array of results.
+In 1685 Gottfried Leibniz stated in &#8220;The Art of Discovery&#8221; that
+&#8220;The only way to rectify our reasonings is to make them as tangible
+as those of the Mathematicians, so... when there are disputes... we can
+simply say: Let us calculate... to see who is right.&#8221;
+At the time, the logic languages necessary to apply to many fields didn&#8217;t
+exist, and even if they did, the challenge of applying them manually
+would have made them less useful.
+<p>
+The good news is that
+today there are a variety of computer programs and logic systems (languages)
+that can help you conclusively prove claims about the real world.
+The bad news is that it&#8217;s often hard to find out how to use these tools.
+For example, many of their creators assume that users have a vast amount
+of mathematical background.
+<p>
+When I was writing my dissertation
+<a href="http://www.dwheeler.com/trusting-trust">
+Fully Countering Trusting Trust through Diverse Double-Compiling</a>
+I ended up having to learn a lot of poorly-documented &#8220;folklore&#8221;.
+In this paper, I briefly provide some &#8220;lessons learned&#8221; that I hope
+will help others who want to prove that certain claims are true.
+<p>
+<h1>Brief Lessons Learned</h1>
+<p>
+Here are some brief lessons learned:
+<ol>
+<li>
+<i>
+Determine your goal (claim) and the basic kinds of assumptions that
+you believe will prove it</i>.
+You&#8217;ll need to do this in great detail to complete a real proof, but
+it&#8217;s important to at first get a basic sense of what you&#8217;re trying to
+prove.
+Creating a few figures and naming all the &#8220;parts&#8221; of your problem can help.
+Proofs always require that you assume <i>something</i>;
+trying to prove something from nothing is hopeless.
+So, the key is to clarify your goals, and look for
+assumptions that you can easily defend to others.
+<li>
+<i>Learn several different logic languages and their supporting tools,
+then choose the
+&#8220;weakest&#8221; language that can easily express your assumptions and goals
+and the tool that best meets your needs</i>.
+There are many different mathematical/logic languages, each with
+their strengths and weaknesses.
+In general, the more &#8220;expressive&#8221; a language is, the harder it is to
+automate... and if it&#8217;s hard to automate, the human ends up with more work
+to do to prove things.
+I&#8217;ll talk more about this below.
+<li>
+<i>Tools matter</i>.
+Some tools are nicer to work with than others; try out several
+before you select one.
+<li>
+<i>If you're trying to prove something about (a model of) the real world,
+then start with an extremely simple model of the world, prove a simplified
+claim about that, and then slowly expand</i>.
+Trying to model the whole world at once will get you nowhere.
+By slowly expanding from a very simple model of the world
+that you <i>can</i> prove, you will immediately see
+what addition causes problems.
+<li>
+<i>Generate counter-examples if you cannot prove it</i>.
+If you feed assumptions and a goal into a program, and the tool
+can&#8217;t prove it,
+feed the same thing to a &#8220;model checker&#8221; to generate a counter-example.
+(Obviously, this only works if there&#8217;s such a tool for your language.)
+The counter-example will show you an example of <i>why</i> you can&#8217;t
+prove something, and that may be helpful to you.
+<li>
+<i>Remember, you must provide all needed assumptions</i>.
+A prover can only assume what you give it; if you don&#8217;t state it, it
+cannot assume anything.
+Some logic languages look like Prolog, but if you&#8217;re familiar with Prolog
+this can be misleading.
+Prolog presumes
+&#8220;negation as failure&#8221;, that is, if it can&#8217;t prove
+something is true, then Prolog assumes it&#8217;s false.
+General theorem provers make no such assumption!
+On the other hand, theorem provers include an &#8220;occurs check&#8221;,
+so the kinds of expressions that get Prolog programs into infinite loops
+are non-problems for theorem provers.
+<li>
+<i>Strive to have good, consistent names</i>.
+Using clear names and a consistent naming convention can not only make
+the final proof clearer, it can also save a lot of time debugging things.
+A good name can keep you from making some mistakes in the first place,
+simply because some false claims will be &#8220;obviously&#8221; untrue.
+Many systems using naming conventions to distinguish between
+constants and variables, and some (like prover9) even let you choose
+between conventions.
+I find that the Prolog convention (uppercase are variables,
+lowercase are constants) is simpler to use when modelling the real world
+compared to some other conventions, because then it&#8217;s easier to
+have clear names.
+(The prover9 alternative is that terms beginning with u-z are variables,
+but this can lead to odd names if you&#8217;re modelling the real world.)
+<li>
+<i>Check that your assumptions are consistent</i>.
+In most logic systems, if you baldly assume something inconsistent
+(such &#8220;a equals b&#8221; <i>and</i> &#8220;a is not equal to b&#8221;), then you can
+prove <i>anything</i>.
+Thus, once you have your proof, run your assumptions through a
+model-checker;
+if the model-checker can find a model, then
+the assumptions are satisfiable and thus consistent.
+See my dissertation
+<a href="http://www.dwheeler.com/trusting-trust">
+Fully Countering Trusting Trust through Diverse Double-Compiling</a>
+for an example of this.
+Beware: The word "model" has different meanings.
+In this paper and in casual conversation, the word "model" often means
+an abstract (and typically mathematical) representation of the real world.
+Model-checkers use a different technical definition of the word "model";
+in model-checkers, a "model" can considered the set of assignments
+that can can meet a given set of assumptions.
+<li>
+<i>Use a separate verifier</i>.
+Proof tools can have bugs, too.
+So, have the proof tool output the proof, and then run it through
+a separate &#8220;verifier&#8221; program that checks each step.
+Verifiers can be much simpler than a program for <i>creating</i> proofs,
+so they can act as a good test for whether a proof is true or not.
+Not all tools have verifiers, so
+you may want to prefer a tool where there&#8217;s a separate verifier.
+For example, prover9 proofs can be checked by ivy.
+<li>
+<i>Have others review the proof</i>.
+A prover can prove that some claim is true, given the assumptions,
+but it cannot tell you if the claim or assumptions are adequate
+models of reality.
+Others can tell you where they think your model is inadequate for what
+you are trying to prove, warn you of dubious assumptions
+(maybe you can break those up into simpler assumptions), and so on.
+</ol>
+
+<p>
+<h1>Choosing a logic language and tool</h1>
+<p>
+Unless you <i>want</i> to do things by hand, you&#8217;ll need a tool.
+Different tools implement different logic languages, and of course,
+the language you use matters greatly.
+So in practice, you end up selecting both the logic language and the
+tool simultaneously.
+(This is a lot like selecting a programming language, really.)
+
+<p>
+Unfortunately, the current practice is that you need to
+learn a little bit about several different tools and their languages
+before you can decide if they&#8217;re right for your problem.
+That&#8217;s unfortunate, but probably unavoidable.
+In particular, tools tend to add little improvements or extensions that
+may or may not be helpful to you.
+
+<p>
+My paper
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)</a> specifically discusses a number of FLOSS formal methods tools
+that may be useful to you.
+I recommend that you prefer FLOSS proof tools for these purposes;
+they cost nothing, aren&#8217;t tied to a particular vendor
+(avoiding vendor lock-in),
+won&#8217;t disappear on you in the future, and so on.
+
+<p>
+There are several different basic logic languages.
+Going from weakest to strongest, major types of languages include
+propositional logic, first-order logic (FOL),
+modal FOL, and higher-order logic (HOL).
+([Schumann2001, page 73] has a slightly more complicated summary
+about language expressiveness.)
+Propositional language is too weak for most ordinary users;
+programs that implement propositional languages
+(such as SAT solvers) are usually building blocks for creating
+larger systems instead of being used directly by end-users.
+
+<p>
+I recommend that if you&#8217;re new to this, start by learning
+first-order logic (FOL), and see if you can make your problem fit inside FOL.
+The modal logic and higher-order logic (HOL) systems can be <i>very</i>
+useful, but they are more difficult to automate (thus requiring more
+human intervention).
+What&#8217;s more, it&#8217;s much easier to learn other systems once you know FOL.
+
+<p>
+In practice, real-world languages have lots of extensions and
+&#8220;built-in theorems&#8221;.
+At the least, almost every tool builds in equality (=), because that&#8217;s
+necessary for lots of real work.
+Some systems (like prover9) build in list handling, so you can handle
+arbitrary-length lists; these can be really useful.
+Many systems build in or add various forms of arithmetic;
+if you need arithmetic, you <i>need</i> to use such systems
+instead of trying to add them yourself.
+The program CVC3 is a good program to use if you need something
+that includes lots of arithmetic.
+Other useful programs include HOL, PVS, and (if you&#8217;re proving programs) ACL2.
+
+<p>
+I should warn you that the term &#8220;model&#8221; has two subtly different meanings.
+The non-technical term &#8220;model&#8221;
+means &#8220;a simplified representation
+of the real world&#8221;; in this sense, if you are trying to prove something
+about the real world, then your assumptions and goal(s) are
+models of the real world.
+There&#8217;s also a technical meaning of the term &#8220;model&#8221;
+that means
+&#8220;an assignment of constants that meet all the given constraints&#8221;;
+this is the kind of model that &#8220;model-checkers&#8221; find.
+Both meanings are used, and it can be confusing.  Sorry.
+
+<p>
+You can see a little more about formal methods in general at my
+<a href="http://www.dwheeler.com/formal_methods/">formal methods page</a>.
+
+
+
+<p>
+<h1>First-Order Logic (FOL)</h1>
+<p>
+Many provers are based on &#8220;first-order logic&#8221; (FOL).
+If you can express your requirements using some version of FOL, then
+you can probably use lots of highly-automated tools that actually
+<i>create</i> the proof (instead of just checking it).
+<a href="http://en.wikipedia.org/w/index.php?title=First-order_logic&amp;printable=yes">
+Wikipedia&#8217;s
+&#8220;First-order logic&#8221; entry has some useful information</a>.
+Some people use different symbols for the same concept, and may add or remove
+some operations, but once you know one variant
+it&#8217;s trivial to learn another variant.
+<p>
+My dissertation
+<a href="http://www.dwheeler.com/trusting-trust">
+Fully Countering Trusting Trust through Diverse Double-Compiling</a>
+section 5.2 gives a brief summary of FOL in 5.2.
+In short, in FOL, every expression is a term or a formula.
+A term (which denotes an object) is defined as: a variable, a constant, or a function application of form f(...) where each of the zero or more comma-separated parameters is a term.
+A formula (which denotes a truth value of true or false)
+is defined as being one of the following (if both A and B are formulas):
+<table border="1">
+<tr><th>Expression</th><th>Meaning</th></tr>
+<tr><td>-A</td><td>&#8220;not A&#8221;. If A is true, then -A is false; if A is false, then -A is true.</td></tr>
+<tr><td>A &amp; B</td><td>&#8220;A and B&#8221;.  Both A and B must be true for the expression to be true</td></tr>
+<tr><td>A | B</td><td> &#8220;A or B&#8221;. At least one of A or B must be true for the expression to be true.</td></tr>
+<tr><td>A -&gt; B</td><td> &#8220;A implies B&#8221; or &#8220;if A, then B&#8221;</td></tr>
+<tr><td>A &lt;-&gt; B</td><td>&#8220;A implies B, and B implies A&#8221;. This is a short form of &#8220;(A -&gt; B) &amp; (B -&gt; A)&#8221;</td></tr>
+<tr><td>A &lt;- B</td><td>&#8220;B implies A&#8221;; this is just a sometimes-useful reversed form of &#8220;B -&gt; A&#8221;</td></tr>
+<tr><td>all X A</td><td> &#8220;for all values of X, A is true&#8221;; X is a variable</td></tr>
+<tr><td>exists X A</td><td> &#8220;there exists some X where A is true&#8221;; X is a variable</td></tr>
+<tr><td>T1 = T1</td><td> &#8220;T1 equals T2&#8221;; T1 and T2 must be terms</td></tr>
+<tr><td>T1 != T2</td><td> &#8220;T1 is not equal to T2&#8221;</td></tr>
+<tr><td>p(...)</td><td>predicate (a &#8220;function&#8221; that returns a boolean); each of the 1 or more comma-separated parameters is a term.</td></tr>
+</table>
+<p>
+For example, you can state &#8220;all men are mortal&#8221; in FOL as:
+<pre>
+  % "For all X, if X is a man, then X is mortal"
+  all X man(X) -&gt; mortal(X).
+</pre>
+You can express &#8220;Socrates is a man&#8221; in FOL as:
+<pre>
+  man(socrates).
+</pre>
+From these two statements, you can then prove that Socrates is mortal:
+<pre>
+  mortal(socrates).
+</pre>
+<p>
+There are endless books and pages on FOL;
+a good library and/or a web search should get you started.
+<a href="http://www.fecundity.com/logic/">
+&#8220;forall x: An introduction to Formal Logic&#8221; by P.D. Magnus</a>
+is an open access introductory textbook in formal logic.
+
+<p>
+Here are some external pages on how to convert ideas into FOL:
+<ul>
+<li><a href="http://www.earlham.edu/~peters/courses/log/transtip.htm">
+&#8220;Translation Tips&#8221; by Peter Suber</a>
+<li><a href="http://pages.cs.wisc.edu/~dyer/cs540/notes/fopc.html">
+&#8220;First-Order Logic&#8221; by C. R. Dyer</a>
+<li><a href="http://cs.nyu.edu/faculty/davise/guide.html">
+&#8220;Guide to Axiomatizing Domains in First-Order Logic&#8221; by Ernest Davis</a>
+</ul>
+<p>
+Unfortunately, FOL has some real weaknesses that are easily extended, but
+many mathematicians don&#8217;t seem to <i>realize</i> that they are weaknesses.
+For example, you can&#8217;t define &#8220;if-then-else&#8221; easily in FOL.
+FOL has two &#8220;types&#8221;: formula (essentially booleans) and terms
+(everything else).  You can define a multi-parameter object that returns
+a boolean (Predicate) or a term (function), but <i>all</i> parameters have
+to be terms (non-booleans) - and if-then-else inherently takes a boolean!
+<a href="http://www.cs.nyu.edu/pipermail/smt-lib/2003/000018.html">This
+email notes why it&#8217;s important to add if-then-else for practical
+languages</a>.
+
+<p>
+<h1>Prover9/Mace4</h1>
+<p>
+<a href="http://www.cs.unm.edu/~mccune/mace4/">Prover9/Mace4</a>
+(GPLv2+ license) is a really neat combination of tools.
+Prover9 can be used to search for a proof, and mace4 can be used to search
+for a counter-example, which is an interesting combination.
+Prover9&#8217;s language is limited (it&#8217;s basically FOL), but if you
+can express your problem using its language, it&#8217;s extraordinarily good at
+automatically finding proofs or counter-examples.
+Prover9 includes support for equality and lists, and generally it
+has a "nice" syntax that's faily close to textbook formats
+(making it easy to use).
+<p>
+Prover9 is a "theorem prover" that works in a way similar to many other
+provers.
+First, it negates the "goal" statement
+(the idea is that you're trying to prove that there's some contradiction).
+Then, it tries to generate all possible facts from this set of assumptions
+(including the negated goal statement), until it finds a contradiction.
+Obviously, this is <i>not</i> the way that a human would work, but
+that's okay if you're simply trying to find out if something is true
+given certain assumptions.
+This works primarily because computers are remarkably fast, and
+the developers of prover9 (and other such programs) have honed heuristics
+that work in many cases.
+<p>
+Mace4 and prover9 include <i>limited</i> support for integer arithmetic.
+In Mace4 you can turn on arithmetic support with set(arithmetic),
+and it's fairly capable.
+Historically, prover9 couldn't handle arithmetic at all,
+but as of 2008-2009 its "production mode" can do this
+(use set(production) to turn this on).
+However, production mode
+disables many of prover9's other capabilities so this is <i>much</i>
+more limited (for example, it won't show the rewrites in the output).
+Many problems don't require calculation, and these limited capabilities
+may be sufficient for some problems that do.
+Prover9 has also recently added an if(boolean,if-term,else-term),
+which is very convenient but again has limitations.
+If your problem focuses on in-depth arithmetic calculations,
+prover9 is probably not the tool for you.
+<p>
+Prover9 is easy to invoke; just say &#8220;prover9 -f FILE.in&#8221; on the command line,
+where FILE.in gives the assumptions and goal to be proved.
+The prover9 documentation doesn&#8217;t describe its input format very clearly;
+here&#8217;s my attempt at documenting the
+<a href="prover9-bnf.txt">prover9 formula syntax (in BNF)</a>.
+<!--
+In the long term, I might switch to
+<a href="http://www.cs.miami.edu/~tptp/TPTP/SyntaxBNF.html">
+TPTP syntax</a>
+(as
+<a href="http://mally.stanford.edu/cm/">Stanford's Computational
+Metaphysics project</a> has done), since this is a standard format accepted
+by many tools... but prover9/mace4 include tools to translate to/from
+TPTP, so I can delay doing that (knowing that I <i>can</i> escape from
+the unique format of the tool).
+-->
+
+<p>
+There&#8217;s a paucity of small, simple examples of prover9 in use.
+It's hard to be simpler than
+<a href="mortal.in">mortal.in</a>, which is the
+"Socrates is mortal" proof in prover9 syntax.
+
+<p>
+Here&#8217;s the proof that the square root of 2 is irrational, as
+<a href="sqrt2.in">prover9 input</a> and
+<a href="sqrt2.xml">prover9 output</a>.
+(This is a translation of
+the Otter proof from Larry Wos, by Michael Beeson and William McCune,
+as published in
+<a href="http://www.cs.ru.nl/~freek/comparison/">
+&#8220;The Seventeen Provers of the World&#8221;
+compiled by Freek Wiedijk</a>).
+Here&#8217;s the
+<a href="sqrt2.pdf">square root of 2 proof, as a graphic</a>.
+
+<p>
+Here&#8217;s another example, <a href="distinct.in">distinct.in</a>, which
+defines this predicate:
+<pre>
+  distinct([First, Second : Rest]) -&gt;
+   ( (First != Second) &amp;
+     distinct([First : Rest]) &amp;
+     distinct([Second : Rest])).
+</pre>
+The &#8220;distinct&#8221; predicate is useful all by itself, because &#8220;distinct&#8221; makes it
+easy to declare that a collection of terms are all different.
+Basically, &#8220;distinct&#8221; accepts a list of terms, and then declares that
+every term is different from all the other terms.
+For example, you can then state that a, b, c, and d are all different
+by stating &#8220;distinct([a,b,c,d]).&#8221;.
+This is also a useful example of how to do recursive
+list-handling in prover9.
+<p>
+Note: due to technical issues in prover9, if you include this definition
+of "distinct" in your assumptions but you never <i>use</i> it,
+then you may get a misleading message.
+If prover9 can find a proof but "distinct" is not used, it may output
+"SEARCH FAILED" followed by "Exiting with 1 proof" (or some other number).
+In such cases, prover9 <i>did</i> find a proof, but
+thought it had to keep searching.
+
+<p>
+Unfortunately, FOL doesn&#8217;t have any built-in notion of type, so
+programs like prover9 that implement FOL don&#8217;t have types either.
+You can implement types in prover9, using FOL; whether or not you
+<i>should</i> do this depends on your problem.
+If you add types where they aren&#8217;t needed, then the assumptions,
+goal, and proof may become much more complicated.
+In my dissertation I decided to discuss types in the informal
+text, but not use them in the actual proof.
+A <i>trivial</i> way to implement types is to simply make a predicate
+that is true if the object is a given type, e.g.:
+<pre>
+  % human(X) is true if X is human.
+  human(abraham_lincoln).
+  % penguin(X) is true if X is a penguin.
+  penguin(tux).
+</pre>
+If there are only two types, then it&#8217;s easy to declare that
+if something is of one type, then it&#8217;s not of the other type.
+Here, we declare that any unknown X cannot be both a human and a penguin:
+<pre>
+  -(human(X) &amp; penguin(X)).
+</pre>
+File
+<a href="penguin.in">penguin.in shows how to implement simple types
+in prover9's first-order logic (FOL)</a>
+
+<p>
+That doesn&#8217;t scale well to many types if you want to make
+claims about many types.
+If you have 30 different types, and an item is at most one of those
+types, it&#8217;d be a pain to directly declare that the same way.
+Thankfully, you can then use recursion
+(just like the &#8220;distinct&#8221; predicate above)
+to declare that instances of different types are themselves distinct.
+The file
+<a href="distinct_types.in">distinct_types.in</a>
+shows how to do this.
+
+<p>
+You can even define that certain types are subclasses of other classes,
+and so on, but again, you have to build that yourself.
+The file
+<a href="classes.in">classes.in</a>
+is a trivial example.
+
+<p>
+File
+<a href="distinct_classes.in">distinct_classes.in
+demonstrates how to implement
+partitioned superclasses and subclasses (in a hierarchy), instances of
+types, and various facts about them using
+in prover9's first-order logic (FOL)</a>.
+
+<p>
+My dissertation
+<a href="http://www.dwheeler.com/trusting-trust">
+Fully Countering Trusting Trust through Diverse Double-Compiling</a>
+has some additional examples of using prover9.
+
+<!--
+ Examine implementing types.
+ Walk through examples of using prover9 - invoking, explain results.
+ Euclidean geometry - Tarski's 1st order version.
+-->
+
+
+<p>
+<h1>Other</h1>
+<p>
+I can&#8217;t really begin to scratch the surface here.
+I haven&#8217;t gone into a vast number of topics, but I hope this little
+paper has helped.
+<p>
+[Schumann2001] is not a bad introduction to using automated proof
+tools.
+
+<p>
+<h1>Bibliography</h1>
+<p>
+[Schumann2001] Schumann, Johann M. 2001.
+&#8220;Automated Theorem Proving in Software Engineering&#8221;.
+Berlin: Springer-Verlag.
+ISBN 3-540-67989-8
+
+<p>
+<hr>
+<p>
+You might want to look at my
+<a href="http://www.dwheeler.com/secure-programs">Secure Programming HOWTO
+web page</a>,
+<a href="http://www.dwheeler.com/essays/oss_software_assurance.pdf">
+Open Source Software and Software Assurance (Security)</a>,
+and
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)</a>.
+The
+<a href="http://www.openproofs.org">open proofs</a> page has information
+about open proofs.
+<p>
+You can also view
+<a href="http://www.dwheeler.com">my home page</a>.
+</body>
+</html>
+

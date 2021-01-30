@@ -1,0 +1,35 @@
+% Demo how to declare in prover9 that the types are distinct.
+% David A. Wheeler
+% Released to the public domain.
+% Usage:
+%   prover9 -f *.in > *.out
+
+% Use prolog naming format (initial uppercase is variable):
+set(prolog_style_variables).
+
+formulas(assumptions).
+
+% Define distinct_types(List):
+% Instances of one type are different than instances
+% of any of the other types.
+distinct_types([First, Second : Rest]) ->
+ ( -(typeof(X, First) & typeof(X, Second)) & (First != Second) &
+   distinct_types([First : Rest]) &
+   distinct_types([Second : Rest])).
+
+% Simple example - these types are distinct (nothing can be BOTH).
+distinct_types([penguin,horse,human]).
+
+% Abraham Lincoln is human.
+typeof(abraham_lincoln, human).
+
+% Tux is a penguin.
+typeof(tux, penguin).
+
+end_of_list.
+
+% Simple demonstration, to show that it works:
+formulas(goals).
+ -typeof(abraham_lincoln,penguin).
+end_of_list.
+

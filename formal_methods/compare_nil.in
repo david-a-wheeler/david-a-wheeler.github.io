@@ -1,0 +1,73 @@
+% Demo how to declare in prover9 classes/subclasses.
+% David A. Wheeler
+% Released to the public domain.
+% Usage:
+%   prover9 -f *.in > *.out
+
+% Use prolog naming format (initial uppercase is variable):
+set(prolog_style_variables).
+
+formulas(assumptions).
+
+
+% Issue: Why is the comparison with $nil necessary?!?
+
+% Define distinct(List): Each item in List is not equal to all the others.
+% (distinct([First, Second : Rest]) & (Second != $nil)) ->
+
+  distinct([First, Second : Rest]) ->
+  ( (First != Second) &
+    distinct([First : Rest]) &
+    distinct([Second : Rest])).
+
+% Each item in list are distinct types.
+%  distinct_types([First, Second : Rest]) & (Second != $nil) ->
+%  distinct_types([First, Second : Rest]) ->
+%   ( -(typeof(X, First) & typeof(X, Second)) &
+%     distinct_types([First : Rest]) &
+%     distinct_types([Second : Rest])).
+
+
+% We'll presume that we can have one or more hierarchies of
+% superclass ... subclass ... etc.
+% An instance has a specific "type", and only one type in a particular
+% hierarchy.
+% subclass(Class, Superclass) -> ancestorof(Class, Superclass).
+% (ancestorof(Class, Intermediary) & subclass(Intermediary, Superclass)) ->
+%          ancestorof(Class, Superclass).
+%
+% "Instance isa Class" if Instance's type is Class or an ancestor of Class.
+% typeof(Instance, Class) -> isa(Instance, Class).
+% typeof(Instance, Type) & ancestorof(Type, Class) -> isa(Instance, Class).
+
+% Query: descendsfrom(Subclass,Superclass)
+descendsfrom(Subclass, Superclass) <- subclassof(Subclass,Superclass).
+descendsfrom(Subclass,Superclass) <- (descendsfrom(Subclass,Intermediary)
+                                      & subclassof(Intermediary,Superclass)).
+
+% Query: isa(Instance, Class)
+isa(Instance, Class) <- typeof(Instance, Class).
+isa(Instance, Class) <- typeof(Instance, Type) & descendsfrom(Type, Class).
+
+% subclassof(Class, Superclass).
+
+subclassof(bird, animal).
+subclassof(penguin, bird).
+subclassof(mammal, animal).
+subclassof(human, mammal).
+
+% typeof(Instance, ImmediateType)
+
+typeof(abraham_lincoln, human).
+
+distinct([abraham_lincoln, tux]).
+% distinct_types([penguin,human]).
+
+
+end_of_list.
+
+% Simple demonstration, to show that it works:
+formulas(goals).
+ isa(abraham_lincoln, animal).
+end_of_list.
+
