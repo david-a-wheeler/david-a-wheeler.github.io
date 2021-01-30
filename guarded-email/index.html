@@ -1,0 +1,125 @@
+<html>
+<head>
+<title>Home Page for David A. Wheeler's Information on Guarded Email</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Guarded Email">
+<meta name="keywords" content="Guarded Email, David, Wheeler, David A. Wheeler, essays">
+
+</head>
+<body bgcolor="#FFFFFF">
+<h1><center><font color="#339900">Home Page for "Countering Spam with Ham-Authenticated Email and the Guarded Email Protocol"</font></center></h1>
+<p>
+Spam (unsolicited bulk email, also called junk email or junk mail)
+has become a serious problem on the Internet.
+The paper available at this location,
+<a href="guarded-email.html">
+"Countering Spam with Ham-Authenticated Email
+and the Guarded Email Protocol",</a> may be an answer to eliminating spam
+permanently as a serious problem on the Internet.
+I have described another anti-spam approach too, called hampasses;
+for more information on hampasses, see my separate essay
+<a href="http://www.dwheeler.com/essays/spam-email-password.html">
+Countering Spam Using Hampasses (Email Passwords)</a>.
+Currently I use hampasses for my needs.
+<p>
+<img src="alicebob.png" alt="Alice and Spud try to send email to Bob" width="256" height="256" align="right">
+The paper available at this site first defines
+a spam threat model (involving Alice the legitimate sender, Bob the receiver,
+and Spud the spammer).
+This paper then identifies a major category of approaches
+for countering spam: authenticating that email is ham (not spam)
+before deliving the email to Bob.
+It then defines a specific new authentication protocol,
+called "guarded email", that should eliminate nearly all spam without throwing
+away legitimate email and is extremely resistant to spammer counterattack.
+In guarded email, received email is first checked by a "guard," and only
+email that is authenticated as ham is delivered to the final recipient Bob.
+Email is authenticated as ham by being signed or having a "from" address
+already listed in Bob's whitelist, or by including a password (or other
+authentication marker) selected by Bob. Otherwise, the email is <i>not</i> accepted; instead, Bob replies with a human-readable challenge
+explaining how to determine the password. Any time Bob sends an email,
+or receives an email with a correct password,
+that address is added to the whitelist.
+Techniques to eliminate problems with other challenge-response systems,
+such as preventing loops, eliminating cleartext passwords,
+and countering forged addresses, are also discussed.
+<p>
+The result is a simple protocol where strangers can communicate by answering
+a simple human-readable challenge: untrusted users must "log in" to
+send email to someone else. Guarded email can incorporate significant
+new legal protections against spammers: it can include a legal contract for
+sending email, require spammers to "break into" computers to spam,
+and demonstrate opting out.
+It can also incorporate optional cryptographic techniques
+to counter spammer capturing of cleartext passwords, and can be implemented
+incrementally by individuals across the Internet.
+<p>
+The protocol can be illustrated this way:
+<p>
+<img src="alice-bob-communicate.png" alt="Illustration of Guarded Email with Alice and Bob" width="424" height="551">
+<p>
+<font size="+2">
+<a href="guarded-email.html"><b>For more information, see my draft
+paper, "Countering Spam with Ham-Authenticated Email
+and the Guarded Email Protocol"</b></a>.
+</font>
+<p>
+<a href="http://www.templetons.com/brad/spam/challengeresponse.html">
+Brad Templeton has written a short article on proper principles
+for challenge-response systems</a>.
+His article is more abstract, but it's 
+worth looking at as well.
+<p>
+There are lots of variations on this theme.
+<a href="http://www.bluebottle.com">Bluebottle</a> can use this approach,
+using the recipient's full name as the "password".
+<p>
+There are a number of authentication-based approaches.
+Unfortunately, authentication-based approaches only nibble at the problem,
+since spammers can authenticate themselves too.
+Authentication measures are really useful when <i>coupled</i> with
+other measures, since as laws outlawing spam (suddenly I can track you
+back and <i>sue</I> you) and making whitelisting approaches much
+more secure.
+PGP and S/MIME authenticate, but at a level far in excess to what
+most people want, and don't handle strangers well (which is the
+real problem with spam).
+<a href="http://spf.pobox.com">Sender Permitted From (SPF)</a> is
+is one of the most popular of these approaches.
+Unfortunately, it only checks the <i>envelope</i> of email, not the
+contents, so information that users actually see (like the "From:"
+address) isn't actually protected by SPF. SPF badly breaks forwarding, too,
+which makes it hard to deploy for many people.
+<a href="http://www.wired.com/news/business/0,1367,63513,00.html">
+Yahoo's DomainKeys approach</a> signs email, and then recipients
+can check if the signature is okay using DNS.
+This approach makes sense, and is similar to
+<a href="http://www.dwheeler.com/essays/easy-email-sec.html">my
+earlier proposal for secure email</a>.
+Microsoft has an approach it calls "email caller id", but
+it appears that
+<a href="http://boycott-email-caller-id.org/">
+Microsoft's approach is both patent-encumbered and nonstandard,
+and thus unacceptable for use as an email standard</a>.
+<p>
+There are various <a href="http://www.hashcash.org">hashcash approaches</a>,
+which require a
+sender to use compute time create a "stamp" that a receiver can check.
+<a href="http://www-106.ibm.com/developerworks/linux/library/l-hashcash.html?ca=dgr-lnxw01HashCash">
+This developerworks article explains more. </a>
+When only used for email to strangers this actually looks
+pretty good; see
+<a href="http://www.camram.org/frequently-raised-objections.html">
+Camram's Frequently Raised objections</a> for arguments supporting it. 
+He also has a discussion on
+<a href="http://www.camram.org/why-money-stamps-fail.html">
+why money stamps fail</a>.
+<a href="http://dir.yahoo.com/Business_and_Economy/Business_to_Business/Computers/Communications_and_Networking/Software/Email/Junk_Email_Removal_and_Filtering/">Yahoo has a list of anti-spam mechanisms</a> you might find interesting.
+<p>
+Feel free to
+<a href="http://www.dwheeler.com">look at my home page</a> or my
+<a href="http://www.dwheeler.com/essays/stopspam.html">essay on
+stopping spam</a>.
+</body>
+</html>
+
