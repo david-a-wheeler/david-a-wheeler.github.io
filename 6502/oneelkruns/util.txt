@@ -1,0 +1,127 @@
+ 
+( Utility words )
+
+( Words for handling ProDOS prefix )
+
+create PNAME  80 allot  ( room for a prefix )
+create PNAME2 80 allot  ( startup prefix )
+
+create PARMS ( ProDOS parameter table )
+              1 c,  ( number of parameters )
+  PNAME 256 mod c,  ( address of output buffer )
+  PNAME 256  /  c,
+
+create PMLI  ( ProDOS MLI interface )
+  32 c,   0 c, 191 c,   ( JSR $BF00  ;MLI          )
+                 0 c,   ( DFB $00    ;CMD NUMBER   )
+     PARMS 256 mod c,   ( DA  PARMS  ;PARAM TABLE  )
+     PARMS 256  /  c,
+                96 c,   ( RTS        ;NO ERR CHECK )
+
+: get_prefix ( -- )  ( get the current prefix )
+  199 PMLI 3 + c! ( GET_PREFIX )
+  PMLI execute ;
+  ( prefix now in PNAME as a counted string )
+
+: set_prefix ( -- )  ( set the prefix in PNAME )
+  198 PMLI 3 + c! ( SET_PREFIX )
+  PMLI execute ;
+  ( prefix assumed in PNAME as a counted string )
+
+
+( Low-level utility words - should be in QForth proper )
+
+: 2dup  ( x y -- x y x y )  over over ;
+: 2drop ( x y -- )  drop drop ;
+: 2swap ( a b c d -- c d a b )  >r rot rot r> rot rot ;
+
+: max ( a b -- max[a,b] )
+  dup >r over r> > if drop else swap drop then ;
+
+: min ( a b -- min[a,b] )
+  dup >r over r> > if swap drop else drop then ;
+
+: keypress ( --  )  ( wait for a key to be pressed, no cursor )
+  0 -16306 c!  begin -16384 c@ 127 > until  key drop ;
+
+: getkey ( -- c )  ( get a key, no cursor, 0 if none pressed )
+  -16384 c@ dup 127 > if 128 - 0 -16368 c! else drop 0 then ; 
+  
+: accept ( addr len -- )  ( expect, but makes a null terminated string )
+  swap dup >r swap expect  0 r> span + c! ;
+
+variable qnum
+variable qsign
+variable qaddr
+: number ( addr -- n )  ( read a null terminated string as a number )
+  qaddr !  0 qnum !  1 qsign !
+  begin  qaddr @ c@ dup 0= 0= while
+    dup 45 = if 
+      drop -1 qsign ! 
+    else
+      dup dup 47 > swap 58 < and if
+        48 -  qnum @ 10 * +  qnum !
+      else
+        drop
+      then 
+    then
+    qaddr @ 1+ qaddr !
+  repeat drop
+  qnum @ qsign @ * ;
+
+
+( number to string )
+
+create (num>str)
+  160 c,   0 c,     (       LDY #0    )
+   41 c, 127 c,     (       AND #7F   )
+  145 c,   6 c,     (       STA [6],Y )
+  230 c,   6 c,     (       INC 6     )
+  208 c,   2 c,     (       BNE :END  )
+  230 c,   7 c,     (       INC 7     )
+   96 c,            ( :END  RTS       ) 
+
+: num>str ( n addr -- )  ( convert n to a string at addr )
+  6 !  >r                       ( set output address, hide n ) 
+  54 c@  55 c@                  ( old CSW values             )
+  (num>str)  256 mod  54 c!     ( set CSW to new routine     )
+  (num>str)  256  /   55 c!
+  r> .                          ( unhide n and print it      )
+  0 6 @ 1- c!                   ( null terminate             )
+  55 c!  54 c! ;                ( restore old CSW values     )
+
+
+variable lo
+variable hi
+: getNum ( lo hi -- n ) ( get a number in [0,9] )
+  hi !  lo !
+  begin
+    key 48 - dup dup
+    lo @ max hi @ min = 0=
+  while  drop  repeat ;
+
+: setpfx ( h v -- )  ( change the prefix )
+   dup cv hi !  dup ch lo !
+   ." .................................................."
+   ." .............."
+   lo @ ch PNAME 1+ 64 expect  span PNAME c!
+   span 0= if 1 PNAME c! 32 PNAME 1+ c! then
+   set_prefix 
+   hi @ cv  lo @ ch
+   ."                                                   "
+   ."               " get_prefix ;
+
+: get_start_prefix ( -- )
+  get_prefix
+  65 0 do
+    PNAME i + c@
+    PNAME2 i + c!
+  loop ;
+
+: set_start_prefix ( -- )
+  65 0 do
+    PNAME2 i + c@
+    PNAME i + c!
+  loop
+  set_prefix ;
+

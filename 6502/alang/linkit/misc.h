@@ -1,0 +1,6 @@
+
+void error();
+
+void fatal();
+
+

@@ -1,0 +1,481 @@
+This is the html version of the file http://mirrors.apple2.org.za/ground.icaen.uiowa.edu/Mirrors/uni-kl/languages/hyper_c/hyper_c.doc.
+Google automatically generates html versions of documents as we crawl the web.
+
+
+
+         Documentation for HyperC (abridged)
+
+         ----------------------------------- 
+
+First off, HyperC is not compatible with a the IIGS. There
+
+is a patch, but I do not have it, although I do want it. If
+
+you have it please post as a favour to me (in appreciation
+
+perhaps?). 
+
+Second scanf and fscanf are not supported at all. A
+
+separate utility was released, but the company folded
+
+before I could buy a copy. 
+
+Finally, K & R is fully supported, plus some nice extras,
+
+although the names have been changed to protect the
+
+innoncent.  ANSI C is not supported except by coincidence. 
+
+Getting stated
+
+-------------- 
+
+The disk, as sent, should have files called Autoexec,
+
+c.system, opsys and shell and subdirectories bin/,hdrs/ and
+
+libs/ in the root. It is not neccessary that they be this
+
+way on your system, but you will need to edit the cc and
+
+ccn files, at least, to work with your configuration. 
+
+useful commands: 
+
+?                  - Help  - very important
+
+asm65              - 6502 assembler - not source code
+
+                   compatible with any other known
+
+                   assembler
+
+asmcp              - p-code assembler
+
+bye                - prodos quit call
+
+cc                 - C compile to p-code
+
+ccn                - C compile to 6502
+
+cd <path>          - change directory
+
+cls                - Home - clear screen fo non-BASIC types
+
+cp <from> <to>     - copy files
+
+dm [address]       - dump memory-do not use 0x -hex assumed
+
+ed <file>          - editor
+
+ls [directory]     - list files
+
+mkdir <path>       - make directory
+
+mksys <file>       - make sys file- this changes the file
+
+                   type to 'sys' for stand alone apps, it
+
+                   does not do anything else to make the
+
+                   file behave like a sys file
+
+mv <from> <to>     - move files - copy, then delete
+
+path [path]        - show or set execution path (prefix?)
+
+pp                 - pre-processor - use only in batch file
+
+pwd                - print working directory
+
+ren <old> <new>    - rename file
+
+rm <file>          - remove (delete) files
+
+sym                - print symbol tables
+
+vols               - volumes online 
+
+path is any valid prodos path
+
+file can be multiple files, whitespace delineated 
+
+the autoexec file is like a batch file that executes when
+
+the system is booted. I use it to copy all of the files to
+
+the ramdisk, I suggest you do the same. This program is
+
+VERY disk intensive, without a ramdisk you will become
+
+annoyed very quickly. 
+
+BTW, the compiler is optimized for size, not speed. This
+
+makes is very slow to execute (vis a vis assember) and slow
+
+to compile due to the compilation algorythm.  
+
+memory usage 
+
+0x800 - 0x2000 - HyperC kernel - don't use. ever.
+
+0x200-0x3ff    - hyperC globals - more or less
+
+zero page      - spotty use by one system or another -
+
+                 avoid using, or use prodos locations after
+
+                 saving contents
+
+               - 0x50-0xb0 seems clear, use at own risk
+
+0x9f00         - Hyperc execution stack goes down from here
+
+                 This saves 8 buffers for I/O
+
+               - can be moved, but not reccommended 
+
+65c02 support 
+
+c02 opcodes and addressing modes will be generated if the
+
+-e flag is set for the asm65 module (asm65 -e) (check out
+
+ccn file) 
+
+Text editor commands  (ed) 
+
+Find               - search for string
+
+Insert             - insert mode editting
+
+Xchange            - overwrite mode editting
+
+Mark               - Mark blocks for moving, removing, or
+
+                     duplicating
+
+Quit               - return to shell
+
+esc                - takes you back one level 
+
+control codes while editting (hold control key and press..)
+
+a      - back one word
+
+c      - scroll up one page
+
+d      - cursor right
+
+e      - cursor up
+
+f      - forward one word
+
+g      - delete character
+
+h      - cursor down
+
+r      - scroll down one page
+
+s      - cursor left
+
+t      - delete word
+
+u      - refresh screen
+
+w      - scroll down one line
+
+x      - cursor down
+
+y      - delete one line
+
+z      - scroll up one line
+
+q      - use in combination with other commands to move
+
+         larger distances - ctl-q ctl-r goes to first page 
+
+when quitting: 
+
+Append  - loads another file onto end of one just editted
+
+Edit    - edit a new file
+
+Quit    - return to shell
+
+Return  - continue editting current file
+
+Save    - save current file 
+ 
+
+Difference with K & R 
+
+no scanf 
+
+#if, #line unsupported
+
+bitfields may be any simple type
+
+values are always coerced into 16-bits within (compiler)
+
+   registers and stack. (My term)
+
+addressof (&) operator may be applied to any variable type
+
+   except bitfields.
+
+auto and register are equivalent storage classes
+
+parameters may be declared as var type to provide automatic
+
+   dereferencing. (Hey I just copy the stuff I don't write
+
+                   it!)
+
+float and double are 8 byte objects, however they have no
+
+   meaning without the floating point libraries
+
+long, short, int are all 16 bit words
+
+enumeration types are added - I don't know what they are so
+
+   I can't help you there
+
+bitsets are added - a packed array of bits that can
+
+   represent graphics planes, io ports and the universe as a
+
+   whole- as enumeration types
+
+nested functions- up to 16 deep - functions can be defined
+
+   within other functions
+
+Anchored variables - a variable can be forced to a specific
+
+   memory location using the @<address>; form. note that
+
+   address can be an expression. In fact functions can also
+
+   be forced to a fixed location using #define <function>
+
+   @<address>, but this creates great weirdness and I would
+
+   not suggest it. 
+ 
+
+options 
+
+asmcp -[l o* t ] <files>  -l provide listing
+
+asm65 -[l o*]  <file>     -o alternate ouput filename
+
+                         -t combine text and data sections 
+
+cc  -[o*] <file>         -o alternate output name (useless)
+
+ccn -[o*] <file> 
+
+echo <parms>         parses command line arguments 
+
+ed  -[e +#]              -e show error message (if any)
+
+                         -+ place cursor at line # 
+
+lib <libname> -[b* d i* r v x] <files> - b before specified
+
+                             file use only with -r
+
+                         -d delete files from lib
+
+                         -i get filenames from this file
+
+                      instead of command line (cheap Make?)
+
+                         -r replace files
+
+                         -v verbose
+
+                         -x extract files from library 
+
+list <file>          - list file to stdout - from list.c 
+
+lnk  <file>          -linker - there's a dozen or so
+
+                      options, look at cc for some of them 
+
+mac -[o* v]  <file>      - macro expander 
+
+pp -[o*]  <file>         - pre-processor 
+
+sym -[s]  <file>         -print symbol tables of files 
+
+to redirect output to your printer precede  the command
+
+with 'print #<slot#>-'. The dash means no LF after CR. 
+
+Interesting and useful functions 
+
+CHAR getkey(clearbuf)        /*get new key*/
+
+BOOL clearbuf                /*clear buffer if true*/ 
+
+returns next key from keyboard buffer, high bit clear 
+
+INT kbdRead(buffer, maxChars) /*getline from keyboard*/
+
+TEXT *buffer
+
+INT maxChars 
+
+reads maxChar-2 characters from keyboard and null
+
+terminates string in buffer. Not echoed to screen. cr or
+
+ctl-c terminates input and ctl-@ aborts program. 
+
+INT conRead(buffer,maxChars) 
+
+identical to kbdRead, but echoes to the screen. 
+
+INT conWrite (buffer,buflen) /*write buffer to screen*/ 
+
+VOID _vidinti()              /*initialize 80columns slot3*/ 
+
+VOID _prtinit(slot)         /*initialize printer slot*/ 
+
+should be able to initialize any slot with this though. 
+
+VOID _prtonly()         /*vector output to printer only*/ 
+
+VOID _prtvid()          /*screen and printer simulcast*/ 
+
+VOID _vidonly()         /*I'll leave to your imagination*/ 
+
+INT prtWrite(buffer,buflen) /*write buffer to printer */ 
+
+VOID putchr(ch)  /*print character  */ 
+
+VOID putstr(str)  /* print null terminated string */ 
+
+VOID vidinv()  /*set inverse video */ 
+
+VOID vidnorm()  /*set normal video mode*/ 
+
+INT exec(progname,argc,argv) /*load/execute new program */
+
+TEXT  *progname 
+
+VOID close(fd)  /* close file fd, 0 closes all files */ 
+
+FILE create(filename) /*create and open new file*/ 
+
+FILE open(fname) 
+
+INT read(fd,buf,len) 
+
+INT write(fd,buf,len) 
+
+VOID remove(fname)  /* delete file */ 
+
+VOID rename(oldname,newname) 
+
+INT getEOF(fd,fpos)  /*get end of file */ 
+
+INT fprintf(fd,argn...)  /* formatted output to file*/ 
+
+INT getc(fd)   /* get character from file */ 
+
+FILE mustCreate(fname,err) /*create with error handler*/ 
+
+FILE mustOpen(fname,altpaths,err) /*open with error chk*/ 
+
+INT mustGetl(fd,buffer,maxlen,err,fname) /*read line of
+
+                                 char with error handling*/ 
+
+INT getl(fd,buffer,maxlen) /*read line of char from file */ 
+
+INT mustRead(fd,buf,len,err,fname)     
+
+INT mustWrite(fd,buf,len,err,fname) 
+
+VOID sync()   /* flush file buffers */ 
+
+There are maybe a hundred more functions in the book. As
+
+far as I can tell they are all standard C. Try them and
+
+see. most of the parameters are easy to determine what type
+
+of variable they represent (fname,buffer, altpaths are
+
+pointers to null terminated text strings, fd, len, are
+
+ints). err is interesting in that it is  given as:
+
+   VOID (*err)()   - This is a pointer to a function as in
+
+                     ANSI C.
+
+                   - if not specified (nil pointer) will go
+
+                     to standard handler error() 
+
+Floating point libraries
+
+------------------------ 
+
+To use floating point you must replace pp with ppf, replace
+
+libc and cc on the HyperC disk with the libc and cc from the
+
+fp disk, modify ccn so it looks more like the new cc and
+
+put fp.h in the /hdrs subdirectory 
+
+new types  all SANE format
+
+                                            header prefixes
+
+EXTENDED           11 byte extended precision       x
+
+DOUBLE              9 byte double      "            d
+
+SINGLE              5 byte single      "            s
+
+COMP                9 byte comp integer             c
+
+LONG                4 byte long    "                l
+
+INF                infinity
+
+NAN                not a number? 
+
+e or E for can now be used exponents 
+
+sample code and utilities to convert various numbers to
+
+other formats and to strings.  
+
+All in all this is a very powerful implementation of C for
+
+8-bit Apple II's. It is unfortunate the company is no
+
+longer around, this is much closer to ANSI C than any of
+
+the other compilers I've seen for other machines, except
+
+the Mac. I hope you find this useful, there are about 150
+
+pages total which go into considerable detail on compiler
+
+operation, overlays and programming practice. Most of this
+
+is over my head, although I am learning as I use it. 
+
+Enjoy.
+

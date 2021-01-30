@@ -1,0 +1,126 @@
+const keyboard=$C000
+const keystrobe=$C010
+const iobuffer=$0800
+const databuff=$0C00
+byte goodbye[] = "THAT'S ALL FOLKS!"
+byte errstr[]  = "ERROR: "
+byte nopfx[]   = "NO SET PREFIX"
+byte perr
+
+def home
+	romcall(0, 0, 0, 0, $FC58)
+end
+
+def gotoxy(x, y)
+	^($24) = x
+	romcall(y, 0, 0, 0, $FB5B)
+end
+
+def prbyte(val)
+    cout('$')
+	romcall(val, 0, 0, 0, $FDDA)
+end
+
+def crout
+	romcall(0, 0, 0, 0, $FD8E)
+end
+
+def getpfx(path)
+        byte params[3]
+
+        ^(path)  = 0
+        params.0 = 1
+        params:1 = path
+        perr     = syscall($C7, @params)
+        return path
+end
+
+def open(path, buff)
+        byte params[6]
+
+        params.0 = 3
+        params:1 = path
+        params:3 = buff
+        params.5 = 0
+        perr     = syscall($C8, @params)
+        return params.5
+end
+
+def close(refnum)
+        byte params[2]
+
+        params.0 = 1
+        params.1 = refnum
+        perr     = syscall($CC, @params)
+        return perr
+end
+
+def read(refnum, buff, len)
+        byte params[8]
+
+        params.0 = 4
+        params.1 = refnum
+        params:2 = buff
+        params:4 = len
+        params:6 = 0
+        perr     = syscall($CA, @params)
+        return params:6
+end
+
+def prfiles
+        byte path[64]
+        byte refnum
+        byte firstblk
+        byte entrylen, entriesblk
+        byte i, type
+        word entry, filecnt
+
+        getpfx(@path)
+        prstr(@path)
+        crout
+        refnum = open(@path, iobuffer);
+        if perr
+                return perr
+        fin
+        firstblk = 1
+        repeat
+                if read(refnum, databuff, 512) == 512
+                        entry = databuff + 4
+                        if firstblk
+                                entrylen   = databuff.$23
+                                entriesblk = databuff.$24
+                                filecnt    = databuff:$25
+                                entry      = entry + entrylen
+                        fin
+                        for i = firstblk to entriesblk
+                                type = ^(entry)
+                                if type <> 0
+                                        ^(entry) = type & $0F
+                                        prstr(entry)
+                                        if type & $F0 == $D0 ; Is it a directory?
+                                                cout('/')
+                                        fin
+                                        crout
+                                        filecnt = filecnt - 1
+                                fin
+                                entry = entry + entrylen
+                        next
+                        firstblk = 0
+                else
+                        filecnt = 0
+                fin
+        until filecnt == 0
+        return close(refnum)
+end
+
+;home
+if prfiles
+    prstr(@errstr)
+    prbyte(perr)
+fin
+crout
+prstr(@goodbye)
+while ^(keyboard) < 128
+loop
+^(keystrobe)
+done

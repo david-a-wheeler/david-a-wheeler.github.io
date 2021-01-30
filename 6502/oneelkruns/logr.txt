@@ -1,0 +1,47 @@
+(                                                      )
+(  Low resolution graphics words for QForth.GR         )
+(  RTK, 16-Jan-04,  last update:  16-Jan-04            )
+( ==================================================== ) 
+
+( Constants for monitor routines )
+
+-1948 constant (SETCOL)  ( $F864, set lores color     )
+-2048 constant (PLOT)    ( $F800, plot a point        )
+-2023 constant (HLINE)   ( $F819, horizontal line     )
+-2008 constant (VLINE)   ( $F828, vertical line       )
+-1998 constant (CLRSCR)  ( $F832, clear graphics      )
+-1994 constant (CLRTOP)  ( $F836, clear top of screen )
+
+create (SCRN)
+ 173 c, 0 c, 0 c,      ( LDA <areg )
+ 172 c, 0 c, 0 c,      ( LDY <yreg )
+  32 c, 113 c, 248 c,  ( JSR SCRN  )
+ 141 c, 0 c, 0 c,      ( STA <areg )
+  96 c,                ( RTS       )
+areg (SCRN) 1+ ! 
+yreg (SCRN) 4+ !     ( set up register addresses )
+areg (SCRN) 10 + !
+
+: SCRN ( x y -- c )  ( return the color of x,y )
+  areg ! yreg ! (SCRN) execute areg @ ;
+
+: CLRSCR ( -- )  (CLRSCR) execute ;   ( clear the screen )
+: CLRTOP ( -- )  (CLRTOP) execute ;   ( clear top of screen )
+
+: COLOR ( n -- )  areg ! (SETCOL) execute ;
+: PLOT ( x y -- ) areg ! yreg ! (PLOT) execute ;
+
+: HLINE ( x y z -- )  ( horizontal line from x to y at z )
+  areg !  44 c!  yreg !  (HLINE) execute ;
+
+: VLINE ( x y z -- )  ( vertical line from x to y at z )
+  yreg !  45 c!  areg !  (VLINE) execute ;
+
+: GR ( -- )  ( set graphics mode )
+  -16304 c@ drop  -16298 c@ drop  -16301 c@ drop 
+  19 34 c!  CLRTOP  page ;
+
+: TEXT ( -- )  -16303 c@ drop  -16302 c@ drop 0 34 c! ;  ( set text mode )
+: FULL ( -- )  -16302 c@ drop ;  ( set full graphics mode )
+: MIXED ( -- ) -16301 c@ drop ;  ( set mixed graphics, text mode )
+

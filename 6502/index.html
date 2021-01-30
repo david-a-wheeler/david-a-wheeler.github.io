@@ -1,0 +1,1138 @@
+<html>
+<head>
+<title>David A. Wheeler's 6502 Language Implementation Approaches</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="David A. Wheeler's 6502 Approaches">
+<meta name="keywords" content="David, Wheeler, David A. Wheeler, 6502, compiler, linker, Apple II, Apple II+, Apple //e">
+</head>
+
+<body bgcolor="#FFFFFF">
+<h1><center><font color="#339900">David A. Wheeler's 6502 Language Implementation Approaches</font></center></h1>
+<p>
+This page has some information on implementing computer languages
+(beyond ordinary assembly language)
+on the extremely old and obsolete 6502 chips.
+I still find it to be an interesting intellectual challenge, even though
+it has no <i>commercial</i> use that I know of.
+Many programs for the 6502 were written in assembly language, because
+it was difficult to efficiently implement high-level languages on the 6502.
+People certainly use higher-level languages on 6502s, but
+I often wondered if there were better ways to handle them.
+I focus slightly on Apple II-based systems, but not much; for development,
+a 6502 is a 6502.
+<p>
+There's lots of general information on the 6502;
+<a href="http://e-tradition.net/bytes/6502/6502_instruction_set.html">
+here's a summary of the 6502 instruction set</a>.
+The
+<a href="http://www.e-tradition.net/bytes/6502/">Virtual 6502</a>
+will let you do some quick playing with their assembly language via a browser.
+Warning: There's lots of variation in assembler syntax; this one that requires
+zero page accesses be specially marked with "*".
+<p>
+Ideally, a language could be self-hosting and interactive
+(allowing redefinitions on the fly), but also cross-compiling
+(emphasizing "best possible performance" and a nicer environment), and
+would let you do speed vs. space trade-offs.
+For self-hosting, a small size has value (so that there's room for
+other stuff!).
+<p>
+Note: I strongly prefer open source software for development tools,
+especially in this case since there's no real possibility of
+long-term for-pay support,
+so I'll specifically warn away from problem licenses
+(or non-licenses) if I know about them.
+<p>
+Right now I find <a href="#forth">Forth</a>, <a href="#plasma">PLASMA</a>,
+and <a href="#atalan">Atalan</a> especially interesting in this area,
+as described below, but there are many other interesting approaches too.
+<p>
+<h1 id="my-approaches">My specialized approaches</h1>
+<p>
+Here is a
+<a href="a-lang.txt">discussion on approaches to implementing
+languages on 6502 chips</a>, which discusses several
+fundamentally-different approaches to implementing languages on the 6502.
+The 6502 is not easy to generate good code for, and I think these
+approaches produce better results than the "obvious" approaches
+used by most.
+<p>
+Here is
+<a href="alang.tar">some demo code for the first approach,
+creating overlapping memory locations for use as
+local variables and for parameter passing (to and fro).</a> (GPL).
+Using overlapping addresses works around the limited memory,
+inefficient pointer/stack manipulation routines, and
+8-bit registers of the 6502.
+<p>
+Below are various other options.
+Forth, Action!, and Slang have especially interesting implementation
+approaches (for different reasons)
+if someone wants to create/improve new implementation approaches.
+<a href="http://sourceforge.net/projects/c65cm/">c65cm</a>
+(formerly
+<a href="http://hem.bredband.net/b129764/Siders/">65CM</a>)
+is also
+very interesting, especially for self-hosting; they greatly limit the
+language, but as a result make it trivial to compile.
+<p>
+<h1 id="forth">Forth</h1>
+<p>
+Forth is a remarkably useful language if you intend to self-host
+useful and fast programs on an 8-bit system; it's relatively fast
+in execution, fast to develop in, powerful, and easily fits in tiny spaces
+(say, 8K for the Forth system and at least 1K of RAM to
+create new definitions).
+You have to get your head around reverse Polish, and be prepared for
+disaster if you don't put the right number of parameters on the data stack.
+Forth normally doesn't keep track of how many data values its words
+consume or produce, so programmers have to keep track (!).
+(If you don't use locals, it's even trickier;
+<a href="http://www.complang.tuwien.ac.at/forth/gforth/Docs-html/Locals.html#Locals">
+Gforth's locals and ANS Forth locals can make it easier to program
+in Forth</a>, and there's a
+<a href="http://www.complang.tuwien.ac.at/forth/anslocal.fs">
+a short implementation of {...} local variables that makes Forth
+programming easier</a>,
+but it creates inefficiencies if the compiler doesn't do any
+optimizations.)
+In my mind, Forth forces humans to switch to a less-common syntax
+(reverse polish), making the human be the "parser", and almost no
+error-checking; in return, you get a simple, powerful system
+(Forth's ability to return multiple values from a single function
+is more capable than C's).
+<p>
+<a href="http://www.forth.com/starting-forth/"><i>Starting Forth</i></a> is
+the classic text for learning Forth; in fact, it's just a great
+book that shows how to make complicated topics easy to understand.
+<a href="http://thinking-forth.sourceforge.net/"><i>Thinking Forth</i></a> 
+is good as well; it's basically the follow-on book.
+<a href="https://www.forth.com/resources/forth-programming-language/">The Evolution of Forth</a> provides an excellent summary of the language and its
+history.
+<p>
+If you want to get an idea of how Forth works, try out
+<a href="http://www.forthfreak.net/jsforth.html">Forth in Javascript</a>.  
+From the command line you can do stuff like (a "\" precedes a line of
+comments):
+<pre>
+ \ Put 3 and 4 on the stack. The "+" function adds the top two numbers
+ \ on the stack (consuming them) and puts the result on the stack.
+ \ The "." function consumes and prints the top number on the stack:
+ 3 4 + .
+
+ \ Create a new function named DEMO that prints "A".
+ \ The ":" starts the definition (followed by the name), "65 EMIT"
+ \ puts a 65 on the stack and then prints that character, and
+ \ the ";" ends the definition.
+ : DEMO 65 EMIT ;
+
+ \ Run the new function:
+ DEMO
+
+ \ Create a variable called "A":
+ VARIABLE A
+ \ Now any use of "A" puts its address on the stack.
+ \ Store "5" into variable A.  The function "!" takes a value from the stack
+ \ and stores it in the address at the top of the stack:
+ 5 A !
+ \ Retrieve ("@") and print (.) the value stored in A:
+ A @ .
+</pre>
+<p>
+The original "fig-FORTH 6502" was released in in September 1980
+under very generous legal terms, with complete source code and the ability
+to modify and release derivatives of it.
+It took me forever to track down its legal status; back then, many people
+didn't concern themselves about legal statements, which makes things
+painful to deal with in today's lawsuit-happy times.
+Basically, it merely states that you just have to give them credit.
+<p>
+If you use a fig-Forth derivative, just include the notice
+in further distribution from its assembly code listing, which states
+"RELEASE 1.1 WITH COMPILER SECURITY
+AND VARIABLE LENGTH NAMES
+ASSEMBLY SOURCE LISTING".
+The assembly listing states that
+"This public domain publication is provided through the courtesy
+of Forth Interest Group, P.O. Box 1105, San Carlos, CA 94070.
+Further distribution must include this notice.
+FORTH INTEREST GROUP * * * * * PO. Box 1105 * * * * * San Carlos, Ca. 94070".
+In general, FIG released code to the public domain, as you can see by their
+covers, and since they are the ones who made the official releases, I think
+it's reasonable to rely on the front covers that say that they are
+"released to the public domain" or at most merely require acknowledgement,
+in which case it's legal to use, modify, and re-release derivatives.
+<p>
+Here's the
+<a href="http://www.forth.org/fig-forth/fig-forth_6502.pdf">FIG-Forth
+assembly code as PDF</a> including its legal notice.
+<a href="fig-forth_6502.pdf">Here's my local copy of the FIG-Forth
+PDF page to verify this, in case that goes away</a>.
+<a href="forth65.zip">Here's a zipped version of FIG-FORTH for the
+(generic) 6502</a>, and here's the
+<a href="FIG6502.ASM">FIG6502.ASM
+assembly code for FIG-FORTH for the (generic) 6502 as text</a> via
+<a href="http://home.comcast.net/~wrodiger/FIG6502.ASM">
+wrodiger's copy of FIG-FORTH for the 6502</a>.
+The
+<a href="fig-forth-glossary.txt">fig-forth glosssary</a> describes
+every word and what it does, and is a gold mine for a simple explanation
+of how to use it.
+<a href="http://www.forth.org/fig-forth/contents.html">Here's the
+set of related PDF files</a>, including the Apple II version
+(a specialized version of the 6502 version).
+The fig site only has the source code as PDF,
+but Dietmar Krueger (dkrueger, at retronym dot de)
+has managed to recreate the Apple II version as text:
+<a href="MyFigForthApple2.zip">MyFigForthApple2.zip</a> includes
+<a href="MyFigForthApple2.s.txt">MyFigForthApple2.s.txt</a>.
+
+<p>
+<a href="https://github.com/scotws/TaliForth2">TaliForth2</a> implements
+the newer ANS Forth standard on a 65C02 (the newer 65C02).
+TaliForth uses subroutine-threaded code, an implementation approach
+which should be faster but also takes more memory.
+<a href="http://calc6502.com/RobotGame/summary.html#PortingForth">RobotGame
+discusses using TaliForth2</a>.
+
+<p>
+<a href="http://www.forth.org/fd/FD-V06N5.pdf">Why Forth isn't slow</a>
+discusses why Forth is remarkably fast; he determined that Forth had
+about a 29% overhead compared to similar assembly,
+which is remarkably small (there are BIG caveats with that calculation,
+but the point is that the overheads are relatively small).
+A direct threading implementation would probably be better than
+fig-Forth's indirect threading, but I digress (see Rodriguez' article for why).
+<a href="http://wiki.strotmann.de/wiki/Wiki.jsp?page=ProForth">ProForth
+for the Apple II is derived from fig-Forth</a>.
+The original fig-Forth for 6502 has a few known bugs; its
+UM/MOD has a bug that
+<a href="http://6502.org/source/integers/ummodfix/ummodfix.htm">Garth Wilson
+found and corrected</a>
+(<a href="ummod.txt">here's the basics</a>).
+Its
+<a href="http://forum.6502.org/viewtopic.php?f=9&t=689">
+UM* also has a bug, see here for a fix and optimizations</a>
+(see also 
+<a href="http://6502org.wikidot.com/software-math">
+this 6502 software math page</a>).
+
+<p>
+It might be easy to switch FIG-FORTH over to a split stack
+that stores low-byte/high-byte on the zero page as separate ranges
+(my approach #2).
+This would create lots of efficiency improvements:
+pushing and popping are shorter operations (1 operation instead of two,
+every time).
+Also, although this would make it slightly nonstandard for Forth,
+logical calculations and checks could use a 1-byte value and ignore the
+"high" byte, speeding/simplifying things further.
+You could have many other 8-bit operations too, which would speed things up.
+ANS Forth specifies a minimum of 32 cells of Parameter Stack
+{64 bytes, easily fitting in zpage} and 24 cells of Return Stack
+{usually this is the page 1 return stack}
+(Brad Rodriguez prefers 64 cells of each).
+(By having the TOS be 2 bytes in zpage, you can still use the TOS
+easily as a pointer.)
+(Sadly, pointer accesses are harder this way.)
+<p>
+<a href="http://www.forth.org/">Forth Interest Group (FIG)</a> and
+<a href="http://www.forth.org/svfig/">Silicon Valley FIG</a> has more info.
+<a href="http://wiki.forthfreak.net/index.cgi?ForthSystems">Here's a
+partial list of Forth implementations</a>.
+Papers about efficiently implementing Forth include
+<a href="http://www.bradrodriguez.com/papers/moving1.htm">
+"MOVING FORTH: Part 1: Design Decisions in the Forth Kernel"
+by Brad Rodriguez</a>
+(a great paper explaining how to implement Forth),
+<a href="http://www.complang.tuwien.ac.at/anton/euroforth/ef01/ertl01.pdf">
+Threaded Code Variations and Optimizations by M. Anton Ertl</a>,
+<a href="http://www.complang.tuwien.ac.at/forth/threaded-code.html">
+Threaded Code</a>,
+<a href="http://www.forth.com/resources/evolution/evolve_5.html">
+"Evolution of Forth"'s discussion of future directions</a>,
+<a href="http://portal.acm.org/citation.cfm?id=988319">
+"Threaded interpretive systems and functional programming environments"
+by Harvey Glass,
+ACM SIGPLAN Notices, Volume 20,  Issue 4 (April 1985), pp. 24-32
+(ISSN:0362-1340)</a>
+and of course
+<a href="http://en.wikipedia.org/wiki/Threaded_code">
+Wikipedia's article on threaded code</a>.
+<a href="http://www.ultratechnology.com/meta.html">Forth meta compilation</a>
+is not only interesting - it helps you understand Forth innards.
+Forth's advantages don't do much for systems with a Gig of RAM, and its
+disadvantages (difficult-to-read, little error-checking, etc.)
+have made it all but disappear from modern systems,
+but there's much positive to say about it for the 8-bit world.
+<a href="http://www.cp.eng.chula.ac.th/~piak/teaching/ca/stack.htm">
+Stack machine briefly introduces the theory behind stack machines</a>.
+<a href="http://www.complang.tuwien.ac.at/anton/euroforth/ef08/papers/pelc.pdf">
+Updating the Forth Virtual Machine (Pelc)</a> has a discussion
+of interesting additions to the traditional Forth VM
+as is often implemented today.
+<p>
+<a href="http://wilsonminesco.com/stacks/">6502 STACKS: More than you
+thought (Garth Wilson)</a> has a lot of information about handling
+stacks on 6502s, including Forth.
+<p>
+<!-- Was: http://www.geocities.com/oneelkruns -->
+<a href="http://home.comcast.net/~oneelkruns/">Ron's Software Page</a> has interesting things, including QForth.
+<!-- Geocities may disappear soon, so
+<a href="oneelkruns/index.html">here's a backup copy</a>;
+<a href="qforth">here's pre-extracted text of mini-QForth</a>.
+The backup copy was obtained by doing "wget --recursive --convert-links --page-requisites --no-parent --no-host-directories http://www.geocities.com/oneelkruns/".
+-->
+<a href="ftp://ftp.forth.org/pub/Forth/Compilers/native/misc/appleII/">
+Forth.org has a set of Apple // Forth implementations</a>.
+<p>
+<a href="http://home.comcast.net/~oneelkruns/">
+SPL</a> is a Forth-like language that is implemented in plain
+Python and generates 6502 assembly code.
+<p>
+I should note that there are many versions of Forth.  The original fig-Forth
+is heavily related to the later Forth-79, and many
+Forths are based on fig-Forth.
+The later Forth-83 made a lot of big (controversial) changes:
+"true" changed from 1 to -1, the meaning of NOT changed,
+it mandated floored division (incompatible with prior usage),
+and some words like PICK and ROLL became 0-based.
+Here's guidance on
+<a href="http://atariwiki.strotmann.de/wiki/Wiki.jsp?page=Converting%20FIG-Forth%20Programs%20to%20Forth-83&skin=raw">converting fig-Forth to Forth-83</a>.
+The later
+<a href="http://www.forth.com/resources/evolution/evolve_5.html">ANS Forth</a>
+tried to make things less rough.
+<p>
+The big problem with Forth is that it's entirely postfix, which many
+people find hard to read.
+What can be done about that?
+Interestingly, several people have developed infix versions of Forth,
+which might produce the best of all worlds... the readability of more
+traditional notations, and the speed + small size of Forth.
+<a href="http://www.complang.tuwien.ac.at/anton/euroforth/ef08/papers/haley.pdf">
+"An infix syntax for Forth (and its compiler)"
+by Andrew Haley (Red Hat) (2008)
+</a>
+describes a nifty reader;
+"Infix Forth is not a translator from some other language to Forth, but an
+infix form of the language that doesn’t change its semantics."
+<p>
+Many Forth systems can easily bring in an assembler.
+<a href="http://wiki.strotmann.de/wiki/Wiki.jsp?page=A%20FORTH%20ASSEMBLER%20FOR%20THE%206502">William F. Ragdale wrote a Forth assembler for the 6502</a>
+that takes about 1300 bytes.
+<p>
+I think that a programming language could be
+devised that combined the efficiency/simplicity of Forth implementations
+with more traditional syntax.
+<p>
+<a href="http://wiki.strotmann.de/wiki/Wiki.jsp?page=Forth">Forth on 6502</a>
+has more information.
+
+<p>
+<h1 id="plasma">PLASMA</h1>
+<p>
+<a href="http://schmenk.is-a-geek.com/PLASMA.html">
+PLASMA
+(Proto Language ASsembler for Apple) by David Schmenk</a>
+is "a combination of virtual machine and assembler/compiler matched closely to the 6502 architecture".
+<a href="http://vm02.cvs.sourceforge.net/viewvc/vm02/vm02/plasma/">PLASMA source code is available on SourceForge</a>.
+This was based on the author's experience in developing a Java VM
+for Apple //s (!) - he created a new VM, and a language for implementing it.
+It unambiguously open source software (GPLv2), which is great.
+It is currently focused on ProDOS, but I expect it would be easy to
+port to other operating systems (such as Diversi-DOS).
+<p>
+PLASMA is a new language for an old system, but it looks extremely promising.
+It has a much more traditional syntax, yet it is designed to work well
+within the very limiting 6502 structure.
+An interesting aspect is that you can easily state, for each function,
+one of three implementation techniques:
+interpreted bytecode ("def", smallest but slowest),
+threaded calls into the interpreter ("deft", in-between), and
+natively compiled code ("defn", fastest but largest).
+Thus, the programmer can declare for each function if it
+should optimize for speed, space, or between, which is promising.
+Unlike some languages (like Action!) it can handle functions
+that call themselves (limited by stack space, but important for things
+like self-hosted compilers).
+<p>
+It is designed to be self-hosting, which I find especially interesting.
+<p>
+The main high-level PLASMA source language is more capable than
+Integer Basic (e.g., it supports real functions and procedures),
+but it does not have support for many different types and only
+basic support for structures.
+It does not include built-in floating point support, for example.
+It looks like a promising language for self-hosted development of
+games and system applications.
+<p>
+The PLASMA source language uses ";" for comments that end at end-of-line.
+End-of-line ends an expression.
+Constants can be defined with "const NAME = VALUE",
+variables with "DATATYPE NAME = VALUE" (DATATYPE can be "word" or "byte"),
+and the basic "if" syntax is if ... then .. fin.
+Here are some examples, based on snippets from "pong.pla":
+<blockquote>
+<pre>
+CONST FALSE     = 0
+CONST TRUE      = NOT FALSE
+CONST KEYBOARD  = $C000
+CONST KEYSTROBE = $C010
+CONST SPEAKER   = $C030
+BYTE  EXITMSG   = "PRESS ANY KEY TO EXIT."
+BYTE  SCORE[3]
+
+DEF BEEP(TONE, DURATION)
+  BYTE I, J
+
+  FOR J = DURATION DOWNTO 0
+    FOR I = TONE DOWNTO 0
+    NEXT
+    ^SPEAKER
+  NEXT
+END
+
+DEF KEYPRESSED
+  RETURN ^KEYBOARD > 127
+END
+
+DEF GETKEY
+  BYTE KEY
+
+  REPEAT
+    KEY = ^KEYBOARD
+  UNTIL KEY > 127
+  ^KEYSTROBE
+  RETURN KEY
+END
+
+DEF TEXTMODE
+  RETURN ROMCALL(0, 0, 0, 0, $FB39)
+END
+
+DEF GOTOXY(X, Y)
+  ^($24) = X
+  RETURN ROMCALL(Y, 0, 0, 0, $FB5B)
+END
+</pre>
+</blockquote>
+<p>
+The PLASMA run-time is a stack-based virtual machine
+(with stack on zpage).
+Since it's stack-based, it includes operations like
+ZERO (push zero on the stack),
+ADD (add top two values, leave result on top),
+and
+INCR (increment top of stack).
+Some instructions look like Forth, e.g.,
+DUP (duplicate top stack value) and
+DROP (drop top stack value).
+Other instructions are clearly designed for a traditional programming
+language, and not Forth:
+CALL (subroutine call with stack parameters),
+ENTER (allocate frame size and copy stack parameters to local frame),
+LEAVE (deallocate frame and return from subroutine call)
+and
+RET (return from sub routine call).
+Its <a href="PLAVM.S.txt">basic runtime implementation is pretty
+straightforward</a>.
+The bytecode uses only even numbers
+(so the implementation doesn't have to multiply
+each instruction by two to use it as an index).
+<p>
+Here are the PLASMA VM opcodes (TOS=top of stack, with 16-bit values):
+<ul>
+<li>ZERO - push 0 on the stack.
+<li>ADD,SUB,MUL,DIV,MOD - compute TOS-1 op TOS, where op is add, subtract,
+multiply, divide, or modulo, popping both and pushing result.
+These are 16-bit values.
+E.G., "SUB" subtracts TOS from TOS-1.
+The implementation doesn't really pop and re-push, of course.
+<li>INCR,DECR,NEG,COMP - Increment/decrement/negate/bitwise-complement TOS.
+<li>BAND,IOR,XOR - Compute TOS-1 op TOS, where op is
+bitwise-and/inclusive-or/exclusive-or 
+<li>SHL,SHR - Shift TOS-1 left/right by TOS
+<li>IDXW - Shift TOS left BY 1, then add TO TOS-1, replacing both with result.
+Presumably this is to compute index addresses given an
+index in TOS and base in TOS-1.
+(The documentation says it shifts TOS-1, but I think that's wrong).
+<li>NOT - Logical not
+<li>LOR,LAND - Logical or/and
+<li>LAA - Replace absolute tag with address
+<li>LLA - Load address of local frame offset
+<li>CB - Load a constant byte (from the instructions to the stack)
+<li>CW - Load a constant word (from instructions to the stack)
+<li>IDXB - Code same as ADD. Presumably to index bytes, where
+index is TOS and address is TOS-1.
+<li>DROP,DUP - Drop/duplicate TOS.
+<li>OVER - OVER TOS-1 to TOS.
+<li>SWAP - Swap TOS with TOS-1.
+<li>BRLT,BRGT,BREQ,BRNE - Branch on less-than/greater-than/equal/not-equal
+<li>ISEQ,ISNE,ISGT,ISLT,ISGE,ISLE - Compute is-equal, not-equal,
+greater-than, less-than, greater-equal, less-equal for TOS and TOS-1.
+Consumes both, and pushes to TOS either 0 (false) or $FFFF (true).
+<li>BRFLS, BRTRU - Branches.
+<li>JUMP,IJMP - Jump, indirect jump.
+<li>CALL,ICAL,ENTER,LEAVE,RET,EXIT - Routines for handling subroutines.
+<li>LB,LW - load byte/word given address TOS
+<li>LLB,LLW - load byte/word value from local frame offset
+<li>LAB,LAW - load byte/word from absolute address
+<li>DLB,DLW - Store byte/word value to local frame offset without popping stack
+<li>SB,SW - Store byte/word value TOS to address TOS-1
+<li>SLB,SLW - Store byte/word value to local frame offset
+<li>SAB,SAW - Store byte/word value to absolute address
+<li>DAB,DAW - Store byte/word value to absolute address without popping stack
+</ul>
+
+<p>
+At this early stage the "native" version is pretty inefficient
+(it appears that the current early implementation doesn't have an
+intermediate format, leading to lots of inefficiencies).
+But the bytecode and threaded (subroutine) call approaches
+look pretty efficient for what they are;
+I looked over its basic wordset and it looks like a really good fit
+for the 6502.
+The threaded call approach in particular looks fairly efficient
+(for that kind of approach).
+This approach may make larger programs easier, since many programs have a few
+routines that are speed-critical and many others that are not.
+
+<p>
+The (initial) <a href="http://schmenk.is-a-geek.com/PLASMA.html">PLASMA summary page</a>
+includes a link to a
+<a href="http://schmenk.is-a-geek.com/tarfiles/plasma01.dsk">Plasma Apple ][ boot image you can just boot and use</a>.
+I have had no luck getting it to work on
+cAndy Apple (an Android Apple ][ emulator),
+but on Android it works just fine with the
+KEGS KEGS IIgs Emulator by James Sanford.
+David Schmenk, the creator of PLASMA, reports that it also works on
+Virtual ][.
+Once you start the boot disk, you will be dumped into the text editor.
+In this text editor you can edit text or press ESC to enter
+special commands.
+A simple way to see the instructions is to press ESC, then type
+the line "r edit.readme" (do not include the quotes, note the space after r,
+and end the line with RETURN).
+The text editor actually supports several commands when you press ESC,
+including "r FILENAME" (read in FILENAME and throw away the current buffer),
+"c" (show the disk catalog), and "x" (compile and execute).
+For a demo, you can do ESC r SPACE rod.pla RETURN, then x RETURN;
+that runs a short demo called "rod.pla" that shows simple color graphics.
+
+<p>
+There have been many refinements since then.
+The <a href="https://github.com/dschmenk/PLASMA">PLASMA github site</a>
+has a significantly updated version, and adds some very interesting
+features such as multi-assignment.
+It is being used as the VM for a new
+new adventure game being developed for the Apple II and Commodore 64
+called
+<a href="https://github.com/badvision/lawless-legends">Lawless legends</a>.
+However, one thing missing from the updated version is an IDE
+that runs on the Apple II;
+That is his current work-in-progress.
+He hopes to eventually write a JIT compiler, using the
+CPU type to compile optimized machine code from byte code as it loads.
+
+<p>
+<h1 id="atalan">Atalan</h1>
+<p>
+<a href="http://atalan.kutululu.org/">Atalan</a>
+is a new language for 6502s and other 8-bit systems.
+It is open source software (released under the MIT license)
+and is also available via the
+<a href="http://code.google.com/p/atalan/">
+Google code page for Atalan</a>.
+This compiles straight to 6502 code, and they claim they do a good job.
+It's got a lot of language features; it looks like a very pleasant
+language to use.
+<p>
+Their documentation says that,
+"Procedure local variables and arguments are internally allocated as global variables. Atalan analyzes procedure call chain and if possible, reuses global variable space to several procedures."
+That was an approach I wrote about years ago!
+<p>
+Atalan <i>only</i> compiles to machine code; given the limited memory space,
+that could cause serious challenges for larger programs.
+It is designed to be cross-compiled; it is not clear if it could
+realistically support self-hosting.
+
+
+<p>
+<h1>Python</h1>
+<p>
+<a href="http://pymite.python-hosting.com/">PyMite</a> implements a
+Python subset for 8-bit systems; I can easily imagine this working for
+a 6502.
+<p>
+<h1>C and C-like</h1>
+<p>
+<a href="http://www.cc65.org">CC65 (6502 C compiler)</a> exists,
+it's a descendant from Small-C.
+It's not open source software (it predates general awareness of
+licensing issues), unfortunately.
+It implements a fairly wide range of C, but the code it generates is
+inefficient.
+The
+<a href="http://www.cc65.org/doc/internal.txt">
+"Internals doc for CC65"</a>
+explains how it works (and why it's inefficient).
+In CC65,
+"The program stack used by programs compiled with CC65 is located in high
+memory.  The stack starts there and grows down.  Arguments to functions, local
+data etc are allocated on this stack, and deallocated when functions exit...
+the return address goes on the normal 6502
+stack [page 1], *not* on the parameter stack...
+the AX register pair [is] the primary register.
+Just about everything interesting that the
+library code does is done by somehow getting a value into AX, and then calling
+some routine or other..."
+It then shows a calling sequence for i = baz(i, c);
+where i and c are global variables;
+it doesn't show what you to do work with the parameters, but
+it's nontrivial.
+
+<p>
+HyperC (for ProDos) is interesting;
+they added a "var" prefix for variables like Pascal
+(though if implemented using pointers, this could be quickly inefficient
+since pointer manipulation is painful on 6502s.. but if implemented
+using my approach #1 that'd be nice).
+They also added a "@address" statement, so you could allocate exactly
+where a variable would go.
+HyperC supports K&amp;R C, not ANSI C, and omits stuff like scanf().
+<p>
+I briefly used Manx's Aztec C; it was awful.
+It generated bad code, and was a pain to use.
+<p>
+It's definitely costly and is not OSS, but the
+<a href="http://www.grantronics.com.au/micro-c.html">
+Micro/C compilers (based on C-Flea</a>
+(<a href="http://www.grifo.com/SOFT/uk_DDS.htm">see also here</a>)
+is a C compiler suite based on
+<a href="http://fixunix.com/cp-m/631-p-code-based-c-compilers.html">
+C-Flea, a small virtual machine for C</a>.
+
+
+<p>
+<h1>Sort-of-assembler</h1>
+<p>
+<a href="http://hem.bredband.net/b129764/Siders/">65CM</a> implements
+a "pretty assembler" language for the 6502 (GPL).
+It's designed so that the compiling is run on a PC, and the resulting
+code is sent to the 6502.
+65CM handles 2 types of variables (BYTE and WORD), and
+supports inline assembler.
+It's not high-level at all, so be prepared for that.
+What it calls "expressions" are actually constant expressions
+(they can't have any variables), the IF statement must be of the form:
+<pre>
+   IF VE1 ( '=', '<>', '<', '>', '<=', '>=' ) VE2 THEN
+     ...
+   ENDIF
+</pre>
+where "VE1" and "VE2" must be a variable name or a (constant) expression.
+Similarly, you can make calls using:
+<pre>
+   GOSUB {Variable (pointermode) OR Expression (Address) OR Label (Internal)}
+    [ PASSING {Variable} AS ACC {Variable} AS XREG {Variable} AS YREG ]
+</pre>
+You can assign a variable a value:
+<pre>
+  LET {Variable} = {Variable OR Expression}
+</pre>
+But if you want to add something to the variable, that's another statement:
+<pre>
+  ADD {VE1} TO {VE2} GIVING {VE3}
+</pre>
+
+<p>
+<a href="http://home.pipeline.com/~hbaker1/sigplannotices/sigcol04.pdf">
+"The COMFY 6502 Compiler" by Henry G. Baker (Nov. 1997)</a>
+describes the COMFY language (and the paper includes the source code!).
+It is "intended to be a replacement for assembly languages when programming
+on 'bare' machines", but intentionally has a LISP-based syntax.
+<blockquote>
+"COMFY-65 is a `medium level' language for programming
+on the MOS Technology 6502 microcomputer
+[MOSTech76]. COMFY-65 is `higher level' than assembly
+language because 1) the language is structured-
+while-do, if-then-else, and other constructs are used instead
+of goto's; and 2) complete subroutine calling conventions
+are provided, including formal parameters. On
+the other hand, COMFY-65 is `lower level' than usual
+compiler languages because there is no attempt to shield
+the user from the primitive structure of the 6502 and its
+shortcomings. Since COMFY-65 ismeant to be a replacement
+for assembly language, it attempts to provide for the
+maximumflexibility; in particular, almost every sequence
+of instructions which can be generated by an assembler
+can also be generated by COMFY. This flexibility is due
+to the fact that COMFY provides all the non-branching
+operations of the 6502 as primitives."
+</blockquote>
+COMFY-65 is implemented in Emacs Lisp; it's not clear how hard it would be to
+create a self-hosting version.
+Any LISP might be aided by my <a href="http://www.dwheeler.com/readable">
+readable LISP work</a>.
+<a href="http://home.pipeline.com/~hbaker1/sigplannotices/sigcol03.pdf">
+Here's a background paper on COMFY</a>.
+(<a href="http://home.pipeline.com/~hbaker1/">Henry Baker has many
+other interesting papers, too</a>.)
+<a href="http://github.com/jaoswald/cl-comfy-6502/tree/master">
+There's a git-able version of COMFY-65</a>; unfortunately,
+it's not open source software (not even slightly!), due to
+ACM licensing nastiness.
+That's unfortunate.
+<p>
+Andy Hefner (ahefner) wrote a Common Lisp-based 6502 assembler
+(sort of a macro assembler with Common Lisp syntax).
+He posted
+<a href="https://github.com/ahefner/asm6502">the source code on github</a>
+(MIT license).
+He
+<a href="http://ahefner.livejournal.com/20528.html">blogged about it</a>,
+and wrote a little demo for an NES; this was then
+<a href="http://developers.slashdot.org/story/12/02/07/0043241/hacking-the-nes-with-lisp">picked up by Slashdot</a>.
+
+<p>
+I should definitely mention
+<a href="http://www.6502.org/source/interpreters/sweet16.htm">
+Sweet 16</a>, the "pseudo microprocessor" implemented by
+Steve Wozniak.
+(<a href="http://en.wikipedia.org/wiki/SWEET16">Here's the SWEET-16
+Wikipedia article</a>).
+It simulates a simple 16-bit microcomputer (handy when you need to do a
+lot of 16-bit operations) with 16 registers,
+running about 10 times slower than native code
+but taking far less space
+(each opcode takes 1 byte, and the whole interpreter takes about 300 bytes).
+Many Apple assemblers include support for Sweet-16.
+Unfortunately, the rights to use its original implementation
+aren't entirely clear.
+Apple, even in its heyday, encouraged it use in programs.
+Since it was was copyrighted by Apple in 1977, its copyright
+<i>should</i> have expired in 2005.
+That's because the
+<a href="http://en.wikipedia.org/wiki/United_States_Copyright_Act_of_1976">
+U.S. copyright act of 1976</a> didn't take effect until January 1, 1978,
+and the
+<a href="http://en.wikipedia.org/wiki/Copyright_Act_of_1909">
+previous copyright term in the U.S. was 28 years
+plus another 28 if renewed</a>.
+I doubt Apple would have renewed its copyright, since this was not a
+money-maker by 2005, so it <i>should</i> have gone to the public domain.
+(This is also true for Applesoft Basic, which
+was released on cassettes in 1977).
+Unfortunately,
+<a href="http://www.publicdomainsherpa.com/copyright-renewal.html">
+a 1992 revision to the copyright laws automatically renewed all copyrights
+after 1963</a>.
+I find this absurd; how are innovators supposed to innovate if
+essentially everything created is walled-off?
+<!--
+I did some
+<a href="http://comminfo.rutgers.edu/~lesk/copyrenew.html">
+searches on Copyright renewal records</a>
+and didn't see anything from "Apple Computer".
+-->
+
+
+<p>
+<h1>Lisp/LOGO</h1>
+<p>
+<a href="http://web.archive.org/web/20100131151915/http://www.ip9.org/munro/skimp/">The "skimp" page also includes a
+list of several 8-bit LISP implementations,
+including several for the 6502</a>.
+<a href="http://www.groupsrv.com/computers/about657489.html">
+This discussion lists more</a>.
+One useful implementation discussion (of many!) is
+<a href="http://www.cs.indiana.edu/~dyb/pubs/3imp-abstract.html">
+R. Kent Dybvig's "Three Implementation Models for Scheme".
+University of North Carolina Computer Science Technical Report 87-011
+[Ph.D. Dissertation], April 1987</a>.
+<p>
+<a href="http://gomez.yellowcouch.org/lisp/">neslisp</a>
+is a small subset of Lisp that generates 6502 code (NES); the
+as of version 0.1 it is released under the GPLv2 license
+(and thus is open source software).
+An older version is available via
+<a href="https://code.google.com/p/neslisp">neslisp on Google code</a>.
+<!--
+Google code says its license is GNU GPLv2, though the downloaded file
+looks like BSD to me... but either way it's open source software.
+-->
+<p>
+<a href="https://github.com/stamourv/picobit">Picobit</a> (GPLv3)
+looks interesting.
+You program in Lisp (specifically a variant of Scheme)
+on a larger system; it then compiles to a VM that runs on the target.
+Currently it does not support the 6502, but the system
+is designed to be portable and it looks to me that it'd be
+relatively easy to port to a 6502.
+<p>
+<a href="http://piumarta.com/software/lysp/">Lysp</a> (MIT license)
+is another small implementation of Lisp.  It doesn't directly support 6502
+and is in C, but it's small...
+so it might not be hard to transliterate.
+A related program from the same developer is
+<a href="http://piumarta.com/software/maru/">Maru</a>, which can self-host.
+This could be a reasonable starting point for creating a 6502 Lisp.
+<p>
+<a href="http://blog.nullspace.io/apple-2-lisp-part-1.html">Turning the Apple //e into a lisp machine, part 1</a>
+refers to this
+<a href="https://github.com/hausdorff/turtles">Lisp interpreter
+for the Apple //e</a> (MIT license).
+They also show a clever bootstrap approach: they send code via the
+audio jack (!).
+<p>
+There's more that can be done; Lisp was originally developed in 1965,
+on even smaller systems.
+The book "Lisp in Small Pieces",
+<a href="http://www.findinglisp.com/blog/2004/06/program-transformation-in-lisp.html">Program Transformation in Lisp</a>,
+<a href="http://library.readscheme.org/index.html">this Scheme page</a> and
+<a href="http://library.readscheme.org/page8.html">these details on
+implementation</a> are all of interest.
+<a href="http://www.cs.indiana.edu/~dyb/papers/3imp.pdf">
+R. Kent Dybvig's "Three Implementation Models for Scheme"</a> shows how
+to implement Scheme while still keeping most stuff on the stack.
+Tagging could be difficult, but an alternative (that I believe was
+done for early Lisp implementations) is to partition the memory into
+regions; to determine the tag, just check which memory region it is in.
+It might be possible to start with
+<a href="http://www.software-lab.de/down.html">
+PicoLisp</a> to create a 6502 version.
+There is a trivial
+<a href="http://www.cs.utexas.edu/users/moore/acl2/v3-1/distrib/acl2-sources/books/workshops/1999/compiler/">
+ACL2 implementation of Lisp (GPL)</a> that I converted into Common Lisp
+(<a href="http://www.dwheeler.com/trusting-trust/lisp-demo/mycompiler.cl">
+compiler</a>, <a href="http://www.dwheeler.com/trusting-trust/lisp-demo/">
+run-time</a>;
+<a href="http://www.informatik.uni-kiel.de/~wg/Berichte/Acl2book.ps.gz">
+See Wolfgang Goerigk's "Compiler Verification Revisited"</a> for more).
+<p>
+I know that there was an "InterLISP 65" available for Atari's 6502-based line.
+<p>
+Various full LOGO implementations were available as well.
+
+
+
+<p>
+<h1>Basic and Pascal</h1>
+<p>
+Of course, many people used BASIC and Pascal (esp. UCSD Pascal).
+That's well-documented elsewhere.
+<p>
+<a href="http://wiki.freepascal.org/UCSD_Pascal">UCSD Pascal</a>
+is now available for non-commercial use, including its source code.
+(It is <i>not</i> open source software, as misleadingly stated.)
+UCSD had its own P-code system, which let a lot of code fit in little space.
+It wasn't fast, and the only "fast" escape was to write assembly.
+UCSD Pascal also required you to use its operating system, which was
+a problem for self-hosting systems that needed to interact with the
+rest of the world.
+UCSD Pascal was very useful, and many programs (including the first
+Wizardry!) were written in it.
+The fundamental problem with UCSD Pascal is that its opcodes weren't
+designed to be easily-supported by the 6502; instead, its goal was
+cross-system portability.
+As a result, any 6502 implementation of them was going to have trouble,
+in part because all stack-based operations on the 6502 were slow.
+<a href="http://fixunix.com/cp-m/631-p-code-based-c-compilers.html">
+This discussion about p-code and Sweet-16</a> notes this difference -
+Sweet-16 was designed to be easily-implemented by the 6502, and thus
+was a nicer fit to the 6502.
+<p>
+<a href="https://turborascal.com">Turbo Rascal</a> is a Pascal for
+Commodore 64 and a few other systems.
+Free, appears to be proprietary (I didn't see any reference to source code).
+<!-- https://lemonspawn.com/turbo-rascal-syntax-error-expected-but-begin/ -->
+<p>
+In theory it wouldn't be hard to at least create a better version of BASIC
+(e.g., add stuff from True Basic like real subroutines)
+to run on these things.
+
+<p>
+<h1>Java</h1>
+<p>
+Believe it or not, you can run Java on an Apple // (and other 6502 systems).
+<a href="http://sourceforge.net/projects/vm02/">VM02 implements a
+(limited) Java Virtual Machine on Apple // (6502) systems</a>.
+(This is the same person who wrote PLASMA).
+Java is not designed for these kinds of systems;
+the implementation can do some things, and it's cool that it works at all, but
+it's probably not the best choice for many tasks.
+It's pretty cool though.
+
+<p>
+<h1 id="promal">PROMAL</h1>
+<p>
+PROMAL (PROgrammer's Micro Application Language) is "an unusual and
+obscure language by Systems Management Associates, also released for the
+8-bit Apple machines and the early PC. Its features include mandatory
+indentation (like Python), pointer arithmetic (like C), and recursion,
+and it has a good assembly language interface. There is also a shell
+with support for command recall and scripting."
+There is a
+<a href="https://en.wikipedia.org/wiki/PROMAL">PROMAL Wikipedia page</a>,
+and much more detail (and this quote) are available at the
+<a href="https://www.lyonlabs.org/commodore/onrequest/PROMAL/">Lyon Labs
+PROMAL information page</a>.
+Unfortunately, I do not see any evidence that they have released copyright
+or changed licenses, so as far as I can tell it is a legal minefield.
+(Copyright essentially lasts forever in the US, even though that is
+unconstitutional, and I always worry when the legal rights are unclear.)
+If anyone can find evidence that there is no legal issue, I would
+love to see it.
+
+<p>
+<h1>Other Languages</h1>
+<p>
+<p>
+<a href="http://www.ffd2.com/fridge/slang/">Slang</a> is an
+interesting 6502 language, currently for the Commodore 64.
+It is more like a "clean Basic" than anything else -
+full expression handling, structured "if" and loop constructs, and so on.
+It handles subroutines by separating the call from the argument-passing,
+which is a little unfortunate but understandable.
+Its approach to handling local variables is very straightforward;
+since they go in and out of scope, that is used to assign specific
+locations (a simple and clever approach).
+It's a big compiler, so probably can't often have the compiler and the
+running program resident simultaneously.
+Overall, this is a nice approach, <i>way</i> better than the typical
+Basics that came with 6502s (both in language cleanliness and in
+speed of result).
+Unfortunately, I can't find any licensing info.
+<p>
+<a href="http://en.wikipedia.org/wiki/Action_programming_language">
+Action!</a> was a popular self-hosting programming language
+for Atari 6502-based systems.
+It was reasonably readable (its syntax similar to ALGOL 68).
+Wikipedia notes that
+"Action! is significant for its high performance, which allows games
+and graphics demos to be written in a high-level language without use
+of hand-written assembly language code. Action! language constructs were
+designed to map cleanly to 6502 hardware."
+"Local variables are assigned fixed addresses in memory, instead of
+being allocated on the stack. This enables tight code to be generated
+for the 6502, but precludes the use of recursion."
+{Note: Action could have added a "recurse" keyword, as I noted
+<a href="a-lang.txt">my text about implementation</a>, which would have
+then supported recursion but only where it was needed, so that only
+functions that could eventually produce a call to themselves would
+have to pay the price.
+<a href="http://gury.atari8.info/effectus/">Effectus</a>
+is a cross-compiler on Windows that targets Atari 8-bit,
+and is intentionally similar to Action!, but I don't see any source code
+available at all (it certainly doesn't appear to be open source software).
+<p>
+Note: Both Slang and Action! do not support recursive functions.
+In both cases, a few small extensions to support recursive functions
+(e.g., a "recurse" statement to mark them, so that calls must save the
+old arguments and local variables) would make them efficient yet
+easy to use, and permit self-hosting.
+(Even if a function is recursive, noting simple self tail-recursion
+would be easy, and would be worthwhile since saving variables is
+expensive.)
+
+<p>
+<h1>Suites</h1>
+<p>
+The <a href="http://tack.sourceforge.net/">
+Amsterdam Compiler Kit</a>
+is a "cross-platform compiler and toolchain suite that is
+small, portable, extremely fast, and extremely flexible. It targets a
+number of low-end machines [and] supports several languages,
+including ANSI C, Pascal and Modula-2".
+It has (or at least had) support for the 6502.
+It dates back to the early 1980s,
+and was originally developed by
+Andrew Tanenbaum and Ceriel Jacobs as a commercial product and used as
+Minix' native toolchain.
+"After eventually failing as a commercial project, it was made open
+source under a BSD license in 2003 when it looked like it was going to
+be abandoned and the code lost...
+The ACK contains compilers for ANSI C, K&amp;R C, Pascal, Modula-2,
+Occam 1, and a primitive Basic."
+Its intermediate language "EM" is a stack-based language;
+<a href="http://tack.sourceforge.net/olddocs/em.pdf">here is the
+technical description of EM</a>.
+
+<p>
+<h1>Assembly</h1>
+<p>
+<a href="http://6502.org/tools/asm/">6502.org lists lots of assemblers</a>,
+<a href="http://www.floodgap.com/retrotech/xa/">xa</a> looks promising,
+and it supports common syntax.
+<a href="https://hkn.eecs.berkeley.edu/~mcmartin/ophis/">Ophis</a> is
+a 6502 assembler written in Python in 2006-2007; it
+looks nice, though its syntax is a little different).
+<a href="https://skilldrick.github.io/easy6502/">Easy 6502</a>
+helps you interactively learn 6502 assembly.
+
+
+<p>
+<h1>Other stuff</h1>
+<p>
+If you want to go elsewhere to see related pages, feel free to look at
+other locations such as
+<a href="http://www.6502.org">www.6502.org (general site on the 6502)</a>.
+<!--
+They don't:
+<a href="http://www.6502.org/crossdev/lang/index.htm">6502 FIG Forth
+implementation</a>.
+-->
+You can also find reference material on the web, such as the
+<a href="http://www.6502.org/tutorials/6502opcodes.htm">6502 opcodes</a>.
+<a href="http://bobsc5.home.comcast.net/aal/">
+Bob Sander-Cederlof's newsletter <i>Apple Assembly Line</i></a>
+was filled with useful information.
+<a href="http://www.textfiles.com/apple/6502.bugs.txt">Here's a list of
+6502 bugs</a> (important if you're doing assembly!).
+<p>
+<a href="http://apple2.org.za/gswv/a2zine/GS.WorldView/v1999/Feb/A2.NET.GOODIES.2.99/A2Programmer%27s.Languages.txt">
+The Apple II Programmer's Catalog of Languages and Toolkits
+</a>
+has a long list of development tools.
+<!-- http://web.archive.org/web/20040602210017/www.npsnet.com/danf/cbm/cross-development.html -->
+<a href="http://mirrors.apple2.org.za/ground.icaen.uiowa.edu/apple8/Languages/">
+Apple8 languages</a> has lots of downloads for Apple II development
+languages.
+<a href="http://www.npsnet.com/danf/cbm/cross-development.html">Here's another list of 6502 development tools</a>.
+<p>
+It's not directly 6502 assembly, but
+<a href="http://web.mac.com/randyhyde/HighLevelAsm/LearnAboutHLA.html">
+High-Level Assembler (HLA) for 80x86</a> is interesting, and might have some
+useful lessons.
+<a href="http://webster.cs.ucr.edu/AsmTools/HLA/HLADoc/HLARef2_html/HLARef.html">The HLA manual explains the rationale for a "high level" assembly language</a>.
+<p>
+You'll need to transfer files to and fro; this is tricky with Apple IIs
+because they have an unusual disk format;
+<a href="http://adtpro.sourceforge.net/index.html">ADTPro</a>
+and its cousin ADT can help; it lets you send/receive disk images
+via serial lines, Ethernet, or even audio (!).
+<a href="http://www.deater.net/weave/vmwprod/apple/dos33fs.html">DOS33fs
+by Vince Weaver</a>
+is a nice, simple utility for Unix/Linux
+that lets you read/write DOS 3.3 disk images.
+<a href="http://stjarnhimlen.se/apple2/">Apple 2 stuff</a> has links to more
+disk image manipulators and an Integer Basic compiler.
+<a href="http://www.syndicomm.com/apple2/systemsoftware/index.html">
+Syndicomm has Apple // boot disks available.</a>
+<a href="http://www.nulib.com/downloads/index.htm">NuLib</a> can handle
+various "shrunk" formats.
+<a href="http://stason.org/TULARC/pc/apple2/emulator/index.html">
+Apple ][ emulator resources guide</a> lists many emulators.
+<a href="http://home.swbell.net/rubywand/A2FAQs5MAINHALL.html">
+Apple ][ FAQs</a> is what it says.
+
+<p>
+<a href="http://porkrind.org/a2/">Here's a Javascript-only Apple ][+ emulator</a>, you can emulate one just with a browser!
+
+<p>
+<h1>Apple ][ ROMs</h1>
+<p>
+It'd be neat if someone wrote/released an Apple ][ ROM as
+open source software.
+I've talked with Woz, who's told me there's no chance of that from Apple.
+
+<p>
+Steve Nickolas <!-- usotsuki at buric.co -->
+has developed a simple Apple ][ ROM
+and released it under a permissive FLOSS license, specifically
+<a href="http://en.wikipedia.org/wiki/University_of_Illinois/NCSA_Open_Source_License">University of Illinois/NCSA Open Source License</a>.
+He calls this the "gameware" ROM.
+You can
+<a href="http://1.buric.co/gameware-0.14.zip">download it from him</a>;
+<a href="gameware-0.14.zip">I have a cached copy</a>.
+He says that "while crude, I did implement such
+a thing a few years ago...
+This only implements part of the monitor, requires a 'C02, is buggy as
+hell, and doesn't include BASIC, but it's a start."
+
+<p>
+I've sent an email to VTech, and VTech's Corporate Communications Department
+sent me an email on 2012-06-15
+saying that "We have no problem to release the code
+but it will take some time for us to find it out,
+as it is a very old product. We will keep you posted on any update."
+That is a very exciting development, I hope it works out!!
+The Apple ][, and VTech's competing implementation of it, is an
+important part of history. I think this is a great way to prevent the
+loss of this history, as well as making it possible to have
+have completely legal emulations of it.
+<!-- See vtech-roms.txt -->
+
+<p>
+It might be possible to get a
+<a href="http://lowendmac.com/coventry/06/apple-ii-clones.html">
+clone maker to release ROMs, such as
+Video Technologies (VTech)'s ROM for the Laser 128,
+or Franklin's later ROM</a>.
+
+<p>
+<a href="http://alfter.us/computers/apple2/archives/aal.aspx">
+AAL-8603
+notes the special values required for a ROM for ProDOS 1.1.1 to boot</a>.
+"There are two problems with getting ProDOS to boot on a non-standard machine.  The first is the ROM Checksummer.  This subroutine starts at $267C in Version 1.1.1, and is only called from $25EE.  The code is purposely weird, designed to look like it is NOT checking the ROMs...
+The wizards who put ProDOS together figured out a fancy function which changes the 64 bits from $FB09 through $FB10 into the value $75.  Their function does this whether your ROMs are the original monitor ROM from 1977-78, the Autostart ROM, the original //e ROM, or any other standard Apple ROM...
+The original Apple II ROM has executable code at $FB09, and in hex it is this:  B0 A2 20 4A FF 38 B0 9E.  All other Apple monitor ROMs have an ASCII string at $FB09.  The string is either "APPLE ][" or "Apple ][".  Notice that the "AND #$DF" in the checksummer strips out the upper/lower case bit, making both ASCII strings the same."
+
+<p>
+<h1>6502 on Minecraft</h1>
+<p>
+There's a
+<a href="http://gamegenus.blogspot.com/2012/04/6502-emulator-in-minecraft-runs-forth.html">6502 emulator in Minecraft that runs Forth</a>,
+which is
+<a href="http://hackaday.com/2012/05/20/building-a-6502-in-minecraft/">
+further discussed here</a>.
+
+<p>
+<h1>Miscellaneous</h1>
+<p>
+<a href="https://www.youtube.com/watch?v=ZsRRCnque2E">25c3: The Ultimate Commodore 64 Talk</a> discusses the Commodore 64 in detail, and includes a discussion on the 6502 (really 651) machine code.
+
+<p>
+<a href="https://monster6502.com/">Monster 6502</a> is rebuilding a
+6502 but much larger, so you can see it working (amazing!).
+It does not use any logic gate chips.
+I would call it a "discrete transistor" implementation,
+though whether or not it really meets that description depends on your
+pickiness.
+The 6502 original design requires "transmission gate" transistors,
+and individually packaged 4-terminal MOSFETs to do this aren't
+commercially available any more.
+
+<h1>ROMs</h1>
+
+<p>
+On a related note:
+<a href="https://github.com/MEGA65/open-roms">open-roms</a> is working
+to create open ROMs, at first for the C64.
+Good luck!!
+
+<p>
+This page was
+<a href="https://news.ycombinator.com/item?id=12536211">featured on
+YCombinator's hacker news</a> - welcome!!
+There were a number of interesting related comments there.
+
+<p>
+<h1>Dedication</h1>
+<p>
+I've provided this information to world in memory of Bob Pew,
+an old friend who died in 1994.
+Bob, you're missed.
+
+<p>
+Feel free to
+<a href="http://www.dwheeler.com">See my home page</a>.
+You may also want to see
+<a href="http://www.dwheeler.com/apple2">my Apple ][ page</a>.
+
+</body>
+</html>
+
+<!--
+
+-->

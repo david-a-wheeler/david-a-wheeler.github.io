@@ -1,0 +1,45 @@
+
+( Date and Time via ProDOS.      RTK, QForth 2.1, 16-Jul-96 )
+
+( Last update: 16-Jul-96 )
+
+( Use ProDOS MLI to read the current date and time )
+
+-16496 constant tbase   ( base address for date and time )
+
+( $BF90 - month/day, $BF91 - year, $BF92 - minute, $BF93 - hour )
+
+(  7  6  5  4  3  2  1  0  <- bits                              )
+( -----------------------                                       )
+( Y6 Y5 Y4 Y3 Y2 Y1 Y0 M3  $BF91                                )
+( M2 M1 M0 D4 D3 D2 D1 D0  $BF90                                )
+(  0  0  0 H4 H3 H2 H1 H0  $BF93                                )
+(  0  0 M5 M4 M3 M2 M1 M0  $BF92                                )
+
+create (time)  ( read the time )
+    32 c,  0 c,  191 c,   ( JSR $BF00 , MLI entry point )
+   130 c,                 ( HEX 82    , GET_TIME        )
+     0 c,  0 c,           ( HEX 0000  , dummy table     )
+    96 c,                 ( RTS                         )
+
+: @time ( -- hour minutes )
+  (time) execute  tbase 3+ c@  tbase 2+ c@ ;
+
+: .time ( -- )  ( display current time )
+  @time swap . 8 emit ." :" . ;
+
+: @date ( -- month day year ) 
+  (time) execute  
+  tbase c@ 2/ 2/ 2/ 2/ 2/
+  tbase 1+ c@ 1 b.and 1 = if 8 + else then  ( month )
+  tbase c@ 31 b.and                         ( day   )
+  tbase 1+ c@ 2/                            ( year  )
+;
+
+: .date ( -- )  ( display current date )
+  @date rot . 8 emit ." /" swap . 8 emit ." /" . ;
+
+: .today ( -- ) ( current date and time )
+  .time .date ;
+
+

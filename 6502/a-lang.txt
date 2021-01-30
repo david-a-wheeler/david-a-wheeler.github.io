@@ -1,0 +1,1883 @@
+A-LANG: WAYS TO IMPLEMENT COMPUTER LANGUAGES ON 6502s
+David A. Wheeler
+
+
+Here are some of ideas on how
+to create efficient and easy-to-use programming languages
+for 6502-based computers (such as the Apple II, Commodore 64/128,
+Atari 400/800, and the original Atari game machine).
+
+I haven't tried to implement these ideas at length, since I haven't directly
+used Apple II's (or any other 6502-based system) for some time
+(though there was a time I could rebuild an Apple II from memory!).
+For me, this is simply an intellectual exercise.
+I did create a partial prototype of some of these ideas, particularly
+some of the linking techniques.
+
+Still, this was an old problem that a friend of mine
+(Bob Pew) & I often hashed out.  Bob passed away just when I completed
+writing the first draft of these ideas, and I was about to call
+him about my new ideas for this old puzzle we'd often chatted about.
+I miss him; perhaps this little file will serve as a small memorial to him.
+
+Perhaps some reader of this file actually DOES decide to do this. If you do:
+(a) are you SURE you don't have better things to do?
+(b) please let me know, I'd love to hear about it.
+
+Who knows; maybe the ideas of an "optimizing assembler" and
+"compiling linker" can be taken to other systems. It makes some sense,
+especially for systems where compilers are quickly written & can
+generate assembly, so that poor compiler code can be made a little better.
+It's possible these ideas have been created before, especially on far
+older systems.
+
+These are essentially notes, and are a little rough in places.
+There are probably a few minor bugs in various places.
+Sorry about that, but I think you'll still find them useful.
+
+--- David A. Wheeler
+
+File originally created 1994-04-11
+This version (slightly revised) 2009-07-18
+
+================================================================
+BACKGROUND/THE PROBLEM
+
+The 6502 is a weird beast with a very irregular instruction set.
+Bob Pew & I wanted a language that would be (a) faster to program in (than
+assembly) but be (b) fast when running.  It needed to be pretty efficient.
+This turns out to be an intellectually challenging problem; below
+are (what I think are) some solutions.
+
+There are many odd things about the 6502 that make it hard to do this:
+ + It's REALLY an 8-bit processor. It doesn't even have 16-bit
+   data registers or instructions (many other 8-bit chips, like the Z80,
+   at least had these). That means that, where possible, use
+   8-bit manipulations instead of 16 or 32 bit data types.
+ + Its instruction set is rather irregular and has a few
+   odd addressing schemes (esp. "zero page").
+ + Its built-in stack (for subroutines) is only 256 bytes long -
+   possibly enough for storing the return address, but probably not
+   big enough for storing data as well.
+ + ANY kind of stack access takes more time and uses
+   up a (precious) register... which is why assembly language programs
+   tended to pass values via fixed address locations.
++ It has a tiny amount of addressable memory, so for "big" programs, you
+  need to conserve space.
+
+A key to using the 6502 is to keep as much as possible in the "zero
+page." The zero page is the first 256 bytes of memory; the 6502 has
+a large set of special operations that use this area of memory, in
+many ways like an extended register set.
+Loads and stores are faster to the zero page, and some operations
+(such as indirect addressing) REQUIRE use of the zero page.
+
+========================================================
+THE SOLUTIONS
+
+I have developed a few new (to my knowledge) solutions to this problem:
+1. Statically assign parameter and local variables in a special way.
+   To do this, divide the work of compilation & linking
+   in an unusual way (the linker does a ton of "compilation" work)
+   to efficiently use 6502 resources, and
+   in particular assign all local variables and parameters to static
+   addresses. Global analysis is then used to assign addresses so that,
+   in most cases, all copying between locations (e.g., between
+   the addresses for parameters and addresses for local variables)
+   are essentially optimized away.  This could probably be best utilized
+    by creating a different language, so it then discusses a potential
+   ASM+ & Simple, a pair of languages that squeeze as much
+   efficiency out of the 6502 as reasonably possible.
+   However, the approach could be used by C, etc., especially if the
+   programmer is willing to accept certain conventions and extensions
+   (e.g., extending C to support pass-by-reference like C++ and then writing
+   6502 code that uses that extension in most cases).
+   This approach can support recursion - even automatically - but there
+   is a cost where the recursion occurs.
+2. Fixed location data stack.
+   This would be easier to implement & would support recursion more easily.
+   This approach wouldn't be as fast or small as the previous approach,
+   but it would support a more traditional approach
+   (linking could just link, compiling could just compile).
+   This approach would be particularly good for FORTH-based languages.
+   You could extend this with a frame pointer (one byte?) and
+   add easier support for traditional languages.
+
+[ Dan of opendtv (at yahoo dot com) has noted another way:]
+3. "Use fixed zero page locations for
+locals and parameter passing, simulating a
+conventional CPU with a large register file. This
+eliminates most stack operations, except for
+saving/restoring the zero page "registers" at function
+entry/exit (leaf functions can use locations that
+don't need to be saved/restored). To reduce code size,
+the save/restore should be done with a JSR to a
+subroutine. This is really almost the same idea as #1,
+except that "register" assignment is done locally
+instead of globally. Global allocation would be nice,
+but it isn't necessary.
+The cc65 compiler partially implements this concept by
+allowing locals (but not parameters) to be explicitly
+assigned to zero page by using the "register" keyword.
+It's good for pointers since they can be used directly."
+
+Let me add a few comments on #3:
+Even non-leaf functions can avoid saving/restoring
+in many cases; if their zero page assignments don't overlap with
+another function's (including themselves), they don't need to
+save/restore.  The notion here is that a call and return are slightly
+more expensive, because they must save/restore the input parameters
+and local variables, but then all accesses are way faster because they
+are at constant addresses in zero page (which is the best possible
+place to be).  The save/restore can store data in a full data stack,
+so this would permit indefinite recursion.  One oddity: The "obvious"
+implementation doesn't permit passing on addresses of local variables,
+because that will change once it's put the save/restore stack.
+A solution is to put such variables directly on the save/restore stack,
+which you could also do for larger local arrays; the local zpage
+values could then store its address on the save/restore stack, and you'd
+use special commands to access them.
+
+Yes, call/return takes longer due to completely copying the parameters
+and local temporaries, but that can be done in a tight loop at top speed;
+all other operations to the current frame happen using constant-location
+zpage accesses, which are blazingly fast, and that is likely to
+more than compensate.
+
+
+#4 All local variables/parameters in zero page, spill as needed
+
+Mike Birch mentioned in this approach to me in 2019
+(it's probably been done before, but I haven't found evidence currently):
+
+I'd put *all* local variables and parameters in zero
+page. Most of the time, routines would just run up and down zp but if
+it ran out of space (should be a rare occasion), I'd cache half of it
+and let it run anew. Pretty much the same approach to task switching -
+copy zp, stack and screen. The bottom few locations would be for fixed
+addressing (zp),y or jmp () and treated as registers, including a
+second set for interrupts but the rest would be set up in frames
+covering parameters, return values, local variables *and* space to call
+functions with the largest parameters. This means that the interrupt
+handler can still use its own temporary frame without interfering with
+the current thread. Indexing of all local variables would, therefore,
+be zp,x with x being loaded from a stack frame zp location.
+
+I think (and I'm still working on the compiler code right now)
+that the occasional buffering of zp would be more than made up for by
+the extra speed and compactness of the code.
+By noting where and when
+parameters are used, they can easily be optimized and use the parameter
+zp location directly and indexing local variables (eg for va_start) can
+use ldy zp,x. Structure pointers, alas, would have to use the fixed
+point registers and LDY #elem_offset.
+
+A mul161616 instruction (if not used via subroutine) with the
+frame in the X register, offsets as -n from x and non-rereferenced
+variables would therefore be:
+
+zp_num1 equ -2
+zp_num2 equ -4
+zp_result equ -6
+
+LDA zp_num1,x   ; 2 Low byte - used for addition so may as well keep in A
+loop:
+LSR zp_num2+1,x ; 4
+ROR zp_num2     ; 6
+BCC no_add      ; 8
+PHA 		; 9
+CLC 		; 10
+ADC zp_result,x ; 12
+STA zp_result,x ; 14
+LDA zp_num1+1,x ; 16
+ADC zp_result+1,x ; 18
+STA zp_result+1,x ; 20
+PLA 		; 21
+no_add:
+BNE not_done    ; 23
+LDY zp_num2+1,x ; 25    check hi byte for also zero
+BEQ done        ; 27
+not_done:
+ASL             ; 28
+ROL zp_num1+1,x ; 30
+BCC loop        ; 32 Always
+
+That's 32 bytes to multiply 2 memory locations giving a third
+which, I think, would give the 68000 a run for its money even if it
+does have more memory. It also shaves off a clock cycle per instruction
+which should also put something in the bank ready for the occasional
+banking overhead.
+
+The half-splitting was to try and avoid the kind of situation that
+arose in the 4Kb paging on the old IBM 370 mainframes where a function
+would be called in a loop and have to be paged-in every time. If it's
+running up and down ZP with calls and returns then most of the time it
+shouldn't have to page and when it does, it won't have to page at the
+same point.
+
+Knowing the maximum amount of ZP space the current function needs, the
+parameters/return values can be either built at the top or passed as an
+offset in X (probably the former). The first and last instructions can
+put the size the current function needs in A and call an allocate/page
+function which will adjust the Frame pointer. Loaded into X, this will
+allow all of the current variables to be used. When it leaves, a
+similar adjustment will be made, placing the frame pointer into X
+before returning. The calling function then knows that, even if X/Frame
+pointer has changed, that the variables it was using are still in the
+same relative position.
+
+Comments by David A. Wheeler: This seems very workable, and
+has the serious advantage of being easy to implement while still
+providing "traditional" call semantics (where programs can recursively
+call any function, directly or indirectly).
+Spilling on exactly half may not be the best heuristic - it might
+be best to measure that, and also let programs force a spill
+from zero page early if they want to do that.
+
+One disadvantage of any "spillage" system is that you can't easily take
+the address of some local (stack) variable and pass it down to what
+you call.  There's an easy solution: provide a routine to allocate
+directly on the spillage stack and return its address.  Then you can
+force allocation there when you want to.  That also makes easy to create
+bigger local variables that would quickly get evicted anyway.
+
+It's hard to argue that these are "always better", but I suspect
+they're better in at least some circumstances than other approaches.
+Stack-based approaches that use a zero page two-byte pointer to an
+arbitrary stack are flexible, but SLOW on a 6502 and create large code sizes.
+Anyway, if you're implementing these kinds of systems, you might want
+to think about these ideas.
+
+There's also the issue of whether to generate straight 6502 code,
+or use some sort of virtual machine... and if the latter, what to do.
+The 6502 has little memory, so some sort of VM that can do operations
+like 16-bit operations more easily has a lot of advantages.
+So further down, I then discuss some of the ways to implement
+virtual machines (like Sweet-16, p-code, threading, etc.);
+if you generate straight 6502 code, it's easy to run out of space
+in 64K, so often you want to use a virtual system simply to save space.
+
+The assembler syntax I've used below is S-C assembler like; in particular,
+I presume that the assembler will choose zero page access when it can.
+
+========================================================
+SOLUTION 1: Overloaded static parameter/local addresses - ASM+ and Simple.
+
+This approach creates overloaded static addresses for
+parameters and local variables, in a special way that
+maximizes use of the zero page.
+It's probably easiest if specialized languages are designed to
+exploit this property, so I also discuss 2 specialized languages to do so.
+
+The approach below uses the zero page as much as possible,
+overloading each zero page location with many different variable values
+(as long as they aren't used simultaneously). In fact, it's difficult to
+believe that normal humans could overload its usage so well, so this
+approach has the potential to be in some ways more efficient than humans.
+
+This approach doesn't _require_ specialized language, but it might
+be easier and more flexible that way, and originally I had in mind
+the idea of creating a high-level language specifically to be easier to
+efficiently implement on a 6502 (of which this idea would be part).
+Two specialized computer langauges are discussed here:
+
+ASM+: A macro assembler with 2 peephole optimization stages and a special
+      macro language with common operations (increment integer, etc).
+      It can be used as a "smart" assembly language directly, or as an
+      intermediate compilation language generated by a "Simple" compiler.
+
+Simple: A higher-level language that would be C (and Ada) like,
+      but would pass by reference (like Fortran) instead of by value (like C).
+      Why reference-passing, when the 6502 poorly supports arbitrary pointers
+      and copies?  The answer is that, with this new overloading approach,
+      reference passing could often be implemented by a copy that never
+      actually happens (via address overloading).
+      Since the 6502 doesn't have a usable data stack, this approach is
+      more efficient on this platform (in the implementation, the
+      "reference" is implemented not necessarily by copying values, but
+      by having exactly the same address assigned to the parameter and
+      the variable calling it, creating "zero-copy" calls where possible).
+      Recursion could still be done, though recursive calls could be
+      expensive when executed.
+      By using Ada-like parameter passing (noting IN, OUT, and IN OUT)
+      passing data is MUCH more efficient than for C, because most "copies"
+      could be eliminated.
+
+Creating code when everything was implemented would go through
+the following steps (with product types in square brackets):
+
+ [Simple Code as ASCII text, created by a programmer] ->
+ Simple compiler. ->
+ [ASM+ Code as ASCII text] ->
+ Special preprocessor and/or done as part of the "linker" step ->
+ [List of procedures & what they call; also input/output params, globals,
+  and a list of variable sizes which need allocation] ->
+
+ (At this step "compilation" is done. Now to link:)
+
+ Run "linker" across all ASM+ code - first determine what procedures call
+    what & then do a topological sort. Then determine address locations
+    of all variables (including variables used to pass data between
+    procedures), trying to use zero page as much as possible.
+    Generate a file of all address locations.
+    I've written a quickie "demo" program that handles the topological
+    sort and shows that you really can stick in a lot of variables into
+    zero page if you do this (it also generates a huge batch of EQU's that
+    a simple assembler could use to support this idea).
+    Note that you also want to "prefer"
+    a memory allocation that eliminates copying memory for parameter passing;
+    this is possible by judiciously "overlapping" memory locations
+    from different calls.
+ Pass one of ASM+ assembler. Transforms "early" macro expansions, then
+     does a peephole optimization pass on the assembly-with-some-macros.
+ Pass two of ASM+ assembler. Transform all normal macro expansions into
+     6502 code, then do another peephole optimization.
+ [Executable Code]
+
+"Compiling" a Simple or ASM+ file is relatively cheap.
+Linking on larger systems would get expensive, since there would be
+some global analysis followed by assembly of everything.
+This is necessary to maximize zero page usage.
+
+The ASM+ assembler could fit in the restricted 6502 memory.
+The assembler would need to keep the macros, global definitions,
+jump addresses of procedures, and addresses for parameters in memory
+at all times; for each procedure definitions could be kept & then dropped.
+Code could come in & out via the disk.  Thus, this could be self-hosting.
+
+The procedure call system should be by-reference, since this is cheaper
+on a system without a stack and where "copies" aren't really copied.
+By-value can be supported too, but the goal is to minimize actual copies.
+Values are simply written to fixed locations
+(preferably in the zero page)
+and the procedures are then JSRed. Return values are handled the same way.
+Recursive calls can be handled, though expensively: copy the values that
+might be changed onto a stack and/or malloced area, call the recursive call,
+then pop the values off the stack.   This can be noticed at link time;
+by simply following the call tree you can see which calls
+"loop back", and wrap those calls with the commands to save & restore
+the variables covered by everything memory location possibly used "between".
+
+Implementation order: naturally not everything need be built at once.
+The ASM+ assembler could start out as a stock macro assembler, and just
+create macros for it in the stock macro language.
+The macro language would need the ability to do .IF's during expansion,
+since it would need to pick from a number of expansions depending on
+whether or not certain values were contant, in the zero page, etc.
+Thus only the "linker" would need to be built, which would simply
+examine for special macros that define procedures,
+etc, and generate addresses for everything.
+The peephole optimizers could be built later.
+
+Bob originally wanted an ASM+-like language, and he always liked Fortran--
+I think he would have liked a Fortran-like parameter system!
+
+Here's a sample ASM+ syntax:
+
+"I" is used for (2-byte) integers, "C" for (1-byte) characters,
+"L" is used for (4-byte) longs, "P" for (2-byte) pointers,
+"R" for records of other sizes.
+
+Results are always the left-hand-side argument (so that later Simple
+operations will look similar).
+
+
+I++  A    increment integer A.      INC A ; BNE .1 ; INC A+1 ; .1
+C++  A    increment character A.    INC A
+I--
+C--
+
+I:=I A,B  copy B into A.
+C:=C A,B  copy B into A.
+I:=C A,B  copy B into A.
+
+I+=I A,B
+C+=C A,B
+I+=C A,B
+
+also -=, *=, /*
+
+I:=I+I A,B,C
+
+also -, *, /, and for C as well.
+
+MEMCOPY
+
+IFI==0 A, BR
+IFI==I A, B, BR
+
+also !=, >, >=, <, <=
+also for C.
+
+And also some "combined" macros, which expand into optimized 6502
+instructions (some for loops, for example):
+
+I--==0 A, BR       Decrement A; if not 0, branch.
+I++!=I A, B, BR    Increment A; if not B, branch
+I++<=I A, B, BR    Increment A; if less than or equal to B, branch.
+
+IZERO A            Same as I:=I #0.
+
+
+FOR  ... various forms, inc. some which use the Y register for fast loops.
+
+CALL location
+
+To call another procedure, use I:=I etc to copy values into the procedure's
+IN and INOUT parameters, then use CALL to call into it.
+A processor will examine ASM+ files to look for CALL, IN, OUT, INOUT,
+FUNC, and PROC commands.
+
+
+The first peephole optimization step would try to fold constants,
+combine copies together (so that they're all done at once), and combine
+separate macros into specialized combined macros (like the ones listed
+above). Example:  I--; IFI==0  becomes  I--==0
+                  I:=I B, #0   becomes  CLEARI B
+
+The second peephole optimization step would try to optimize combinations
+of assembly instructions to eliminate extra work.
+For example: LDA #!XXX; STA ?A; LDA #?B; STA ?C ; LDA #!XXX becomes
+             LDA #?B; STA ?C; LDA #!XXX; STA ?A;
+  so loading sets of variables with constants is faster.
+  For example, if the constants are <256 this would combine the high byte 0s.
+  If the constants were identical (say 5), similar approaches could
+  combine all the loads into pretty reasonable items.
+
+             JSR X ; RTS => JMP X
+
+
+Two peephole steps could be used - one to see "wider" areas of code
+(collections of copies, etc.), and the second one to cover
+special-case asm instructions, etc.
+As a quick-and-dirty implementation, lex/flex or a regular expression
+engine could be used to implement the peephole optimizations.
+
+
+Now for the "Simple" language.
+It is to generate the ASM+ language.
+It's designed to be simple to parse (probably by recursive descent or LL(1),
+since they're easy to build & small).
+It would be easier to create if, at first, the language were VERY restricted.
+
+The syntax I've put down is very C-like, but with some Ada & Pascal
+influences. Ideally, with the "right" definition files or simple text
+preprocessing, it should compile on a stock compiler on other machines.
+
+The syntax should also fit within the target machine limits.
+For example, old Apple II's can't generate curly brackets ({}) or
+underscores (_). I would substitute the dollar sign ($) for _, and
+use [] instead of {} - again, to support self-hosting.
+
+As far as parsing it goes, recursive descent is often easy to understand,
+but I suspect an LL(1) parser would be better (see Fisher, page 120).
+Eventually it'd be good if Simple were written in itself, and using an
+LL(1) parser driver would mean that recursion wouldn't be necessary
+(which would be an expensive operation in Simple).
+Also, a table-driven parser would be much smaller (inserting comparisons
+everywhere would make the compiler large) & according to Fisher they
+tend to be faster too (that's surprising).
+The table could be used to at least list what are legal tokens where
+an error occurs, and for LL(1) it's easy to add an automatic error repairer.
+
+Down the road, it'd be better if there was a way to specify that
+some parameters get passed in a register, and/or fix certain addresses.
+This could be used to reduce link-time, -- precompile large modules, and
+could be used to create really nice interfaces to underlying OSs.
+While it might be difficult to generate code that used the params in
+registers, it'd be useful to low-level routines -- allow direct calls to
+assembly-level procedures.
+
+
+File = External_Statements*
+
+External_Statements =
+ Global_Declaration |
+ Subprogram_Definition
+
+Global_Declaration =
+ ["private"] variable_definition
+
+
+Subprogram_Definition =
+ ( "function" | "procedure" ) identifier [ "(" argument_list ")" ]
+
+
+Here's a sample Simple program:
+
+private char current_x, current_y;
+
+procedure move$cursor(in char x, in char y)
+[
+ int b = 0;
+ // Move the cursor to the new position x, y.
+ x++;
+ y += current_y;
+ b += 0x1fff;
+];
+
+
+Which would generate the following ASM+:
+
+ MODULE LOCAL$FILE
+ PRIVATE-BYTE LOCAL$FILE.CURRENT_X
+ PRIVATE-BYTE LOCAL$FILE.CURRENT_Y
+
+ PROC MOVE$CURSOR
+ IN X,1 ; second parameter is size
+ IN Y,1
+ ALLOC B,2
+; so far we've just been allocating space. Here's executable code!
+ IZERO B
+ C++ X
+ C+=C Y, CURRENT_Y
+ I++ B
+; The following should probably deallocate storage in the assembler so
+; that entire large programs can be assembled in one pass.
+ ENDPROC MOVE$CURSOR
+ ENDMODULE LOCAL$FILE
+
+Which in the end would probably generate something like the following:
+
+; Example of Link-generated allocation of storage.
+MOVE$CURSOR.X EQU $10
+MOVE$CURSOR.Y EQU $11
+MOVE$CURSOR.B EQU $12 ; for low byte; also covers $13.
+LOCAL$FILE.CURRENT_X EQU $900
+LOCAL$FILE.CURRENT_Y EQU $901
+
+; Example of code.
+
+MOVE$CURSOR
+    LDA #0        ; zero
+    STA $12
+    STA $13
+    INC $10       ; ++ for character.
+    CLC           ; += for character.
+    LDA $11
+    ADC $901
+    STA $901
+
+    LDA $12       ; B += 0x1fff
+    ADC #$ff
+    STA $12
+    LDA $13
+    ADC #$1f
+    STA $13
+
+There's a lot of allocation operations in the intermediary code,
+but that makes sense.. the
+key to using the 6502 is to allocate scarce zero page resources, and
+the key to making a faster assembler is to allocate & deallocate
+procedure space so all procedures can be assembled at one time.
+There needs to be a keyword that hints "put this in the zero page."
+The C "register" keyword isn't quite right, since it's perfectly
+reasonable to take the address of such a variable.
+Perhaps the right keyword is "zpage".
+
+Probably recursive calls should be marked as "recurse" to note that they're
+expensive and that's okay, though maybe not - the compiler in particular
+might need to recurse.  Ideally, the compiler/linker combo could
+figure this all out automatically (this is quite practical, since the
+linker has to determine the call tree any for allocation purposes).
+For self-hosting interactive use, it might be necessary to require the
+marker (since it's hard to do otherwise).
+
+Another option would be to require that to do recursive calls, callers
+must explicitly call functions that push/pop the storage area of that
+callee.  E.G.:
+  FPUSH(FUNCTION_NAME); // Push to a data stack the FUNCTION_NAME's locals
+  ... now you can directly copy to the areas representing function parameters
+  FUNCTION_NAME(...);
+  FPOP(FUNCTION_NAME);
+The FPUSH would store the local variables, parameter area, etc.,
+for FUNCTION_NAME, and FPOP would reverse it.
+A language that did this could be easily implemented and self-hosting,
+because you're depending on the human to figure it out.
+That's annoying if you recurse *often*, but if recursion is relatively
+uncommon, then that's not too bad.
+
+Procedures-in-procedure support could be added later. That's easy as long
+as they don't recurse - simply reference the address of the object.
+
+Various other words as compiler hints (like "register" in C) would be
+helpful, esp. for the loops (so that the X or Y register can be used as a loop
+register where appropriate).
+Such keywords probably include ZPAGE, REG{A,X,Y}.
+Perhaps FOR REGX I := 10 DOWNTO 0 {by 2} DO ... ENDFOR;
+could become
+ LDX #$0a
+ ; if constant start, don't need to check here!
+.1
+ ...
+ DEX
+ BPL .1
+
+
+Probably it should support modules (like C, based on files), header
+files (maybe add a C-like macro expander?), etc.
+
+Note one odd thing: in a big program, it might be efficient if the
+tightest loops are in separate subroutines called by others; that way,
+since they're lower in the tree, they're more likely to get zero
+pages assigned to them.
+
+
+CC65, a freeware C compiler for 6502s, has a "-static-locals" option.
+This option lets locals be in static locations, and they correctly
+note that this produces faster code but doesn't permit it to be
+re-entrant.  However, it doesn't appear that CC65 takes advantage
+of allowing function parameters to also be passed statically, nor does
+it exploit the approach discussed here to allocate so that copying
+(e.g., to parameters) is only notional and doesn't actually occur in the
+code itself.  CC65 appears to be open source software,
+and is available at: http://www.cc65.org
+CC65 normally takes a different approach (based on the older SmallC);
+it uses the A and X registers as a register, and pushes parameters on
+a small stack through multiple JSR's (that are simple to implement as
+a compiler, but not really very efficient).
+
+
+Then a small text editor could be built, both to use these things
+(eventually the Simple compiler, linker, and ASM+ assembler
+should be self-hosted) and to show how to use these things.
+
+It would probably have a buffer module (for storing the text) and a
+display module (to take what's in the buffer & display it).
+If text has been modified, move it to a line buffer internally so that
+inserts & deletes don't move everything.
+Allow cursor motions keys like wordstar (control ESDX), delete previous
+letter, move around like emacs, find (control-F?), and ESC back to a menu
+for saving, loading, cataloging, help.  Two option sets: one for normal
+text vs. one for programs, and a general host-based one (shift key mod, etc).
+
+The key here is to have a basic, easy-to-use text editor; one didn't
+come with the Apples, oddly enough.
+
+====================================================
+SOLUTION 2: FIXED LOCATION DATA STACK
+
+This approach depends on fixing the location of the data stack,
+but spreads the lower and upper bytes to different locations
+(possibly different pages) instead of having the bytes be
+adjacent in the memory space.  It would work nicely for
+Forth, C, etc.  The trick is that the upper & lower bytes of multibyte
+values aren't stored contiguously in memory, but are instead "spread"
+into parallel pages; this trick increases the available space significantly,
+makes stack movement code faster, and increases safety.
+IE, you have "all data stack low bytes" continguous,
+and "all data stack high bytes" continguous if you
+allow 2-bytes of data on your stack.
+
+Though it's the normal 6502 convention, there's no REQUIREMENT to
+store 16-bit values in the order of "lower 8 bits", followed
+immediately by "upper 8 bits".
+The upper & lower bytes could be separated by a standard
+distance (e.g., 256 bytes) instead, and that might have some advantages.
+
+If you create fixed positions for the array of "lower bytes" and
+the "upper bytes", as long as there aren't more than 256 elements, access
+is easy. Simply set the X or Y register to the index, then use
+the "address,X" or "address,Y" access mode to get or store the
+lower & upper byte of whatever you want.
+Of course, the address+X shouldn't cross pages, since this would
+slow down access on an already slow machine.
+
+Thus, the X or Y register becomes the stack pointer, into a stack
+that might use 2 pages.
+
+For data stacks (necessary for Forth, C, etc),
+this works out particularly well. This means that if you're
+willing to live with a 256-element data stack (not completely unreasonable),
+you can have a pretty clean & quick interface.
+Moving up & down the stack involves a single increment or decrement to
+the X or Y register, the cheapest possible operation.
+You can also cheaply access operations "inside" the stack by selecting
+precomputed offsets, again making access MUCH easier.
+
+I'd earlier toyed with a 128-element data stack, but this
+"spreading" approach is easier,
+and allows twice as many data elements!
+Pushing and popping are cheaper (one inc/dec instead of two, without
+lots of carry checks).
+This also means that char-vs-int errors aren't deadly (as they are
+if chars push 1 byte and ints push 2).
+Just use the X or Y register as the data stack pointer, and have two
+pages set aside for data (one for low, one for high).
+Even better, you could have 4 pages, and long ints can be passed around
+without worrying about incorrectly taking them off the stack as the
+wrong size! Type conversions between char, int, and long become no-ops,
+eliminating a set of dangerous mistakes.
+
+If you want the approach but can't live with only 256 data elements,
+you could check on each stack push & pop, and move (most of the) data
+elements when the stack got full or empty.
+This is slower, obviously.  You do a check less often (e.g., on
+each call/return to a new function).
+
+Conversely, if you're willing to accept a far smaller data stack,
+the results would be ESPECIALLY efficient if you slap the
+stack into the zero page.  If you normally have to deal with 16-bit
+integers, this won't waste any more space, but it saves all the
+incrementing/decrementing you have to do to fix up stacks, AND
+if there's an error in stack manipulations (a serious problem in Forth)
+you'll have far less damage.
+With a split stack, you coudl even put the low byte in zpage, and
+the high byte elsewhere... if you often use 8-bit values (e.g.,
+as truth values or characters) then that could be quite useful.
+The original fig-FORTH did this, and was remarkably fast.
+
+You could even combine techniques: use the zero page for the data stack,
+with a standard offset. If the stack overflows or underflows
+you copy to/from elsewhere.  Having a zero-page stack,
+accessed this way, with overflows might give really good performance
+for a data stack-based system.
+
+One problem is that the stack can't handle many large
+data elements (no local variables with 200 bytes each); I've
+programmed on such systems before, and as long as there's a heap
+allocation system that's not a serious problem.
+The implementation could even put variables beyond a certain size
+on the heap automatically.
+
+One design decision: do you keep an X or Y register set nearly all
+the time as the stack pointer?  Almost certainly yes, since this
+would be heavily used.  If so, do you use the X or Y register, and
+which direction do you grow (up or down)?
+I'm not _certain_ if the X or Y register is best, nor if
+growing up or down is best.  At first I used X, then someone
+suggested I use Y, but after examination I think X would be better.
+There are some accesses using indirect pointers that are useful
+and require the Y register.
+Even more importantly, many instructions such as the
+incrementing and decrementing instructions can only be used directly if X
+is used as the stack pointer; with Y it's more complicated.
+(Brad Rodriguez came to the same conclusion - that X would be better -
+through the same method - analyzing the address modes available. See:
+http://www.bradrodriguez.com/papers/moving1.htm ).
+
+Here's a sample. For the stack, the X-reg points to the top of stack,
+growing downwards in memory.  Thus X starts large & get smaller as more
+items get put onto it.  If it becomes 0, the stack is full.
+On decrementing X, you can check to see if it's become negative,
+or to be more paranoid you could declare an error if it's zero (X=0).
+Set X=$FE (say) as an "empty" value.
+To look "inside" the stack, simply use addresses with assembly-time
+increments (i.e. no runtime cost!).
+
+; perhaps alias "LOWSTACK+1" as "SECOND$PARAMETER$LOWBYTE",
+;               "LOWSTACK+2" as "THIRD$PARAMETER$LOWBYTE", etc.
+; LOWSTACK and HIGHSTACK could be in the zero page, giving less data space
+; but more speed and smaller code -- or they could be at the beginning
+; of two different pages, giving 256 possible data values.
+; Note that the assembly language given here can assemble either way,
+; so that could be an easy configuraion option.
+
+ADD-INTEGERS
+ ; pop & add top two integers on the stack.
+ ; pushing result onto stack.
+ CLC
+ LDA LOWSTACK,X       ; add low bytes.
+ ADC LOWSTACK+1,X     ; this is how to look at the "one inside".
+ STA LOWSTACK+1,X     ; replace 2nd parameter (which will be the return value)
+ LDA HIGHSTACK,X      ; add high bytes.
+ ADC HIGHSTACK+1,X
+ STA HIGHSTACK+1,X
+ INX                  ; pop the stack (once), leaving result on stack.
+ RTS
+
+DUP-INTEGER
+ DEX                  ; push the stack, making room for the new value.
+                      ; Always make room for a value first by pushing first;
+                      ; that way, the system could support
+                      ; interrupts which use this stack too.
+ LDA LOWSTACK+1,X
+ STA LOWSTACK,X
+ LDA HIGHSTACK+1,X
+ STA HIGHSTACK,X
+ RTS
+
+
+If the stack were always pushed before data was stored on it,
+interrupt handling could be well-supported.
+This would make it easily possible to create time-sharing on
+a 6502 (a frightening thought!).
+
+Obviously, stack-checking code could be inserted too, at some cost
+in code size and performance.
+
+Let's compare this to the the FIG Forth implementation available at:
+ http://www.6502.org/crossdev/lang/index.htm
+Here's its code for PLUS (+):
+          CLC
+          LDA 0,X
+          ADC 2,X
+          STA 2,X
+          LDA 1,X
+          ADC 3,X
+          STA 3,X
+          INX
+          INX
+          JMP NEXT
+That's not too bad.  It does use the zero page, making it more efficient
+(it's only 15 bytes).
+It has to do a some work to manipulate the stack.
+Forth cells on 6502s are essentially universally 2 bytes
+long, and that's fine. But because it puts the high byte right after the
+low byte (as is traditionally done), it has to do more fiddling
+with the X pointer (e.g., every time it adds or drops something from the
+data stack, a key operation, it has to do two increments or two decrements
+of a register instead of just one).  Access to the top-of-stack
+requires indexed addressing mode, which as we'll discuss is unnecessary.
+Even more importantly, if the programmer makes a mistake, it's curtains
+for the data.  In contrast, having separate high and low stacks
+encourages the use of single-byte data (something the 6502 is FAR more
+efficient at), since it no longer is as dangerous to use in a Forth system.
+So, you could have Forth words that specifically operate on 8-bit values,
+which could be implemented in-line (since they're fast).
+For example, if truth values are always considered to be 8 bits, then IF
+and so on only need to look at the low byte, and tests only need to
+set the low byte... which, given the many tests a real program
+needs to perform and then check, could be a real savings.
+The FIG Forth implementation is a word-based intepretive system, which
+is slower than a JSR-based implementation (where the Forth words are
+compiled into JSR WORD everywhere)... I'm partial to the JSR design due to
+its speed, but the approach described in this paper will work with either.
+
+So, how do you implement stack-based approaches?
+Some Forth implementations store the top of the data stack in a register,
+and NOT in the stack itself.  That's definitely worth thinking about
+for ANY system that has a data stack.
+Unfortunately, the 6502's puny registers make this a little tricky to do
+with its built-in registers. (But zpage can be used as a register;
+more about that in a moment.)
+
+Here's a much LESS efficient way to access the stack, by a real program.
+Mini-QForth works by calling a routine that pops the top-of-stack
+into the register pair A and Y, and then another routine that pushes
+the pair onto the stack.  This uses up 2 of the 3 registers, and creates
+lots of extra work. For example,
+Here's the mini-QForth code that implements "Add the top 2 numbers":
+ADD JSR POPDATA
+ STY TEMP
+ STX TEMP+1
+ JSR POPDATA
+ TYA
+ CLC
+ ADC TEMP
+ TAY
+ TXA
+ ADC TEMP+1
+ TAX
+ JMP PUSHDATA
+And this has to call PUSHDATA and POPDATA, which are:
+PUSHDATA TXA
+ LDX DATSTACK
+ STA DATAAREA,X
+ DEX
+ TYA
+ STA DATAAREA,X
+ DEX
+ STX DATSTACK
+ INC DATITEMS
+ BEQ :ERROR
+ RTS
+POPDATA LDA DATITEMS
+ BEQ :ERROR
+ DEC DATITEMS
+ LDX DATSTACK
+ INX
+ LDA DATAAREA,X
+ TAY
+ INX
+ STX DATSTACK
+ LDA DATAAREA,X
+ TAX
+ RTS
+That is a LOT of code.  It's WAY more slower and more complicated
+than Fig-Forth, for example.  This is terribly inefficient, and I don't
+see the upside of it.
+
+A very interesting alternative is to consider using 2 fixed zero-page
+locations as the top of stack value (not a pointer, but the actual
+value itself).  After all, using a register as the "top of stack" value
+is a common optimization on other processors,
+and accessing a fixed location in zpage is about the
+fastest thing a 6502 can do unless the data fits in its puny registers.
+There's a trade:
+ * Operations that don't move the stack up or down
+   are faster (because you can use direct zpage access to the TOS), and
+   you can directly use the TOS as a pointer (if it's in the moving stack
+   you'd have to copy it to another zpage location to use it)
+ * On the other hand, any implied push/pop requires copying the TOS value
+   to/from the "traditional" stack.
+In such a case, a "+" operator that added the top two items on the stack,
+putting the result onto the stack, would look like this:
+ CLC
+ LDA LTOS      ; two bytes; constant address, so VERY fast.
+ ADC LSTACK,X  ; two bytes if stack on zpage
+ STA LTOS
+ LDA HSTACK,X
+ ADC HTOS
+ STA HSTACK,X
+ INX ; pop stack (split stack means we need only one)
+This is only one more byte long than the code for loading/storing from
+constant zero page addresses (the one INX), and only 3 more cycles in time
+(for the 3 instructions that use the X index).
+Even more remarkably, it only takes 1 more cycle of time than when adding
+a value in a constant address in zero page with a value in a constant
+address outside of zero page (because both "zero page,X" and "Absolute"
+addressing modes take 4 cycles).
+
+Storing the top-of-stack (TOS) value in the zpage is
+ESPECIALLY nifty for the case where a function takes one
+argument, and returns one argument... in that case, the caller will need
+to push the "old" one, but setting the new TOS, and getting the return
+value, all involve writes to constant zpage locations.. much faster.
+Here's the ENTIRE code for increment TOS (Forth's 1+):
+ CLC      ; 1 byte,  2 cycles
+ INC LTOS ; 2 bytes, 5 cycles
+ BNE .1   ; 2 bytes, 2 cycles if not taken (3 if taken, 4 if cross page)
+ INC HTOS ; 2 bytes, 5 cycles
+.1
+ ; 7 bytes total, 15 cycles in most cases (most of the time branch is taken)
+This is ESPECIALLY nifty because you can then store LTOS directly before HTOS
+in zero page - which means that you can then use the TOS _directly_
+as a pointer.  A problem with the "split Low/High"  stack is that you
+have to copy it elsewhere to use as a pointer, but if it's already there
+in the TOS, then there's no copying required at all.. you just use it!
+Let's illustrate that; here's an operation that uses the top-of-stack as the
+address, replacing the top of stack with the 16-bit value at that address.
+This is Forth's "@" word, aka "fetch", with format ( a-addr -- x );
+it's also the equivalent of C's (*p) when used as an rvalue (e.g., x = *p):
+ ; TEMP should be in zpage.
+ LDY #0
+ LDA (LTOS),Y
+ STA TEMP         ; don't overwrite address until we get both bytes
+ INY
+ LDA (LTOS),Y
+ STA HTOS
+ LDA TEMP
+ STA LTOS
+What about storing values?
+Forth's "!" word (aka "store") has the format ( x a-addr -- ); in C,
+this would be *p used as an lvalue (e.g., *p = x):
+ LDY #0
+ LDA LSTACK,X
+ STA (LTOS),Y
+ INY
+ LDA HSTACK,X
+ STA (LTOS),Y
+ INX          ; Pop one item from stack.
+ INX          ; pop second item from stack.
+(You could insert an INX before this sequence; then you can choose if you
+want to drop the item being written or not.  C in particular lets you do
+x = y = z = expr, so having a "doesn't throw it away" version is useful.
+Or, you could require the use of a separate "pop" operation, and NEVER
+throw expressions away.  Or, always pop away, and just use DUP if you need it.)
+
+If you're implementing a Forth, you really need to look here:
+http://www.bradrodriguez.com/papers/moving1.htm
+The usual FORTH implementation is threaded, and need to implement:
+* NEXT: Find and run the next "instruction".
+* DOCOLON or ENTER: The "instruction" at the beginning of a function which
+  stores the IP on the return stack (so that the function can return later)
+* EXIT (;S): The "instruction" at the end of a function which returns.
+
+Indirect Threaded Code (ITC) is the traditional Forth approach.
+NEXT:
+   (IP) -> W  fetch memory pointed by IP into "W" register
+              ...W now holds address of the Code Field
+   IP+2 -> IP advance IP, just like a program counter
+              (assuming 2-byte addresses in the thread)
+   (W) ->  X  fetch memory pointed by W into "X" register
+              ...X now holds address of the machine code
+   JP (X)     jump to the address in the X register
+DOCOLON: (aka ENTER)
+   PUSH IP     onto the "return address stack"
+   W+2 -> IP   W still points to the Code Field, so W+2 is
+               the address of the Body!  (Assuming a 2-byte
+               address -- other Forths may be different.)
+   JUMP to interpreter ("NEXT")
+EXIT:
+   POP IP   from the "return address stack"
+   JUMP to interpreter ("NEXT")
+
+In direct-threaded, you change NEXT to:
+   (IP) -> W   fetch memory pointed by IP into "W" register
+   IP+2 -> IP  advance IP (assuming 2-byte addresses)
+   JP (W)      jump to the address in the W register
+and ENTER is invoked via a "JMP" in front of its address.
+(If you want direct 6502 code, you'd do that instead).
+Which would be faster on a 6502.
+
+
+Implementing a C compiler this way would produce less efficient code
+that a "Simple" compiler would, in general, since reading or writing
+many values requires an indirection using a register (,X or ,Y) instead
+of a direct write to memory, and would mainly use non-zero-page
+(instead of zero page).  Thus, it'd take more bytes of code, and it'd
+be slower to execute.  However, recursive code
+would be much easier to handle  - Simple would have to work hard to do it.
+Also, implementing this scheme is _extremely_ easy, while doing "ASM+"
+right would take a LOT more work.  Having the TOS be a pair of bytes
+in a FIXED zero page location makes this approach lots more efficient,
+thankfully.
+
+If I were building a "language shop", this would be a good way to add
+a Forth & a C compiler to the "language collection."
+Programming languages which are often implemented using a
+stack-based language would fit this model easily too
+(Java, C#, Python, Perl, PHP, Pascal).
+The next trick would be to figure out how to make sure each can call
+the others.  Probably not too bad via some special "external language
+call" interface, at least no worse than other approaches.
+Forth in particular would work nicely in this scheme.
+
+This brings us to the idea of frame pointers.  It'd be nice to be able to
+access the calling parameters and local variables of a more
+traditional language (C, Ada, Pascal, etc.).
+The traditional method of letting stacks grow/shrink, yet getting
+access to fixed locations, is by using a frame pointer.
+Forth doesn't normally provide frame pointers, and has no idea how many
+data values are pushed/pulled onto the data stack by each function,
+which forces the human to do all the work to figure out "where they are"
+(ugh!).  This is one of the reasons Forth can be tricky to use
+(LOCAL helps, but adds inefficiencies).
+Now, if you know how many words a Forth call consumes and produces on
+the stack, you don't need a frame pointer... you could just insert calls
+that "dup 3 down" or whatever, as long as the system can track how
+many items are on the stack (where branches merge, like the end of an "IF"
+statement, there must be the same number).
+So, you can have frame pointers without their overhead, just insert the
+constant offset to the "current frame pointer".
+For functions that return a value, you can insert the "return value" on the
+stack before everything else (this is "caller result allocation", per
+Baker's "CONS should not CONS its arguments"), and if there are any
+OUT or INOUT parameters, put them on the stack FIRST... that way, you can
+simply drop all the other parameters on a return.
+The "obvious" implementation of this means you must recompile everything
+that uses a function if the number changes, which is terrible for interactivity.
+For interactive use this could be stored specially and loaded by callers,
+restoring interactivity.  If the parameters are all in
+one page (or split high/low between two pages), then the frame pointer
+is only one byte long; that could easily be pushed to the return stack
+as part of the call, and pulled on the return.  If the push and pull
+was done by the callee, then this could be done optionally only by
+the functions where it helped.
+
+For C, you could implement this via a specialized language (like Sweet-16).
+But instead of fixed register locations, you could have loads/stores
+be "relative to current stack" positions, to permit easy access to
+parameters, temporaries, and return values.  Other operations could
+always work on the "top of the stack".  Callers would place the operations
+on the stack and call the function; the callee would push to the stack
+for each temporary, and then start working. E.G.:
+function int p1():
+ return p2(3,4) + 5
+function int p2(int x, int y):
+ return x + y + 22
+Converts to:
+ ; Compute right-hand-side.  First, we must call p2, so push its arguments
+P1:
+ PUSH #3
+ PUSH #4
+ CALL P2
+ PUSH #5
+ ADD ; Adds top two items on the stack
+ RETURN
+P2:
+ ; GOOD generated code:
+ ADD
+ PUSH #22
+ ADD
+ RETURN
+P2-NAIVE:
+ ; Here's naive code; if the compiler can't figure out the optimization,
+ ; here is code that handles the general case that is easily generated:
+ DUP-1  ; duplicate the item one-less-than top-of-stack. Compiler tracks frame
+ DUP-1  ; copy in "y", which is now one less than top-of-stack.
+ ADD
+ PUSH #22
+ ADD
+ ; At this point, the TOS has the result, we want to save it to where
+ ; the top of stack WILL be, which is the beginning of the set of in params.
+ STORE-1 ; Store one into the stack
+ DROP
+ RETURN
+Ah, but how can we have such optimizations?
+The key here is that x and y as used here are the LAST times these are used
+in the function/procedure.
+If these are the last times x and y are used, we don't need to duplicate
+them for future use!!  This means that a sequence of "DUP-1 DUP-1"
+for values we'll never use again can be completely eliminated;
+note that the frame pointer will now have a different result.
+The ADD will happen as usual, as will the PUSH #22 and ADD.
+Then when we want to STORE it, we can trivially notice that the "store"
+is unnecessary - the value is already at the right place. Then we return.
+
+Hmm, how can we do that optimization?  We'll want to convert to an intermediate
+format so we can do these optimizations, which is a non-problem when
+compiling on a larger system, but can be an issue when self-hosting.
+Is there a simple intermediate format we can convert to?
+I'm sure there is, here's one idea.  Imagine that we first convert this to:
+ ; return x + y + 22
+P2:
+ LOADP FIRST-PARAMETER
+ LOADP SECOND-PARAMETER
+ ADD
+ LOAD #22
+ ADD
+ STOREP RESULT ; equal position as FIRST-PARAMETER
+ RETURN
+And as we do this, we note where the LAST use of each parameter is.
+(In this case, both LOADP's are the last time).
+Then, for each sequence of LOADP's where this is the last use, we
+determine if the stack is already set up that way... and if it is, the
+"LOADP" just turns into "empty".  Similarly, for each STOREP, we determine
+if it's already there, and if so, it becomes a no-op.
+If this is a pain, we could decide to only to try to do this
+in "returns" or the last statement, since that's where they are more likely.
+A quickee tail-recursion optimization would be to note that
+the function is calling itself, copy the parameters down to the
+positions of the function, and then jump. (It's not Scheme, but hey.)
+
+There must be SOME literature on this.  I've found:
+* http://www.ece.cmu.edu/~koopman/stack_compiler/stack_co.html
+"A Preliminary Exploration of Optimized Stack Code Generation"
+by Philip J. Koopman, Jr,
+Journal of Forth Applications and Research, 1994, 6(3) pp. 241-251.
+* http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.32.1750
+"Reducing Loads and Stores in Stack Architectures"
+by Thomas Vandrunen ,  Antony L. Hosking ,  Jens Palsberg (2000);
+this one even provides a set of useful optimizations patterns, along with
+proofs they are correct.  This one's been further proved here in
+ http://www.cs.york.ac.uk/ftpdir/reports/2006/YCSTR/03/YCSTR-2006-03.pdf
+"Verification of an Optimisation Algorithm of Stack Machine in Functional
+Programming Languages" by Guanhua He.
+* http://www.ece.cmu.edu/~koopman/stack_computers/index.html
+"Stack Computers: the new wave" by Philip J. Koopman, Jr.
+This one is an overall discussion, but no specific algorithm for this case.
+* http://portal.acm.org/citation.cfm?id=321901
+"The Generation of Optimal Code for Stack Machines"
+by J. L. Bruno and T. Lassagne
+Journal of the ACM (JACM), Volume 22 , Issue 3  (July 1975)
+Pages: 382 - 396, ISSN:0004-5411.
+Starts with a full tree, and then generates stack machine code.
+
+
+
+Note: Supporting "in", "inout", and "out" (a la Ada) would be
+really helpful.  The 6502 is awful at pointer manipulations in general,
+but indexes aren't too bad, so if you can return multiple values from
+a function (e.g., inout and out) you can be far more efficient.
+
+
+{ There are many other possible optimizations, of course.
+QForth uses hashes to reduce identifier search time, see:
+http://forum.6502.org/viewtopic.php?t=555
+}
+
+Of course, there are lots of ways to mix "fixed location" and "stack-based"
+approaches.  Every stack access on a 6502 is a major chore, especially
+if full 16-bit addresses are permitted.
+For example, on a subroutine call, you could have fixed locations in
+the zero page that are used for the current subroutine's arguments and
+local parameters, and then use a stack for temporaries to do calculations
+(e.g., "add" would add the top two numbers on the stack).
+On a call, you'd save the zero page addresses you're going to use to
+store the arguments, set them (e.g., from the stack), and do a call.
+The callee would save any additional zpage needed for local variables.
+On return, the zero page values would be restored so that the caller
+gets their state back, and you can put results (if any) on the stack.
+Obviously, this involves copying variables around, but the point is that
+you hope to get "paid back" by having simple fixed zpage addresses for
+arguments and local variables... which might very well be true.
+
+The two different approaches need not be completely independent.
+For Simple, using the basic idea implies that integer arrays
+(up to 256 elements) could be stored as an array of low bytes, then an
+array of high bytes, making access easy.
+
+In fact, it seems like 2 macro languages could be developed -
+the ASM+ one above, based on fixed addresses, and a
+stack-based macro language, and lots of reuse could occur.
+The underlying assembler & peephole optmization system could be the
+same, and the same 2nd-stage peephole optimizations might be used for both
+(though some optimizations would only be useful in one or the other).
+
+Then you could allow something of the form:
+
+ PROC HELLO            ; proc hello(in int c, out char d)
+ TEMPS 2               ; use this so can set up space for temporaries.
+ S-IN-I  C             ; make sure these are in order.
+ S-OUTI  D             ; the macros remember order to make declaration easy
+ TEMP-I  E             ; int e;
+ TEMP-I  F             ; int f;
+ SZEROI F              ; f := 0;
+ SI+ E, C, F           ; E := C + F;
+ SI:= D, E             ; D := E;
+ SI++ E;               ; I++;
+ ENDPROC               ; pop off temporaries, deallocate in assembler.
+
+Would generate:
+HELLO
+ DEX                   ; space for E
+ ; stack overflow check if desired.
+ DEX                   ; space for F
+ ; stack overflow check if desired.
+ ; Now stack looks like: (top/low mem) F E D C (bottom/higher mem)
+ LDA #0                ; F := 0
+ STA LSTACK,X
+ STA HSTACK,X
+ CLC                   ; E := C + F
+ LDA LSTACK+3,X
+ ADC LSTACK,X
+ STA LSTACK+1,X
+ LDA HSTACK+3,X
+ ADC HSTACK,X
+ STA HSTACK+1,X
+ LDA LSTACK+1,X        ; D := E
+ STA LSTACK+2,X
+ LDA HSTACK+1,X
+ STA HSTACK+2,X
+                       ; Now need to implement E++.  Since
+                       ; INC LSTACK+1, Y  is not a legal addressing mode,
+                       ; this is a good argument for using X and not Y.
+ LDA LSTACK+1,X        ; E++
+ CLC
+ ADC #1
+ STA LSTACK+1,X
+ LDA HSTACK+1,X
+ ADC #0
+ STA HSTACK+1,X
+
+.1
+ INX
+ INX                   ; pop temporaries. Should params be popped by caller?
+ RTS
+
+
+A few notes regarding incrementing - Geoff Weiss noted that
+if you find that you rarely have to increment the high byte, and want to get
+better performace from incrementing 8-bit values and add a penalty to the
+16-bit operation, use this code:
+
+ LDA LSTACK+1,X
+ CLC
+ ADC #1
+ STA LSTACK+1,X
+ BCC .1
+ LDA HSTACK+1,X
+ ADC #0
+ STA HSTACK+1,X
+.1
+
+Again, note that implementing "E++" can't be done with the following
+code, since it doesn't use a legal addressing mode:
+ INC LSTACK+1,Y        ; E++.  This addressing mode is not legal.
+                       ; Should use X instead of Y.
+ BNE .1
+ INC HSTACK+1,Y
+
+
+
+COMPARING THE TWO APPROACHES
+
+Approach #1 takes more work to implement, has the linker do more work,
+and doesn't handle recursion as easily, but it has lots of
+performance advantages.
+Approach #2 is probably much easier to implement, but it has its weaknesses.
+
+Let's examine adding two numbers (ignoring any return) to compare them.
+Here's approach #1, adding A and B and placing them in C
+(to keep things consistent, I'll only use normal adding and not the
+adding that speeds low-only-byte adding while making higher-byte adding
+more expensive and adding code):
+ADD-INTEGERS
+ CLC
+ LDA A$LOW
+ ADC B$LOW
+ STA C$LOW
+ LDA A$HIGH
+ ADC B$HIGH
+ STA C$HIGH
+
+Here's approach #2:
+ADD-INTEGERS
+ ; pop & add top two integers on the stack.
+ ; pushing result onto stack.
+ CLC
+ LDA LOWSTACK,X       ; add low bytes.
+ ADC LOWSTACK+1,X     ; this is how to look at the "one inside".
+ STA LOWSTACK+1,X     ; replace 2nd parameter (which will be the return value)
+ LDA HIGHSTACK,X      ; add high bytes.
+ ADC HIGHSTACK+1,X
+ STA HIGHSTACK+1,X
+ INX                  ; pop the stack (once), leaving result on stack.
+
+Pulling up the 6502 opcodes (e.g., at
+http://www.6502.org/tutorials/6502opcodes.htm), we can compare the approaches.
+
+
+Approach #1 - all zero page:      13 bytes of code,  19 cycles to run
+               no zero page:      19 bytes of code,  25 cycles to run
+Approach #2 - all zero page:      14 bytes of code,  26 cycles to run
+               no zero page:      20 bytes of code,  28 cycles to run
+
+Approach #2 is only one byte longer in code because it has to
+manipulate the stack at the end.  Approach #1 might have to do
+copying, which would take more effort and make it much slower than #2,
+but if the linkage overlap idea works well that copying is rare.
+Approach #2 is always slower than #1; even when approach #1 can't use
+a zero page, it's faster than approach #2 when it's using the zero page.
+Is that a problem? Well, it depends.  Approach #2 is more traditional.
+
+Notes on creating other languages:
+
+A finalization system would be useful, since a number of
+allocation requests could be to compensate for the inability of
+the system to have large local variables.
+Heck, an automatic garbage collector might be fine - mark & sweep collectors
+wouldn't have much to do, since there's not much memory to sweep.
+
+Initialization and adjustment (like Ada 95) would be useful in
+eliminating common errors.
+
+Inheritance can be implemented as with C++ or Ada 95.
+Dispatching would be little expensive, though; each indirection
+would require copying an address into the zero page and using it.
+
+A completely controlled, unbounded-length string type would be very
+handy; it would make text manipulation a lot easier.
+
+Obviously, for real efficiency this would need to be combined with
+many other techniques.  For example, using registers is even faster,
+so using A,X, and/or Y to pass some data is even faster in most cases
+(no saving out and writing back).  However, there are only 3 8-bit
+registers, and they are needed for other things too, so while using them
+in part for parameter passing is a good idea, it's limited in its utility.
+PHA and PLA and the zero page can be used to briefly store and retrieve
+registers, and there are lots of clever techniques for performance
+aids too.
+
+It's critical to use 8-bit (char) values when you can, e.g., for booleans,
+because the 6502 is FAR more efficient at them.
+Even on the rare cases where Approach #1 has to do a copy, it's far less.
+Approach #2 even encourages this, because an error in typing is
+less catestrophic.
+
+
+
+APPROACH #3
+
+This approach has all parameters and local variables in fixed zpage locations,
+so inside a function/procedure, it's just as fast.
+Since you don't HAVE to do analysis across the whole program,
+this can be easily self-hosting.... each input parameter, and
+each local (temporary) variable, is just assigned the next zpage
+location as you compile.  You should probably have a separate
+zpage byte pair at a fixed location, call it "RESULT",
+to hold any function return values; that way,
+it's easy to access the result after function completion.
+
+You should store values in LOW, HIGH order (as traditional), so they
+can be used as pointers.  Let's call the starting position in zpage FRAME.
+
+Each call becomes the following:
+ * Save the locations used by the callee to saved-stack.
+   If the callee has no parameters, and no local variables, this does nothing.
+ * Set the input parameters.  These are shared by the caller, so be
+   sure to not overwrite ones that will need to be read from while
+   creating the call.  If simplicity of the compiler is more important
+   than efficient code, you could ONLY reference the save-stack when accessing
+   current values, and then write the new parameters.
+ * JSR to the new routine.
+
+Each return becomes:
+ * If a function, save to RESULT
+ * Restore from saved-stack
+ * RTS
+
+So for example:
+ int x(a,b) {
+   int c;      //  This is a local variable.  Remember that used space.
+   a = 0;
+   b = 4;
+   a++;
+   c = a + b;
+   c = y(c,b);
+   return c;
+ }
+ int y(f,g) {
+   int q = f + g;
+   return q;
+ }
+Becomes:
+ FRAME  .EQU $00  ; Or somewhere on zpage
+ PARM1  .EQU FRAME
+ PARM1H .EQU PARM1+1
+ PARM2  .EQU FRAME+2
+ PARM2  .EQU PARM2+1
+ PARM3  .EQU FRAME+4
+ PARM3  .EQU PARM3+1
+ FUNCTIONX:
+   LDA #0      ; a=0
+   STA PARM1
+   STA PARM1H
+   STA PARM2H  ; b=4
+   LDA #4
+   STA PARM2   ; okay, this reordering wouldn't be done by a naive impl.
+   INC PARM1   ; a++;
+   BNE .1
+   INC PARM1H
+ .1
+   CLC         ; c = a + b
+   LDA PARM1
+   ADC PARM2
+   STA PARM1
+   LDA PARM1H
+   ADC PARM2H
+   STA PARM1H
+ ;
+   LDY #FUNCTIONY.SAVELEN ; save results to prepare for the call to Y
+   JSR SAVEFRAME
+   LDA PARM3 ; y.f = x.c
+   STA PARM1
+   LDA PARM3H
+   STA PARM1H
+   ; "y.g = x.b" is a copy to its own position - compiler should notice this!
+   ; LDA PARM2
+   ; STA PARM2
+   ; LDA PARM2H
+   ; STA PARM2H
+   JSR FUNCTIONY
+   ; Compiler should notice "copy result to result" is a no-op.
+   LDY #FUNCTIONX.SAVELEN
+   JMP RESTOREFRAME
+ FUNCTIONX.SAVELEN .EQU $4+$2 ; bytes for parameters + bytes for locals
+ ; int y(f,g) {
+ ;  int q = f + g;
+ ;  return q;
+ FUNCTIONY:
+   CLC         ; q = f + g
+   LDA PARM1
+   ADC PARM2
+   STA PARM3
+   LDA PARM1H
+   ADC PARM2H
+   STA PARM3H
+   ; store q into result
+   LDA PARM3
+   STA RESULT
+   LDA PARM3H
+   STA RESULTH
+   LDY #FUNCTIONY.SAVELEN
+   JMP RESTOREFRAME   ; This is JSR RESTOREFRAME followed by RTS.
+ FUNCTIONY.SAVELEN .EQU $4+$2 ; bytes for parametesr + bytes for locals.
+
+We need SAVEFRAME and RESTOREFRAME, so let's do this:
+ FRAMEPTR .EQU $FE ; Point to beginning of stored frames.
+ SAVEFRAME:  ; Store Y items onto the saved frames.  We'll grow down.
+   ; First, make room for the new values
+   STY TEMP
+   CLC
+   LDA FRAMEPTR
+   SBC TEMP
+   STA FRAMEPTR
+   LDA FRAMEPTR+1
+   SBC #0
+   STA FRAMEPTR+1
+   ; TODO: Could check if we've run out of room.
+   ; Now, copy the values into the new area:
+ .1
+   LDA FRAME,Y
+   STA (FRAMEPTR),Y
+   DEY
+   BVS .1
+   RTS
+
+ RESTOREFRAME:
+   STY TEMP
+ .1
+   LDA FRAME,Y
+   STA (FRAMEPTR),Y
+   DEY
+   BVS .1
+ ; Now give up the area
+   CLC
+   LDA FRAMEPTR
+   ADC TEMP
+   STA FRAMEPTR
+   LDA FRAMEPTR+1
+   ADC #0
+   STA FRAMEPTR+1
+   RTS
+
+If a function has no parameters, and doesn't have local variables, you
+can skip the copying.
+
+The stack that stores frames - call it the "framestack" - can be
+used to store arrays (including large arrays) on the frame,
+essentially an alloca()-like approach.
+E.G., to support:
+ int f() {
+   char buffer[1024];
+ }
+the start of f() can increase the framespace by 1024, and store the
+resulting start-of-frame (buffer's start) in a local variable on zpage.
+Now accessing buffer is pretty easy.
+On return, deallocate this.
+
+You can even handle displays (as required by Pascal) - just
+store the back reference in a local parameter.
+
+You could even implement a stack-based system this way;
+the frame of parameters could implemented this way, and the
+stack (e.g., for temporaries or parameter passing) could be built
+separately.
+
+
+
+VIRTUAL MACHINE INSTRUCTIONS
+
+There's only 64K, so if the program is longer, you may want to implement
+an instruction set that takes less space and generate that
+(except for the most time-critical components).
+
+For the virtual machine to run FAST on 6502, it should be designed to be
+fast to implement a 6502.  You MUST look at Woz's Sweet-16 for an example:
+  http://www.6502.org/source/interpreters/sweet16.htm
+which is amazingly short.  You could easily switch in and
+out of use of sweet-16, and in addition, you could even JSR specific
+Sweet-16 instructions straight from 6502 code if you just want to use
+1-2 operations... making it very easy to intermix them.
+This has 16 registers (0-15); R0 is the accumulator. These are its opcodes:
+    00      RTN          Return to 6502 code.
+    0l ea   BR   addr    Unconditional Branch.
+    02 ea   BNC  addr    Branch if Carry=0.
+    03 ea   BC   addr    Branch if Carry=1.
+    04 ea   BP   addr    Branch if last result positive.
+    0S ea   BM   addr    Branch if last result negative.
+    06 ea   BZ   addr    Branch if last result zero.
+    07 ea   BNZ  addr    Branch if last result non-zero.
+    08 ea   BM1  addr    Branch if last result = -1.
+    09 ea   BNM1 addr    Branch if last result not -1.
+    0A      BK           Execute 6502 BRK instruction.
+    0B      RS           Return from SWEET-16 subroutine.
+    0C ea   BS   addr    Call SWEET-16 subroutine.
+Register Opcodes: The SET opcode uses three bytes, to load a 16-bit
+immediate value into a register. All the rest of the register opcodes
+only use one byte. ("MA" = memory address)
+    1n lo hi    SET  n,value    Rn <-- value.   "Set constant"
+    2n          LD   n          R0 <-- (Rn).    "Load (from reg to accumulator)"
+    3n          ST   n          Rn <-- (R0).    "Store (to reg)"
+    4n          LD   @n         MA = (Rn), ROL <-- (MA), "Load byte indirect"
+                                Rn <-- MA+1, R0H <-- 0.
+    5n          ST   @n         MA = (Rn), MA <-- (R0L), "Store byte indirect"
+                                Rn <-- MA+1.
+    6n          LDD  @n         MA = (Rn), R0 <-- (MA, MA+1),
+                                Rn <-- MA+2.   "Load word (double) indirect"
+    7n          STD  @n         MA = (Rn), MA,MA+l <-- (R0),
+                                Rn <-- MA+2.   "Store word (double) indirect"
+    8n          POP  @n         MA = (Rn)-1, R0L <-- (MA),
+                                R0H <-- 0, Rn <-- MA.  "Pop byte indirect"
+    9n          STP  @n         MA <-- (Rn)-1, (MA) <-- R0L,
+                                Rn <-- MA.             "Store POP indirect"
+    An          ADD  n          R0 <-- (R0) + (Rn).    "Add"
+    Bn          SUB  n          R0 <-- (R0) - (Rn).    "Subtract"
+    Cn          POPD @n         MA = (Rn)-2, MA,MA+l <-- R0,
+                                Rn <-- MA.             "Pop word indirect"
+    Dn          CPR  n          R13 <-- (R0) - (Rn),   "Compare"
+                                R14 <-- status flags.
+    En          INR  n          Rn <-- (Rn) + 1.       "Increment"
+    Fn          DCR  n          Rn <-- (Rn) - 1.       "Decrement"
+
+
+
+There are lots of stack machines, including p-code.  One trouble is that
+many of them weren't designed for the 6502, so many of their operations
+are expensive to implement.  Still, you should take a look at
+the UCSD p-code system, various Forth implementations (esp. threading),
+Java bytecode, Python's bytecode, and even the Cintcode/OCODE
+used for BCPL.
+
+There is a potential advantage for approach #3 when combined with
+a virtual machine.  Approach #3 has variables
+in fixed locations, so the VM instructions can generally run faster,
+AND the locations to be addressed can be shorter.
+
+For #3, a variant of the Sweet-16 instruction set could be used.
+In the longer run, I don't think Sweet-16 is optimal for
+total use to implement a high-level language, but it wouldn't be a bad
+place to start prototyping things.
+I would start the frame at $2 (Sweet-16 uses zpage location 0, aka register 0,
+as the accumulator and it's special).  I would add Sweet-16
+operations, namely "SAVEFRAME len", "CALLFRAME", "RETURNFRAME len"
+(the last one calls RESTOREFRAME and then does a Sweet-16 return).
+In SAVEFRAME, you save 'len' values; in RETURNFRAME, you restore 'len' values
+and then return to the caller.
+You'll need to define a convention for returning results from functions;
+let's use R0 (the accumulator) as RESULT.
+You'd probably want to put the FRAMEPTR in a register, too, so it's easier
+to access data stored on the stack (e.g., an local array).
+Let's reuse our example:
+ int x(a,b) {
+   int c;      //  This is a local variable.  Remember that used space.
+   a = 0;
+   b = 4;
+   a++;
+   c = a + b;
+   c = y(c,b);
+   return c;
+ }
+ int y(f,g) {
+   int q = f + g;
+   return q;
+ }
+Which then becomes, in Sweet-16:
+ RESULT .EQU R11  ; Register 11 holds function results
+ FUNCTIONX: ; Our frame contains a, b, c; these become R1, R2, R3.
+   SET R1, #0  ; a = 0
+   SET R2, #4  ; a = 4
+   INR R1      ; a++
+   LD R1       ; c = a + b
+   ADD R2
+   ST R3
+   ; To call c=y(c,b), we save our current frame first
+   SAVEFRAME #FUNCTIONY.SAVELEN
+   ; now copy into the new parameters, without erasing in the process
+   ; y.f = x.c
+   LD R3
+   ST R1
+   ; "y.g = x.b" is a copy to its own position - compiler should notice this!
+   ; LD R2
+   ; ST R2
+   CALLFRAME FUNCTIONY
+   ; Compiler should notice "copy result to result" is a no-op.
+   RETURNFRAME #FUNCTIONX.SAVELEN
+ FUNCTIONX.SAVELEN .EQU $4+$2 ; bytes for parameters + bytes for locals
+ ; int y(f,g) {
+ ;  int q = f + g;
+ ;  return q;
+ FUNCTIONY: ; Our frame contains f, g, q as R1, R2, R3.
+   LD R1
+   ADD R2
+   ST R3
+   ; store q into result
+   ; LD R3 should be optimized away, as ST X LD X == ST X
+   ; Reply with "q".  Compiler should load that ST R3 LD 3 = ST R3, so done!
+   RETURNFRAME #FUNCTIONY.SAVELEN
+ FUNCTIONY.SAVELEN .EQU $4+$2 ; bytes for parametesr + bytes for locals.
+As with many virtual machines, you can implement this several ways,
+esp. if the virtual machine's longer opcode implements can be JSR'd as
+well.  For example, a language could allow you to say
+"do fast stuff here" and "do small stuff here" to optimize the trade
+of space vs. speed.  Then this sequence of Sweet-16 operations could be:
+* Interpreted as usual
+* Translated into either "JSR implementation" or macro-expansion, and
+  run as 6502 instructions.
+* Translated into optimized 6502 code (using Sweet-16 essentially as an
+  intermediate language)
+
+Sweet-16 is nice, but isn't perfect as a virtual machine for
+higher-level languages, and there's always the risk of license issues.
+But as an example and prototype it's helpful, and you can then develop
+your own implementation of a similar VM.  Some possible changes:
+* Indirect saves and loads that don't auto-increment the address
+* 2-byte relative branch instructions.  The problem with 1-byte is that
+  it's more complicated if the branch is too long, and the compiler
+  has to keep track of it.  If you're going to have a VM anyway, may as
+  well make it easy to generate code for.
+* Built-in "memory move" operations that handle forward, back, or
+  best direction would be nice.
+* Need lots more operations, e.g., OR, AND, etc.
+  You could implement a "prefix" op that then uses another table, doubling
+  the number of available operations (though they take one more step
+  to do).
+
+There are lots of different ways to construct virtual machines,
+including varying the number of operaands per operation.
+
+For example, you could create a simple virtual machine that lets you
+manipulate fixed-address values directly as 16-bit values.
+If the instructions were nice enough, a trivial "compiler" might be
+sufficiently pleasant to use (it'd be lower-level than some,
+but higher-level than usual assembly).  For example, here's a few operators:
+; Assignment handles both loads and stores, so it supports lots of modes
+LET (DEST ZPAGE|ADDRESS)(1 or 2 byte) =
+    (ZPAGE ADDRESS|ADDRESS|1byteCONSTANT|2byteCONSTANT|
+     @ZPAGE|@ZPAGE++|@--ZPAGE|FRAMEOFFSET)
+  ; 3 bits for the source mode, 1 bit for dest ZPAGE or ADDRESS,
+  ; 1 bit for 1 vs. 2 byte... 5 bit for details.
++= (DEST ZPAGE|ADDRESS) (ZPAGE|ADDRESS|1byte-CONSTANT|2byte-CONSTANT)
+-= (DEST ZPAGE|ADDRESS) (ZPAGE|ADDRESS|1byte-CONSTANT|2byte-CONSTANT)
+INC (ZPAGE|ADDRESS)
+DEC (ZPAGE|ADDRESS)
+COMPARE (ZPAGE|ADDRESS) (ZPAGE|ADDRESS)  ; Set status registers
+BRANCH {EQ, NE, etc.} ADDRESS
+SAVEFRAME len
+CALLFRAME location
+RETURNFRAME len ; restores the frame, then returns
+The "frameoffset" for assignment lets you easily set up for calls,
+by copying from the "old" values to the new parameter positions.
+A trivial "compiler" would let you use IF and LOOP commands, and compile
+to this.  The "65CM" compiler is sortof an example of this;
+their implementation doesn't permit function calls and returns, but
+with this, that could change.
+Let's reuse our example:
+ int x(a,b) {
+   int c;      //  This is a local variable.  Remember that used space.
+   a = 0;
+   b = 4;
+   a++;
+   c = a + b;
+   c = y(c,b);
+   return c;
+ }
+ int y(f,g) {
+   int q = f + g;
+   return q;
+ }
+Which would then compile to:
+ FUNCTIONX:        ; a,b,c become PARM1, PARM2, PARM3
+   LET PARM1 = #0  ; a = 0
+   LET PARM2 = #4  ; b = 4
+   INC PARM1       ; a++
+   LET PARM3 = PARM1 ; c = a
+   += PARM3 PARM1  ; c += b
+   ; To call something, push the frame offset, then copy the parameters
+   ; (which must already be computed and placed in existing variables)
+   SAVEFRAME #FUNCTIONY.SAVELEN
+   ; now copy into the new parameters, without erasing in the process
+   ; y.f = x.c
+   LET PARM1 = FRAME #3
+   ; "y.g = x.b" is a copy to its own position - compiler should notice this!
+   ; LET PARM3 = FRAME #3
+   CALLFRAME FUNCTIONY
+   ; Compiler should notice "copy result to result" is a no-op.
+   RETURNFRAME #FUNCTIONX.SAVELEN
+ FUNCTIONX.SAVELEN .EQU $4+$2 ; bytes for parameters + bytes for locals
+ FUNCTIONY: ; Our frame contains f, g, q as PARM1, PARM2, PARM3
+   LET PARM3 = PARM1 ; q = f
+   += PARM3 PARM2    ; q += g, which is how we compute q = f+g
+   LET RESULT = PARM3
+   RETURNFRAME #FUNCTIONY.SAVELEN
+ FUNCTIONY.SAVELEN .EQU $4+$2 ; bytes for parameters + bytes for locals.
+Obviously, each of these could be easily expanded (by macros) to
+straight 6502 code, so having 'fast' and 'slow' modes would be easy.
+You could have a real compiler, with this as its VM.
+But for prototyping - or for enabling hosted computing - it'd be nice
+to be able to have a trivial compiler, at least to start with.
+It'd be interesting to benchmark this.
+
+Actually IMPLEMENTING that particular virtual machine could be a lot
+of work, though, because it has to handle all those different addressing
+modes.   On the other hand, it does have an advantage over Sweet-16 -
+it can directly reference more than 15 registers, instead of having to
+constantly bring stuff into R0, operate, and send it back.
+So we could have an instruction set that's a 1-byte instruction,
+followed by a destination info which tends to be a 1-byte zpage address start,
+and source info that tends to be a 1-byte zpage address.
+Basically, treat the zpage addresses as a kind of register... which they ARE
+on the 6502, so that's pretty close to the real system.
+Each of these instructions tends to be longer than Sweet-16, but on the
+other hand, they can be more direct (they generally put data exactly
+where it's supposed to go, if the zpage is where parameters are anyway,
+instead of having to go through an intermediate "accumulator" and back
+out again ).  They're trivial to translate into the direct 6502 codes,
+where that's desired.  And implementing a completely different VM,
+where copying is frankly improbable, eliminates any worry
+about Sweet-16's copyright.  Something like this instruction set:
+ SETBI dest #IMM   ; copy into zpage address dest the immediate byte IMM
+ SETWI dest #IMM   ; copy into zpage address dest the immediate word IMM
+ ; These two are special cases, to make globals easy to access:
+ LOAD  dest #2byteaddr ; copy from the given 2byte addr into dest
+ STORE #2byteaddr src ; copy src (in zpage) into the given 2byte addr
+ CPB   dest src    ; copy byte from zpage src to zpage dest
+ CPW   dest src    ; copy word from zpage src to zpage dest
+ CPB   @dest src
+ CPW   @dest src
+ CPB   dest @src
+ CPW   dest @src
+ CPB   dest @src++
+ CPW   dest @src++
+ CPB   @dest++ src
+ CPW   @dest++ src
+ INCW  dest
+ DECW  dest
+ +=    dest src   ; Compute dest += src
+ +=I   dest #src  ; Compute dest += #src (immediate constant. 2 bytes?)
+ -=    dest src
+ -=I   dest #src
+ COMPARE a1 a2
+ (Branching, etc.)
+ (Frame operations as before)
+ Let's create a special copying operation that lets us copy data FROM
+ a saved frame.
+ CPWFRAME dest #frameposition ; Copy to dest from (Frameptr),#frameposition
+ ; May also want to be able to write to framepositions, e.g., for arrays
+ If a whole byte is the opcode, there's room for PLENTY more.
+Let's reuse our example:
+ int x(a,b) {
+   int c;      //  This is a local variable.  Remember that used space.
+   a = 0;
+   b = 4;
+   a++;
+   c = a + b;
+   c = y(c,b);
+   return c;
+ }
+ int y(f,g) {
+   int q = f + g;
+   return q;
+ }
+Which would then compile to:
+ FUNCTIONX:        ; a,b,c become PARM1, PARM2, PARM3
+   SETWI PARM1 #0  ; a = 0
+   SETWI PARM2 #4  ; b = 4
+   INCW PARM1      ; a++
+   CPW PARM3 PARM1 ; c = a
+   += PARM3 PARM1  ; c += b
+   ; To call something, push the frame offset, then copy the parameters
+   ; (which must already be computed and placed in existing variables)
+   SAVEFRAME #FUNCTIONY.SAVELEN
+   ; now copy into the new parameters, without erasing in the process
+   ; y.f = x.c
+   CPWFRAME PARM1, #3
+   ; "y.g = x.b" is a copy to its own position - compiler should notice this!
+   ; CPWFRAME PARM2, #2
+   CALLFRAME FUNCTIONY
+   ; Compiler should notice "copy result to result" is a no-op.
+   RETURNFRAME #FUNCTIONX.SAVELEN
+ FUNCTIONX.SAVELEN .EQU $4+$2 ; bytes for parameters + bytes for locals
+ FUNCTIONY: ; Our frame contains f, g, q as PARM1, PARM2, PARM3
+   CPW PARM3, PARM1 ; q = f
+   += PARM3 PARM2    ; q += g, which is how we compute q = f+g
+   CPW RESULT, PARM3
+   RETURNFRAME #FUNCTIONY.SAVELEN
+ FUNCTIONY.SAVELEN .EQU $4+$2 ; bytes for parameters + bytes for locals.
+
+And of course, we can simplify further, and go back to a
+single-accumulator model (which is what Sweet-16 does too).
+Sweet-16 uses only 4 bits for operator + 4 bits operand (basically),
+which limits us to 16 registers and only a few opcodes.
+If we use an 8-bit opcode, and typically a 1-byte operand (with an implied
+accumulator), we end up with a mostly conventional assembly language.
+ LDAB #IMM  ; load a byte
+ LDAW #IMM  ; load a word
+ ; These are special cases, to make globals easy to access:
+ LDAB zaddr ; load into accumulator a byte at zaddress
+ LDAW zaddr ; load into accumulator a word starting at zaddress
+ LDAB addr  ; load into accumulator a byte at 2-byte address
+ LDAW addr  ; load into accumulator a word starting at 2-byte address
+ ; etc.
+
+
+
+REFERENCES:
+
+``Crafting a Compiler'' by Charles N. Fisher & Richard J. LeBlanc, Jr.
+1988. Benjamin/Cummings Publishing Company. Menlo Park, CA.
+
+

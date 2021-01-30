@@ -1,0 +1,182 @@
+(                                                )
+(  GRCHAR -- Hires characters for QForth         )
+(                                                )
+(  RTK, 15-Mar-2004.  Last update:  28-Mar-2004  )
+( ---------------------------------------------- )
+( Reqs: qforth.gr, gr.4th, util.4th              )
+( ---------------------------------------------- )
+
+( Constants & Variables )
+
+variable grFGCOLOR
+3 grFGCOLOR !
+
+variable grBGCOLOR
+0 grBGCOLOR !
+
+variable grX
+1 grX !
+
+variable grY
+1 grY !
+
+variable grT
+
+8 constant grVSPACE
+7 constant grHSPACE
+
+create grBITS                       ( bit positions )
+  1 c,  2 c,  4 c,  8 c,  16 c,
+
+create grSTR 10 allot     ( output string for numbers )
+
+
+( Character definitions )
+
+create grCHARS
+   0 c,  0 c,  0 c,  0 c,  0 c,  0 c,  0 c,    ( ' ' )
+   4 c,  4 c,  4 c,  4 c,  4 c,  0 c,  4 c,    ( '!' )
+  10 c, 10 c, 10 c,  0 c,  0 c,  0 c,  0 c,    ( '"' )
+  10 c, 10 c, 31 c, 10 c, 31 c, 10 c, 10 c,    ( '#' )
+   4 c, 31 c, 20 c, 31 c,  5 c, 31 c,  4 c,    ( '$' )
+   0 c, 25 c, 26 c,  4 c, 11 c, 19 c,  0 c,    ( '%' )
+   4 c, 10 c, 18 c, 12 c, 13 c, 18 c, 29 c,    ( '&' )
+   4 c,  4 c,  4 c,  0 c,  0 c,  0 c,  0 c,    ( ''' )
+   4 c,  8 c, 16 c, 16 c, 16 c,  8 c,  4 c,    ( left paren )
+   4 c,  2 c,  1 c,  1 c,  1 c,  2 c,  4 c,    ( rt paren )
+   4 c, 21 c, 14 c,  4 c, 14 c, 21 c,  4 c,    ( '*' )
+   0 c,  4 c,  4 c, 31 c,  4 c,  4 c,  0 c,    ( '+' )
+   0 c,  0 c,  0 c,  6 c,  2 c,  4 c,  8 c,    ( ',' )
+   0 c,  0 c,  0 c, 31 c,  0 c,  0 c,  0 c,    ( '-' )
+   0 c,  0 c,  0 c,  0 c,  0 c,  0 c,  4 c,    ( '.' )
+   0 c,  1 c,  2 c,  4 c,  8 c, 16 c,  0 c,    ( '/' )
+  14 c, 17 c, 19 c, 21 c, 25 c, 17 c, 14 c,    ( '0' )
+   4 c, 12 c,  4 c,  4 c,  4 c,  4 c, 14 c,    ( '1' )
+  14 c, 17 c,  1 c, 14 c, 16 c, 16 c, 31 c,    ( '2' )
+  14 c, 17 c,  1 c, 14 c,  1 c, 17 c, 14 c,    ( '3' )
+   2 c,  6 c, 10 c, 31 c,  2 c,  2 c,  2 c,    ( '4' )
+  31 c, 16 c, 16 c, 30 c,  1 c,  1 c, 30 c,    ( '5' )
+  14 c, 17 c, 16 c, 30 c, 17 c, 17 c, 14 c,    ( '6' )
+  31 c,  1 c,  1 c,  1 c,  1 c,  1 c,  1 c,    ( '7' )
+  14 c, 17 c, 17 c, 14 c, 17 c, 17 c, 14 c,    ( '8' )
+  15 c, 17 c, 17 c, 15 c,  1 c,  1 c,  1 c,    ( '9' )
+   0 c,  4 c,  0 c,  0 c,  4 c,  0 c,  0 c,    ( ':' )
+   0 c,  4 c,  0 c,  0 c,  4 c,  4 c,  8 c,    ( ';' )
+   2 c,  4 c,  8 c, 16 c,  8 c,  4 c,  2 c,    ( '<' )
+   0 c,  0 c, 31 c,  0 c, 31 c,  0 c,  0 c,    ( '=' )
+   8 c,  4 c,  2 c,  1 c,  2 c,  4 c,  8 c,    ( '>' )
+  14 c, 17 c,  2 c,  4 c,  4 c,  0 c,  4 c,    ( '?' )
+  14 c, 17 c, 21 c, 23 c, 22 c, 16 c, 15 c,    ( '@' )
+   4 c, 10 c, 17 c, 17 c, 31 c, 17 c, 17 c,    ( 'A' )
+  30 c, 17 c, 17 c, 30 c, 17 c, 17 c, 30 c,    ( 'B' )
+  14 c, 17 c, 16 c, 16 c, 16 c, 17 c, 14 c,    ( 'C' )
+  30 c, 17 c, 17 c, 17 c, 17 c, 17 c, 30 c,    ( 'D' )
+  31 c, 16 c, 16 c, 30 c, 16 c, 16 c, 31 c,    ( 'E' )
+  31 c, 16 c, 16 c, 30 c, 16 c, 16 c, 16 c,    ( 'F' )
+  15 c, 16 c, 16 c, 16 c, 19 c, 17 c, 15 c,    ( 'G' )
+  17 c, 17 c, 17 c, 31 c, 17 c, 17 c, 17 c,    ( 'H' )
+  14 c,  4 c,  4 c,  4 c,  4 c,  4 c, 14 c,    ( 'I' )
+   1 c,  1 c,  1 c,  1 c,  1 c, 17 c, 14 c,    ( 'J' )
+  17 c, 18 c, 20 c, 24 c, 20 c, 18 c, 17 c,    ( 'K' )
+  16 c, 16 c, 16 c, 16 c, 16 c, 16 c, 31 c,    ( 'L' )
+  17 c, 27 c, 21 c, 21 c, 21 c, 17 c, 17 c,    ( 'M' )
+  17 c, 17 c, 25 c, 21 c, 19 c, 17 c, 17 c,    ( 'N' )
+  14 c, 17 c, 17 c, 17 c, 17 c, 17 c, 14 c,    ( 'O' )
+  30 c, 17 c, 17 c, 30 c, 16 c, 16 c, 16 c,    ( 'P' )
+  14 c, 17 c, 17 c, 17 c, 21 c, 18 c, 13 c,    ( 'Q' )
+  30 c, 17 c, 17 c, 30 c, 20 c, 18 c, 17 c,    ( 'R' )
+  14 c, 17 c, 16 c, 14 c,  1 c, 17 c, 14 c,    ( 'S' )
+  31 c,  4 c,  4 c,  4 c,  4 c,  4 c,  4 c,    ( 'T' )
+  17 c, 17 c, 17 c, 17 c, 17 c, 17 c, 14 c,    ( 'U' )
+  17 c, 17 c, 17 c, 17 c, 17 c, 10 c,  4 c,    ( 'V' )
+  17 c, 17 c, 17 c, 21 c, 21 c, 27 c, 17 c,    ( 'W' )
+  17 c, 17 c, 10 c,  4 c, 10 c, 17 c, 17 c,    ( 'X' )
+  17 c, 17 c, 10 c,  4 c,  4 c,  4 c,  4 c,    ( 'Y' )
+  31 c,  1 c,  2 c,  4 c,  8 c, 16 c, 31 c,    ( 'Z' )
+  31 c, 24 c, 24 c, 24 c, 24 c, 24 c, 31 c,    ( '[' )
+   0 c, 16 c,  8 c,  4 c,  2 c,  1 c,  0 c,    ( '\' )
+  31 c,  3 c,  3 c,  3 c,  3 c,  3 c, 31 c,    ( ']' )
+   0 c,  4 c, 10 c, 17 c,  0 c,  0 c,  0 c,    ( '^' )
+   0 c,  0 c,  0 c,  0 c,  0 c,  0 c, 31 c,    ( '_' )
+
+
+( Functions )
+
+: grSpace ( -- )  ( space to next char position )
+  grX @ grHSPACE + dup 273 > if  drop grX @  then  grX !  ;
+
+: grClearChar ( -- )  ( clear character at grX, grY )
+  grBGCOLOR @ HCOLOR
+  grX @ 1- dup grHSPACE 1+ + swap do
+    i grY @ 1- HPLOT
+    i grY @ grVSPACE + 1- >HPLOT
+  loop
+  grFGCOLOR @ HCOLOR ;
+
+: grDrawLine ( n yoffset -- )  ( draw a line of a character )
+  grY @ + grT !
+  5 0 do
+    dup 4 i - grBITS + c@ b.and 0= 0= if grX @ i + grT @ HPLOT then
+  loop  drop ;
+
+: grEmit ( c -- )  ( emit character at grX, grY )
+  grClearChar                 ( clear character space     )
+  32 max 95 min 32 - 7 * grCHARS +  ( address of character data )
+  dup    c@ 0 grDrawLine      ( draw line 0 )
+  dup 1+ c@ 1 grDrawLine      (           1 )
+  dup 2+ c@ 2 grDrawLine      (           2 )
+  dup 3+ c@ 3 grDrawLine      (           3 )
+  dup 4+ c@ 4 grDrawLine      (           4 )
+  dup 5 + c@ 5 grDrawLine     (           5 )
+      6 + c@ 6 grDrawLine     (           6 )
+  grSpace ;
+
+: grXY ( x y -- )  ( set grX, grY )
+  1 max 184 min  grY !
+  1 max 273 min  grX !  ;
+
+: grNormal ( -- )  ( Set normal text )
+  0 grBGCOLOR !  3 grFGCOLOR ! ;
+
+: grInverse ( -- )  ( set inverse text )
+  3 grBGCOLOR !  0 grFGCOLOR ! ;
+
+: grString ( addr -- )  ( show null terminated string at addr )
+  begin
+    dup c@ 0= 0=
+  while
+    dup c@ grEmit
+    1+
+  repeat  drop  ;
+
+: grStringXY ( addr x y -- )  ( show string )
+  grXY  grString  ;
+
+: grNumber ( n -- )  ( show a number )
+  grSTR num>str  grSTR grString ;
+
+: grNumberXY ( n x y -- )  ( show a number at x,y )
+  grXY  grNumber ;
+
+: grGet ( -- c )  ( get a character )
+  grBGCOLOR @  3 grBGCOLOR !  grClearChar  grBGCOLOR !
+  0 -16368 c!
+  begin
+    -16384 c@ dup 128 <
+  while
+    drop
+  repeat
+  0 -16368 c!
+  127 b.and dup grEmit ;
+
+: grNewChar ( b0 b1 b2 b3 b4 b5 b6 c -- )  ( new character c )
+  32 max 95 min 32 -    ( index into table     )
+  7 * grCHARS + >r      ( address of character )
+  r@ 6 + c!             ( store new char data  )
+  r@ 5 + c!
+  r@ 4+  c!
+  r@ 3+  c!
+  r@ 2+  c!
+  r@ 1+  c!
+  r>     c!  ;
+

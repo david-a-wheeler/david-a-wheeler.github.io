@@ -1,0 +1,25 @@
+
+( Dump utility       QForth 2.1, RTK, 06-Sep-96 )
+
+variable _a1
+variable _a2
+
+: dump_h  ( a -- )  ( dump 16 bytes at a )
+  dup 16 + swap do  i c@ .$  loop ;
+
+: dump_a  ( a -- )  ( print 16 characters )
+  dup 16 + swap do  
+    i c@ 127 b.and
+    dup 31 > if emit else drop ." ." then
+  loop ;
+
+: dump ( a1 a2 -- )  ( dump a range of memory )
+  _a2 ! _a1 !
+  begin
+    _a1 @ _a2 @ <
+  while
+    _a1 @ dump_h
+    _a1 @ dump_a cr
+    16 _a1 +!
+  repeat
+;

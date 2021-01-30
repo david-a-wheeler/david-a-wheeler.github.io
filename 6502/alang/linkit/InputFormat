@@ -1,0 +1,147 @@
+Linker input data format:
+
+Linker_data ::= function_definition | end_marker
+-- Should add | global_definition
+
+function_definition ::= "F" new_line
+                        function_name new_line
+-- Should add "adjectives" here.
+                        parameter_info new_line
+                        local_variable_info new_line
+                        list_of_callees
+-- Should add "nested callees" here.
+
+parameter_info ::= number_of_parameters {parameter_size_in_bytes}* new_line
+
+local_variable_info ::= number_of_variables {variable_size_in_bytes}* new_line
+
+list_of_callees ::= number_of_callees new_line {name_of_callee new_line}*
+
+end_marker ::= "E" new_line
+
+--------------------------
+The following is what compiler input for "test3" would look like:
+
+
+_main()  /* no parameters */
+{
+char a[10];  /* one local variable, 10 bytes long */
+main();
+}
+
+main(argc, argv)
+int argc;
+char **argv;  /* Note 2 parameters, 2 bytes each */
+{
+int t; /* One local variable, 2 bytes long */
+}
+
+a(w)
+int w;
+{
+  int x;
+  d();
+}
+
+b(w, x)
+char w; int x;
+{
+char z;
+}
+
+d()
+{
+}
+
+hello()
+{
+ b();
+}
+
+---------------------------
+The nesting is [parameters] [local variables]:
+
+__main [] [10]
+  _main [2 2] [2]
+    _a [2] [2]
+       _d [] []
+    _b [1 2] [1]
+    _hello [] []
+       _b [1 2] [1] <-- note the call here.
+
+---------------------------
+Input to linker:
+
+
+F
+_b
+2 1 2
+1 1
+0
+F
+__main
+0
+1 10
+1
+_main
+F
+_main
+2 2 2
+1 2
+3
+_a
+_b
+_hello
+F
+_a
+1 2
+1 2
+1
+_d
+F
+_hello
+0
+0
+1
+_b
+F
+_d
+0
+0
+0
+E
+
+---------------------------------------
+Output from the linker (L=local, P=parameters):
+
+->Allocations:
+_d[L][] () 
+->_b[L][ 1] ()  0
+->_d[P][] (_d[L] ) 
+->_b[P][ 1 2] (_b[L] )  1 2
+->_a[L][ 2] (_d[L] _d[P] )  0
+->_hello[L][] (_b[L] _b[P] ) 
+->_a[P][ 2] (_d[L] _d[P] _a[L] )  2
+->_hello[P][] (_b[L] _b[P] _hello[L] ) 
+->_main[L][ 2] (_hello[L] _hello[P] _b[L] _b[P] _a[L] _a[P] )  4
+->_main[P][ 2 2] (_hello[L] _hello[P] _b[L] _b[P] _a[L] _a[P] _main[L] )  6 8
+->__main[L][ 10] (_main[L] _main[P] )  10
+->__main[P][] (_main[L] _main[P] __main[L] ) 
+-><Noname 133980>[] (__main[L] __main[P] ) 
+->
+
+
+---------------------------------------
+Assignments made by the linker:
+(P=parameter, V=local Variable)
+
+P0_a EQU 2                    ; param 0 (1st param) of _a is at 2.
+V0_a EQU 0                    ; 1st local variable of _a is at 0.
+P0_main EQU 6
+P1_main EQU 8
+V0_main EQU 4
+V0__main EQU 10
+P0_b EQU 1
+P1_b EQU 2
+V0_b EQU 0
+

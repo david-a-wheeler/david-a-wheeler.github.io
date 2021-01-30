@@ -1,0 +1,79 @@
+
+( Interpret ECP8 command line argument.     QForth 2.2, RTK, June 97 )
+(                                                                    )
+( Last update:  25-Jun-97                                            )
+( ------------------------------------------------------------------ )
+( Requires:  string.4th      Terrible code but it works!             )
+
+( User level words:                                                  )
+(                                                                    )
+(    get_param     -   copy the command line, call at the beginning  )
+(                      of the program.                               )
+(    delim_param   -   character on stack delimits parameters        )
+(    reset_param   -   reset pointers to read parameters again       )
+(    next_param  ( str -- )  put next parameter in the string        )
+
+create cmdline 80 allot  ( keep a copy of the command line arg )
+
+variable _cmd_off
+variable _cmd_flag
+: get_param ( -- )   ( copy the command line argument )
+  768 c@ 0 do  i 769 + c@ cmdline i + c! loop
+  0 768 c@ cmdline + c!  
+  0 _cmd_off ! 0 _cmd_flag ! ;
+
+variable _cmd_delim
+: delim_param ( c -- )  ( character delimiting parameters )
+  _cmd_delim ! ;
+
+: reset_param ( -- )  ( reset to re-read command line )
+  0 dup _cmd_off ! _cmd_flag ! ;
+
+variable _cmd_str
+variable _cmd_n
+: next_param ( str -- )  ( get next param delimited by delim into str )
+  ( assume get_param called at program startup )
+  dup _cmd_str !  $clear  ( null string )
+  cmdline length _cmd_off @ = if  0 else
+    _cmd_delim @ cmdline  _cmd_off @ + $pos  ( search for delimiter )
+  then
+  if
+   ( found it )
+   dup 1+ _cmd_n ! ( save position )
+   dup 0 <> if
+     ( n ) 0 do
+       cmdline _cmd_off @ + i + c@
+       _cmd_str @ i + c!           ( copy parameter )
+     loop  0 _cmd_str @ _cmd_n @ 1- + c!   ( append null )
+     _cmd_n @ _cmd_off @ + _cmd_off !  ( update offset )
+   else  
+     drop  1 _cmd_off +!  
+     cmdline _cmd_off @ + c@ 0= if  -1 _cmd_flag ! then
+   then 
+  else
+   ( not there, use rest of string if not at end of string )
+   _cmd_flag @ 0= if
+     cmdline _cmd_off @ +  _cmd_str @ $copy ( copy remainder of string )
+     -1 _cmd_flag !
+   else  _cmd_str @ $clear then
+  then
+;
+
+
+( test words: echo the arguments delimited by "/" )
+
+create str 80 allot
+: test ( -- )
+  page get_param           ( get argument )
+  47 ( / ) delim_param     ( set "/" as delimiter )
+  ." Command line arguments:" cr cr
+  str next_param
+  begin
+    str length 0 <>
+  while
+    str disp cr
+    str next_param
+  repeat
+  cr cr key drop bye ;
+
+( works only in a standalone application )

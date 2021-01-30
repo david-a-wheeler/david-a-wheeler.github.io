@@ -1,0 +1,117 @@
+const keyboard=$C000
+const keystrobe=$C010
+
+byte truestr[]  = "TRUE"
+byte falsestr[] = "FALSE"
+byte strlt[]   = " <  "
+byte strgt[]   = " >  "
+byte strlte[]  = " <= "
+byte strgte[]  = " >= "
+byte streq[]   = " == "
+byte strne[]   = " <> "
+byte colon[]    = " : "
+byte goodbye[] = "That's all folks!"
+word j
+def home
+	romcall(0, 0, 0, 0, $FC58)
+end
+def gotoxy(x, y)
+	^($24) = x
+	romcall(y, 0, 0, 0, $FB5B)
+end
+def crout
+	romcall(0, 0, 0, 0, $FD8E)
+end
+
+def print(i)
+        byte numstr[7]
+        byte place, sign
+        place = 6
+        if i < 0
+                sign = 1
+                i    = -i
+        else
+                sign = 0
+        fin
+        while i >= 10
+                numstr[place] = i % 10 + '0'
+                i             = i / 10
+                place         = place - 1
+        loop
+        numstr[place] = i + '0'
+        place         = place - 1
+        if sign
+                numstr[place] = '-'
+                place         = place - 1
+        fin
+        numstr[place] = 6 - place
+        prstr(@numstr[place])
+end
+def prtst(a, tststr, b, tst)
+        print(a)
+        prstr(tststr)
+        print(b)
+        prstr(@colon)
+        if tst
+                prstr(@truestr)
+        else
+                prstr(@falsestr)
+        fin
+        crout()
+end
+
+def comps(a, b)
+        prtst(a, @strlt,  b, a <  b)
+        prtst(a, @strgt,  b, a >  b)
+        prtst(a, @strlte, b, a <= b)
+        prtst(a, @strgte, b, a >= b)
+        prtst(a, @streq,  b, a == b)
+        prtst(a, @strne,  b, a <> b)
+end
+
+def shifts
+        for j = -10 to 10
+                print(j)
+                cout(' ')
+                print(j << 1)
+                cout(' ')
+                print(j >> 1)
+                cout(' ')
+                print(j << 8)
+                cout(' ')
+                print(j >> 8)
+                crout()
+        next
+        j = 256
+        print(j)
+        cout(' ')
+        print(j << 1)
+        cout(' ')
+        print(j >> 1)
+        cout(' ')
+        print(j << 8)
+        cout(' ')
+        print(j >> 8)
+        crout()
+        j = -256
+        print(j)
+        cout(' ')
+        print(j << 1)
+        cout(' ')
+        print(j >> 1)
+        cout(' ')
+        print(j << 8)
+        cout(' ')
+        print(j >> 8)
+        crout()
+end
+
+shifts
+;comps(-1, 0)
+;comps(2, 1)
+;comps(1, 1)
+prstr(@goodbye)
+while ^(keyboard) < 128
+loop
+^(keystrobe)
+done

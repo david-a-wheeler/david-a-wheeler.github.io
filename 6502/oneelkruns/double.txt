@@ -1,0 +1,459 @@
+(  DOUBLE.4TH  --  Double precision integer words  )
+(  RTK, 29-Feb-2004.  Basic on MATH32.S            )
+(                                                  )
+(  Last update:  09-Mar-2004                       )
+( ------------------------------------------------ )
+
+( Registers )
+
+100 constant OP1  ( first operand  )
+104 constant OP2  ( second operand )
+108 constant RES  ( result         )
+116 constant REM  ( remainder      )
+
+( low level words )
+
+: <lo ( addr -- lo )  256 mod ;  ( low part of address )
+: >hi ( addr -- hi )  256  /  ;  ( high part           )
+
+create _zerores     ( zero low part of RES )
+  169 c,   0 c,
+  133 c, 108 c,
+  133 c, 109 c,
+  133 c, 110 c,
+  133 c, 111 c,
+   96 c,
+
+create _iszero     ( set carry if value in PTR1 zero )
+  160 c,   3 c,
+  177 c,  96 c,
+  208 c,   5 c,
+  136 c,
+   16 c, 249 c,
+   56 c,
+   96 c,
+   24 c,
+   96 c,
+
+create _add1       ( add 1 to the value in PTR1 )
+   24 c,
+  160 c,   0 c,
+  177 c,  96 c,
+  105 c,   1 c,
+  145 c,  96 c,
+  200 c,
+  177 c,  96 c,
+  105 c,   0 c,
+  145 c,  96 c,
+  200 c,
+  177 c,  96 c,
+  105 c,   0 c,
+  145 c,  96 c,
+  200 c,
+  177 c,  96 c,
+  105 c,   0 c,
+  145 c,  96 c,
+   96 c,
+  
+create _sub1        ( subtract 1 from the value in PTR1 )
+   56 c,
+  160 c,   0 c,
+  177 c,  96 c,
+  233 c,   1 c,
+  145 c,  96 c,
+  200 c,
+  177 c,  96 c,
+  233 c,   0 c,
+  145 c,  96 c,
+  200 c,
+  177 c,  96 c,
+  233 c,   0 c,
+  145 c,  96 c,
+  200 c,
+  177 c,  96 c,
+  233 c,   0 c,
+  145 c,  96 c,
+   96 c,
+
+create _copy        ( copy value in PTR1 to PTR2 )
+  160 c,   3 c,
+  177 c,  96 c,
+  145 c,  98 c,
+  136 c,
+   16 c, 249 c,
+   96 c,
+
+create _neg         ( negate value in PTR1 )
+  160 c,   3 c,
+  177 c,  96 c,
+   73 c, 255 c,
+  145 c,  96 c,
+  136 c,
+   16 c, 247 c,
+   76 c, _add1 <lo c,  _add1 >hi c,
+
+create _op1res      ( copy OP1 to RES )
+  160 c,   3 c,
+  185 c, 100 c,   0 c,
+  153 c, 108 c,   0 c,
+  136 c,
+   16 c, 247 c,
+   96 c,
+
+create _m32         ( unsigned multiply, OP1 * OP2 => RES )
+   32 c, _zerores <lo c, _zerores >hi c,
+  169 c,   0 c,
+  133 c, 112 c,
+  133 c, 113 c,
+  133 c, 114 c,
+  133 c, 115 c,
+
+  160 c,  32 c,
+   70 c, 103 c,
+  102 c, 102 c,
+  102 c, 101 c,
+  102 c, 100 c,
+  144 c,  25 c,
+
+   24 c,
+  165 c, 112 c,
+  101 c, 104 c,
+  133 c, 112 c,
+  165 c, 113 c,
+  101 c, 105 c,
+  133 c, 113 c,
+  165 c, 114 c,
+  101 c, 106 c,
+  133 c, 114 c,
+  165 c, 115 c,
+  101 c, 107 c,
+  133 c, 115 c,
+
+  102 c, 115 c,
+  102 c, 114 c,
+  102 c, 113 c,
+  102 c, 112 c,
+  102 c, 111 c,
+  102 c, 110 c,
+  102 c, 109 c,
+  102 c, 108 c,
+  136 c,
+  208 c, 202 c,
+   96 c,
+
+create _d32        ( unsigned division, RES/OP2 => RES )
+  169 c,   0 c,
+  133 c, 112 c,
+  133 c, 113 c,
+  133 c, 114 c,
+  133 c, 115 c,
+
+  162 c,  32 c,
+    6 c, 108 c,
+   38 c, 109 c,
+   38 c, 110 c,
+   38 c, 111 c,
+   38 c, 112 c,
+   38 c, 113 c,
+   38 c, 114 c,
+   38 c, 115 c,
+
+   56 c,
+  165 c, 112 c,
+  229 c, 104 c,
+  133 c, 120 c,
+  165 c, 113 c,
+  229 c, 105 c,
+  133 c, 121 c,
+  165 c, 114 c,
+  229 c, 106 c,
+  133 c, 122 c,
+  165 c, 115 c,
+  229 c, 107 c,
+  144 c,  16 c,
+
+  230 c, 108 c,
+
+  133 c, 115 c,
+  165 c, 122 c,
+  133 c, 114 c,
+  165 c, 121 c,
+  133 c, 113 c,
+  165 c, 120 c,
+  133 c, 112 c,
+
+  202 c,
+  208 c, 196 c,
+   96 c,
+
+create _mult          ( Signed multiply, OP1 * OP2 => RES )
+  169 c,   0 c,
+  133 c, 124 c,
+  165 c, 103 c,
+  169 c, 255 c,
+  133 c, 124 c,
+  169 c, 100 c,
+  133 c,  96 c,
+  169 c,   0 c,
+  133 c,  97 c,
+   32 c, _neg <lo c, _neg >hi c,
+  165 c, 107 c,
+   16 c,  17 c,
+  165 c, 124 c,
+   73 c, 255 c,
+  133 c, 124 c,
+  169 c, 104 c,
+  133 c,  96 c,
+  169 c,   0 c,
+  133 c,  97 c,
+   32 c, _neg <lo c, _neg >hi c,
+   32 c, _m32 <lo c, _m32 >hi c,
+  165 c, 124 c,
+  240 c,  11 c,
+  169 c, 108 c,
+  133 c,  96 c,
+  169 c,   0 c,
+  133 c,  97 c,
+   32 c, _neg <lo c, _neg >hi c,
+   96 c,
+
+create _div          ( signed division, OP1/OP2 => RES/REM )
+  169 c,   0 c,
+  133 c, 124 c,
+  165 c, 103 c,
+   16 c,  15 c,
+  169 c, 255 c,
+  133 c, 124 c,
+  169 c, 100 c,
+  133 c,  96 c,
+  169 c,   0 c,
+  133 c,  97 c,
+   32 c, _neg <lo c, _neg >hi c,
+  165 c, 107 c,
+   16 c,  17 c,
+  165 c, 124 c,
+   73 c, 255 c,
+  133 c, 124 c,
+  169 c, 104 c,
+  133 c,  96 c,
+  169 c,   0 c,
+  133 c,  97 c,
+   32 c, _neg <lo c, _neg >hi c,
+
+  165 c, 100 c,
+  133 c, 108 c,
+  165 c, 101 c,
+  133 c, 109 c,
+  165 c, 102 c,
+  133 c, 110 c,
+  165 c, 103 c,
+  133 c, 111 c,
+
+   32 c, _d32 <lo c, _d32 >hi c,
+
+  165 c, 124 c,
+  240 c,  11 c,
+  169 c, 108 c,
+  133 c,  96 c,
+  169 c,   0 c,
+  133 c,  97 c,
+   32 c, _neg <lo c, _neg >hi c,
+
+  165 c, 112 c,
+  133 c, 116 c,
+  165 c, 113 c,
+  133 c, 117 c,
+  165 c, 114 c,
+  133 c, 118 c,
+  165 c, 115 c,
+  133 c, 119 c,
+   96 c,
+
+create _negate     ( OP1 => -OP1 => RES )
+  169 c, 100 c,
+  133 c,  96 c,
+  169 c,   0 c,
+  133 c,  97 c,
+   32 c, _neg <lo c, _neg >hi c,
+   76 c, _op1res <lo c, _op1res >hi c,
+
+create _abs        ( |OP1| => RES )
+  165 c, 103 c,
+   16 c,   3 c,
+   76 c, _negate <lo c, _negate >hi c,
+   76 c, _op1res <lo c, _op1res >hi c,
+
+create _add        ( OP1 + OP2 => RES )
+   24 c,
+  165 c, 100 c,
+  101 c, 104 c,
+  133 c, 108 c,
+  165 c, 101 c,
+  101 c, 105 c,
+  133 c, 109 c,
+  165 c, 102 c,
+  101 c, 106 c,
+  133 c, 110 c,
+  165 c, 103 c,
+  101 c, 107 c,
+  133 c, 111 c,
+   96 c,
+
+create _subt       ( OP1 - OP2 => RES )
+   56 c,
+  165 c, 100 c,
+  229 c, 104 c,
+  133 c, 108 c,
+  165 c, 101 c,
+  229 c, 105 c,
+  133 c, 109 c,
+  165 c, 102 c,
+  229 c, 106 c,
+  133 c, 110 c,
+  165 c, 103 c,
+  229 c, 107 c,
+  133 c, 111 c,
+   96 c,
+
+create _sqrt        ( sqrt[OP1] => RES )
+  160 c,   0 c,
+  132 c, 119 c,
+  132 c, 118 c,
+  132 c, 117 c,
+  132 c, 116 c,
+
+  132 c, 107 c,
+  132 c, 106 c,
+  132 c, 105 c,
+  200 c,
+  132 c, 104 c,
+
+   32 c, _subt <lo c, _subt >hi c,
+  165 c, 111 c,
+   48 c,  48 c,
+
+  230 c, 116 c,
+  208 c,  10 c,
+  230 c, 117 c,
+  208 c,   6 c,
+  230 c, 118 c,
+  208 c,   2 c,
+  230 c, 119 c,
+
+  160 c,   2 c,
+  230 c, 104 c,
+  208 c,  10 c,
+  230 c, 105 c,
+  208 c,   6 c,
+  230 c, 106 c,
+  208 c,   2 c,
+  230 c, 107 c,
+  136 c,
+  208 c, 239 c,
+
+  160 c,   4 c,
+  162 c,   0 c,
+  181 c, 108 c,
+  149 c, 100 c,
+  232 c,
+  136 c,
+  208 c, 248 c,
+   24 c,
+  144 c, 201 c,
+
+  160 c,   4 c,
+  162 c,   0 c,
+  181 c, 116 c,
+  149 c, 108 c,
+  232 c,
+  136 c,
+  208 c, 248 c,
+   96 c,
+
+create _eq          ( OP1 == OP2 => RES, 1=true )
+   32 c, _zerores <lo c, _zerores >hi c,
+  160 c,   3 c,
+  185 c, 100 c,   0 c,
+  217 c, 104 c,   0 c,
+  208 c,   5 c,
+  136 c,
+   16 c, 245 c,
+  230 c, 108 c,
+   96 c,
+
+create _ne          ( OP1 <> OP2 => RES )
+   32 c, _eq <lo c, _eq >hi c,
+  165 c, 108 c,
+   73 c,   1 c,
+  133 c, 108 c,
+   96 c,
+
+create _lt          ( OP1 < OP2 => RES )
+  162 c,   0 c,
+   32 c, _subt <lo c, _subt >hi c,
+  165 c, 111 c,
+   16 c,   1 c,
+  232 c,
+   32 c, _zerores <lo c, _zerores >hi c,
+  134 c, 108 c,
+   96 c,
+
+create _gt          ( OP1 > OP2 => RES )
+  162 c,   0 c,
+   32 c, _subt <lo c, _subt >hi c,
+  165 c, 111 c,
+   48 c,  14 c,
+  169 c, 108 c,
+  133 c,  96 c,
+  169 c,   0 c,
+  133 c,  97 c,
+   32 c, _iszero <lo c, _iszero >hi c,
+  176 c,   1 c,
+  232 c,
+   32 c, _zerores <lo c, _zerores >hi c,
+  134 c, 108 c,
+   96 c,
+
+create _le          ( OP1 <= OP2  => RES )
+   32 c, _eq <lo c, _eq >hi c,
+  165 c, 108 c,
+  208 c,   3 c,
+   32 c, _lt <lo c, _lt >hi c,
+   96 c,
+
+create _ge          ( OP1 >= OP2  => RES )
+   32 c, _eq <lo c, _eq >hi c,
+  165 c, 108 c,
+  208 c,   3 c,
+   32 c, _gt <lo c, _gt >hi c,
+   96 c,
+
+: >OP1 ( lo hi -- )  OP1 2+ ! OP1 ! ;
+: >OP2 ( lo hi -- )  OP2 2+ ! OP2 ! ;
+: @RES ( -- lo hi )  RES @ RES 2+ @ ;
+: @REM ( -- lo hi )  REM @ REM 2+ @ ;
+
+( User level words, d1 => l1 h2, etc. )
+
+: d+ ( d1 d2 -- d3 )  >OP2 >OP1  _add  execute  @RES ;
+: d- ( d1 d2 -- d3 )  >OP2 >OP1  _subt execute  @RES ;
+: d* ( d1 d2 -- d3 )  >OP2 >OP1  _mult execute  @RES ;
+: d/ ( d1 d2 -- d3 )  >OP2 >OP1  _div  execute  @RES ;
+: dmod ( d1 d2 -- d3 )  >OP2 >OP1  _div execute @REM ;
+: d/mod ( d1 d2 -- quo rem )  >OP2 >OP1  _div execute @RES @REM ;
+: dsqrt ( d1 -- d2 )  >OP1  _sqrt execute  @RES ;
+: dnegate ( d1 -- -d1 )  >OP1  _negate execute  @RES ;
+: dabs ( d1 -- |d1| )  >OP1  _abs execute  @RES ;
+: d= ( d1 d2 -- f|t )  >OP2 >OP1  _eq execute  RES c@ 1 = ;
+: d<> ( d1 d2 -- f|t )  >OP2 >OP1  _ne execute RES c@ 1 = ;
+: d< ( d1 d2 -- f|t )  >OP2 >OP1  _lt execute  RES c@ 1 = ;
+: d<= ( d1 d2 -- f|t ) >OP2 >OP1  _le execute  RES c@ 1 = ;
+: d> ( d1 d2 -- f|t )  >OP2 >OP1  _gt execute  RES c@ 1 = ;
+: d>= ( d1 d2 -- f|t ) >OP2 >OP1  _ge execute  RES c@ 1 = ;
+: d.$ ( d -- )  .$ 8 emit .$ ;
+: d>s ( d -- s )  drop ;
+: s>d ( s -- d )  dup 0 < if abs 0 dnegate else 0 then ;
+: */ ( n a b -- n' )  >r >r s>d r> s>d d* r> s>d d/ d>s ;
+: */mod ( n a b -- n' rem )  */ REM @ ;
+: d! ( d addr -- )  dup >r 2+ ! r> ! ;
+: d@ ( addr -- d )  dup @ swap 2+ @ ;

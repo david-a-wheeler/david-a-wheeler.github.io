@@ -1,0 +1,617 @@
+<html>
+<head>
+  <title>6502 Instruction Summary</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+<!-- following code added by server. PLEASE REMOVE -->
+<!-- preceding code added by server. PLEASE REMOVE -->
+<h2>6502 Instruction Summary</h2>
+<i>RTK, last update: 23-Jul-97</i>
+<p>
+<pre>
+   Summary format:
+   --------------
+   
+   mnemonic  -  instruction name 
+   
+      operation     processor status flags affected
+      
+      assembler format  opcode
+   
+      
+--------------------------------------------------------------------------------   
+   
+   ADC  -  Add to Accumulator with Carry
+   =====================================
+   
+      A+M+C -> A,C               N, Z, C, V
+      
+      ADC #aa		69
+      ADC aa		65
+      ADC aa,X		75
+      ADC aaaa		6D
+      ADC aaaa,X	7D
+      
+--------------------------------------------------------------------------------
+      
+   
+   AND  -  AND Memory with Accumulator
+   ===================================
+   
+      A and M -> A              N, Z
+      
+      AND #aa		29
+      AND aa		25
+      AND aa,X		35
+      AND aaaa		2D
+      AND aaaa,X	3D
+      AND aaaa,Y	39
+      AND (aa,X)	21
+      AND (aa),Y	31
+      
+--------------------------------------------------------------------------------
+      
+   ASL  -  Accumulator Shift Left  (also memory)
+   =============================================
+
+           +-+-+-+-+-+-+-+-+ 
+      C &lt;- |7|6|5|4|3|2|1|0| &lt;- 0    N, Z, C
+           +-+-+-+-+-+-+-+-+
+           
+      ASL A			0A
+      ASL aa		06
+      ASL aa,X		16
+      ASL aaaa		0E
+      ASL aaaa,X	1E
+      
+--------------------------------------------------------------------------------
+      
+   BCC  -  Branch on Carry Clear
+   =============================
+   
+      branch on C=0					 no flags
+      
+      BCC aa		90
+      
+--------------------------------------------------------------------------------
+      
+   BCS  -  Branch on Carry Set
+   ===========================
+   
+      branch on C=1					 no flags
+      
+      BCS aa		B0
+      
+--------------------------------------------------------------------------------
+      
+   BEQ  -  Branch Zero Set
+   =======================
+   
+      branch on Z=1					 no flags
+      
+      BEQ aa		F0
+      
+--------------------------------------------------------------------------------      
+      
+   BIT  -  Test Bits in Memory with Accumulator
+   ============================================
+   
+      A and M, M7 -> N, M6 -> V		 N=M7, V=M6, Z=1 if A and M = 0
+      neither A nor M are altered
+      
+      BIT aa		24
+      BIT aaaa		2C
+      
+--------------------------------------------------------------------------------
+      
+   BMI  -  Branch on Result Minus
+   ==============================
+   
+      branch on N=1					 no flags
+      
+      BMI aa		30
+      
+--------------------------------------------------------------------------------
+      
+   BNE  -  Branch on Z reset
+   =============================
+   
+      branch on Z=0					 no flags
+      
+      BNE aa		D0
+      
+--------------------------------------------------------------------------------
+      
+   BPL  -  Branch on Result Plus
+   =============================
+   
+      branch on N=0					 no flags
+      
+      BPL aa		10
+      
+--------------------------------------------------------------------------------
+      
+   BRK  -  Force a Break
+   =============================
+   
+      forced interrupt				 B=1, I=1
+      
+      BRK   		00
+      
+--------------------------------------------------------------------------------
+      
+   BVC  -  Branch on Overflow Clear
+   ================================
+   
+      branch on V=0					 no flags
+      
+      BVC aa		50
+      
+--------------------------------------------------------------------------------
+      
+   BVS  -  Branch on Overflow Set
+   ==============================
+   
+      branch on V=1					 no flags
+      
+      BVS aa		70
+      
+--------------------------------------------------------------------------------
+      
+   CLC  -  Clear Carry Flag
+   ========================
+   
+      0 -> C						 C=0
+      
+      CLC 			18
+      
+--------------------------------------------------------------------------------
+      
+   CLD  -  Clear Decimal Mode
+   ==========================
+   
+      0 -> D	  					 D=0
+      
+      CLD  			D8
+      
+      
+   CLI  -  Clear Interrupt Disable
+   ===============================
+   
+      0 -> I						 I=0
+      
+      CLI 			58
+      
+--------------------------------------------------------------------------------
+      
+   CLV  -  Clear Overflow Flag
+   ===========================
+   
+      0 -> V						 V=0
+      
+      CLV 			B8
+      
+--------------------------------------------------------------------------------
+   
+N.B. CMP, CPX, and CPY all set flags according to:
+
+    A, X, or Y &lt; Memory  --->  N=1, Z=0, C=0
+    A, X, or Y = Memory  --->  N=0, Z=1, C=1
+    A, X, or Y > Memory  --->  N=0, Z=0, C=1
+
+
+   CMP  -  Compare Memory and Accumulator
+   ======================================
+   
+      A compared with M				N, Z, C
+      
+      CMP #aa		C9
+      CMP aa		C5
+      CMP aa,X		D5
+      CMP aaaa		CD
+      CMP aaaa,X	DD
+      CMP aaaa,Y	D9
+      CMP (aa,X)	C1
+      CMP (aa),Y	D1
+      
+      
+   CPX  -  Compare Memory and X register
+   =====================================
+   
+      X compared with M				N, Z, C
+      
+      CPX #aa		E0
+      CPX aa		E4
+      CPX aaaa		EC
+      
+      
+   CPY  -  Compare Memory and Y register
+   =====================================
+   
+      Y compare with M				N, Z, C
+      
+      CPY #aa		C0
+      CPY aa		C4
+      CPY aaaa		CC
+      
+--------------------------------------------------------------------------------
+      
+   DEC  -  Decrement Memory by One
+   ===============================
+   
+      M - 1 -> M					N, Z
+      
+      DEC aa		C6
+      DEC aa,X		D6
+      DEC aaaa		CE
+      DEC aaaa,X	DE
+      
+--------------------------------------------------------------------------------
+      
+   DEX  -  Decrement X
+   ===================
+   
+      X - 1 -> X					N, Z
+      
+      DEX			CA
+      
+--------------------------------------------------------------------------------
+      
+   DEY  -  Decrement Y
+   ===================
+   
+      Y - 1 -> Y					N, Z
+      
+      DEY			88
+
+         
+--------------------------------------------------------------------------------
+
+   EOR  -  Exclusive-OR Memory with Accumulator
+   ============================================
+   
+      A xor M -> A                  N, Z
+      
+      EOR #aa		49
+      EOR $aa		45
+      EOR $aa,X		55
+      EOR $aaaa		4D
+      EOR $aaaa,X	5D
+      EOR $aaaa,Y	59
+      EOR ($aa,X)	41
+      EOR ($aa),Y	51
+
+--------------------------------------------------------------------------------
+
+   INC  -  Increment Memory by one
+   ===============================
+   
+      M + 1 -> M                    N, Z
+      
+      INC $aa		E6
+      INC $aa,X		F6
+      INC $aaaa		EE
+      INC $aaaa,X	FE
+      
+--------------------------------------------------------------------------------
+
+   INX  -  Increment X by one
+   ==========================
+   
+      X + 1 -> X                   	N, Z
+      
+      INX			E8
+
+--------------------------------------------------------------------------------
+
+   INY  -  Increment Y by one
+   ==========================
+   
+      Y + 1 -> Y                   	N, Z
+      
+      INY			C8
+
+--------------------------------------------------------------------------------
+
+   JMP  -  Jump
+   ============
+         
+      JMP $aaaa		4C
+      JMP ($aaaa)	6C
+      
+--------------------------------------------------------------------------------
+
+   JSR  -  Jump to subroutine
+   ==========================
+   
+      JSR $aaaa		20
+      
+--------------------------------------------------------------------------------
+
+   LDA  -  Load Accumulator with memory
+   ====================================
+   
+      M -> A						N, Z
+      
+      LDA #aa		A9
+      LDA $aa		A5
+      LDA $aa,X		B5
+      LDA $aaaa		AD
+      LDA $aaaa,X	BD
+      LDA $aaaa,Y	B9
+      LDA ($aa,X)	A1
+      LDA ($aa),Y	B1
+      
+--------------------------------------------------------------------------------
+
+   LDX  -  Load X with Memory
+   ==========================
+   
+      M -> X						N, Z
+      
+      LDX #aa		A2
+      LDX $aa		A6
+      LDX $aa,Y		B6
+      LDX $aaaa		AE
+      LDX $aaaa,Y	BE
+      
+--------------------------------------------------------------------------------
+
+   LDY  -  Load Y with Memory
+   ==========================
+   
+      M -> Y						N, Z
+      
+      LDY #aa		A0
+      LDY $aa		A4
+      LDY $aa,X		B4
+      LDY $aaaa		AC
+      LDY $aaaa,X	BC
+      
+--------------------------------------------------------------------------------
+   
+   LSR  -  Logical Shift Right
+   ===========================
+   
+           +-+-+-+-+-+-+-+-+ 
+      0 -> |7|6|5|4|3|2|1|0| -> C    N, Z, C
+           +-+-+-+-+-+-+-+-+
+
+      LSR A			4A
+      LSR $aa		46
+      LSR $aa,X		56
+      LSR $aaaa		4E
+      LSR $aaaa,X	5E
+      
+--------------------------------------------------------------------------------
+
+   NOP  -  No Operation
+   ====================
+   
+      NOP			EA
+      
+--------------------------------------------------------------------------------
+
+   ORA  -  OR Memory with Accumulator
+   ==================================
+   
+      A or M -> A					N, Z
+      
+      ORA #aa		09
+      ORA $aa		05
+      ORA $aa,X		15
+      ORA $aaaa		0D
+      ORA $aaaa,X	1D
+      ORA $aaaa,Y	19
+      ORA ($aa,X)	01
+      ORA ($aa),Y	11
+      
+--------------------------------------------------------------------------------
+
+   PHA  -  Push Accumulator on Stack
+   =================================
+   
+      A -> Stack
+      
+      PHA			48
+
+--------------------------------------------------------------------------------
+
+   PHP  -  Push Processor Status on Stack
+   ======================================
+   
+      P -> Stack
+      
+      PHP			08
+
+--------------------------------------------------------------------------------
+
+   PLA  -  Pull Accumulator from Stack
+   ===================================
+   
+      Stack -> A					N, Z
+      
+      PLA			68
+
+--------------------------------------------------------------------------------
+
+   PLP  -  Pull Processor Status from Stack
+   ========================================
+   
+      Stack -> P					from stack
+      
+      PLP			28
+
+--------------------------------------------------------------------------------
+
+   ROL  -  Rotate Left
+   ===================
+   
+           +-+-+-+-+-+-+-+-+ 
+      C &lt;- |7|6|5|4|3|2|1|0| &lt;- C    N, Z, C
+           +-+-+-+-+-+-+-+-+
+
+      ROL A			2A
+      ROL $aa		26
+      ROL $aa,X		36
+      ROL $aaaa		2E
+      ROL $aaaa,X	3E
+      
+--------------------------------------------------------------------------------
+
+   ROR  -  Rotate Right
+   ====================
+   
+           +-+-+-+-+-+-+-+-+ 
+      C -> |7|6|5|4|3|2|1|0| -> C    N, Z, C
+           +-+-+-+-+-+-+-+-+
+
+      ROR A			6A
+      ROR $aa		66
+      ROR $aa,X		76
+      ROR $aaaa		6E
+      ROR $aaaa,X	7E
+      
+--------------------------------------------------------------------------------
+
+   RTI  -  Return from Interrupt
+   =============================
+   
+      RTI			40
+      
+--------------------------------------------------------------------------------
+
+   RTS  -  Return from Subroutine
+   ==============================
+   
+      RTS			60
+      
+--------------------------------------------------------------------------------
+
+   SBC  -  Subtract from Accumulator with Carry
+   ============================================
+   
+      A - M - ~C -> A  (~C is NOT C)	N, Z, C, V
+      
+      SBC #aa		E9
+      SBC $aa		E5
+      SBC $aa,X		F5
+      SBC $aaaa		ED
+      SBC $aaaa,X	FD
+      SBC $aaaa,Y	F9
+      SBC ($aa,X)	E1
+      SBC ($aa),Y	F1
+      
+--------------------------------------------------------------------------------
+
+   SEC  -  Set Carry Flag
+   ======================
+   
+      SEC			38
+      
+--------------------------------------------------------------------------------
+
+   SED  -  Set Decimal Mode
+   ========================
+   
+      SED			F8
+      
+--------------------------------------------------------------------------------
+
+   SEI  -  Set Interrupt Disable
+   =============================
+   
+      SEI			78
+      
+--------------------------------------------------------------------------------
+
+   STA  -  Store Accumulator in Memory
+   ===================================
+   
+      STA $aa		85
+      STA $aa,X		95
+      STA $aaaa		8D
+      STA $aaaa,X	9D
+      STA $aaaa,Y	99
+      STA ($aa,X)	81
+      STA ($aa),Y	91
+      
+--------------------------------------------------------------------------------
+
+   STX  -  Store X in Memory
+   =========================
+   
+      STX $aa		86
+      STX $aa,Y		96
+      STX $aaaa		8E
+      
+--------------------------------------------------------------------------------
+
+   STY  -  Store Y in Memory
+   =========================
+   
+      STY $aa		84
+      STY $aa,X		94
+      STY $aaaa		8C
+
+--------------------------------------------------------------------------------
+
+   TAX  -  Transfer Accumulator to X
+   =================================
+   
+      A -> X						N, Z
+      
+      TAX			AA
+      
+--------------------------------------------------------------------------------
+
+   TAY  -  Transfer Accumulator to Y
+   =================================
+   
+      A -> Y						N, Z
+      
+      TAY			A8
+      
+--------------------------------------------------------------------------------
+
+   TSX  -  Transfer Stack to X
+   ===========================
+   
+      S -> X						N, Z
+      
+      TSX			BA
+      
+--------------------------------------------------------------------------------
+
+   TXA  -  Transfer X to Accumulator
+   =================================
+   
+      X -> A						N, Z
+      
+      TXA			8A
+      
+--------------------------------------------------------------------------------
+
+   TXS  -  Transfer X to Stack
+   ===========================
+   
+      X -> S						N, Z
+      
+      TXS			9A
+      
+--------------------------------------------------------------------------------
+
+   TYA  -  Transfer Y to Accumulator
+   =================================
+   
+      Y -> A						N, Z
+      
+      TYA			98
+
+</pre>
+<hr>
+<img src="http://www.geocities.com/cgi-bin/counter/18"><br>
+Last update: 30-Jan-00<br>
+<a href="65index.html"><b>Back</b></a>
+<!-- text below generated by server. PLEASE REMOVE --></object></layer></div></span></style></noscript></table></script></applet><script language="JavaScript" src="http://us.i1.yimg.com/us.yimg.com/i/mc/mc.js"></script><script language="JavaScript" src="http://us.js2.yimg.com/us.js.yimg.com/lib/smb/js/hosting/cp/js_source/geov2_001.js"></script><script language="javascript">geovisit();</script><noscript><img src="http://visit.geocities.yahoo.com/visit.gif?us1247771237" alt="setstats" border="0" width="1" height="1"></noscript>
+<IMG SRC="http://geo.yahoo.com/serv?s=76001067&t=1247771237&f=us-w7" ALT=1 WIDTH=1 HEIGHT=1>

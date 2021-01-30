@@ -1,0 +1,145 @@
+const sysbuff    = $0800
+const binbuff    = $0C00
+const databuff   = $1000
+const datasz     = $1000
+const getbuff    = $01FF
+byte sysref, perr
+byte prompt[] = "SYSFILE"
+byte bye[]    = "PRESS ANY KEY TO CONTINUE..."
+word filestr
+;
+; ProDOS routines
+;
+def open(path, buff)
+    byte params[6]
+
+    params.0 = 3
+    params:1 = path
+    params:3 = buff
+    params.5 = 0
+    perr     = syscall($C8, @params)
+    return params.5
+end
+def close(refnum)
+    byte params[2]
+
+    params.0 = 1
+    params.1 = refnum
+    perr     = syscall($CC, @params)
+    return perr
+end
+def set_mark(refnum, markptr)
+    byte params[5]
+
+    params.0 = 2
+    params.1 = refnum
+    params.2 = (markptr).0
+    params.3 = (markptr).1
+    params.4 = (markptr).2
+    perr     = syscall($CE, @params)
+    return perr
+end
+def get_eof(refnum, eofptr)
+    byte params[5]
+
+    params.0   = 2
+    params.1   = refnum
+    params.2   = 0
+    params.3   = 0
+    params.4   = 0
+    perr       = syscall($D1, @params)
+    (eofptr).0 = params.2
+    (eofptr).1 = params.3
+    (eofptr).2 = params.4
+    return perr
+end
+def read(refnum, buff, len)
+    byte params[8]
+
+    params.0 = 4
+    params.1 = refnum
+    params:2 = buff
+    params:4 = len
+    params:6 = 0
+    perr     = syscall($CA, @params)
+    return params:6
+end
+def write(refnum, buff, len)
+    byte params[8]
+
+    params.0 = 4
+    params.1 = refnum
+    params:2 = buff
+    params:4 = len
+    params:6 = 0
+    perr     = syscall($CB, @params)
+    return params:6
+end
+;
+; Utils
+;
+def getline
+    ^$33     = $BA
+    ^getbuff = (romcall(0, 0, 0, 0, $FD6A)).1
+    return getbuff
+end
+def prbyte(val)
+  romcall(val, 0, 0, 0, $FDDA)
+end
+;
+; File combine ops
+;
+def opensys(sysfile)
+    byte eof[3]
+
+    sysref = open(sysfile, sysbuff)
+    if not perr
+        get_eof(sysref, @eof)
+;        eof:0 = eof:0 - 1
+;        if eof:0 == $FFFF
+;            eof.2 = eof.2 - 1
+;            if eof.2 == $FF
+;                return
+;            fin
+;        fin
+;        cout('$')
+;        prbyte(eof.2)
+;        prbyte(eof.1)
+;        prbyte(eof.0)
+        set_mark(sysref, @eof)
+    fin
+end
+def copybin(binfile)
+    byte binref
+    word readsz
+
+    binref = open(binfile, binbuff)
+    if not perr
+        cout('+')
+        prstr(binfile)
+        repeat
+            readsz = read(binref, databuff, datasz)
+            if readsz
+                write(sysref, databuff, readsz)
+            fin
+        until readsz == 0
+        close(binref)
+    fin
+    return binref
+end
+
+prstr(@prompt)
+filestr = getline
+opensys(filestr)
+if not perr
+    repeat
+        (filestr).[^filestr] = (filestr).[^filestr] + 1
+    until not copybin(filestr)
+fin
+close(sysref)
+cout($0D)
+prstr(@bye)
+while ^($C000) < 128
+loop
+^($C010)
+done

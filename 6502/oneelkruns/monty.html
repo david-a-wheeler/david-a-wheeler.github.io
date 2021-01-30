@@ -1,0 +1,104 @@
+<html>
+<head>
+<title>Let's Make a Deal?</title>
+</head>
+<body bgcolor=white text=black>
+<!-- following code added by server. PLEASE REMOVE -->
+<!-- preceding code added by server. PLEASE REMOVE -->
+<h2>Let's Make a Deal?</h2>
+
+The old television show, <i>Let's Make a Deal</i>, often played the following game with
+contestants:  A new car is behind on of three doors.  The contestant picks one of the 
+doors at random.  Monty Hall would then open one of the doors the contestant <b><i>didn't</i></b>
+pick and offer the contestant the choice of staying with his original guess or switching
+to the remaining door.  So, the question is, <b>should the contestant go with his original
+guess or should he switch doors?</b>
+<p>
+This game is of course older than the TV show.  Martin Gardner mentioned it as a card game in his 
+column in <i>Scientific American</i> in the 1950s.  More recently it caused a flurry of letters from 
+all sorts of people, some of them mathematicians, when it appeared in Marilyn vos Savant's newspaper 
+column.  Martin and Marilyn gave the correct answer: <b>change your guess</b> but many people
+still do not believe it.  So, I decided to run this little game as a computer simulation.  Since
+this is a little game we only need a little program and I therefore chose a little computer on 
+which to run it.  Specifically, I wrote a program for a 1k Timex/Sinclair-1000 (ZX81) computer which
+plays this game and gives the percent correct for players who stick with their original guess 
+and those who switch when given the chance.  The commented source code follows.
+<p>
+<code>
+10 GOTO 200  ; jump to the program start<p>
+
+20 LET S=1  ; Constants for the LCG random number generator, S is the seed<br>
+30 LET A=82669  ; Multiplier<br>
+40 LET M=131072 ; Modulo:  F = A*F MOD M<br>
+55 RETURN  <p>
+
+60 LET F=S*A  ; Implement the random number generator, answer in F<br>
+65 LET F=F-M*INT(F/M)  <br>
+70 LET S=F  <br>
+75 LET F=S/M  ; F = [0,1)<br>
+80 RETURN  <p>
+
+100 GOSUB 60  ; Get a random integer: 0, 1, 2<br>
+105 LET F=INT(3*F)  <br>
+110 RETURN  <p>
+
+200 GOSUB 20  ; intialize random number generator<br>
+210 LET C=0  ; Counts number of trials<br>
+215 LET R=0  ; Number of correct initial guesses<br>
+220 LET W=0  ; Number correct after changing guess<br>
+225 GOSUB 100  ; Get a random integer, 0-2<br>
+230 LET G=F  ; And make it the door with the car, G<br>
+235 GOSUB 100  ; Get another integer, 0-2<br>
+240 LET B=F  ; This is the player's original guess, B<br>
+245 IF B=G THEN LET R=R+1  ; Did they get it on the first try?<br>
+250 GOSUB 100  ; Get another random integer, 0-2<br>
+255 IF G=F OR B=F THEN GOTO 250  ; Until it is neither the car nor the guess<br>
+260 LET B=3-(F+B)  ; Set the guess to the remaining door (i.e. change the guess)<br>
+270 IF G=B THEN LET W=W+1  ; If player is now right, count it<br>
+275 LET C=C+1  ; This trial is over<br>
+280 GOSUB 500  ; So update the screen<br>
+285 GOTO 225  ; And do it again<p>
+
+500 PRINT AT 1,0;"RUN ";C ; Print the results of a run<br>
+505 PRINT AT 5,0;"INIT ";R;", ";100*R/C <br>
+510 PRINT AT 9,0;"CHANGE ";W;", ";100*W/C <br>
+515 RETURN <p>
+
+Line <b>260</b> might seem a little mysterious.  It is a way of making
+the value of B, the player's guess, the door that isn't already open (which is in F) or the one 
+the player has already picked.  It works because the sum of 0+1+2 = 3 so subtracting the sum of any
+two doors, 0, 1, or 2, will necessarily leave the number of the door that wasn't in the sum.
+<p>
+When this program is run the percent of guesses correct initially and after switching doors will begin
+to settle down as the number of trials increases.  As expected, the chance of guessing correctly
+from among the three doors will approach 1/3 or 33 percent.  However, the odds of getting the
+correct door when the player changes his guess is not 33 percent but 2/3 or 66 percent, which is 
+what Martin and Marilyn said it should be.  Running the program for a long time will cause the
+percents to "drift" from their mathematical values of 1/3 and 2/3 respectively.  This is due
+to the not-so-hot choice of constants for the random number generator.  I didn't use the generator
+built into the machine because I wanted to control the generation of random numbers.  There are
+better choices of constants available but unfortunately they exceed the precision of the T/S-1000.
+Still, the numbers are obviously close to the expected percentages to be convincing.
+
+<h2>Wanna Try It Yourself?</h2>
+
+If you have a real T/S-1000 or ZX-81 machine then simply type the program in and run it.  Since
+most people don't have these machines around anymore the next best thing is to use an emulator.  
+Emulators for the PC do exist though the TS-1000 emulator dies on Pentium class PCs in MS-DOS
+under W95.  It will work on older machines: I ran it on a Mac emulating a 80286 PC with MS-DOS 5.0
+and it worked fine.  I wrote the program using the Mac ZX-81 emulator which can be found, along
+with many excellent Mac emulators, <a href="http://www.emulation.net">here</a>.  (Naturally, I 
+did verify the program on a real T/S-1000!)
+<p>
+<b>Download <a href="monty.zip">MONTY.81</a>, a tape image of the above program for T/S-1000 and 
+ZX-81 emulators.</b>
+<p>
+<b>More information, including extensions of the problem to n doors, can be found
+  <a href="http://math.rice.edu/~ddonovan/montyurl.html">here</a> on Dennis Donovan's page.</b>
+<p>
+<hr>
+<img src="http://www.geocities.com/cgi-bin/counter/16"><br>
+Last update: 30-Jan-00<br>
+<a href="index.html"><b>Back</b></a>
+<!-- text below generated by server. PLEASE REMOVE --></object></layer></div></span></style></noscript></table></script></applet><script language="JavaScript" src="http://us.i1.yimg.com/us.yimg.com/i/mc/mc.js"></script><script language="JavaScript" src="http://us.js2.yimg.com/us.js.yimg.com/lib/smb/js/hosting/cp/js_source/geov2_001.js"></script><script language="javascript">geovisit();</script><noscript><img src="http://visit.geocities.yahoo.com/visit.gif?us1247771230" alt="setstats" border="0" width="1" height="1"></noscript>
+<IMG SRC="http://geo.yahoo.com/serv?s=76001067&t=1247771230&f=us-w7" ALT=1 WIDTH=1 HEIGHT=1>

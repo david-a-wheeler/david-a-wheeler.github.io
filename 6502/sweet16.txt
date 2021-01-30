@@ -1,0 +1,211 @@
+CURRENTLY HAS ERRORS.  Question: What happens if LDD @R0?
+
+For the virtual machine to run FAST on 6502, it should be designed to be
+fast to implement on one.  You simply have to look at Woz's Sweet-16:
+  http://www.6502.org/source/interpreters/sweet16.htm
+which is amazingly short.  You could easily switch in and
+out of use of sweet-16, and in addition, you could even JSR specific
+Sweet-16 instructions straight from 6502 code if you just want to use
+1-2 operations... making it very easy to intermix them.
+This has 16 registers (0-15); R0 is the accumulator.
+Here's my quick summary of its instructions:
+ 00      RTN          Return to 6502 mode.
+ 0l ea   BR   addr    Branch always (Unconditional Branch).
+ 02 ea   BNC  addr    Branch if Carry=0.
+ 03 ea   BC   addr    Branch if Carry=1.
+ 04 ea   BP   addr    Branch if last result positive.
+ 0S ea   BM   addr    Branch if last result negative.
+ 06 ea   BZ   addr    Branch if last result zero.
+ 07 ea   BNZ  addr    Branch if last result non-zero.
+ 08 ea   BM1  addr    Branch if last result = -1.
+ 09 ea   BNM1 addr    Branch if last result not -1.
+ 0A      BK           Execute 6502 BRK instruction.
+ 0B      RS           Return from SWEET-16 subroutine.
+ 0C ea   BS   addr    Call SWEET-16 subroutine.
+ 1n lo hi    SET  n,value    Rn = 2 byte immediate value. (Load immediate)
+ 2n          LD   n          R0 = Rn.                    (Load register)
+ 3n          ST   n          Rn = R0.                    (Store register)
+ 4n          LD   @n         R0L = *Rn, R0H = 0, Rn++    (Load byte, Rn points)
+ 5n          ST   @n         *Rn = R0L,  Rn = Rn + 1     (Store byte)
+ 6n          LDD  @n         R0 = @Rn, Rn += 2           (Load word)
+ 7n          STD  @n         *Rn = R0, Rn += 2           (Store word)
+ 8n          POP  @n         Rn--, R0 = *Rn              (Pop byte)
+ 9n          STP  @n         Rn--, *Rn = R0              (Store byte)
+ An          ADD  n          R0 = R0 + Rn                (Add)
+ Bn          SUB  n          R0 = R0 - rn                (Subtract)
+ Cn          POPD @n         MA = (Rn)-2, MA,MA+l <- R0,
+                             Rn <- MA.
+ Dn          CPR  n          R13 <- (R0) - (Rn),
+                             R14 <- status flags.
+ En          INR  n          Rn <- (Rn) + 1.
+ Fn          DCR  n          Rn <- (Rn) - 1.
+BTW, this summary is derived from this set:
+    00      RTN          Return to 6502 code.
+    0l ea   BR   addr    Unconditional Branch.
+    02 ea   BNC  addr    Branch if Carry=0.
+    03 ea   BC   addr    Branch if Carry=1.
+    04 ea   BP   addr    Branch if last result positive.
+    0S ea   BM   addr    Branch if last result negative.
+    06 ea   BZ   addr    Branch if last result zero.
+    07 ea   BNZ  addr    Branch if last result non-zero.
+    08 ea   BM1  addr    Branch if last result = -1.
+    09 ea   BNM1 addr    Branch if last result not -1.
+    0A      BK           Execute 6502 BRK instruction.
+    0B      RS           Return from SWEET-16 subroutine.
+    0C ea   BS   addr    Call SWEET-16 subroutine.
+    1n lo hi    SET  n,value    Rn <-- value.
+    2n          LD   n          R0 <-- (Rn).
+    3n          ST   n          Rn <-- (R0).
+    4n          LD   @n         MA = (Rn), ROL <-- (MA),
+                                Rn <-- MA+1, R0H <-- 0.
+    5n          ST   @n         MA = (Rn), MA <-- (R0L),
+                                Rn <-- MA+1.
+    6n          LDD  @n         MA = (Rn), R0 <-- (MA, MA+1),
+                                Rn <-- MA+2.
+    7n          STD  @n         MA = (Rn), MA,MA+l <-- (R0),
+                                Rn <-- MA+2.
+    8n          POP  @n         MA = (Rn)-1, R0L <-- (MA),
+                                R0H <-- 0, Rn <-- MA.
+    9n          STP  @n         MA <-- (Rn)-1, (MA) <-- R0L,
+                                Rn <-- MA.
+    An          ADD  n          R0 <-- (R0) + (Rn).
+    Bn          SUB  n          R0 <-- (R0) - (Rn).
+    Cn          POPD @n         MA = (Rn)-2, MA,MA+l <-- R0,
+                                Rn <-- MA.
+    Dn          CPR  n          R13 <-- (R0) - (Rn),
+                                R14 <-- status flags.
+    En          INR  n          Rn <-- (Rn) + 1.
+    Fn          DCR  n          Rn <-- (Rn) - 1.
+And this one:
+ 00   1   Return to 6502 mode
+ 01   2   Branch Always
+ 02   2   Branch no Carry
+ 03   2   Branch on Carry
+ 04   2   Branch on Positive
+ 05   2   Branch on Negative
+ 06   2   Branch if equal
+ 07   2   Branch not equal
+ 08   2   Branch on negative 1
+ 09   2   Branch not negative 1
+ 0A   1   Break to Monitor
+ 0B-0F   1   No operation
+ 1R   3   R<-2 byte constant (load register immediate)
+ 2R   1   ACC<-R
+ 3R   1   ACC->R
+ 4R   1   ACC<-@R, R<-R+1
+ 5R   1   ACC->@R, R<-R+1
+ 6R   1   ACC<-@R double
+ 7R   1   ACC->@R double
+ 8R   1   R<-R-1, ACC<-@R (pop)
+ 9R   1   R<-R-1, ACC->@R
+ AR   1   ACC<-@R(pop) double
+ BR   1   compare ACC to R
+ CR   1   ACC<-ACC+R
+ DR   1   ACC<-ACC-R
+ ER   1   R<-R+1
+ FR   1   R<-R-1
+
+
+There are lots of stack machines, including p-code.  One trouble is that
+many of them weren't designed for the 6502, so many of their operations
+are expensive to implement.
+
+This is potential advantage for approach #3.  Approach #3 has variables
+in fixed locations, so the VM instructions can generally run faster,
+AND the locations to be addressed can be shorter.
+
+For #3, a variant of the Sweet-16 instruction set could be used.
+In the longer run, I don't think Sweet-16 is optimal for
+total use to implement a high-level language, but it wouldn't be a bad
+place to start prototyping things.
+I would start the frame at $2 (Sweet-16 uses zpage location 0, aka register 0,
+as the accumulator and it's special).  I would add Sweet-16
+operations, namely "SAVEFRAME len", "CALLFRAME", "RETURNFRAME len"
+(the last one calls RESTOREFRAME and then does a Sweet-16 return).
+In SAVEFRAME, you save 'len' values; in RETURNFRAME, you restore 'len' values
+and then return to the caller.
+You'll need to define a convention for returning results from functions;
+let's use R0 (the accumulator) as RESULT.
+You'd probably want to put the FRAMEPTR in a register, too, so it's easier
+to access data stored on the stack (e.g., an local array).
+Let's reuse our example:
+ int x(a,b) {
+   int c;      //  This is a local variable.  Remember that used space.
+   a = 0;
+   b = 4;
+   a++;
+   c = a + b;
+   c = y(c,b);
+   return c;
+ }
+ int y(f,g) {
+   int q = f + g;
+   return q;
+ }
+Which then becomes, in Sweet-16:
+ RESULT .EQU R11  ; Register 11 holds function results
+ FUNCTIONX: ; Our frame contains a, b, c; these become R1, R2, R3.
+   SET R1, #0  ; a = 0
+   SET R2, #4  ; a = 4
+   INR R1      ; a++
+   LD R1       ; c = a + b
+   ADD R2
+   ST R3
+   ; To call c=y(c,b), we save our current frame first
+   SAVEFRAME #FUNCTIONY.SAVELEN
+   ; now copy into the new parameters, without erasing in the process
+   ; y.f = x.c
+   LD R3
+   ST R1
+   ; "y.g = x.b" is a copy to its own position - compiler should notice this!
+   ; LD R2
+   ; ST R2
+   CALLFRAME FUNCTIONY
+   ; Compiler should notice "copy result to result" is a no-op.
+   RETURNFRAME #FUNCTIONX.SAVELEN
+ FUNCTIONX.SAVELEN .EQU $4+$2 ; bytes for parameters + bytes for locals
+ ; int y(f,g) {
+ ;  int q = f + g;
+ ;  return q;
+ FUNCTIONY: ; Our frame contains f, g, q as R1, R2, R3.
+   LD R1
+   ADD R2
+   ST R3
+   ; store q into result
+   ; LD R3 should be optimized away, as ST X LD X == ST X
+   ; Reply with "q".  Compiler should load that ST R3 LD 3 = ST R3, so done!
+   RETURNFRAME #FUNCTIONY.SAVELEN
+ FUNCTIONY.SAVELEN .EQU $4+$2 ; bytes for parametesr + bytes for locals.
+As with many virtual machines, you can implement this several ways,
+esp. if the virtual machine's longer opcode implements can be JSR'd as
+well.  For example, a language could allow you to say
+"do fast stuff here" and "do small stuff here" to optimize the trade
+of space vs. speed.  Then this sequence of Sweet-16 operations could be:
+* Interpreted as usual
+* Translated into either "JSR implementation" or macro-expansion, and
+  run as 6502 instructions.
+* Translated into optimized 6502 code (using Sweet-16 essentially as an
+  intermediate language)
+
+Sweet-16 is nice, but isn't perfect as a virtual machine for
+higher-level languages, and there's always the risk of license issues.
+But as an example and prototype it's helpful, and you can then develop
+your own implementation of a similar VM.  Some possible changes:
+* Indirect saves and loads that don't auto-increment the address
+* 2-byte relative branch instructions.  The problem with 1-byte is that
+  it's more complicated if the branch is too long, and the compiler
+  has to keep track of it.  If you're going to have a VM anyway, may as
+  well make it easy to generate code for.
+* Built-in "memory move" operations that handle forward, back, or
+  best direction would be nice.
+* Need lots more operations, e.g., OR, AND, etc.
+  You could implement a "prefix" op that then uses another table, doubling
+  the number of available operations (though they take one more step
+  to do).
+
+
+REFERENCES:
+
+``Crafting a Compiler'' by Charles N. Fisher & Richard J. LeBlanc, Jr.
+1988. Benjamin/Cummings Publishing Company. Menlo Park, CA.
+

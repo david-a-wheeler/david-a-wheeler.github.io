@@ -1,0 +1,142 @@
+
+( Hi-res graphics words for QForth-GR.    RTK, QForth 2.1g, 27-Jul-96  )
+(                                                                      )
+( Basic line and point plotting using Applesoft graphics routines.     )
+(                                                                      )
+( last mod: 13-Jan-2004                                                )
+( -------------------------------------------------------------------- )
+( Possible future additions:  shape table DRAW and XDRAW               )
+
+( The problem here is that the Applesoft graphics routines use many of )
+( the same memory locations in zero page as does QForth.  So, before   )
+( every graphics call the current QForth values must be saved and the  )
+( old graphics values restored.  When the command is complete the      )
+( QForth values must be restored.  Therefore, the graphics routines    )
+( cannot be part of QForth proper, they must exist "outside" of it in  )
+( a "protected" memory region.  To this end, file buffer #3 has been   )
+( chosen, so file id 2 cannot be used.  Not much of a sacrifice: how   )
+( often are three different files open at the same time?               )
+
+
+( ==================================================================== )
+(                            Constants                                 )
+( ==================================================================== )
+
+-24835 constant AREG   ( $9EFD - storage for A register )
+-24834 constant XREG   ( $9EFE - X register )
+-24833 constant YREG   ( $9EFF - Y register )
+
+
+( ==================================================================== )
+(                     Low-Level Graphics Routines                      )
+( ==================================================================== )
+
+-24832 constant (swap)      ( $9F00 )  ( Swap 16 bytes at $E0 with $9E00 )
+-24784 constant (copy)      ( $9F30 )  ( Copy $E0 --> $9E00              )
+-24800 constant (hgr)       ( $9F20 )  ( Init HGR page one               )
+-24768 constant (hcolor)    ( $9F40 )  ( Set plotting color              )
+-24752 constant (hplot)     ( $9F50 )  ( hplot a point                   )
+-24731 constant (hline)     ( $9F65 )  ( draw a line from last point     )
+
+create DATA
+   162 c,  16 c,         ( 9F00: A2 10          LDX #$10    )
+   202 c,                ( 9F02: CA        LOOP DEX         )
+   181 c, 224 c,         ( 9F03: B5 E0          LDA $E0,X   )
+   168 c,                ( 9F05: A8             TAY         )
+   189 c,   0 c, 158 c,  ( 9F06: BD 00 9E       LDA $9E00,X )
+   149 c, 224 c,         ( 9F09: 95 E0          STA $E0,X   )
+   152 c,                ( 9F0B: 98             TYA         )
+   157 c,   0 c, 158 c,  ( 9F0C: 9D 00 9E       STA $9E00,X )
+   224 c,   0 c,         ( 9F0F: E0 00          CPX #$00    )
+   208 c, 239 c,         ( 9F11: D0 EF          BNE LOOP    )
+    96 c,                ( 9F13: 60             RTS         )
+
+     0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c,  ( fill )
+
+    32 c,  48 c, 159 c,  ( 9F20: 20 30 9F       JSR $9F30  ; copy 1st time )
+    32 c, 226 c, 243 c,  ( 9F23: 20 E2 F3       JSR $F3E2  ; init HGR      )
+    76 c,   0 c, 159 c,  ( 9F26: 4C 00 9F       JMP $9F00  ; swap          )
+
+     0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, ( fill )
+
+   162 c,  16 c,         ( 9F30: A2 10          LDX #$10    )
+   202 c,                ( 9F32: CA        LOOP DEX         )
+   181 c, 224 c,         ( 9F33: B5 E0          LDA $E0,X   )
+   157 c,   0 c, 158 c,  ( 9F35: 9D 00 9E       STA $9E00,X )
+   224 c,   0 c,         ( 9F38: E0 00          CPX #$00    )
+   208 c, 246 c,         ( 9F3A: D0 F6          BNE LOOP    )
+    96 c,                ( 9F3C: 60             RTS         )
+
+     0 c, 0 c, 0 c, ( fill )
+
+    32 c,   0 c, 159 c,  ( 9F40: 20 00 9F       JSR $9F00  ; swap     )
+   174 c, 254 c, 158 c,  ( 9F43: AE FE 9E       LDX $9EFE  ; x reg    )
+    32 c, 240 c, 246 c,  ( 9F46: 20 F0 F6       JSR $F6F0  ; SETHCOL  )
+    76 c,   0 c, 159 c,  ( 9F49: 4C 00 9F       JMP $9F00  ; swap     )
+
+     0 c, 0 c, 0 c, 0 c, ( fill )
+
+    32 c,   0 c, 159 c,  ( 9F50: 20 00 9F       JSR $9F00  ; swap     )
+   173 c, 253 c, 158 c,  ( 9F53: AD FD 9E       LDA $9EFD  ; a reg    )
+   174 c, 254 c, 158 c,  ( 9F56: AE FE 9E       LDX $9EFE  ; x reg    )
+   172 c, 255 c, 158 c,  ( 9F59: AC FF 9E       LDY $9EFF  ; y reg    )
+    32 c,  87 c, 244 c,  ( 9F5C: 20 57 F4       JSR $F457  ; HPLOT    )
+    76 c,   0 c, 159 c,  ( 9F5F: 4C 00 9F       JMP $9F00  ; swap     )
+
+     0 c, 0 c, 0 c,  ( fill )
+
+    32 c,   0 c, 159 c,  ( 9F65: 20 00 9F       JSR $9F00  ; swap     )
+   173 c, 253 c, 158 c,  ( 9F68: AD FD 9E       LDA $9EFD  ; a reg    )
+   174 c, 254 c, 158 c,  ( 9F6B: AE FE 9E       LDX $9EFE  ; x reg    )
+   172 c, 255 c, 158 c,  ( 9F6E: AC FF 9E       LDY $9EFF  ; y reg    )
+    32 c,  58 c, 245 c,  ( 9F71: 20 3A F5       JSR $F53A  ; HLINE    )
+    76 c,   0 c, 159 c,  ( 9F74: 4C 00 9F       JMP $9F00  ; swap     )
+( end )
+
+: GR_INIT ( -- )  ( move data to $9F00 )
+  119 0 do
+    i DATA + c@  i -24832 + c!
+  loop
+;
+
+create (hscrn)
+     169 c,  32 c,             ( HSCRN  LDA #$20      )
+     133 c, 230 c,             (        STA HPAG      )
+     173 c, 253 c, 158 c,      (        LDA AREG      )
+     174 c, 254 c, 158 c,      (        LDX XREG      )
+     172 c, 255 c, 158 c,      (        LDY YREG      )
+     32  c,  17 c, 244 c,      (        JSR HPOSN     )
+     164 c, 229 c,             (        LDY HIDX      )
+     177 c,  38 c,             (        LDA [HBASE],Y )
+     37  c,  48 c,             (        AND HMASK     )
+     41  c, 127 c,             (        AND #$7F      )
+     240 c,   2 c,             (        BEQ OFF       )
+     169 c,   1 c,             (        LDA #1        )
+     141 c, 253 c, 158 c,      ( OFF    STA AREG      )
+     96  c,                    (        RTS           )
+
+
+( ==================================================================== )
+(                     High Level Graphics Words                        )
+( ==================================================================== )
+
+: HGR ( -- )  GR_INIT (hgr) execute page ;  ( set graphics mode )
+
+: HCOLOR ( color -- )  8 mod XREG c!  (hcolor) execute ;   ( set the color )
+
+: HPLOT ( x y -- )  ( plot a point )
+  AREG c! dup 256 / YREG c! 256 mod XREG c!  (hplot) execute ;
+
+: >HPLOT ( x y -- )  ( draw a line from last point to this one )
+  YREG c! dup 256 / XREG c! 256 mod AREG c!  (hline) execute ;
+
+: HLINE ( x1 y1 x2 y2 -- )  HPLOT >HPLOT ;  ( draw a line )
+
+: HSCRN ( x y -- t|f )  ( hires SCRN, true if point is set )
+  AREG c! dup 256 / YREG c! 256 mod XREG c!  (hscrn) execute
+  AREG c@ 1 = ;
+
+: TEXT ( -- )  -16303 c@ drop  -16302 c@ drop 0 34 c! ;  ( set text mode )
+: FULL ( -- )  -16302 c@ drop ;  ( set full graphics mode )
+: MIXED ( -- ) -16301 c@ drop ;  ( set mixed graphics, text mode )
+

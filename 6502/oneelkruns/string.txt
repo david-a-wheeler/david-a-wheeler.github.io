@@ -1,0 +1,117 @@
+
+( Null terminated string words.      RTK, QForth 2.1, 20-Aug-96 )
+(                                                               )
+( Last update:  10-Aug-97                                       )
+( ------------------------------------------------------------- )
+( Based on the Pocket Forth string words by C. Heilman.         )
+
+( Example of a string constant )
+
+create scon1 string Hello, world!~ 13 allot 0 c,
+
+( Helpful words )
+
+: ?dup dup 0= if ( nothing ) else dup then ;
+: min ( a b -- min[a,b] )  over over >
+  if swap drop else drop then ;
+
+( String words )
+
+variable ^s1
+variable ^s2
+: length ( string -- len )  ( length of the string at addr )
+  dup >r begin dup c@ while 1+ repeat  r> - ;
+
+: $clear ( string -- ) 0 swap c! ; ( erase a string )
+
+: accept ( string len -- )  ( get a null terminated string )
+  swap dup >r swap expect  0 r> span + c! ;
+
+( this should be in assembly... )
+: cmove ( a1 a2 #bytes -- )
+    rot ^s1 ! swap ^s2 !
+    ^s2 @ ^s1 @ < if  ( move down in memory )  
+      0 do
+        ^s1 @ i + c@  ^s2 @ i + c!
+      loop
+    else              ( move up in memory )
+      -1 swap do
+        ^s1 @ i + c@  ^s2 @ i + c!
+      -1 +loop
+    then ;
+
+: $copy ( str1 str2 -- )  ( copy string 1 to string 2 )
+    ^s2 ! ^s1 !  ^s1 @ length 0 do
+      ^s1 @ i + c@ ^s2 @ i + c!
+    loop  0 ^s2 @ ^s1 @ length + c! ;
+
+: $+ ( source.string dest.string -- ) ( append to source )
+    dup length + $copy ;
+
+: $= ( string1 string2 -- t|f ) ( true if strings equal )
+    ^s2 ! ^s1 !  ^s1 @ length ^s2 @ length = if
+      -1  ^s2 @ length 0 do
+        ^s1 @ i + c@  ^s2 @ i + c@ <> if
+          drop 0 leave
+        else then
+      loop
+    else  0  then ;
+
+: $left ( string len -- )  ( clip string to len chars )
+    over length min  +  $clear ;
+
+: $right ( string len -- )  ( clip string to rightmost len characters )
+    over length over - 0> if
+      over length over -  rot dup rot +  swap rot 1+  cmove
+    else drop drop then ;
+
+: $mid ( string start len -- )  ( clip string to len section at start )
+    rot rot over length  swap - 1+  >r dup r> $right  swap $left ;
+
+: $same ( s1 s2 -- t|f )  ( true if s2,len2 = s1,len2 )
+    ^s2 ! ^s1 !  -1  ^s2 @ length 0 do
+      ^s1 @ i + c@  ^s2 @ i + c@ <> if
+        drop 0 32767 else 1 then
+    +loop ;
+
+: $upper ( string -- )  ( make string uppercase )
+    dup dup >r length + r@ do
+      i c@ dup dup 96 > swap 123 < and if
+        32 - i c! else drop then
+    loop ;
+
+: $char ( character string -- ) dup length + dup >r c! 0 r> 1+ c! ;
+
+variable ^pos
+: $pos ( character string -- pos t | f )  ( true if char in string )
+  -1 ^pos !  dup dup ^s1 ! dup length + swap do
+    dup i c@ = if  i ^s1 @ - ^pos ! leave else then
+  loop  drop  ^pos @ -1 = if 0 else ^pos @ -1 then ;
+
+( new versions, 07-Aug-97 )
+
+variable s_1
+variable s_2
+: strncmp ( s1 s2 -- t|f )  ( true if s1,len1 = s2,len1 )
+  s_2 ! s_1 !
+  s_1 @ c@  s_2 @ c@ =
+  s_1 @ dup length 1- dup >r + c@  s_2 @ r> + c@ =
+  and if  
+    -1 s_1 @ length 0 do
+      s_1 @ i + c@  s_2 @ i + c@  = 0= if
+        drop 0 then
+    loop 
+  else  0  then ;
+
+variable s_3
+variable s_4
+: $find ( s1 s2 -- pos t | f )  ( find s1 in s2 and return the postition )
+  s_4 ! s_3 !
+  s_4 @ length  s_3 @ length  < if  0 else
+    0 s_4 @ length  s_3 @ length - 1+ 0 do
+      s_3 @  s_4 @ i +  strncmp if
+        drop i -1 leave
+      then
+    loop
+  then 
+;

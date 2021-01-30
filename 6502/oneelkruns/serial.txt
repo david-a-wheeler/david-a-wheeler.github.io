@@ -1,0 +1,114 @@
+( serial.4th  -  Apple IIgs serial words, QForth 2.2   )
+( RTK, 13-Jul-2007,  Last update: 28-Jul-2007          )
+( based on code in ADTpro                              )
+( ---------------------------------------------------- )
+
+( Zero page )
+8 constant TEMPA
+9 constant TEMPX
+10 constant TEMP
+11 constant BUF
+
+( IIgs SCC Z8530 registers and constants )
+-16328 constant GSCMDB    ( channel B, modem )
+-16326 constant GSDATAB
+-16327 constant GSCMDA    ( channel A, printer )
+-16325 constant GSDATAA
+209 constant RESETA    ( constant to reset channel A)
+ 81 constant RESETB    ( constant to reset channel B)
+208 constant WR11A     ( init wr11 on channel A)
+  0 constant WR11BXTAL ( init wr11 on channel B, external clock )
+ 80 constant WR11BBRG  ( init wr11 on channel B, baud rate gen  )
+
+( Baud tables - 300, 1200, 2400, 4800, 9600, 19200, 38400, 57600 )
+create BAUDL 126 c, 94 c, 46 c, 22 c, 10 c, 4 c, 1 c, 0 c,
+create BAUDH 1 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c,
+
+( Baud rates - set to this value )
+0 constant B300       4 constant B9600
+1 constant B1200      5 constant B19200
+2 constant B2400      6 constant B38400
+3 constant B4800      7 constant B57600
+
+: setBaud ( c -- )  ( set the baud rate )
+  dup BAUDL + c@  12 GSCMDB c! GSCMDB c!
+      BAUDH + c@  13 GSCMDB c! GSCMDB c! ;
+
+( Send the accumulator out the modem port )
+create (MOUT) 
+  133 c, 8 c, 134 c, 9 c, 173 c, 56 c, 192 c, 170 c, 41 c, 4 c, 240 c, 248 c, 
+  138 c, 41 c, 32 c, 240 c, 243 c, 165 c, 8 c, 141 c, 58 c, 192 c, 166 c, 9 c, 
+  165 c, 8 c, 96 c,
+
+create (EVEN)  ( Set the high bit for even parity, then send )
+  133 c, 8 c, 162 c, 7 c, 160 c, 0 c, 41 c, 1 c, 208 c, 7 c, 74 c, 202 c, 
+  208 c, 248 c, 24 c, 144 c, 4 c, 200 c, 24 c, 144 c, 245 c, 152 c, 41 c, 1 c,
+  240 c, 6 c, 165 c, 8 c, 9 c, 128 c, 133 c, 8 c, 165 c, 8 c, 76 c,
+  (MOUT) 256 mod c, (MOUT) 256 / c,
+
+create (ODD)  ( Set the high bit for odd parity, then send )
+  133 c, 8 c, 162 c, 7 c, 160 c, 0 c, 41 c, 1 c, 208 c, 7 c, 74 c, 202 c, 
+  208 c, 248 c, 24 c, 144 c, 4 c, 200 c, 24 c, 144 c, 245 c, 152 c, 41 c, 1 c, 
+  208 c, 6 c, 165 c, 8 c, 9 c, 128 c, 133 c, 8 c, 165 c, 8 c, 76 c,
+  (MOUT) 256 mod c, (MOUT) 256 / c,
+
+( Read a character from the modem port )
+create (MIN)
+  120 c, 173 c, 56 c, 192 c, 173 c, 56 c, 192 c, 41 c, 1 c, 240 c, 249 c, 
+  169 c, 1 c, 141 c, 56 c, 192 c, 173 c, 56 c, 192 c, 41 c, 32 c, 240 c, 10 c, 
+  162 c, 48 c, 142 c, 56 c, 192 c, 162 c, 0 c, 142 c, 56 c, 192 c, 169 c, 8 c, 
+  141 c, 56 c, 192 c, 173 c, 56 c, 192 c, 133 c, 8 c, 88 c, 96 c,
+
+create (MIN7)
+  32 c, (MIN) 256 mod c, (MIN) 256 / c, 165 c, 8 c, 41 c, 127 c, 133 c, 8 c,
+  96 c,
+
+
+( 8-bit characters )
+: m! ( c -- )  ( send c out the modem port )
+  areg !  (MOUT) execute ;
+
+: m@ ( -- c )  ( read c from the modem port )
+  (MIN) execute  TEMPA c@ ;
+
+
+( 7-bit characters )
+: m7e! ( c -- )  ( send a 7-bit character with even parity )
+  areg !  (EVEN) execute ;
+
+: m7o! ( c -- )  ( send a 7-bit character with odd parity )
+  areg !  (ODD) execute ;
+
+: m7@ ( -- c )  ( read a 7-bit character, ignore parity )
+  (MIN7) execute TEMPA c@ ;
+
+
+( Read up to 256 bytes into a buffer, 8N1 )
+create (MREAD)
+  160 c, 0 c, 32 c, (MIN) 256 mod c, (MIN) 256 / c,  145 c, 11 c, 
+  200 c, 196 c, 10 c, 208 c, 246 c, 96 c, 
+
+: mread ( buf n -- )
+  TEMP c!  BUF !  (MREAD) execute ;
+
+( Write up to 256 bytes from a buffer, 8N1 )
+create (MWRITE)
+  160 c, 0 c, 177 c, 11 c, 32 c, (MOUT) 256 mod c, (MOUT) 256 / c,
+  200 c, 196 c, 10 c, 208 c, 246 c, 96 c, 
+
+: mwrite ( buf n -- )
+  TEMP c!  BUF !  (MWRITE) execute ;
+
+
+( Initialize the modem port )
+create (INITM)
+  120 c, 173 c, 56 c, 192 c, 162 c, 9 c, 169 c, 81 c, 142 c, 56 c, 192 c, 
+  141 c, 56 c, 192 c, 234 c, 162 c, 3 c, 169 c, 192 c, 142 c, 56 c, 192 c, 
+  141 c, 56 c, 192 c, 162 c, 5 c, 169 c, 98 c, 142 c, 56 c, 192 c, 141 c, 56 c,   192 c, 162 c, 14 c, 169 c, 0 c, 142 c, 56 c, 192 c, 141 c, 56 c, 192 c, 
+  162 c, 4 c, 169 c, 68 c, 142 c, 56 c, 192 c, 141 c, 56 c, 192 c, 162 c, 11 c,   169 c, 80 c, 142 c, 56 c, 192 c, 141 c, 56 c, 192 c, 169 c, 1 c, 162 c, 14 c,   142 c, 56 c, 192 c, 141 c, 56 c, 192 c, 169 c, 193 c, 162 c, 3 c, 142 c, 
+  56 c, 192 c, 141 c, 56 c, 192 c, 169 c, 106 c, 162 c, 5 c, 142 c, 56 c, 
+  192 c, 141 c, 56 c, 192 c, 162 c, 15 c, 169 c, 0 c, 142 c, 56 c, 192 c, 
+  141 c, 56 c, 192 c, 162 c, 0 c, 169 c, 16 c, 142 c, 56 c, 192 c, 141 c, 56 c,   192 c, 162 c, 1 c, 169 c, 0 c, 142 c, 56 c, 192 c, 141 c, 56 c, 192 c, 173 c,   56 c, 192 c, 169 c, 9 c, 141 c, 56 c, 192 c, 169 c, 0 c, 141 c, 56 c, 192 c, 
+  88 c, 96 c,
+
+: initPort ( b -- )  setBaud  (INITM) execute ;

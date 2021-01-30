@@ -1,0 +1,226 @@
+<html>
+<head>
+<title>Multiplication Flashcards</title>
+</head>
+<body bgcolor=white text=black>
+<!-- following code added by server. PLEASE REMOVE -->
+<!-- preceding code added by server. PLEASE REMOVE -->
+<h2>Multiplication Flashcards</h2>
+I wrote this little Applesoft program for my kids to help them learn
+their multiplication tables.  Ok, certainly not a new thing, in fact
+one of the oldest uses of a personal computer, which is why I used an
+old personal computer to implement it, but still - it works.
+<p>
+The program will run on any Apple II+ or better computer in either
+DOS 3.3 or ProDOS.  Simply copy the source below and save it as a text
+file on an Apple disk.  How to do that is your problem :)  Then at the
+Applesoft prompt type NEW followed by EXEC MULT.BAS  (assuming you called
+the file MULT.BAS) and finally, when it is done loading, SAVE MULTIPLY.
+Then RUN to use the program, which is self-explanatory.
+<p>
+<hr>
+<p>
+<code><pre>
+REM
+REM  Multiplication Flashcards
+REM 
+REM  RTK, 30-Oct-98.  For David, Peter, Paul and Monica :-)
+REM
+REM  Last update:  08-Nov-98
+REM
+REM ==============================================================
+
+REM -----------------------
+REM  Jump to program start
+REM -----------------------
+   5 GOTO 10000
+
+REM --------------------------------
+REM  Return a number from 0..9 in N
+REM --------------------------------
+   10 N = INT(10*RND(1)):RETURN
+
+REM ----------------------------------
+REM  Seed the random number generator
+REM ----------------------------------
+   12 N = RND(-SEED):RETURN
+
+REM ------------
+REM     "0"
+REM ------------
+   20 HLIN X,X+4 AT Y:HLIN X,X+4 AT Y+8
+   25 VLIN Y,Y+8 AT X:VLIN Y,Y+8 AT X+4
+   27 RETURN
+
+REM ------------
+REM     "1" 
+REM ------------
+   30 VLIN Y,Y+8 AT X+2:RETURN
+
+REM ------------
+REM     "2"
+REM ------------
+   40 HLIN X,X+4 AT Y:HLIN X,X+4 AT Y+8
+   45 VLIN Y,Y+4 AT X+4:HLIN X,X+4 AT Y+4
+   50 VLIN Y+4,Y+8 AT X: RETURN
+
+REM ------------
+REM     "3"
+REM ------------
+   60 HLIN X,X+4 AT Y:HLIN X,X+4 AT Y+4
+   65 HLIN X,X+4 AT Y+8:VLIN Y,Y+8 AT X+4
+   70 RETURN
+
+REM -------------
+REM     "4"
+REM -------------
+   80 HLIN X,X+4 AT Y+4:VLIN Y,Y+8 AT X+4
+   85 VLIN Y,Y+4 AT X:RETURN
+
+REM -------------
+REM     "5"
+REM -------------
+   90 HLIN X,X+4 AT Y:VLIN Y,Y+4 AT X
+   95 HLIN X,X+4 AT Y+4:VLIN Y+4,Y+8 AT X+4
+  100 HLIN X,X+4 AT Y+8:RETURN
+
+REM -------------
+REM     "6"
+REM -------------
+  110 GOSUB 90:VLIN Y+4,Y+8 AT X:RETURN
+
+REM -------------
+REM     "7"
+REM -------------
+  115 VLIN Y,Y+8 AT X+4:HLIN X,X+4 AT Y:RETURN
+
+REM -------------
+REM     "8"
+REM -------------
+  120 GOSUB 110:VLIN Y,Y+4 AT X+4:RETURN
+
+REM -------------
+REM     "9"
+REM -------------
+  125 GOSUB 80:HLIN X,X+4 AT Y:RETURN
+
+REM ------------------
+REM   Print a blank
+REM ------------------
+  127 COLOR=0:FOR T7=0 TO 5:VLIN Y,Y+8 AT X+T7:NEXT T7
+  128 COLOR=C:RETURN
+
+REM ----------------------
+REM  Emit the digit in X$
+REM ----------------------
+  130 D=VAL(X$):GOSUB 127
+  135 ON D+1 GOSUB 20,30,40,60,80,90,110,115,120,125
+  140 X=X+6:IF X>=36 THEN X=2:Y=Y+11:IF Y>=32 THEN Y=4
+  145 RETURN
+
+REM ------------------------------
+REM  Print the number in N at X,Y 
+REM ------------------------------
+  150 N$=STR$(N):IF LEN(N$)=2 THEN X$=LEFT$(N$,1):GOSUB 130:N$=RIGHT$(N$,1)
+  155 X$=N$:GOSUB 130
+  160 RETURN 
+
+REM ---------------------
+REM  Print an 'x' at X,Y
+REM ---------------------
+  200 GOSUB 127:PLOT X,Y+1:PLOT X+1,Y+2:PLOT X+2,Y+3:PLOT X+4,Y+1
+  205 PLOT X+3,Y+2:PLOT X,Y+5:PLOT X+1,Y+4:PLOT X+3,Y+4:PLOT X+4,Y+5
+REM finish up using emit routine above
+  210 GOTO 140
+
+REM ---------------------
+REM  Print an '=' at X,Y
+REM ---------------------
+  220 GOSUB 127:HLIN X,X+4 AT Y+2:HLIN X,X+4 AT Y+5:GOTO 140
+
+REM --------------------
+REM  Print a '?' at X,Y
+REM --------------------
+  240 GOSUB 127:HLIN X,X+4 AT Y:VLIN Y,Y+3 AT X+4:HLIN X+1,X+4 AT Y+3
+  245 VLIN Y+3,Y+5 AT X+1:PLOT X+1,Y+7:GOTO 140
+
+REM ---------------
+REM  "Happy" sound
+REM ---------------
+  250 ?CHR$(7);CHR$(7);CHR$(7):RETURN
+
+REM --------------
+REM  "Buzz" sound
+REM --------------
+  260 FOR W3=1 TO 50:ZX=PEEK(-16336)*PEEK(-16336):NEXT W3:RETURN
+
+
+REM ===========================
+REM      Random Flashcards
+REM ===========================
+   1000 ?"TYPE THE ANSWER TO THE PROBLEM AND":?"PRESS RETURN"
+   1005 INPUT"NUMBER OF FLASHCARDS = ";F$:F=VAL(F$)
+   1010 R=0:IF F$="" THEN RETURN
+   1015 FOR W= 1 TO F
+   1020   GR:X=2:Y=15
+   1025   GOSUB 10:C=N+1:GOSUB 10:A1=N:GOSUB 150
+   1030   GOSUB 10:C=N+1:GOSUB 200
+   1035   GOSUB 10:C=N+1:GOSUB 10:A2=N:GOSUB 150
+   1040   GOSUB 10:C=N+1:GOSUB 220
+   1045   GOSUB 10:C=N+1:GOSUB 240
+   1050   HOME:?:INPUT"ANSWER = ";A3
+   1055   N=A1*A2:Y=15:X=26:C=15:GOSUB 150
+   1060   IF A1*A2=A3 THEN R=R+1:GOSUB 250:GOTO 1070
+   1065   GOSUB 260:GET LOST$:?
+   1070 NEXT W
+   1075 GR:HOME:?:? R;" OUT OF ";F;" OR ";100*R/F;"% CORRECT"
+   1080 ?"PRESS A KEY TO CONTINUE:";:GET LOST$:?
+   1085 RETURN
+
+
+REM ===============
+REM      Drill
+REM ===============
+   2000 INPUT "DRILL WHICH NUMBER ?";A1
+   2005 INPUT "NUMBER OF PROBLEMS ?";F$:F=VAL(F$)
+   2010 R=0:IF F$="" THEN RETURN
+   2015 FOR W = 1 TO F
+   2020   GR:X=2:Y=15
+   2025   GOSUB 10:C=N+1:N=A1:GOSUB 150
+   2030   GOSUB 10:C=N+1:GOSUB 200
+   2035   GOSUB 10:C=N+1:GOSUB 10:A2=N:GOSUB 150
+   2040   GOSUB 10:C=N+1:GOSUB 220
+   2045   GOSUB 10:C=N+1:GOSUB 240
+   2050   HOME:?:INPUT"ANSWER = ";A3
+   2055   N=A1*A2:C=15:X=26:Y=15:GOSUB 150
+   2060   IF A1*A2=A3 THEN R=R+1:GOSUB 250:GOTO 2070
+   2065   GOSUB 260:GET LOST$:?
+   2070 NEXT W
+   2075 GR:HOME:?:? R;" OUT OF ";F;" OR ";100*R/F;"% CORRECT"
+   2080 ?"PRESS A KEY TO CONTINUE:";:GET LOST$:?
+   2085 RETURN
+
+
+REM ================
+REM      Main
+REM ================
+   10000 TEXT:HOME
+   10001 INPUT"ENTER A FIVE DIGIT NUMBER = ";SEED:GOSUB 12
+   10005 HOME:INVERSE:?"MULTIPLICATION FLASHCARDS!!!":NORMAL
+   10010 ?:?:?"CHOOSE ONE:":?:?
+   10015 ?"   1. RANDOM FLASHCARDS"
+   10020 ?"   2. DRILL"
+   10040 ?:?"   3. QUIT PROGRAM"
+   10045 ?:?:?"WHICH ? ";:GET M$:?M$:M=VAL(M$)
+   10050 IF (M<1) OR (M>3) THEN 10005
+   10055 IF M=3 THEN ?:?:END
+   10060 GR:C=1:X=2:Y=4:HOME
+   10065 ON M GOSUB 1000,2000
+   10070 TEXT:GOTO 10005
+</pre></code>
+<hr>
+<img src="http://www.geocities.com/cgi-bin/counter/13"><br>
+Last update: 30-Jan-00<br>
+<a href="index.html"><b>Back</b></a>
+<!-- text below generated by server. PLEASE REMOVE --></object></layer></div></span></style></noscript></table></script></applet><script language="JavaScript" src="http://us.i1.yimg.com/us.yimg.com/i/mc/mc.js"></script><script language="JavaScript" src="http://us.js2.yimg.com/us.js.yimg.com/lib/smb/js/hosting/cp/js_source/geov2_001.js"></script><script language="javascript">geovisit();</script><noscript><img src="http://visit.geocities.yahoo.com/visit.gif?us1247771229" alt="setstats" border="0" width="1" height="1"></noscript>
+<IMG SRC="http://geo.yahoo.com/serv?s=76001067&t=1247771229&f=us-w2" ALT=1 WIDTH=1 HEIGHT=1>

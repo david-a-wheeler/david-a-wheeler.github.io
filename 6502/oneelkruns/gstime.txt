@@ -1,0 +1,155 @@
+(                                                )
+(  GSTIME -- Get the time on an Apple IIgs       )
+(                                                )
+(  RTK, 17-Jan-2004,  Last update: 10-Mar-2004   )
+(                                                )
+(  Adapted from code on usenet by Dave Empson,   )
+(  1994.                                         )
+( ---------------------------------------------- )
+(  Requires:  double.4th, util.4th               )
+( ---------------------------------------------- )
+
+832 constant SECOND ( 0..59 )
+833 constant MINUTE ( 0..59 )
+834 constant HOUR   ( 0..23 )
+835 constant YEAR   ( add 1900 to get year )
+836 constant MONTH  ( 1..12 )
+837 constant DAY    ( 1..31 )
+838 constant DOW    ( day of the week, 1 = Sunday )
+
+create gsStart 4 allot  ( starting time, sec of day      )
+variable timerDelay     ( timer delay in seconds         )
+variable timerKill      ( set to true to kill all timers )
+
+( Machine code to get the time )
+
+create (gstime)
+   24 c,                       ( CLC                                         )
+  251 c,                       ( XCE           ; set native 65816 mode       )
+  194 c,  48 c,                ( REP #$30      ; set 16-bit registers        )
+   72 c,                       ( PHA                                         )
+   72 c,                       ( PHA                                         )
+   72 c,                       ( PHA                                         )
+   72 c,                       ( PHA           ; stack space for 8 bytes     )
+  162 c,   3 c,  13 c,         ( LDX #$0D03    ; call number for ReadTimeHex )
+   34 c,   0 c,   0 c, 225 c,  ( JSL $E10000   ; call the IIgs toolbox       )
+  104 c,                       ( PLA                                         )
+  141 c,  64 c,   3 c,         ( STA $0340     ; get seconds and minutes     )
+  104 c,                       ( PLA                                         )
+  141 c,  66 c,   3 c,         ( STA $0342     ; get hour and year           )
+  104 c,                       ( PLA                                         )
+   24 c,                       ( CLC                                         )
+  105 c,   1 c,   1 c,         ( ADC #$0101    ; add 1 to day and month      )
+  235 c,                       ( XBA           ; swap to get month first     )
+  141 c,  68 c,   3 c,         ( STA $0344                                   )
+  104 c,                       ( PLA           ; get day of week and dummy   )
+  235 c,                       ( XBA           ; swap to get DOW first       )
+  141 c,  70 c,   3 c,         ( STA $0346                                   )
+   56 c,                       ( SEC                                         )
+  251 c,                       ( XCE           ; return to 6502 mode         )
+   96 c,                       ( RTS                                         )
+
+( Get the time or parts thereof )
+
+: dateTime ( -- dow dy mn yr hr min sec )
+  (gstime) execute DOW c@ DAY c@ MONTH c@ YEAR c@ 1900 +
+  HOUR c@ MINUTE c@ SECOND c@ ;
+
+: date ( -- dow day month year )
+  (gstime) execute  DOW c@ DAY c@ MONTH c@ YEAR c@ 1900 + ;
+
+: time ( -- hour minute second )
+  (gstime) execute  HOUR c@ MINUTE c@ SECOND c@ ;
+
+: dow ( -- dow )  (gstime) execute DOW c@ ;
+: day ( -- day )  (gstime) execute DAY c@ ;
+: month ( -- month )  (gstime) execute MONTH c@ ;
+: year ( -- year )  (gstime) execute YEAR c@ 1900 + ;
+: hour ( -- hour )  (gstime) execute HOUR c@ ;
+: minute ( -- min )  (gstime) execute MINUTE c@ ;
+: second ( -- sec )  (gstime) execute SECOND c@ ;
+
+
+( Handle a single timer )
+
+: secOfDay ( h m s -- ds )  ( calculate second of the day )
+  s>d rot s>d 60 0 d* d+ rot s>d 3600 0 d* d+ ;  
+
+: startTime ( -- )  ( set now to be the zero time )
+  (gstime) execute
+  HOUR c@ MINUTE c@ SECOND c@ secOfDay  gsStart d! ;
+
+: delayTime ( h m s -- dn )  ( find difference between times )
+  secOfDay gsStart d@ d-  2dup 0 0 d< if  20864 1 d+  then ;
+
+: setTimer ( n -- )  ( set the timer )
+  timerDelay !  startTime ;
+
+: timer ( -- dm )  ( time since starting in seconds )
+  time delayTime ;
+
+: timer? ( -- t|f )  ( true if the timer has expired )
+  timer timerDelay @ s>d d>= ;
+
+
+( Set up to run up to 10 words with timers )
+
+( Example:                                                      )
+(                                                               )
+(   clearWords  clearDelays    -- initialize                    )
+(                                                               )
+(   : t1 ." Thing 1" cr -1 ;   -- first word, always restarted  )
+(   : t2 ." Thing 2" cr -1 ;   -- second word                   )
+(                                                               )
+(   ' t1 0 setWord   -- run as timer 0                          )
+(   ' t2 6 setWord   -- run as timer 6                          )
+(                                                               )
+(    3 0 startTimer  -- run timer 0 every 3 seconds             )
+(   10 6 startTimer  -- run timer 6 every 10 second             )
+(   runTimers        -- run the timers                          )
+(                                                               )
+
+create timerDelays  20 allot  ( delay times in seconds         )
+create timerStarts  40 allot  ( time timer started, hr/min/sec )
+create timerWords   20 allot  ( addresses of words to run      )
+
+: clearWords ( -- )  ( clear timer words )
+  10 0 do  0 timerWords i 2* + !  loop ;
+
+: clearDelays ( -- )  ( clear timer delays )
+  10 0 do  0 timerDelays i 2* + !  loop ;
+
+: setWord ( addr n -- )  ( set word n to addr )
+  2* timerWords + ! ;
+
+: startTimer ( s n -- )  ( start timer n with an s second delay )
+  dup >r 2* timerDelays + !   ( set delay ) 
+  r>  4 * timerStarts + >r    ( find address for start time )
+  (gstime) execute            ( current time )
+  HOUR c@ MINUTE c@ SECOND c@
+  secOfDay r> d! ;            ( set start time )
+
+: checkTimer ( n -- t|f )  ( true if timer n has expired )
+  dup 4 * timerStarts + d@  gsStart d!   ( set start time )
+  2* timerDelays + @        timerDelay ! ( set delay      )
+  timer? ;                               ( expired?       )
+
+: timersZero? ( -- t|f )  ( true if all delays are zero )
+  0 10 0 do  i 2* timerDelays + @ +  loop  0= ;
+
+ : runTimers ( -- )  ( run the timers )
+  0 timerKill !  -1 
+  begin while 
+    10 0 do  
+      i 2* timerDelays + @ 0= 0= if             ( if delay 0 ignore )
+        i checkTimer if 
+          i 2* timerWords + @ execute           ( run word )
+          if 
+            i 2* timerDelays + @ i startTimer   ( restart timer )  
+          then 
+        then 
+      then 
+    loop 
+    timersZero? 0=       ( check if all done )
+    timerKill @ 0=  and  ( or if all killed  )
+  repeat ; 

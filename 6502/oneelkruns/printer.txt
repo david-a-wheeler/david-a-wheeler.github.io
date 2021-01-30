@@ -1,0 +1,27 @@
+
+( PR# and IN# words.     QForth 2.1, RTK, Feb. 1996 )
+
+( Last update:  04-Mar-04 )
+
+( PR#  -- set output slot )
+
+create (pr#) 
+
+       166 c, 238 c,  (    A6 EE  LDX $EE     ; get data stack pointer )
+              232 c,  (       E8  INX         ; ptr to low bye of TOS  )
+189 c,   0 c, 170 c,  ( BD 00 AA  LDA $AA00,X ; get TOS                )
+ 32 c, 149 c, 254 c,  ( 20 95 FE  JSR $FE95   ; monitor set outport    )
+               96 c,  (       60  RTS         ; return                 )
+
+: PR# ( s -- )  (pr#) execute drop ;  ( send output to the specified slot )
+
+: printer-on  1 PR# ;  ( activate printer )
+: printer-off 3 PR# ;  ( deactivate printer )
+
+( IN# -- same as PR# except calls $FE8B not $FE95 )
+
+create (in#) 166 c, 238 c, 232 c, 189 c,  0 c,
+             170 c,  32 c, 139 c, 254 c, 96 c,
+
+: IN# ( s -- )  (in#) execute drop ;  ( get input from specified slot )
+
