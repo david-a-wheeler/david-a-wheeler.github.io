@@ -1,0 +1,203 @@
+"Accuse" by "David A. Wheeler"
+
+The story title is "Accuse". 
+The story author is "David A. Wheeler". 
+The story headline is "A small replayable puzzle". 
+The story genre is "Mystery". 
+The release number is 4. 
+The story description is "This is a small puzzle/game where you must determine who murdered someone, with what, and where, by making a series of accusations.  The solution, suspect placement, and weapon placement is random each time. It's a fun little puzzle on its own (murder mysteries are still a common genre), and perhaps more importantly it's a small demonstration/trial of Inform7's new English-language syntax (which the author wanted to try out). This is a different game than Clue/Cluedo: it has different game rules, goals, and names.  For example, each accusation must be completely different from the previous one, and your goal is to minimize time.  You can get this game from http://www.dwheeler.com. This game is released under the terms of the GNU General Public License (GPL) version 2 or later, so you can even make modifications to this or include a modified version of it in your own games."
+The story creation year is 2007.
+
+[This produces a game in Z-machine format. You need a Z-machine player to play it; thankfully, there are Z-machine players available for just about any computer that you can turn on, and they're generally free.  Frobnitz is a good player for PalmOS PDAs, while Windows and Linux users might choose Frotz; both players are open source software.
+
+This is a different game from "Clue"/"Cluedo" ((TM) Hasbro). It has different game rules, e.g., everything has to be in that room before an accusation, every accusation must be completely different from the last one, and there's only one player.  It intentionally uses the traditional adventure mechanisms of going places, picking up items, and directing other characters, which results in many subtle differences in this game.  There's a different goal: to have the lowest time. You win as an accusation, not a separate claim. There are different character names, and there is a different number of everything.  There's no equivalent to 'cards', either.
+
+This document was written using "Inform 7" by Graham Nelson, version 4K41.]
+
+Release along with a website, a file of "Accuse in Z5 format" called "Accuse.z5" and the source text.
+
+Use no scoring. [A larger amount of time is BAD, so we must do the scoring ourselves instead of using the built-in scoring system.]
+
+Chapter 1 - The Physical World
+
+Section 1 - Rooms and Objects in them
+
+[We have a number of descriptions and objects to play with.  They don't have an effect on the game, but hey, they're fun.]
+
+The Hall is a room. "You are in an elaborate formal hallway. Exits are east, south, and up."
+
+The Library is east of the Hall. "You're in a library covered wall-to-wall with computer books. There are exits west and down."
+
+Some books are here.  The books are scenery.  Understand "book" as books.
+Instead of taking or examining books, say "There's no time for that.  There's a murder to be solved here." 
+
+A heavy chair is here. It is fixed in place.
+
+Your boss is a man. He is on the chair. The description of your boss is "Your boss is a plump, short man; the buttons on his shirt are straining to escape."
+He is carrying a note.
+
+The description of the note is "The note says, 'Sir, we've done all sorts of tests, and you have an extraordinary gift.  By merely accusing someone of using something for murder, you can determine if there is something true about the accusation with complete accuracy.  There are some complications, though.  For example, the weapon and your current location are considered part of the accuration... so if you accuse an innocent person in the murder location or of using the murder weapon, you'll only determine that something about your accusation is true. For each accusation you have to use a completely different set of people, weapon, and location than your previous accusation; this can complicate your efforts.  Also, it takes 10 minutes for you to determine if an accusation is true... that may be a problem when you are in a hurry.  Science is completely unable to explain your gift; use it wisely.'"
+
+Before going to the library for the first time:
+ say "Your boss says, 'I'm so glad you've come.  Please hurry to determine who performed this murder, along with where and with what.  I know you have a special power when you accuse others; I've brought this note to explain it further.'
+
+He hands you a note.";
+  move note to player.
+
+After answering your boss that anything, say "Your boss says, 'Hurry up - we need to determine who performed this murder, along with where and with what.'".
+
+The Entrance is south of the Hall. "You're at the entrance to this grand estate, where a large red door to the outside.  I hope you aren't planning on leaving before you solve this mystery! The only way to go from here is north."
+
+A big red door is here. It is scenery.
+Instead of opening or closing or unlocking or entering the big red door: say "Nonsense, don't leave.  We have a murder to solve."
+Instead of going south in the Entrance: say "Nonsense, don't leave.  We have a murder to solve."
+
+A brass plaque is here.  The plaque is fixed in place. The description of the plaque is "The plaque says, 'This game [italic type]Accuse[roman type]  is Copyright (C) 2007 David A. Wheeler. It is released under the terms of the GNU General Public License (GPL), version 2 or later.  That means you can modify this game and/or include it in other games, but you must release this game (modified or not, or included in a larger game) under the GNU GPL version 2 or later.  In particular, when you release it, you must release its source code too (so others can make their own improvements too!).  Please credit David A. Wheeler in any modified work.'".
+
+The Bedroom is up from the Hall.  "You're in a plush bedroom; apparantly the owner liked creature comforts. The sole exit is down."
+A bed is here.  It is scenery.
+The plush blankets are on the bed. They are scenery.
+Instead of taking blankets, say "It's not that cold here.  Hurry up with the business at hand!"
+
+An end table is here.  It is scenery.
+A picture is on the end table. The description of the picture is "You see a picture of the very handsome David A. Wheeler, former maintainer of Scepter of Goth, who coincidentally is the author of this game.  Yup, he's [italic type]very[roman type]  handsome."
+
+A huge red button is here.  It is fixed in place. The description of the button is "It's a big, blinking red button, in the middle of the wall."
+Instead of pushing red button:
+ say "Zap!  The world spins around you quickly.";
+ move player to Dungeon.
+
+Before going to the bedroom for the fourth time:
+ say "A hollow voice says, 'http://www.dwheeler.com'.".
+
+The Dungeon is down from the Library. "You're in a dungeon.  Hmm, this isn't the normal kind of room you see in today's houses.  On the wall is written 'Xyzzy isn't a magic word.' The only way out of here is to go up."
+
+Section 2 - Weapons and Miscellaneous Objects
+
+A weapon is a kind of thing.
+A rusty knife is a weapon. The description of the knife is "It's a knife with a rusty handle.  The blade, however, has been recently sharpened and cleaned."
+A gun is a weapon.  The description of the gun is "It's a 9mm, with some bullets left."
+A jar of poison is a weapon. The description of the jar of poison is "It's a jar of poison.  You know this, because it says 'POISON' in big letters on the side of the jar.  Below it is the tagline, 'Guaranteed to kill quickly, and there's no antidote!'  -- Who sells this stuff?!?"
+[I originally had only 2 weapons, which makes the game much more challenging.]
+
+Chapter 2 - The Suspects
+
+A suspect is a kind of person.
+Ms Pepper, Mr Salt, and Mr Thyme are suspects.
+Ms Pepper is female.
+
+The description of Ms Pepper is "Ms Pepper is a pretty woman with a great smile.  She's wearing a T-shirt and blue jeans."
+The description of Mr Salt is "Mr Salt is tall, thin, and worried."
+The description of Mr Thyme is "Mr Thyme is wearing a shabby overcoat, and shifting his eyes rapidly from place to place."
+
+Persuasion rule for asking suspects to try going: persuasion succeeds.
+Persuasion rule for asking suspects to try going for the fourth time:  say "The suspect argues with you for several minutes, instead of going anywhere."; increase solution time by 4; persuasion fails.  [This is just here to make things more interesting.  Trying again will make it continue]
+
+[Ms Pepper is a friend of mine's handle from many years ago... Hi Ms Pepper!  Mr Salt was a friend of hers, hope he's doing well.  I added Mr Thyme to round out the theme.]
+
+Chapter 3 - Handling Accusations
+
+The murderer and last accused suspect are people that vary.
+The murder location and last accused location are rooms that vary.
+The murder weapon and last accused weapon are weapons that vary.
+The number of accusations is a number that varies.
+The solution time is a number that varies.
+The warning about giving up is a number that varies.
+
+Accusing is an action applying to two things. Understand "accuse [someone] using [something]", "accuse [someone] of using [something]", "accuse [someone] with [something]", "accuse [someone] with using [something]" and "accuse [someone] [something]" as accusing.
+
+Check accusing: if noun is not a suspect, say "You can only accuse suspects." instead.
+Check accusing: if second noun is not a weapon then say "You can only accuse suspects of using a weapon." instead.
+Check accusing: if noun is not visible then say "You can only accuse suspects that you can see." instead.
+Check accusing: if second noun is not visible then say "You can only accuse suspects of using weapons that you can see." instead.
+Check accusing: if number of accusations > 0 and noun is the last accused suspect then say "Pick on somebody else first!" instead.
+Check accusing: if number of accusations > 0 and second noun is the last accused weapon then say "Pick on another weapon first!" instead.
+Check accusing: if number of accusations > 0 and location is the last accused location then say "Try a different room first!" instead.
+
+Carry out accusing:
+  increase number of accusations by 1;
+  increase solution time by 9; [1 more from the turn itself]
+  change last accused suspect to noun;
+  change last accused weapon to second noun;
+  change last accused location to location.
+
+Report accusing:
+ if noun is murderer and second noun is murder weapon and location is murder location begin;
+   say "You solved it in [solution time] minutes!";
+   end the game in victory;
+ otherwise;
+   [say "[if noun is male]He[end if][if noun is female]She[end if] says, 'No, it's not true!'";]
+   say "'What!? Me, [noun], with the [second noun] in the [location]?'
+
+";
+    if noun is murderer or second noun is murder weapon or location is murder location begin;
+        say "You sense that something about your accusation is true.";
+    otherwise; say "You sense that your accusation is COMPLETELY wrong.";
+    end if;
+ end if.
+
+Chapter 4 - Other commands
+
+Helping is an action applying to nothing. Understand "help" as helping.
+Instead of helping:
+ decrease solution time by 1; [Don't penalize for "help"]
+ say "Your goal is to figure out the murderer, murder weapon, and murder location.  You can 'accuse' someone of using something, and determine if there is something true or not about the accusation (i.e., if the suspect, weapon, or current location participated in the murder).
+
+Here are some useful commands:
+
+north, south, east, west, up, and down: Go that direction.
+
+Get (object): Get that object.
+
+accuse (someone) with using (something): Accuse 'someone' of committing the murder at this location, using 'something'.  You can omit the 'with' and 'using'.
+
+(Name), go (direction): Tell the named person to go that direction.
+
+Give up: Give up, and be told what the solution was."
+
+Xyzzying is an action applying to nothing. Understand "xyzzy" and "plugh" and "hello sailor" as xyzzying.
+Instead of xyzzying: say "Nothing happens."
+
+Carry out quitting the game:
+  end the game saying "Sorry; the murder was committed by [murderer] using [the murder weapon] in [the murder location]."
+Understand "give up" as quitting the game.
+
+Chapter 4 - Gameplay
+
+When play begins:
+  Change solution time to 0;
+  Change the warning about giving up to 0;
+  Change the right hand status line to "Time: Unstarted";
+  Change murderer to a random suspect;
+  Change murder location to a random room;
+  Change murder weapon to a random weapon;
+  repeat with this suspect running through suspects begin; 
+    move this suspect to a random room;
+  end repeat; 
+  repeat with this weapon running through weapons begin; 
+    move this weapon to a random room;
+  end repeat;
+  say "Welcome, detective!  We really need your help in finding out who committed this terrible murder, where, and with what (the gun, knife, or poison).  I understand that you can accuse someone and determine if something is true about the accusation; that is a skill you'll need here!  But you'll need to hurry; we must find out who murdered Mr. David A. Wheeler right away.
+
+[italic type]Type 'help' for more.[roman type]".
+
+Every turn:
+  Increase solution time by 1;
+  if solution time > 0 then change the right hand status line to "Time: [solution time] minute[if solution time > 1]s[end if]".
+
+After reading a command: 
+    if the player's command includes "please" begin; 
+        say "(That's very polite! But no need to say please.)"; 
+        cut the matched text; 
+    end if.
+
+Rule for deciding whether all includes scenery: it does not.
+
+Instead of going nowhere for the third time: say "There's no need to bump into walls, I'll tell you if there's an exit in a certain direction."
+
+Taking inventory is acting confused. Looking is acting confused.
+
+After acting confused for the sixth turn:
+ say "Are you having trouble? Type 'help' to get more information."
+
+
