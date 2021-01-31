@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Encodef Home Page</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="David A. Wheeler's Page for Encodef">
+<meta name="keywords" content="filenames, POSIX, Linux, Unixx">
+
+</head>
+<body bgcolor="#FFFFFF">
+<center><h1><font color="#339900">Encodef</font></h1></center>
+This is the main web site for <i>encodef</i>, a suite of programs that
+tries to make it easier to process filenames in Unix*/Linux/POSIX systems.
+You can get code, etc., from the
+<a href="https://sourceforge.net/projects/encodef/">encodef project page</a>.
+<p>
+Historically, Unix/Linux/POSIX allow almost any byte in a filename,
+but this flexibility is the source of many problems.
+I describe the problem in
+<a href="http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html">
+Fixing Unix/Linux/POSIX Filenames:
+Control Characters (such as Newline), Leading Dashes, and Other Problems</a>.
+I discuss ways of writing shell programs to work around this,
+using existing tools, in
+<a href="http://www.dwheeler.com/essays/filenames-in-shell.html">
+Filenames and Pathnames in Shell: How to do it correctly</a>.
+
+<p>
+The &#8220;encodef&#8221; program takes filenames (which may include newlines,
+tabs, ESC, leading dash, space, and other nastiness), and encodes
+them into a format that&#8217;s easier to process.
+The &#8220;decodef&#8221; program reverses the process.
+The &#8220;xargsf&#8221; program is a stub prototype so that you can see how these
+integrate into the standard xargs program.
+<p>
+The <a href="encodef.pdf">Encodef man page</a> has more details.
+<p>
+At this point, it's "usable", and more than adequate for prototyping
+and testing ideas about encoding filenames.
+<p>
+Feel free to
+<a href="encodef-0.40.tar.gz">download the encodef source code
+in tarball format</a> (Free-libre/open source software, MIT license).
+It includes a self-test suite, so you can get more confidence that it works.
+Also,
+<a href="http://www.dwheeler.com/essays/releasing-floss-software.html">
+it follows common compilation and
+installation processes</a>, which let you easily control how to
+install it (e.g., by setting DESTDIR and --prefix).
+<p>
+Here are a few thoughts, based in part on my experimentation with them:
+<ol>
+<li>If POSIX systems always forbid or escaped
+bad filenames (like having control characters), many problems disappear.
+<li>If bad filenames are possible,
+then there <i>must</i> be a way to <i>easily</i> deal with them.
+Forbidding the <i>creation</i> of bad filenames helps somewhat
+(because then in certain cases they won't happen), but
+then you <i>still</i> have to be able process bad filenames.
+<li>The <i>conventional</i> way to do this is to use the null byte \0
+to terminate/separate filenames.
+This is widely supported by <tt>find</tt> and <tt>xargs</tt>, you can then
+store these in files, and some programs can process them.
+These are very efficient.
+I believe that the POSIX standard should be modified so that the POSIX shell's
+<tt>read</tt> command could also easily process null-terminated data
+(I suggest using -0), and there's a good argument for <tt>grep</tt> as well.
+<li>You could also <i>escape</i> the filenames, and that's
+what encodef does.
+In the long term, if encoding is to be supported,
+I believe that at least <tt>xargs</tt> and <tt>printf(1)</tt>
+should be modified to directly support decoding,
+and <tt>find</tt> should be modified to directly support encoding.
+The advantage of encoding is that then <i>any</i> text processing tool
+can process (encoded) filenames.
+But encoding/decoding has higher overhead, creates new issues
+(which characters are encoded? Which encoding system?), and it's more
+work for utilities to implement encoding compared to using
+null byte separators.
+<li>If bad filenames must exist, I think that it'd be best if POSIX added
+support for <i>both</i> null byte termination <i>and</i> encoding.
+Null byte termination could be used for simple common cases
+(using find(1), shell read, grep, storing them in a file, using xargs).
+For more complicated cases, encoding/decoding could be used so that
+the full suite of POSIX tools could be used.
+If the encoder/decoder could also process null byte termination, then it
+could fill the gap when more complex tools are needed.
+A tool like <tt>pax</tt> could be trivially modified to output files with
+null byte terminators; the encoding tool could then transform that
+to nicely encoded filenames with newline terminators.
+<li>If you're going to encode, it's best to encode a large number of
+characters.  This reduces the risk of improperly handling metacharacters,
+and also increases the likelihood that testing will detect when you've
+forgotten to decode an encoded filename.
+</ol>
+<p>
+Some systems, like FreeBSD, have the tools
+<a href="http://www.freebsd.org/cgi/man.cgi?query=vis&apropos=0&sektion=1&manpath=FreeBSD+8.0-RELEASE&format=html">vis(1)</a> and
+<a href="http://www.freebsd.org/cgi/man.cgi?query=unvis&sektion=1&apropos=0&manpath=FreeBSD+8.0-RELEASE">unvis(1)</a>, but vis and unvis
+are terrible tools for this problem:
+<ol>
+<li>
+vis(1) expects filenames on its command line, which it <i>reads</i>.
+That means it doesn't work easily with find(1); you end up with very
+complicated expressions that have to create multiple processes with
+each filename.
+It doesn't even <i>slightly</i> compete with the simpler
+<tt>find . -exec encodef {} \+</tt>
+<!--
+creation of multiple processes for every filename.
+For example, to create a list of newline-terminated encoded filenames,
+you have to do something like:
+<pre>
+  find . -exec ( echo -n {} | vis -w ; printf "\n" ) \;
+</pre>
+-->
+<li>unvis(1)'s decoder doesn't consider the complications of decoding in
+shell.  The shell's command substitution <i>removes</i> all trailing newlines;
+a filename decoder should optionally append some static character so that
+the shell can get the data without corruption.
+</ol>
+
+
+<p>
+<hr>
+<p>
+You might want to look at my
+<a href="http://www.dwheeler.com/secure-programs">Secure Programming HOWTO
+web page</a>, or some of my other writings such as
+<a href="http://www.dwheeler.com/essays/open-standards-security.pdf">
+Open Standards and Security</a>,
+<a href="http://www.dwheeler.com/essays/oss_software_assurance.pdf">
+Open Source Software and Software Assurance (Security)</a>,
+and
+<a href="http://www.dwheeler.com/essays/high-assurance-floss.html">
+High Assurance (for Security or Safety) and Free-Libre / Open Source Software (FLOSS)</a>.
+
+<p>
+You can also view
+<a href="http://www.dwheeler.com">my home page</a>.
+</body>
+</html>
+

@@ -1,0 +1,116 @@
+# Makefile for:
+NAME=encodef
+VERSION=0.2
+
+# This makefile generally follows the GNU coding standards
+# ("info standards") release process.
+# It does use mkdir's "-p"; "-p" is now part of the Single Unix Spec v3,
+# so it should be safe to use.
+
+SHELL=/bin/sh
+INSTALL=install -p
+
+# Set prefix to "/usr" if you want these installed in system locations.
+prefix=/usr/local
+# exec_prefix is not used in this package:
+exec_prefix=$(prefix)
+bindir=$(exec_prefix)/bin
+sbindir=$(exec_prefix)/sbin
+libexecdir=$(exec_prefix)/libexec
+datarootdir=$(prefix)/share
+datadir=$(datarootdir)
+# scriptdir holds the wrapped shell programs (architecture-independent):
+scriptdir=$(datadir)/$(NAME)
+mandir=$(datarootdir)/man
+man1dir=$(mandir)/man1
+# Used when creating RPM files:
+rpmbuilddir=$(HOME)/rpmbuild
+
+# DESTDIR can be set, if desired.
+
+INSTALL_PROGRAM=$(INSTALL)
+INSTALL_DATA=$(INSTALL) -m 644
+MKDIR=mkdir
+MKDIR_P=$(MKDIR) -p
+
+quoted_scriptdir='$(scriptdir)'
+
+all: Makefile encodef encodef.pdf
+
+encodef: encodef.c Makefile
+	gcc -Wall -pedantic encodef.c -o encodef
+
+encodef.pdf: encodef.1 Makefile
+	man -t ./encodef.1 | ps2pdf - - > encodef.pdf
+
+test:
+	./encodef_test
+
+check: test
+
+clean:
+	rm -fr encodef encodef.exe
+
+dist: distribute
+
+distribute: clean
+	chmod -R a+rX *
+	mkdir ,1
+	cp -p [a-zA-Z]* ,1
+	rm -f ,1/*.tar.gz ,1/*.rpm ,1/index.html ,1/config.status ,1/Makefile
+	mv ,1 encodef-$(VERSION)
+	tar cvfz encodef-$(VERSION).tar.gz encodef-$(VERSION)
+	chown --reference=. encodef-$(VERSION).tar.gz
+	rm -fr encodef-$(VERSION)
+
+
+installdirs:
+	$(MKDIR_P) "$(DESTDIR)$(bindir)"
+	$(MKDIR_P) "$(DESTDIR)$(man1dir)"
+	# Check to make sure that key dirs exist (and fail if they don't):
+	test -d "$(DESTDIR)$(bindir)" -a -d "$(DESTDIR)$(man1dir)"
+
+# As required by the GNU coding standards, we install data and programs
+# one per line, and repeat the name of the file being installed, to work
+# around limitations of various old utilities.
+
+# We provide the target "do-install" for "make" implementations that
+# don't correctly handle .PHONY.  The problem is that we (must) have
+# a program named "install", so if make doesn't correctly implement
+# .PHONY, then make will get confused with the command "make install".
+# If you have such a (lousy) make, do "make do-install" instead
+# of "make install".  Or, install GNU make!
+
+do-install: installdirs
+	# Front-end programs, install in bindir:
+	$(INSTALL_PROGRAM) encodef   "$(DESTDIR)$(bindir)/encodef"
+	$(INSTALL_PROGRAM) decodef   "$(DESTDIR)$(bindir)/decodef"
+	$(INSTALL_PROGRAM) xargsf    "$(DESTDIR)$(bindir)/xargsf"
+	# Man pages:
+	-$(INSTALL_DATA)   encodef.1 "$(DESTDIR)$(man1dir)/encodef.1"
+
+install: do-install
+
+# install-strip not implemented
+# install-strip: do-install
+
+uninstall:
+	# Remove front-end programs:
+	rm -f "$(DESTDIR)$(bindir)/encodef"
+	rm -f "$(DESTDIR)$(bindir)/decodef"
+	rm -f "$(DESTDIR)$(bindir)/xargsf"
+	# Remove manual pages:
+	-rm -f "$(DESTDIR)$(man1dir)/encodef.1"
+
+# This works around the expansion done by "make":
+dollar=$
+
+distclean: clean
+
+# This is recommended by the GNU conventions:
+Makefile: configure Makefile.in
+	if [ -x config.status ] ; then ./config.status ; else ./configure ; fi
+
+.PHONY: accept all clean dist distclean do-install install install-strip \
+        tarball test pdf rpm rpmlint print uninstall
+

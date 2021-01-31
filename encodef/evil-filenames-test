@@ -1,0 +1,307 @@
+#!/bin/bash
+
+# evil-filenames-test: Test out handling "evil" filenames in shell.
+
+# This create directory "evil" with evil filenames inside, and then
+# processes them correctly.  Each evil file contains a different number.
+# This leaves the directory "evil" behind, so you can use the
+# files it creates to test your programs.  The code is written so if your
+# system doesn't permit the creation of certain filenames, it'll keep going
+# and test what your system DOES allow.
+
+# Parts are bash-specific, because we want to test some bash extensions.
+# This shell script requires support for $'...', which is widely supported
+# and recently added to POSIX: http://austingroupbugs.net/view.php?id=249
+# It uses some non-standard bash extensions, esp. <(...). Also uses "seq".
+
+set -u  # Turn on warning flag
+IFS="$(printf '\n\t')"
+tab="$(printf '\t')"
+newline="$(printf '\nX')"
+newline="${newline%X}"
+
+PATH="$PATH:$(pwd)/../encodef/:$(pwd)"
+
+### Create directory "evil/" containing evil filenames ###
+
+rm -fr evil/
+mkdir -p evil/
+
+counter=1
+make_evil_file () {
+  # $1 has an evil filename to create.
+  file="$1"
+  if printf '%s\n' "$counter" > evil/"${file}"
+  then
+    printf 'Created #%s "%s"\n' "$counter" "$file"
+    counter=$(($counter + 1))
+  else
+    printf "Failed to create \"$file\"\n" "$file"
+  fi
+}
+
+on_cygwin=0
+backslashes_allowed=1
+if [ -f /usr/bin/cygcheck ] ; then
+  on_cygwin=1
+  backslashes_allowed=0
+fi
+
+make_evil_file 'xyz'
+make_evil_file '.abc'
+# Space character issues:
+make_evil_file 'x y z'
+make_evil_file 'x  y z'
+make_evil_file ' '
+make_evil_file '  '
+make_evil_file 'xyz '
+make_evil_file 'xyz  '
+make_evil_file '  xyz  '
+make_evil_file '. '
+make_evil_file '.. '
+make_evil_file '.a bc'
+# Leading dashes:
+make_evil_file '-'
+make_evil_file '--'
+make_evil_file '-n'
+make_evil_file '--force'
+make_evil_file '-n --force'
+# Punctuation characters:
+make_evil_file '` ! @ # $ % ^ & * ( ) _ - + ~ ='
+make_evil_file '; : < > , . ?'
+make_evil_file '{} [] | " "'
+if [ "$backslashes_allowed" = 1 ] ; then
+  make_evil_file 'not-control-\ty' # Looks like tab, but it's not.
+  make_evil_file "\\"
+  make_evil_file "\\\\"
+  make_evil_file '\n' # Not a newline
+else
+  printf 'Intentionally not making filenames with backslash\n'
+fi
+make_evil_file 'xy[az]'  # Can trigger bracket expansion
+make_evil_file 'x{yz}'  # Can trigger brace expansion
+make_evil_file '(xyz)'  # parens are trouble.
+make_evil_file "'"
+make_evil_file "\""
+make_evil_file '*'
+make_evil_file '~'
+make_evil_file '~root'  # Leading tilde may be expanded
+make_evil_file '!!'  # bang can trigger history expansion
+make_evil_file '!-1'
+# BOM marker in UTF-8 (0xEF, 0xBB, 0xBF), with nothing afterwards:
+make_evil_file $'\xef\xbb\xbf'
+# BOM marker in UTF-8 with normal name after (consider it distinct):
+make_evil_file $'\xef\xbb\xbfxyz'
+# Invalid UTF-8:
+make_evil_file $'\xf0\xa4BAD' # Character U+24B62 => F0 A4 AD A2, cut it off
+make_evil_file $'\xff'
+make_evil_file $'\xff\xff\xff\xff'
+# Modified UTF-8 permits "C0 80" to represent null, but should that
+# be showing up in a filename?  Almost certainly not, but here we test for it:
+make_evil_file $'\xc0\x80'
+# Control characters and DEL:
+make_evil_file $'\001x\001y\001'
+make_evil_file $'\e[5;34;42mIn color\e[0;37;40mNot in color'
+make_evil_file $'\x7f' # DEL char
+make_evil_file $'Q\x7f' # DEL char
+make_evil_file $'\rx\ry\r'
+make_evil_file 'ZZ'
+
+last_counter_without_newline_tab=$(($counter - 1))
+
+# Newline and tab
+make_evil_file $'\nx\ny\n'
+make_evil_file $'\nx\ny\r\n'  # ending \r\n => \n on Cygwin.
+make_evil_file $'x\ny'
+make_evil_file $'\nx\ny\n\n'
+make_evil_file $'\nx\ny\n\r'
+make_evil_file $'\n'
+make_evil_file $'\n\n'
+make_evil_file $'x\ty'
+
+
+last_counter=$(($counter - 1))
+
+
+### Compute correct answers ###
+
+# Create "correct-results" files.
+seq 1 $last_counter > correct-results
+seq 1 $last_counter_without_newline_tab > correct-results-no-nl-tab
+find evil/ -type f -name '.*' ! -name '.' ! -name '..' \
+     -exec cat {} \; | sort -n > correct-hidden-ids
+
+sort correct-hidden-ids > .,x
+sort correct-results    > .,y
+comm -13 .,x .,y | sort -n > correct-results-unhidden
+rm .,x .,y
+
+controlchars="$(printf '*[\001-\037\177]*')"
+find evil/ -type f ! -name "$controlchars" -exec cat {} \; | \
+  sort -n > correct-without-control
+
+
+### Process the evil filenames and check that we get correct results ###
+
+printf '\nNow running tests\n\n'
+testnum=0
+errors=0
+
+start_test () {
+  testnum=$(($testnum + 1))
+  printf 'TEST #%s: %s\n' "$testnum" "$1"
+}
+
+compare () {
+  correct_results="../$1"
+  actual_results="../actual_dir/results$testnum"
+  mkdir -p ../actual_dir
+  mv ../results "$actual_results"
+  if ! cmp "$correct_results" "$actual_results" ; then
+    printf "Errors found in $actual_results, as follows:\n":
+    diff -u "$correct_results" "$actual_results"
+    errors=$(($errors + 1))
+  fi 
+}
+
+cygwin_warning () {
+  if [ $on_cygwin = 1 ] ; then
+    printf 'WARNING: Expected failure, ending \\r\\n mapped to \\n\n'
+    errors=$(($errors - 1))
+  fi
+}
+
+# Move into "evil/" subdirectory to show we can handle initial "-".
+cd evil/
+
+start_test 'Correct portable glob use: "for" loop, prefix glob, check for existence'
+for file in ./* ; do
+  if [ -e "$file" ] ; then
+    cat "$file"
+  fi
+done | sort -n > ../results
+compare correct-results-unhidden
+
+start_test 'Correct portable glob use, including hidden files (beginning with ".")'
+for file in ./* ./.[!.]* ./..?* ; do
+  if [ -e "$file" ] ; then
+    cat "$file"
+  fi
+done | sort -n > ../results
+compare correct-results
+
+start_test 'Correct glob use, simpler but requires nonstandard bash extension nullglob'
+( shopt -s nullglob
+  for file in ./* ; do
+    cat "$file"
+  done ) | sort -n > ../results
+compare correct-results-unhidden
+
+start_test 'Simple find -exec; can be unwieldy if COMMAND is large'
+find . -type f -exec cat {} \; | sort -n > ../results
+compare correct-results
+
+start_test 'Simple find -exec with +, faster if multiple files are okay for COMMAND'
+find . -type f -exec cat {} "+" | sort -n > ../results
+compare correct-results
+
+printf 'Skip okay if pathnames cannot contain tabs or newlines - they do!\n'
+
+start_test 'Use find and xargs with \0 separators (nonstandard but common extensions)'
+( find . -type f -print0 | xargs -0 cat ) | sort -n > ../results
+compare correct-results
+
+start_test 'Head-busting, but it works.'
+find . -type f -exec sh -c '
+ for file do
+    cat "$file"
+ done' sh {} + | sort -n > ../results
+compare correct-results
+
+# Skip "okay if cannot contain tabs|newlines"
+
+start_test 'Skip pathnames with embedded control chars, including newline and tab'
+IFS="$(printf '\n\t')"
+controlchars="$(printf '*[\001-\037\177]*')"
+(
+  set -f  # Needed for filenames with *, etc.
+  for file in $(find . -type f ! -name "$controlchars") ; do
+    cat "$file"
+  done ) | sort -n > ../results
+compare correct-without-control
+
+
+start_test 'find... while loop, requires find and shell extensions'
+cygwin_warning
+# variables might not stay set once the loop ends:
+(
+  # FAILS: find . -type f -print0 | while read -d "" file ; do
+  # FAILS: find . -type f -print0 | while read -r -d "" file ; do
+  # WORKS?: find . -type f -print0 | while IFS="" read -d "" file ; do
+  find . -type f -print0 | while IFS="" read -r -d "" file ; do
+    cat "$file"
+  done ) | sort -n > ../results
+compare correct-results
+
+
+start_test 'find... while loop, nonstandard process redir, read, find -print0'
+cygwin_warning
+while IFS="" read -r -d "" file <&4 ; do
+   cat "$file"
+done 4< <(find . -type f -print0) | sort -n > ../results
+compare correct-results
+
+
+start_test 'find... while loop, named pipe version'
+cygwin_warning
+mkfifo mypipe
+find . -type f -print0 > mypipe &
+while IFS="" read -r -d "" file <&4 ; do
+  cat "$file"
+done 4< mypipe | sort -n > ../results
+compare correct-results
+
+# Only use encodef if we have it.  The || is to deal with Cygwin weirdness;
+# Cygwin auto-execs "file.exe" as file, but "which" won't find it.
+if which encodef || which encodef.exe ; then
+  start_test 'Use the author'\''s encodef program.'
+  # This version is portable across POSIX; in practice
+  # you can often use "-print0" instead of "-exec printf '%s\0' {} \;"
+  for encoded_pathname in $(find . -type f -exec printf '%s\0' {} \; | \
+                            encodef ) ; do
+    file="$(encodef -d -Y -- "$encoded_pathname")" ; file="${file%Y}"
+    cat "$file"
+  done | sort -n > ../results
+  compare correct-results
+fi
+
+start_test 'Make filename list in variable (omit tab|newline names)'
+# Put tab-separated list of files in $filelist
+filelist=""
+newline_tab_pattern="$(printf '*[\n\t]*')"
+# Requires nonstandard extensions to find and to shell (bash works);
+# we do this so that $filelist will exist when the loop ends.
+while IFS="" read -r -d "" file <&4 ; do
+  if [ -z "$filelist" ] ; then
+    filelist="${file}"
+  else
+    filelist="${filelist}${tab}${file}"
+  fi
+done 4< <(find . -type f ! -name "$newline_tab_pattern" -print0)
+printf '\n'
+# Execute using $filelist; we must "set -f" to do this.
+oldSetOptions=$(set +o)             # Backup option settings
+set -f
+cat $filelist | sort -n > ../results
+eval "$oldSetOptions" 2> /dev/null  # Restore option settings
+compare correct-results-no-nl-tab
+
+
+if [ $errors = 0 ] ; then
+  printf 'No errors found. Done.\n'
+  exit 0
+else
+  printf 'Errors found.\n'
+  exit 1
+fi
+

@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# Uses bash's $'...'
+
+echo "Rebuilding just in case..."
+make
+
+echo "Running encodef_test!"
+
+
+runtest() {
+ # Report if a test succeeded or failed.
+ # $1 = name of test
+ # $2 = actual result
+ # $3 = expected result
+ if [ "$2" = "$3" ] ; then
+   echo "SUCCESS for test $1"
+ else
+   echo "FAILURE for test $1"
+   echo "ACTUAL result:"
+   printf '%s' "$2" | od -c
+   echo "EXPECTED result:"
+   printf '%s' "$3" | od -c
+   exit 1
+ fi
+}
+
+# By resetting the PATH, we *ensure* that we're running the newly-compiled
+# program being tested, and not an installed version if any.
+# For extra credit, we'll set "F" to invoke the current directory's version:
+PATH=".:$PATH"
+F=./encodef
+
+# Simple encoding in pfb format ("extra 0")
+# Encoding from stdin
+runtest 1e "$(echo -n 'abc' | "$F" -b)" 'abc'
+runtest 2e "$(echo -n $'abc\ndef\n' | "$F" -b)" 'abc\ndef\n'
+runtest 3e "$(echo -n $'/a/b c' | "$F" -b)" '/a/b\040c'
+
+# Encoding from command line
+runtest 4e "$("$F" -b -- $'/a/b c')" '/a/b\040c'
+runtest 5e "$("$F" -b -- $'/a/b-c')" '/a/b-c'
+runtest 6e "$("$F" -b -- $'/a/-c')" '/a/\055c'
+runtest 7e "$("$F" -b -- $'/a/\001x')" '/a/\001x'
+runtest 8e "$("$F" -b -- $'/a/\0015')" '/a/\00015'
+
+# Decoding pfb
+runtest 10e "$("$F" -b -d -- $'/a/c\\0040d')" '/a/c d'
+
+# Simple encoding in URL %xx (percent) format
+runtest 1U "$(echo -n 'abc' | "$F" -U)" 'abc'
+runtest 2U "$(echo -n $'abc\ndef\n' | "$F" -U)" 'abc%0adef%0a'
+runtest 3U "$(echo -n $'/a/b c' | "$F" -U)" '/a/b%20c'
+
+runtest 4U "$("$F" -U -- $'/a/b c')" '/a/b%20c'
+runtest 5U "$("$F" -U -- $'/a/b-c')" '/a/b-c'
+runtest 6U "$("$F" -U -- $'/a/-c')" '/a/%2dc'
+runtest 7U "$("$F" -U -- $'/a/\001x')" '/a/%01x'
+runtest 8U "$("$F" -U -- $'/a/\0015')" '/a/%015'
+
+# Simple decoding of %xx (percent) format
+
+runtest 1Ud "$(echo -n 'abc' | "$F" -Ud)" 'abc'
+runtest 2Ud "$(echo -n 'abc%20def' | "$F" -Ud)" 'abc def'
+runtest 3Ud "$(echo -n 'abc%' | "$F" -Ud)" 'abc%'
+runtest 4Ud "$(echo -n 'abc%2' | "$F" -Ud)" 'abc%2'
+runtest 5Ud "$(echo -n 'abc%xx' | "$F" -Ud)" 'abc%xx'
+
+
+# Simple encoding in backslash format
+runtest 1B "$("$F" -B -- $'a\tb')" 'a\tb'
+runtest 2B "$("$F" -B -- $'a\001b')" 'a\01b'
+runtest 3B "$("$F" -B -- $'a\0012')" 'a\0012'
+
+# Simple decoding in backslash format
+runtest 4B "$("$F" -d -B -- 'a\0012')" $'a\0012'
+

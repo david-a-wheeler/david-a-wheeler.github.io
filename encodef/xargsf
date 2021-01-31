@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# This is a lame prototype to try out extensions to "xargs", without
+# actually modifying "xargs".  It requires that the underlying xargs
+# have a "-0" option, which is usually true.
+
+# Its argument format is:
+# xargsf DECODEF_OPTIONS ...xargs arguments...
+# A *real* implementation would let you mix the options together, but
+# this is enough to do some experiments.
+
+# Example usage:
+# echo 'Makefile' | ./xargsf -p ls -l 
+
+decodef_options="$1"
+shift
+
+decodef "$decodef_options" | xargs -0 "$@"
+
+
