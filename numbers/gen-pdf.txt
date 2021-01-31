@@ -1,0 +1,71 @@
+I've tried a number of different ways to generate PDFs.
+
+The simplest - use OpenOffice.org 2.
+
+Choose File/Export as PDF, check filename and then select "Save", then:
+Range: All pages
+Images: Lossless
+General: Tagged PDF, export notes, use transition effects
+
+Select "Okay".  This generates the file as
+(1) the slides, then (2) the annotated slides.
+Easy to handle, that's for sure... only one file, which makes my life easier.
+People can then print the range they want.
+
+Don't turn on "Tagged PDF".  It has some nice extras, but the
+file balloons to 3.5M in size, as opposed to 475K. Not worth it.
+
+====================
+Here are some other experiments I tried.
+
+
+First, installation (only need to do once):
+* On Windows, install Adobe Distiller.
+* Go to control panel, add printer "HP Color LaserJet 5/5M PS"
+  as "print to file".
+* In Distiller, create "Standard(1)" that generates Acrobat 3.0 (PDF 1.2).
+
+To do the conversion:
+* From OpenOffice.org, set the print dialogue correctly.
+  - For slides, under options set "fit to page" (else the slides
+    won't be centered on the page) and output "Drawings".
+    Be sure to set paper orientation to "landscape"
+  - For annotated slides, under options deselect "Drawings"
+    and select "Notes".  Be sure to set paper orientation to "portrait".
+* Print to the "LaserJet" file to create Postscript
+* Use the distiller to convert PS to PDF.
+* Use Acrobat 6 to reduce filesize, for Acrobat 4.
+It isn't quite centered, and some fonts get translated,
+but it seems to work everywhere.
+
+
+ALTERNATIVES THAT DON'T WORK:
+
+OpenOffice 1 can generate PDF using their built-in PDF generator.
+That seems to be portable, but the generated fonts look ugly on-screen.
+They probably print nicely, but since presentations may be viewed on
+screen that's not okay.
+
+OpenOffice 2 generates beautiful PDFs (with correct marketshare),
+but hits lots of viewer bugs.  For example,
+evince on Fedora Core 4 crashes on it.  Acrobat 6 can't read it,
+incorrectly saying its start is wrong.
+
+Distiller, invoked directly for OOo, hits a bug on the slide with
+browser marketplace share -- the slide is mostly erased,
+instead of the graphic.
+
+Issue: I did the whole process, printing to
+"HP Color LaserJet 5/5M PS", use Distiller, then used Acrobat 6 to
+reduce filesize (to different file).
+After reducing filesize, Adobe Acrobat couldn't view, saying:
+    File does not begin with '%PDF-'
+Oddly enough, the file DOES begin with "%PDF-"; I'm guessing there's
+a problem with something embedded in it.  The graphics for the marketplace
+display unacceptably slowly on Fedora Core 3's ggv
+(over a minute before the first lines of the image show).
+Will NOT compressing the file further help?
+(One place claimed this was from overlong names, but it's
+not >128 chars!).  Googling for bug reports suggests it's a
+"long filename" problem, but even tiny filenames (q.pdf) don't work.
+
