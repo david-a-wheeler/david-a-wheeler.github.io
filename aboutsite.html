@@ -184,7 +184,7 @@ its Wayback Machine)</a> is probably a good place to start.
 
 <h1>HTTPS and other security headings</h1>
 <p>
-This site supports HTTPS.
+This site uses HTTPS.
 This has three advantages: (1) privacy for users (others will not know
 which pages are being viewed on this site),
 (2) authentication that they're really seeing my site (and not someone else's),
@@ -196,37 +196,16 @@ told it's a permanent reroute, and are also told to use HTTPS for future
 connections to this site
 (using HTTP Strict Transport Security, aka HSTS).
 <p>
-I previously planned to do this when
+This site is currently hosted by GitHub and uses certificates from
 <a href="https://www.eff.org/deeplinks/2014/11/certificate-authority-encrypt-ent
-ire-web">Let&#8217;s encrypt</a> became operational, but various
-challenges interfered with using them in my case,
-so I bought a separate TLS certificate.
-It's still a win for Let&#8217;s encrypt, because separately-purchased
-TLS certificates have generally gotten cheaper due to competition.
+ire-web">Let&#8217;s encrypt</a>.
 <p>
-The TLS setup isn't ideal, in particular, it does not support
-some of the latest protocols protocols and crypto algorithms, and
-in some cases allows older ones.
-<!-- https://www.ssllabs.com/ssltest/analyze.html?d=www.dwheeler.com -->
-I can't fix that without changing my hosting service (at a significantly
-higher price).
-Many attacks don't really work directly against this site,
-because it's a bunch of static pages, so it's not as bad as it might appear.
-<p>
-Similarly, I don't have a CAA record (yet), because namecheap
+I'm not made of money, so I've intentionally chosen
+inexpensive solutions.
+I don't have a CAA record (yet), because namecheap
 (my DNS provider) doesn't support them yet.
-<p>
-The real issue is that I'm not made of money,
-and this is what's available on the inexpensive hosting service I use.
-Even paying for a separate cert is cheaper than some alternatives I've seen,
-especially since the site isn't squelched or charged extra when it's busy.
-If someone wants to pay for my hosting costs, I would like to hear from them.
-<p>
-I have
-<a href="https://securityheaders.io/?q=dwheeler.com&amp;followRedirects=on">enabled many HTTP security headings</a>,
-I'm intentionally avoiding HTTP Public Key Pinning (HPKP), because
-that makes it harder to switch CAs and honest mistakes can sometimes render
-your site useless.
+That said, this is a bunch of static pages, so many issues don't
+apply in this case.
 
 <h1>Why was there a "www"?</h1>
 <p>
@@ -239,12 +218,14 @@ I was fine with that setup, but then Chrome started falsifying
 URLs by omitting the www.
 Since many people use Chrome, I decided to drop the www so that Chrome users
 would see the correct domain name.
-I forward the older www.dwheeler.com URLs to the new canonical name.
-I have changed many links so that they use dwheeler.com instead of
-www.dwheeler.com, but I have not spent the effort to be thorough about it.
-No doubt you'll see lots of references to the older domain name both
-here and elsewhere; since forwarding works fine, I don't think it's
-a big deal.
+<p>
+For a while I've forwarded all www.dwheeler.com to dwheeler.com, and
+Google knew to do that automatically.
+I still forward www.dwheeler.com to dwheeler.com
+if the original uses http (not https).
+Unfortunately I no longer redirect www.dwheeler.com to dwheeler.com if
+the original is https, because GitHub doesn't support that.
+If there's still a link on my site to www.dwheeler.com, please let me know.
 
 <!--
 I've decided, as
@@ -287,9 +268,11 @@ On 2014-08-24:
 www.dwheeler.com.       1023    IN      A       208.86.184.80
 -->
 <a href="http://www.findownersearch.com/web-intellects-3916762-brand.html">Web intellects appears to be owned by Jumpline</a>.
+Unfortunately, in 2020 they started being unreliable and then they
+ignored all ticket requests.
+So in 2021 I hurriedly switched to hosting via GitHub.
 <a href="http://www.web-hosting-top.com/">Who knows, I may need
 to move again in the future</a>.
-
 
 <p>
 I was able to easily switch between these different
