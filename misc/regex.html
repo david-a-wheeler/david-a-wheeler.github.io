@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Regular Expression (regex aka RE) Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Demonstrate regular expression (aka regex or RE) notation using javascript">
+<meta name="keywords" content="regular expression, regular expressions, regex, RE, demo, security, filter, javascript">
+<meta name="generator" content="vim">
+<link rel="stylesheet" type="text/css" href="paper.css">
+<style type="text/css">
+.success { font-size: 20px; font-weight: bold; color: green; }
+.fail    { font-size: 20px; font-weight: bold; color: red; }
+</style>
+<script language="javascript">
+<!--
+function calcMatch() {
+  try {
+    var re = new RegExp(document.doMatch.pattern.value);
+    if (document.doMatch.data.value.match(re)) {
+      document.getElementById('result').innerHTML = '<span class="success">MATCHES</span>';
+    } else {
+      document.getElementById('result').innerHTML = '<span class="fail">DOES NOT MATCH</span>';
+    }
+  }
+  catch(e) {
+    // alert(e);
+    document.getElementById('result').innerHTML = '<span class="fail">Invalid pattern</span>';
+  }
+}
+
+// Force recalc on load.
+window.onload = calcMatch;
+
+function newcommon() {
+  var cm = document.getElementById('commonmenu')
+  var chosenoption = cm.options[cm.selectedIndex]
+  document.getElementById('pattern').value = chosenoption.value
+  calcMatch()
+}
+
+function newpattern() {
+  calcMatch()
+  document.getElementById('commonmenu').selectedIndex = 0
+}
+
+// -->
+</script>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="title">Regular Expression (regex aka RE) Demo</h1>
+<p>
+Please enter your pattern (as a regular expression) and data;
+this program will show below if the data matches the pattern.
+You can select a common pattern to get started.
+</p>
+
+<form id="doMatch" name="doMatch" method=post action="javascript:void(0)"
+<p>Common pattern:
+<select id="commonmenu" onchange="newcommon()" onmouseup="newcommon()">
+<option value="" selected="selected">Choose a common pattern</option>
+<option value="^[A-Za-z]{2,4} [0-9]{1,4}$">Class id</option>
+<option value="^[A-Za-z][A-Za-z0-9_]*$">Variable name</option>
+<option value="^[A-Za-z]([-A-Za-z']*[A-Za-z])?$">Last name (no accents)</option>
+<option value="^(0|[1-9][0-9]*)$">Non-negative integer</option>
+<option value="^0|[1-9][0-9]*$">BAD Non-negative integer</option>
+<option value="^[0-9]{3}-[0-9]{2}-[0-9]{4}$">SSN</option>
+<option value="^[1-9][0-9]{0,2}$">Numbers 1-999</option>
+<option value="^[1-9][0-9]{3}-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[0-1])$">YYYY-MM-DD Date (picky)</option>
+<option value="^\([2-9][0-9]{2}\) [1-9][0-9]{2}-[0-9]{4}$">U.S. Phone number (xxx) yyy-zzzz</option>
+<option value="^(O-O(-O)?|[NBRQK][a-h]?[1-8]?x?[a-h][1-8])[+#]?[!?]?[!?]?$">Chess piece (not pawn) move, SAN notation</option>
+<option value="^([2-9]|10|J(ack)?|Q(ueen)?|K(ing)?|A(ce)?) *(of *)?(S(pades?)?|H(earts?)?|D(iamonds?)?|C(lubs?)?)$">Playing card</option>
+<option value="^.*$">Anything allowed (bad filter!)</option>
+</select>
+
+
+</p>
+<p>Pattern: <input type=text id="pattern"
+value="^[A-Za-z]{2,4} [0-9]{1,4}$"
+size=70 onchange="newpattern()" onkeyup="newpattern()">
+</p>
+<p>Data: <input type=text id="data" 
+   value="SWE 781" size=60 onchange="calcMatch()" onkeyup="calcMatch()">
+</p>
+<br />
+<br />
+<p id="result">
+You need to enable Javascript for this to work.
+</p>
+<p></p>
+</form>
+
+<br />
+<br />
+<p>
+Some
+<a href="http://www.w3schools.com/jsref/jsref_obj_regexp.asp">
+key parts of the regex language</a>:
+</p>
+<ol>
+<li>Letters and digits stand for themselves,
+a &#8220;.&#8221; matches any one character
+(except newline or carriage return),
+&#8220;[...]&#8221; lists a set of acceptable
+characters (these are all <i>atoms</i>).
+<li>
+An atom may be followed by a duplication marker, creating a <i>piece</i>:
+&#8220;*&#8221; means match 0 or more of the previous atom,
+&#8220;+&#8221; means match 1 or more of the previous atom,
+&#8220;?&#8221; means the previous atom is optional,
+&#8220;{n,m}&#8221; means n through m of the previous atom.
+<li>
+&#8220;(...)&#8221; groups a sequence of pieces into one atom.
+<li>
+&#8220;|&#8221; separates alternative sequences of pieces.
+</ol>
+<p>
+When using regular expressions as a filter, be sure that it begins with ^
+(match data beginning) and ends with $ (match data ending).
+Beware: the | has lower precedence.
+</p>
+<p>
+<a href="https://regexper.com/">Regexper.com</a> provides a delightful
+visualization of regular expressions.
+</p>
+<p>
+You can get a
+<a href="regex.c.txt">similar text-based C program regex.c</a>
+if you want to try out
+POSIX EREs instead of Javascript regular expressions
+(they have much in common but are not identical).
+</p>
+<p>
+(C) Copyright 2012 <a href="http://www.dwheeler.com">David A. Wheeler</a>.
+
+</body>
+</html>
+
