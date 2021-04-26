@@ -1,0 +1,124 @@
+# Ensure file extensions map to correct MIME types
+AddType video/webm .webm
+AddType audio/webm .weba
+AddType image/svg+xml svg svgz
+AddType application/rss+xml .rss
+AddType image/vnd.microsoft.icon .ico
+AddType application/x-font-opentype .otf
+AddEncoding gzip svgz
+
+# Performance improvments
+# Test with: https://www.webpagetest.org/
+
+# Tell browser to cache the results.  This delays the view of changes
+# until they age out, but speeds typical diplay.
+# https://www.webpagetest.org wants this set for 30 days, and will warn
+# if it's an hour+ and less than 30 days.  However, that is too much time
+# for people to not notice changes, so I set it shorter intentionally.
+# Header always set Cache-Control "max-age=3600"
+Header always set Cache-Control "max-age=600"
+
+# Sadly, this isn't supported.
+# I set it longer for images, they're less likely to change.
+# ExpiresActive On
+# ExpiresDefault 60
+# ExpiresByType image/gif 3600
+# ExpiresByType image/png 3600
+# ExpiresByType image/jpeg 3600
+# ExpiresByType image/vnd.microsoft.icon 3600
+
+# Compress many (uncompressed) formats, to minimize network bandwidth
+# https://www.fastly.com/blog/new-gzip-settings-and-deciding-what-compress
+AddOutputFilterByType DEFLATE text/html application/x-javascript text/css application/javascript text/javascript text/plain text/xml application/json application/vnd.ms-fontobject application/x-font-opentype application/x-font-truetype application/x-font-ttf application/xml font/eot font/opentype font/otf image/svg+xml image/vnd.microsoft.icon
+
+# Redirect certain URLs, esp. http: to https:
+# http://www.rationalplanet.com/2009/04/non-www-to-www-redirect-on-plesk-hosting/
+RewriteEngine on
+ 
+# FORMER SETTING: Force use of "www."
+# RewriteCond %{HTTP_HOST} ^dwheeler\.com
+# RewriteRule ^(.*)$ https://www.dwheeler.com/$1 [L,R=301]
+
+# Force use of HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://dwheeler.com/$1 [L,R=301]
+
+# CURRENT SETTING: Force NON-use of "www."
+RewriteCond %{HTTP_HOST} ^www\.dwheeler\.com
+RewriteRule ^(.*)$ https://dwheeler.com/$1 [L,R=301]
+
+# Force HTTPS in the future for whole site. For 1 year, use "max-age=31536000"
+# This is known as HTTP Strict Transport Security, or HSTS.
+Header set Strict-Transport-Security "max-age=31536000; includeSubdomains;" env=HTTPS
+
+# If view clicks on an HTTP link, don't send the referer information
+# to the destination (that would leak exactly the page the user was looking
+# at to people who can read unencrypted traffic).  See:
+# https://scotthelme.co.uk/a-new-security-header-referrer-policy/
+Header set Referrer-Policy "no-referrer-when-downgrade"
+
+# Security hardening
+
+# Protect against (some) clickjacking attacks
+Header always set X-Frame-Options "SAMEORIGIN"
+
+# Enable reflective XSS protection.  This is pointless right now, since
+# it's a static site, but in case I change it later it's already prepositioned.
+Header always set X-Xss-Protection "1; mode=block"
+
+# Don't let Chrome and IE guess the content type - we will tell them the type!
+Header always set X-Content-Type-Options "nosniff"
+
+# CSP.  This is pointless now, but it might become useful.
+# This doesn't restrict much; perhaps restrict more later.
+Header always set Content-Security-Policy "default-src https: data: 'unsafe-inline'"
+# Header always set Content-Security-Policy "default-src https: data: 'unsafe-inline' 'unsafe-eval'"
+
+# CORS.  We could be more permissive to allow any client-side JavaScript
+# to get more from this website.  However, I don't see any users,
+# so I've disabled this for now.
+# Header always set Access-Control-Allow-Origin "*"
+# Header always set Access-Control-Allow-Methods "OPTIONS, GET, HEAD"
+# Ensure that Access-Control-Allow-Credentials is false.
+# Header always set Access-Control-Allow-Credentials "false"
+
+# I intentionally do *not* use HTTP Public Key Pinning - it locks me
+# into a specific CA provider, and is easily misconfigured into disaster.
+
+# Disable directory-listing, in case we accidentally include something
+Options -Indexes
+
+
+# Disable old SSLv2/SSLv3 protocols.
+# Unfortunately this isn't honored in .htaccess.
+# SSLv2 is vulnerable to DROWN attack
+# https://blog.qualys.com/securitylabs/2016/03/04/ssl-labs-drown-test-implementation-details
+# SSLv3 is vulnerable to POODL attack
+# https://blog.qualys.com/ssllabs/2014/10/15/ssl-3-is-dead-killed-by-the-poodle-attack
+# SSLEngine On
+# SSLProtocol all -SSLv2 -SSLv3
+
+# Prefer better better crypto algorithms. See:
+# https://weakdh.org/sysadmin.html
+# SSLCipherSuite          ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA
+# SSLHonorCipherOrder     on
+
+
+# Harden: Make certain unexpected URLs auto-error
+# ErrorDocument 403 /403.html
+
+SetEnvIf Request_URI "'" bad_bot=1
+SetEnvIf Request_URI '"' bad_bot=1
+SetEnvIf Request_URI '`' bad_bot=1
+SetEnvIf Request_URI '%22' bad_bot=1
+SetEnvIf Request_URI '%27' bad_bot=1
+SetEnvIf Request_URI '%60' bad_bot=1
+
+<limit HEAD GET POST>
+  Order Allow,Deny
+  Allow from all
+  Deny from env=bad_bot
+</limit>
+
+# Eventually be more specific:
+Options -ExecCGI
