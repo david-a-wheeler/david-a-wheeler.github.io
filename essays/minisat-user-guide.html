@@ -63,18 +63,23 @@ by Russel and Norvig, 1995).
 <p>
 MiniSAT, like most SAT solvers, accepts its input in a simplified
 "DIMACS CNF" format, which is a simple text format.
-Every line beginning "c" is a comment.
+It's a mostly-line-oriented format.
+Any line beginning with "c" is a comment.
 The first non-comment line must be of the form:
 <pre>
  p cnf NUMBER_OF_VARIABLES NUMBER_OF_CLAUSES
 </pre>
 <p>
-Each of the non-comment lines afterwards defines a clause.
-Each of these lines is a space-separated list of variables;
+After that, non-comment lines define clauses.
+Each clause is a space-separated list of 1-based variable indices;
 a positive value means that corresponding variable
 (so 4 means x4), and a negative value means the negation of that variable
 (so -5 means -x5).
-Each line must end in a space and the number 0.
+Clauses can extend beyond a single line; clauses are terminated
+by a final value of "0"
+The file ends when the last clause terminates.
+See <a href="https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html"
+>CNF files</a> for more information.
 <p>
 So the CNF expression above would be written as:
 <pre>
