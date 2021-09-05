@@ -1,0 +1,270 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Program Library HOWTO</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="NEXT"
+TITLE="Static Libraries"
+HREF="x26.html"></HEAD
+><BODY
+CLASS="ARTICLE"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="ARTICLE"
+><DIV
+CLASS="TITLEPAGE"
+><H1
+CLASS="TITLE"
+><A
+NAME="AEN2"
+>Program Library HOWTO</A
+></H1
+><DIV
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="50%"
+CELLSPACING="0"
+CELLPADDING="0"
+ALIGN="CENTER"
+><TR
+><TD
+VALIGN="TOP"
+><B
+>Abstract</B
+></TD
+></TR
+><TR
+><TD
+VALIGN="TOP"
+><P
+>This HOWTO for programmers
+discusses how to create and use program libraries on Linux.
+This includes static libraries, shared libraries, and
+dynamically loaded libraries.</P
+></TD
+></TR
+></TABLE
+></DIV
+><HR
+WIDTH="75%"
+ALIGN="CENTER"
+COLOR="#000000"
+SIZE="1"></DIV
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+><A
+HREF="t1.html#INTRODUCTION"
+>Introduction</A
+></DT
+><DT
+><A
+HREF="x26.html"
+>Static Libraries</A
+></DT
+><DT
+><A
+HREF="x36.html"
+>Shared Libraries</A
+></DT
+><DT
+><A
+HREF="x172.html"
+>Dynamically Loaded (DL) Libraries</A
+></DT
+><DT
+><A
+HREF="x216.html"
+>Miscellaneous</A
+></DT
+><DT
+><A
+HREF="x293.html"
+>More Examples</A
+></DT
+><DT
+><A
+HREF="x324.html"
+>Other Information Sources</A
+></DT
+><DT
+><A
+HREF="x345.html"
+>Copyright and License</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="INTRODUCTION"
+>Introduction</A
+></H1
+><P
+>This HOWTO for programmers
+discusses how to create and use program libraries on Linux
+using the GNU toolset.
+A ``program library'' is simply a file containing compiled code (and data)
+that is to be incorporated later into a program;
+program libraries allow programs to be more modular, faster to recompile,
+and easier to update.
+Program libraries can be divided into three types:
+static libraries, shared libraries, and
+dynamically loaded (DL) libraries.</P
+><P
+>This paper first discusses static libraries, which are installed
+into a program executable before the program can be run.
+It then discusses shared libraries, which are loaded at program
+start-up and shared between programs.
+Finally, it discusses dynamically loaded (DL) libraries, which can
+be loaded and used at any time while a program is running.
+DL libraries aren't really a different kind of library format
+(both static and shared libraries can be used as DL libraries);
+instead, the difference is in how DL libraries are used by programmers.
+The HOWTO wraps up with a section with more examples and a section
+with references to other sources of information.</P
+><P
+>Most developers who are developing libraries should create shared libraries,
+since these allow users to update their libraries separately from the
+applications that use the libraries.
+Dynamically loaded (DL) libraries are useful, but they require a little more
+work to use and many programs don't need the flexibility they offer.
+Conversely, static libraries make upgrading libraries far more troublesome,
+so for general-purpose use they're hard to recommend.
+Still, each have their advantages, and the advantages of each type
+are described in the section discussing that type.
+Developers using C++ and dynamically loaded (DL) libraries should also
+consult the ``C++ dlopen mini-HOWTO''.</P
+><P
+>It's worth noting that some people use the term
+dynamically <I
+CLASS="EMPHASIS"
+>linked</I
+> libraries (DLLs)
+to refer to shared libraries,
+some use the term DLL to mean any library that is used
+as a DL library, and some
+use the term DLL to mean a library meeting either condition.
+No matter which meaning you pick, this HOWTO covers DLLs on Linux.</P
+><P
+>This HOWTO discusses only the Executable and Linking Format
+(ELF) format for executables and libraries, the format
+used by nearly all Linux distributions today.
+The GNU gcc toolset can actually handle library formats other than ELF;
+in particular, most Linux distributions can still
+use the obsolete a.out format.
+However, these formats are outside the scope of this paper.</P
+><P
+>If you're building an application that should port to many systems,
+you might consider using
+<A
+HREF="http://www.gnu.org/software/libtool/libtool.html"
+TARGET="_top"
+>GNU libtool</A
+>
+to build and install libraries instead of using the Linux tools directly.
+GNU libtool is a generic library support script that
+hides the complexity of using shared libraries
+(e.g., creating and installing them) behind a consistent, portable interface.
+On Linux, GNU libtool is built on top of the tools and conventions
+described in this HOWTO.
+For a portable interface to dynamically loaded libraries,
+you can use various portability wrappers.
+GNU libtool includes such a wrapper, called ``libltdl''.
+Alternatively, you could use the glib library (not to be confused
+with glibc) with its portable support for Dynamic Loading of Modules.
+You can learn more about glib's dynamic loading of modules at
+<A
+HREF="http://library.gnome.org/devel/glib/stable/glib-Dynamic-Loading-of-Modules.html"
+TARGET="_top"
+>http://library.gnome.org/devel/glib/stable/glib-Dynamic-Loading-of-Modules.html</A
+>.
+Again, on Linux this functionality is implemented using the constructs
+described in this HOWTO.
+If you're actually developing or debugging the code on Linux,
+you'll probably still want the information in this HOWTO.</P
+><P
+>This HOWTO's master location is
+<A
+HREF="http://www.dwheeler.com/program-library/"
+TARGET="_top"
+>http://www.dwheeler.com/program-library/</A
+>, and it has been
+contributed to the Linux Documentation Project
+(<A
+HREF="http://www.linuxdoc.org"
+TARGET="_top"
+>http://www.linuxdoc.org</A
+>).
+It is Copyright (C) 2000 David A. Wheeler and is licensed through the
+General Public License (GPL); see the last section for more information.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x26.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Static Libraries</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,673 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Miscellaneous</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Program Library HOWTO"
+HREF="t1.html"><LINK
+REL="PREVIOUS"
+TITLE="Dynamically Loaded (DL) Libraries"
+HREF="x172.html"><LINK
+REL="NEXT"
+TITLE="More Examples"
+HREF="x293.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Program Library HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x172.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x293.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="MISCELLANEOUS"
+>Miscellaneous</A
+></H1
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="NM"
+>nm command</A
+></H2
+><P
+>The nm(1) command can report the list of
+symbols in a given library.
+It works on both static and shared libraries. 
+For a given library nm(1) can list the symbol names defined, each
+symbol's value, and the symbol's type.
+It can also identify where the symbol was defined in the source code
+(by filename and line number), if that information is available in
+the library (see the -l option).</P
+><P
+>The symbol type requires a little more explanation.
+The type is displayed as a letter; lowercase means that the symbol is
+local, while uppercase means that the symbol is global (external).
+Typical symbol types include
+T (a normal definition in the code section),
+D (initialized data section),
+B (uninitialized data section),
+U (undefined; the symbol is used by the library
+  but not defined by the library), and
+W (weak; if another library also defines this symbol, that definition
+   overrides this one).</P
+><P
+>If you know the name of a function, but
+you truly can't remember what library it was defined in, you can use
+nm's ``-o'' option (which prefixes the filename in each line) along
+with grep to find the library name.  From a Bourne shell, you
+can search all the libraries in /lib, /usr/lib, direct subdirectories of
+/usr/lib, and /usr/local/lib for ``cos'' as follows:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>nm -o /lib/* /usr/lib/* /usr/lib/*/* \
+      /usr/local/lib/* 2&#62; /dev/null | grep 'cos$' </PRE
+></TD
+></TR
+></TABLE
+></P
+><P
+>Much more information about nm can be found in the nm ``info''
+documentation locally installed at
+<A
+HREF="info:binutils#nm"
+TARGET="_top"
+>info:binutils#nm</A
+>.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="INIT-AND-CLEANUP"
+>Library constructor and destructor functions</A
+></H2
+><P
+>Libraries should export initialization and cleanup routines using the
+gcc __attribute__((constructor)) and __attribute__((destructor)) function
+attributes.  See the gcc info pages for information on these.
+Constructor routines are executed before dlopen returns
+(or before main() is started if the library is loaded at load time).
+Destructor routines are executed before dlclose returns
+(or after exit() or completion of main() if the library is loaded at load time).
+The C prototypes for these functions are:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>  void __attribute__ ((constructor)) my_init(void);
+  void __attribute__ ((destructor)) my_fini(void);</PRE
+></TD
+></TR
+></TABLE
+></P
+><P
+>Shared libraries must not be compiled with the gcc arguments
+``-nostartfiles'' or ``-nostdlib''.
+If those arguments are used, the
+constructor/destructor routines will not be executed
+(unless special measures are taken).</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="INIT-AND-FINI-OBSOLETE"
+>Special functions _init and _fini (OBSOLETE/DANGEROUS)</A
+></H3
+><P
+>Historically there have been two special functions, _init and _fini
+that can be used to control constructors and destructors.
+However, they are obsolete, and their use can lead to unpredicatable results.
+Your libraries should not use these;
+use the function attributes constructor and destructor above instead.</P
+><P
+>If you must work with old systems or code that used _init or _fini, here's
+how they worked.
+Two special functions were defined for initializing and finalizing a module:
+_init and _fini.
+If a function ``_init'' is exported in a library,
+then it is called when the library is first opened
+(via dlopen() or simply as a shared library).
+In a C program, this just means that you defined some function
+named _init.
+There is a corresponding function called _fini, which is called whenever a
+client finishes using the library
+(via a call dlclose() that brings its reference count to zero, or
+on normal exit of the program).
+The C prototypes for these functions are:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>  void _init(void);
+  void _fini(void);</PRE
+></TD
+></TR
+></TABLE
+></P
+><P
+>In this case,
+when compiling the file into a ``.o'' file in gcc, be sure to add the
+gcc option ``-nostartfiles''.
+This keeps the C compiler from
+linking the system startup libraries against the .so file.
+Otherwise, you'll get a ``multiple-definition'' error.
+Note that this is completely different than compiling modules using
+the recommended function attributes.
+My thanks to Jim Mischel and Tim Gentry for their suggestion to add
+this discussion of _init and _fini,
+as well as help in creating it.</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="SHARED-SCRIPTS"
+>Shared Libraries Can Be Scripts</A
+></H2
+><P
+>It's worth noting that the GNU loader
+permits shared libraries to be text files using a
+specialized scripting language instead of the usual library format.
+This is useful for indirectly combining other libraries.
+For example, here's the listing of
+<TT
+CLASS="FILENAME"
+>/usr/lib/libc.so</TT
+>
+on one of my systems:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>/* GNU ld script
+   Use the shared library, but some functions are only in
+   the static library, so try that secondarily.  */
+GROUP ( /lib/libc.so.6 /usr/lib/libc_nonshared.a )</PRE
+></TD
+></TR
+></TABLE
+></P
+><P
+>For more information about this, see the texinfo documentation on ld
+linker scripts (ld command language).
+General information is at
+info:ld#Options and info:ld#Commands,
+with likely commands discussed in
+info:ld#Option Commands.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="VERSION-SCRIPTS"
+>Symbol Versioning and Version Scripts</A
+></H2
+><P
+>Typically references to external functions are bound on an as-needed basis,
+and are not all bound when the application starts up.
+If a shared library is out of date, a required interface may
+be missing; when the application tries to use that interface,
+it may suddenly and unexpectedly fail.</P
+><P
+>A solution to this problem are symbol versioning coupled with
+version scripts.
+With symbol versioning,
+the user can get a warning when they start their program if
+the libraries being used with the application are too old.
+You can learn more about this from ld manual's descussion of
+version scripts at
+<A
+HREF="http://www.gnu.org/manual/ld-2.9.1/html_node/ld_25.html"
+TARGET="_top"
+>http://www.gnu.org/manual/ld-2.9.1/html_node/ld_25.html</A
+>.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="GNU-LIBTOOL"
+>GNU libtool</A
+></H2
+><P
+>If you're building an application that should port to many systems,
+you might consider using
+<A
+HREF="http://www.gnu.org/software/libtool/libtool.html"
+TARGET="_top"
+>GNU libtool</A
+>
+to build and install libraries.
+GNU libtool is a generic library support script.
+Libtool hides the complexity of using shared libraries
+behind a consistent, portable interface.
+Libtool provides portable interfaces to
+create object files, link libraries (static and shared), link executables,
+debug executables, install libraries, install executables.
+It also includes libltdl, a portability wrapper for
+dynamically loading programs.
+For more information, see its documentation at
+<A
+HREF="http://www.gnu.org/software/libtool/manual.html"
+TARGET="_top"
+>http://www.gnu.org/software/libtool/manual.html</A
+></P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="REMOVING-SYMBOLS"
+>Removing symbols for space</A
+></H2
+><P
+>All the symbols included in generated files are useful for debugging,
+but take up space.
+If you need space, you can eliminate some of it.</P
+><P
+>The best approach is to first generate the object files normally,
+and do all your debugging and testing first
+(debugging and testing is much easier with them).
+Afterwards, once you've tested the program thoroughly, use
+strip(1) to remove the symbols.
+The strip(1) command gives you a good deal of control over
+what symbols to eliminate; see its documentation for details.</P
+><P
+>Another approach is to use the GNU ld options ``-S'' and ``-s'';
+``-S'' omits debugger symbol information (but not all symbols)
+from the output file, while
+``-s'' omits all symbol information from the output  file.
+You can invoke these options through gcc as ``-Wl,-S'' and ``-Wl,-s''.
+If you always strip the symbols and these options are sufficient, feel
+free, but this is a less flexible approach.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="SMALL-EXECUTABLES"
+>Extremely small executables</A
+></H2
+><P
+>You might find the paper
+<A
+HREF="http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html"
+TARGET="_top"
+>Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux</A
+>
+useful.
+It describes how to make a truly tiny program executable.
+Frankly, you shouldn't use most of these tricks under normal
+circumstances, but they're quite instructive in showing how
+ELF really works.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CPP-VS-C"
+>C++ vs. C</A
+></H2
+><P
+>It's worth noting that if you're writing a C++ program, and you're
+calling a C library function, in your C++ code you'll need to define 
+the C function as extern "C".
+Otherwise, the linker won't be able to locate the C function.
+Internally, C++ compilers ``mangle'' the names of C++ functions
+(e.g., for typing purposes), and they need to be told that a given
+function should be called as a C function (and thus, not have its
+name mangled).</P
+><P
+>If you're writing a program library that could be called from C or C++,
+it's recommended that you include 'extern "C"' commands right in your
+header files so that you do this automatically for your users.
+When combined with the usual #ifndef at the top of a file to skip
+re-executing header files, this means that a typical header file usable
+by either C or C++ for some header file foobar.h would look like this:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>/* Explain here what foobar does */
+
+#ifndef FOOBAR_H
+#define FOOBAR_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+ ... header code for foobar goes here ...
+
+#ifdef  __cplusplus
+}
+#endif
+#endif</PRE
+></TD
+></TR
+></TABLE
+></P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="SPEEDING-CPP-INIT"
+>Speeding up C++ initialization</A
+></H2
+><P
+>The KDE developers have noticed that large GUI C++ applications can take
+a long time to start up, in part due to its needing to do many relocations.
+There are several solutions to this.
+See
+<A
+HREF="http://www.suse.de/~bastian/Export/linking.txt"
+TARGET="_top"
+>Making C++
+ready for the desktop (by Waldo Bastian)</A
+>
+for more information.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="LTO"
+>Link-Time Optimization</A
+></H2
+><P
+>GCC 4.5 has added a new optimization option, -flto.
+When source files are compiled and linked
+using -flto, GCC applies optimizations as if all the source code were in
+a single file, which lets it perform far more
+aggressive optimizations.
+You have to also use an optimization level (-Owhatever).
+It obsoletes the old -combine, but you might want to seriously
+consider combining it with -fwhole-program.
+If you want to do this, you need to
+use -flto at all steps of the process, and you should use
+exactly the same optimization and machine-dependent options throughout.
+The article
+<A
+HREF="http://lwn.net/Articles/387122/"
+TARGET="_top"
+>"What's new in GCC 4.5?" in Linux Weekly News (LWN)</A
+>
+has more information.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="LSB"
+>Linux Standard Base (LSB)</A
+></H2
+><P
+>The goal of the Linux Standard Base (LSB) project
+is to develop and promote a set of standards that will
+increase compatibility among Linux distributions and
+enable software applications to run on any compliant Linux system.
+The project's home page is at
+<A
+HREF="http://www.linuxbase.org"
+TARGET="_top"
+>http://www.linuxbase.org</A
+>.</P
+><P
+>A nice article that summarizes how to develop LSB-compliant applications
+was published in October 2002,
+<A
+HREF="http://www-106.ibm.com/developerworks/linux/library/l-lsb.html?t=gr,lnxw02=LSBapps"
+TARGET="_top"
+>Developing LSB-certified applications:
+Five steps to binary-compatible Linux applications</A
+>
+by George Kraft IV
+(Senior software engineer, IBM's Linux Technology Center).
+Of course, you need to write code that only accesses the standardized
+portability layer if you want your code to be portable.
+In addition, the LSB provides some tools so that application writers of C/C++
+programs can check for LSB compliance; these tools use some capabilities
+of the linker and special libraries to do these checks.
+Obviously, you'll need to install the tools to do these checks;
+you can get them from the LSB website.
+Then, simply use the "lsbcc" compiler as your C/C++ compiler
+(lsbcc internally creates a linking environment that will complain if
+certain LSB rules aren't followed):
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+> $ CC=lsbcc make myapplication
+  (or)
+ $ CC=lsbcc ./configure; make myapplication </PRE
+></TD
+></TR
+></TABLE
+>
+You can then use the lsbappchk program to ensure that
+the program only uses functions standardized by the LSB:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+> $ lsbappchk myapplication</PRE
+></TD
+></TR
+></TABLE
+>
+You also need to follow the LSB packaging guidelines
+(e.g., use RPM v3, use LSB-conforming package names, and
+for add-on software must install in /opt by default).
+See the article and LSB website for more information.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MERGING-LIBRARIES-INTO-LARGER"
+>Merging Libraries into Larger Shared Libraries</A
+></H2
+><P
+>What if you want to first create smaller libraries, then later
+merge them into larger libraries?
+In this case, you may find ld's "--whole-archive" option useful,
+which can be used to forcibly bring .a files and link them into an .so file.</P
+><P
+>Here's an example of how to use --whole-archive:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+> gcc -shared -Wl,-soname,libmylib.$(VER) -o libmylib.so $(OBJECTS) \
+ -Wl,--whole-archive $(LIBS_TO_LINK) -Wl,--no-whole-archive \
+ $(REGULAR_LIBS)</PRE
+></TD
+></TR
+></TABLE
+></P
+><P
+>As the ld documentation notes, be sure to use --no-whole-archive option
+at the end, or gcc will try to merge in the standard libraries as well.
+My thanks to Kendall Bennett for both suggesting this recipe, as
+well as providing it.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="OTHER-INFO"
+>Other Information</A
+></H2
+><P
+>Red Hat's Ulrich Drepper 
+<A
+HREF="http://people.redhat.com/drepper/dsohowto.pdf"
+TARGET="_top"
+>How to Write Shared Libraries</A
+>
+(August 28, 2004)
+has more information that you may find useful.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x172.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="t1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x293.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Dynamically Loaded (DL) Libraries</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>More Examples</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>
