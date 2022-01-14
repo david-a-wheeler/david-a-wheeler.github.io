@@ -1,0 +1,21 @@
+# Test from Michael Kerrisk, modified by David A. Wheeler,
+# showing that /lib is tested before /usr/lib in the ELF loader
+# (this is the reverse of a.out as documented in the ld.so man page)
+
+# Run this as ROOT (because it has to copy files to /lib and /usr/lib)
+
+# Compile /usr/lib version
+gcc -c -fPIC -DVERSION='"USRLIB"' mod1.c
+gcc -shared -o libdemo.so mod1.o
+mv libdemo.so /usr/lib
+
+# Compile /lib version
+gcc -c -fPIC -DVERSION='"LIB"' mod1.c
+gcc -shared -o libdemo.so mod1.o
+mv libdemo.so /lib
+
+# Compile & run test.
+gcc sltest.c -ldemo -o sltest
+./sltest
+
+
