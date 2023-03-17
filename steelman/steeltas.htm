@@ -1,0 +1,2909 @@
+<HTML><HEAD>
+<TITLE>Ada, C, C++, and Java vs. The Steelman</TITLE>
+<LINK REV="made" HREF="mailto:dwheeler@ida.org">
+</head>
+<BODY BGCOLOR="#FFFFFF">
+<CENTER>
+<FONT SIZE=+2><B>Ada, C, C++, and Java vs. The Steelman</B></FONT><BR>
+<I>David A. Wheeler<BR>
+July/August 1997
+<!--
+Institute for Defense Analyses <A HREF="#legal_note">**
+1801 N. Beauregard St.<BR>
+Alexandria, VA 22311-1772<BR>
+(703) 845-6662<BR>
+dwheeler, at, ida.org --></I>
+</CENTER>
+<P>
+<HR>
+<P>
+<A NAME="abstract"></A>
+<H1>Abstract</H1>
+<P>
+<I>This paper compares four computer programming languages
+(Ada95, C, C++, and Java)
+with the requirements of "Steelman", the original 1978 requirements
+document for the Ada computer programming language.
+This paper provides a view of the capabilities
+of each of these languages, and should help those trying to understand
+their technical similarities, differences, and capabilities.</I>
+<P>
+<A NAME="introduction"></A>
+<H1>Introduction</H1>
+<P>
+In 1975 the U.S. Department of Defense (DoD)
+established a "Common High Order Language" program
+with the goal of establishing a single high order
+computer programming language appropriate for DoD embedded computer
+systems. A High Order Language Working Group (HOLWG) was established to
+formulate the DoD requirements for high order languages, to evaluate
+existing languages against those requirements, and to implement the
+minimal set of languages required for DoD use.
+The requirements were widely
+distributed for comment throughout the military and civil communities,
+producing successively more refined versions from Strawman through
+Woodenman, Tinman, Ironman, and finally Steelman.
+Steelman was released in June 1978 [DoD 1978].
+An electronic version of Steelman is available at
+<A HREF="http://www.dwheeler.com/steelman">"http://www.dwheeler.com/steelman"</A>.
+The original version of the Ada computer programming language was
+designed to comply with the Steelman requirements.
+<P>
+Today there are a number of high order languages in
+commercial and military use, including Ada95, C, C++, and Java.
+I thought it would be an interesting and enlightening exercise to
+compare these languages to Steelman;
+this paper provides the results of this exercise.
+Other comparisons of these languages do exist (for example,
+[Sutherland 1996, Seidewitz 1996]), but none use the
+Steelman requirements as a basis.
+<P>
+This paper compares four computer programming languages
+(Ada95, C, C++, and Java) with the requirements of "Steelman".
+The paper first describes the rules used in this comparison of these
+four languages with Steelman.
+This is followed by conclusions summarizing how each language
+compares to Steelman.
+After the references is a large table, the "meat" of this paper,
+showing how each of these
+languages compare to each of the Steelman requirements.
+<P>
+This paper does not attempt to determine if the Steelman requirements
+are still relevant.
+In the author's opinion, most of the Steelman requirements are still
+desirable for general-purpose computer languages
+when both efficiency and reliability are important concerns.
+Steelman is no doubt incomplete; in particular, object-orientation
+is not a Steelman requirement but is widely considered desirable.
+However, desirability and completeness need not be true
+for this comparison to be useful,
+because this paper simply uses Steelman as a framework
+for examining technical issues of these computer languages.
+Steelman is a useful framework because it was widely reviewed
+and is technically detailed.
+<P>
+<A NAME="rules_for_comparison"></A>
+<H1>Rules for Comparison</H1>
+<P>
+<P>
+The primary rule used in this paper is that a language provides a
+feature if:
+<OL>
+<LI>that feature is defined in the documents widely
+regarded as the language's defining document(s), and
+<LI>that feature is
+widely implemented by compilers typically used for that language with
+essentially the same semantics.
+</OL>
+<P>
+Features that are only provided by a single implementation, or
+are defined but cannot be depended upon across the most commonly used
+implementations, are not considered to be part of the language.
+Examples of features that cannot be depended on are features which
+are often unimplemented, implemented incorrectly on widely-used compilers,
+or implemented with significantly differing semantics.
+Subset compilers for research or student work are not considered unless
+they are widely used by users of that language.
+One area where some "benefit of the doubt" is given is for C++ templates.
+C++ templates are part of the C++ language definition, but current
+C++ compilers implement templates with different semantics [FSF 1995]
+and with different levels of quality [OMG 1995].
+As a result, C++ templates are currently difficult to use in a portable way.
+Still, credit is given for C++ templates since the intent is
+clear and they can be used today (with trouble) on most compilers.
+<P>
+The defining documents used for each of these languages are as follows:
+<UL>
+<LI>Ada95:
+The "Ada 95 Reference Manual" (referred to as the Language Reference
+Manual, or LRM) [ISO 1995] is the official definition of Ada95.
+This document is freely available as a hypertext document at
+<A HREF="http://www.adahome.com/rm95/">"http://www.adahome.com/rm95/"</A>.
+Ada95 is a revision of the original Ada language (now called Ada83),
+which added support for object-orientation and various other capabilities.
+The rest of this paper will use the term "Ada" to mean "Ada95".
+<P>
+<LI>C:
+The official current definition of C is
+ISO/IEC 9899:1990, which is essentially the same as the definition
+developed by ANSI as ANSI X3.159-1989 [ANSI 1989].
+This has been extended by Normative Addition 1
+to support internationalization features, as
+described at <A HREF="http://www.lysator.liu.se/c/na1.html">
+"http://www.lysator.liu.se/c/na1.html"</A>.
+Programmers often don't have these costly standards documents;
+instead, they often use the book by C's developers,
+Kernighan and Ritchie [Kernighan 1988], so this book is also considered
+a defining document, along with its errata
+(see <A HREF="http://www.lysator.liu.se/c/c-errata.html">
+"http://www.lysator.liu.se/c/c-errata.html"</A>).
+<!-- The official ISO CS22 WG14 archive at -->
+<!-- ftp://ftp.dmk.com/DMK/cs22wg14/ -->
+<!-- holds electronic -->
+<!-- copies of current proposals for C9X, the next official revision of C, but -->
+<!-- since these are not official nor widely implemented they are not -->
+<!-- considered further in this paper. -->
+<P>
+<LI>C++:
+There is ongoing work to standardize C++ by 1998
+but no final, approved standard.
+I have used the documents closest to a standard yet widely available,
+namely, the
+<I>Working Paper of ISO Working Group WG21 (April 28, 1995)</I>.
+WG21 is developing the International Standard for the
+C++ programming language.
+This document is available at
+<A HREF="ftp://ftp.research.att.com/dist/c++std/WP/">
+"ftp://ftp.research.att.com/dist/c++std/WP/"</A>.
+and an HTML version is available at
+<A HREF="http://www.cygnus.com/misc/wp/">"http://www.cygnus.com/misc/wp/"</A>.
+There are more recent versions of this document,
+but access to these revisions is more restricted, and changes from 
+this widely-available version
+are less likely to be fully implemented in a wide number of compilers.
+Two other key defining C++ documents
+are the older books <I>The Annotated C++ Reference Manual</I> (ARM)
+[Ellis 1990]
+and Stroustrup's <I>The C++ Programming Language</I>
+[Stroustrup 1991].
+In July 1994 the ANSI/ISO C++ Standards committee voted
+to adopt the Standard Template Library (STL) as part of the C++ library,
+so the STL is considered part of C++ in this paper.
+Other useful C++ references can be found at
+<A HREF="http://yoyodyne.tamu.edu/oop/oopcpp.html">
+"http://yoyodyne.tamu.edu/oop/oopcpp.html"</A>.
+<P>
+<LI>Java:
+The current defining documentation on Java is the documentation
+set available from Javasoft (a Sun Microsystems business) at
+<A HREF="http://java.sun.com/doc/language.html">
+"http://java.sun.com/doc/language.html"</A>.
+Note that what is being evaluated here is the Java <I>language</I>,
+not the underlying Java Virtual Machine.
+There is already a compiler (by Intermetrics)
+that takes Ada source code and generates Java Virtual Machine code
+(see
+<A HREF="http://www.dwheeler.com/lovelace/java.htm">
+"http://www.adahome.com/lovelace/java.htm"</A>).
+</UL>
+<P>
+<A NAME="conclusions"></A>
+<H1>Conclusions</H1>
+<P>
+The appendix shows how well each language supports each Steelman requirement.
+<P>
+The following table shows the number of Steelman requirements met
+by each language.
+The leftmost column shows the name of the language.
+The next columns are the number of requirements the language does not meet,
+only partially meets, mostly meets, and completely meets.
+The final column shows the percentage of Steelman requirements mostly or
+completely met by the language.
+Note that Ada meets the most, followed by Java, C++, and C in that order.
+The Java and C++ percentages are probably too close to be considered
+significantly different.
+<P>
+<TABLE COLS=5 RULES=all BORDER=3 FRAME=box>
+<TR>
+<TH>
+Language
+</TH>
+<TH>
+"No"
+</TH>
+<TH>
+"Partial"
+</TH>
+<TH>
+"Mostly"
+</TH>
+<TH>
+"Yes"
+</TH>
+<TH>
+Percentage of Answers with "Mostly" or "Yes"
+</TH>
+</TR>
+<!-- Insert the data from "countit" below -->
+<!-- TABLE DATA HERE -->
+
+
+<TR>
+<TD ALIGN=center>Ada</TD>
+<TD ALIGN=center>3</TD>
+<TD ALIGN=center>5</TD>
+<TD ALIGN=center>11</TD>
+<TD ALIGN=center>94</TD>
+
+<TD ALIGN=center>93%</TD>
+
+</TR>
+<TR>
+<TD ALIGN=center>C</TD>
+<TD ALIGN=center>32</TD>
+<TD ALIGN=center>21</TD>
+<TD ALIGN=center>16</TD>
+<TD ALIGN=center>44</TD>
+
+<TD ALIGN=center>53%</TD>
+
+</TR>
+<TR>
+<TD ALIGN=center>C++</TD>
+<TD ALIGN=center>19</TD>
+<TD ALIGN=center>17</TD>
+<TD ALIGN=center>23</TD>
+<TD ALIGN=center>54</TD>
+
+<TD ALIGN=center>68%</TD>
+
+</TR>
+<TR>
+<TD ALIGN=center>Java</TD>
+<TD ALIGN=center>20</TD>
+<TD ALIGN=center>12</TD>
+<TD ALIGN=center>22</TD>
+<TD ALIGN=center>59</TD>
+
+<TD ALIGN=center>72%</TD>
+
+</TR>
+
+<!-- End of inserted data -->
+</TABLE>
+
+<P>
+Caution is warranted, since differing percentages
+of "yes" values do not necessarily
+imply that a particular language is more suitable
+than another for a given specific task.
+Note that the original version of Ada was
+specifically designed to meet the Steelman requirements, while none of the
+other languages were specifically designed to do so, so it is expected that
+Ada would meet more of the Steelman requirements than the rest.
+Also, all of these languages have capabilities that are not
+Steelman requirements.
+For example, direct support for
+object-orientation is a feature of Ada, C++, and Java, but
+is not a Steelman requirement.
+Readers should use this comparison to gain additional understanding of
+each of these different languages, and determine which "yes" and "no"
+values are of importance to them.
+<P>
+<!-- BR to make page breaks work well -->
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR><A NAME="high_level"></A>
+The following are high-level remarks comparing each language to Steelman
+based on the table in the appendix, including remarks on the
+language support for reliability (<A HREF="#1B">requirement 1B</A>):
+<P>
+<UL>
+<LI>
+Ada has the most "yes" responses to Steelman;
+this is no surprise, since Ada83 was designed to meet the
+Steelman requirements, and Ada95 is a superset of Ada83.
+Ada has "no" responses to only 3 Steelman requirements:
+<A HREF="#3-3F">3-3F</A>, <A HREF="#5D">5D</A>, and <A HREF="#10F">10F</A>.
+Requirement <A HREF="#3-3F">3-3F</A> requires a specific syntax for constants
+and functions that Ada does not support.
+Requirement <A HREF="#5D">5D</A> restricts the kinds of values supported by the language.
+Ada83 complied more fully with requirement <A HREF="#5D">5D</A>
+(e.g. by not permitting access values to functions),
+but this Steelman requirement was found to be too restricting.
+Ada95 removed these restrictions, resulting in noncompliance with
+Steelman requirement <A HREF="#5D">5D</A>.
+Steelman requirement <A HREF="#10F">10F</A> requires simple assertion capabilities.
+Run-time assertions can be trivially implemented in Ada, but Ada does not
+provide a built-in construct for them.
+Some Steelman requirements are only supported by Ada, for example,
+fixed-point types (requirements <A HREF="#3-1G">3-1G</A> and <A HREF="#3-1H">3-1H</A>).
+<P>
+
+<LI>
+C does not have a number of the Steelman capabilities.
+C does not have support for controlling concurrency -
+calls to the local operating system must be used instead.
+C also does not have an exception handling system nor generic processing
+(setjmp/longjmp and preprocessor commands can perform similar actions
+in trivial cases, but they are not practical substitutes in larger programs).
+Probably a more fundamental issue is that, while good programs can
+be written using C, C does not substantially
+aid in reliability nor maintainability,
+and does not try to maximize compile-time detection of errors.
+Those who believe otherwise need only compare C's error detection
+capabilities with C++, Java, and Ada.
+<P>
+
+<LI>
+C++ supports exception handling and templates (generics), although
+at this time using C++ templates is problematic.
+C++ does not support concurrency directly, taking the same
+approach to this as C does.
+C++ does try to detect more errors at compile-time than C does
+by tightening up C's type system somewhat.
+<P>
+
+<LI>
+Java supports exception handling and concurrency, and
+in general tries to detect errors at compile time.
+Java does not support enumerated types nor generics (templates).
+The former can be partly simulated with a long series of constants,
+and the latter with Java interfaces and the root Object type, but neither are
+very good mechanisms for simulating these capabilities.
+These weaknesses are well-known; for example,
+"Pizza" is superset of Java that adds templates and other
+capabilities (see
+<A HREF="http://wwwipd.ira.uka.de/~odersky/papers.html#Pizza">
+"http://wwwipd.ira.uka.de/~odersky/papers.html#Pizza"</A> ).
+Java does not provide direct control of low-level hardware
+(such as the size and bit structure of types), since it was not designed
+for that purpose.
+Java does try to provide good compile-time and run-time protection;
+some of the "no" answers in the table are specifically because of this
+(for example, Java initializes all variable values which goes against
+requirement <A HREF="#5E">5E</A> and the efficiency issues of requirement <A HREF="#1D">1D</A>).
+Like Ada, Java does not have a built-in run-time assertion mechanism
+(requirement <A HREF="#10F">10F</A>),
+but this is trivially implemented in Java.
+<P>
+</UL>
+<P>
+Again, users of this paper should apply caution; differing percentages
+of "yes" values and capabilities do not necessarily
+imply that a particular language is more suitable
+than another for a given specific task.
+Readers should examine each answer and determine which
+"yes" and "no" values are of importance to them.
+This information is intended to help readers
+gain additional understanding of each of these different languages.
+
+<!-- Add BR to make page breaks work out -->
+<BR>
+<A NAME="references"></A>
+<H1>References</H1>
+<P>
+<UL>
+<LI>
+[ANSI 1989]
+ANSI C. 1989.
+ANSI X3.159-1989.
+<LI>
+[DoD 1978]
+U.S. Department of Defense. June 1978.
+``Department Of Defense
+Requirements for High Order
+Computer Programming Languages: "Steelman"''
+Electronically available at
+<A HREF="http://www.dwheeler.com/steelman">
+"http://www.dwheeler.com/steelman"</A>.
+<LI>
+[Ellis 1990]
+Ellis, Margaret A., and Bjarne Stroustrup.
+1990.
+"The Annotated C++ Reference Manual" (ARM).
+ISBN 0-201-51459-1
+Reading, MA: Addison-Wesley.
+<LI>
+[FSF 1995]
+Free Software Foundation.
+1995.
+"Where's the Template?".
+<I>Using and Porting GNU C</I>.
+Available at many locations, e.g.
+<A HREF="http://www.delorie.com/gnu/docs/gcc/gcc_toc.html">"http://www.delorie.com/gnu/docs/gcc/gcc_toc.html"</A>.
+<LI>
+[ISO 1995]
+ISO.
+January 1995.
+<I>Ada 95 Reference Manual</I>.
+ANSI/ISO/IEC-8652:1995.
+Available at
+<A HREF="http://www.adahome.com/rm95/">"http://www.adahome.com/rm95/"</A>.
+<LI>
+[Kernighan 1988]
+Kernighan, Brian W., and Dennis M. Ritchie.
+1988.
+"The C Programming Language".
+Second Edition.
+ISBN 0-13-110362-8.
+Englewood Cliffs, NJ: Prentice-Hall.
+<LI>
+[OMG 1995]
+Object Management Group.
+July 1995.
+<I>The Common Object Request Broker: Architecture and Specification</I>.
+Revision 2.0.
+Section 15.1.2 says ``Because C++ implementations vary widely in
+the quality of their support for templates, this mapping does not
+explicitly require their use ...''.
+<LI>
+[Seidewitz 1996]
+Seidewitz, Ed. October 1996.
+"Another Look at Ada 95".
+<I>Object Magazine</I>.
+NY, NY: SIGS Publications Inc.
+<LI>
+[Stroustrup 1991]
+Stroustrup, Bjarne.
+1991.
+The C++ Programming Language.
+Second Edition.
+ISBN 0-201-53992-6.
+Reading, MA: Addison-Wesley.
+<LI>
+[Sutherland 1996]
+Sutherland, Jeff. September 1996.
+"Smalltalk Manifesto".
+<I>Object Magazine</I>.
+NY, NY: SIGS Publications Inc.
+</UL>
+<P>
+<A NAME="legal_note">**</A>
+<I>This paper is not endorsed by, and does not necessarily represent
+the views of, the Institute for Defense Analyses (IDA),
+the U.S. Department of Defense (DoD), or the U.S. Government</I>.
+<P>
+<I>I am grateful to Michael Kappel, Magnus Kempe, and James Kuehn
+for their constructive comments.</I>
+
+<P>
+<A NAME="appendix"></A>
+<H1>Appendix: Table Comparing Four Languages to Steelman</H1>
+<P>
+In this table, the left-hand column gives the Steelman requirement.
+The next four columns show how well Ada, C, C++, and Java meet this
+requirement. An entry of "yes" indicates that the language and its
+major implementations generally meet the requirement, while a "no"
+indicates that requirement is generally not met.
+There are two intermediate entries: "partial" indicates some of the
+requirement is met, but a significant portion (or intent) of the
+requirement is not met, "mostly" indicates that the requirement is
+generally met, but some specific capability of the requirement is not
+fully met.
+Underneath the columns for each language is commentary explaining these
+entries.
+<P>
+I have tried to be fair to all of these languages.
+Nevertheless, some of these entries, particularly in section 1, are
+judgement calls. Readers are encouraged to revisit each entry
+(particularly in section 1), compare each language,
+and draw their own conclusions.
+Items which I felt are particularly questionable have been marked
+with a question mark ("?").
+<!-- Questionable items besides section 1 include 3-3D -->
+<P>
+<BR CLEAR=all>
+<P>
+<TABLE COLS=6 RULES=all BORDER=3 FRAME=box>
+<TR>
+<TH>
+Requirement
+</TH>
+<TH>
+Ada
+</TH>
+<TH>
+C
+</TH>
+<TH>
+C++
+</TH>
+<TH>
+Java
+</TH>
+<TH>
+Comments
+</TH>
+</TR>
+
+<TR>
+<TD>
+<A NAME="1A"></A><FONT SIZE=-1><A NAME="1A"></A><A HREF="steelman.htm#1A">1A. Generality.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Java can't directly control hardware; Java programs must declare native methods and implement such operations in another language.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="1B"></A><FONT SIZE=-1><A NAME="1B"></A><A HREF="steelman.htm#1B">1B. Reliability.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly?</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada requires separate specifications for all modules other than stand-alone subprograms. C and C++ contain many well-known traps (= vs. ==, &amp; vs. &amp;&amp;, premature semicolon in control structures, fall-through behavior in switch statements when "break" is omitted); some were removed or made less likely in Java but others were not. C permits separate specifications (through prototypes) but are optional; function names are globally accessible by default and can be incorrectly redefined.  C++ supports separate specifications and has a slightly tighter type system than C.  Also, good use of C++'s object-oriented features should increase the likelihood of compile-time detection of some kinds of errors. Java automatically generates specifications (as opposed to using redundant specifications). C and C++ do little checking at run-time. Both Ada and Java perform a number of run-time checks (e.g. bounds checking and checks for null values) to detect errors early.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="1C"></A><FONT SIZE=-1><A NAME="1C"></A><A HREF="steelman.htm#1C">1C. Maintainability.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly?</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada was originally designed with readability in mind. C was not, and can easily be (ab)used to make impenetrable code.  C (and hence C++ and Java) includes a great deal of terse notation which reduces readability (e.g. the "for" loop notation, using "&amp;&amp;" instead of "and", and operators such as "&lt;&lt;").  C++'s object-oriented features, if used, are likely to improve maintainability (because they force interfaces to be defined and used). Java's document comments (//*) and standard documentation conventions aid in readability.  Note that "readability" of a programming language is extremely subjective - well-structured programs can be read and maintained in any language by someone who knows the language, and no language can prevent all poor approaches.  At issue in this requirement is how strongly the language encourages readable and maintainable code.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="1D"></A><FONT SIZE=-1><A NAME="1D"></A><A HREF="steelman.htm#1D">1D. Efficiency.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada functions returning unbounded size objects usually have hidden extra efficiency costs (access types can be used where this is important). C++ implicit conversion operations may be activated in situations not easily recognizable by its users. C/C++ pointer arithmetic and aliasing prohibit some optimizations. Java's garbage collection raises questions about efficiency and guaranteed timing, especially in real-time systems.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="1E"></A><FONT SIZE=-1><A NAME="1E"></A><A HREF="steelman.htm#1E">1E. Simplicity.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada includes both Ada 83's discriminated records and the newer (OO) tagged types (these have many similarities). C is a very simple language (though not necessarily simple to use). C++ has C operations and its own operations (new/delete vs. malloc/free, cout vs. printf).</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="1F"></A><FONT SIZE=-1><A NAME="1F"></A><A HREF="steelman.htm#1F">1F. Implementability.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All of these languages have been reasonably implemented.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="1G"></A><FONT SIZE=-1><A NAME="1G"></A><A HREF="steelman.htm#1G">1G. Machine Independence.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Approaches differ. Ada includes a number of mechanisms to query the underlying configuration (such as bit ordering conventions) and C/C++ include some querying mechanisms. Conditional compilation in Ada and Java is handled through "if (constant)" statements (this does not permit conditional compilation in cases where "if" statements are not permitted). Java has few mechanisms for querying the underlying configuration and imposes requirements on bit length and semantics of numeric types that must be supported. Java strives for machine independence by hiding the underlying machine.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="1H"></A><FONT SIZE=-1><A NAME="1H"></A><A HREF="steelman.htm#1H">1H. Complete Definition.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="2A"></A><FONT SIZE=-1><A NAME="2A"></A><A HREF="steelman.htm#2A">2A. Character Set.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly (trigraphs and digraphs)</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly (trigraphs and digraphs)</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C, C++, and Java usually use a number of characters (such as {, }, [, ], and #) that are not available on some European terminals (which only offer the seven-bit ISO 646 character set and use these positions for accented characters).  C added trigraphs to help European users, but trigraphs are horrible to use in practice. Normative Addition 1 to C added digraphs and the &lt;iso646.h&gt; header in an attempt to make C easier to use in such cases; while somewhat improved, such programs are still more difficult to read.  Note that supporting restricted character sets is becoming less important as old 7-bit European terminals disappear, and restrictions to support upper-case-only users are now irrelevant.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="2B"></A><FONT SIZE=-1><A NAME="2B"></A><A HREF="steelman.htm#2B">2B. Grammar.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C has a few cases where parser state dependent feedback to the lexical analyzer is necessary (e.g. typedef, preprocessor tokenization). C++ is more difficult to parse because it isn't LALR(1).  Java isn't really LALR(1) either, but known techniques make it so it can be handled as though it is LALR(1).</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="2C"></A><FONT SIZE=-1><A NAME="2C"></A><A HREF="steelman.htm#2C">2C. Syntactic Extensions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C/C++ preprocessor can be used to create some (obscure) syntactic forms.  A preprocessor (such as cpp or m4) can be used with any language, including Ada and Java, but neither include a preprocessor in their definition.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="2D"></A><FONT SIZE=-1><A NAME="2D"></A><A HREF="steelman.htm#2D">2D. Other Syntactic Issues.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C comments (also supported by C++) cross multiple lines. C,C++, and Java don't have "closing" key words, but use matching opening and closing braces. Matching braces have the advantage of being easy to type and support with text editors, but permit errors in maintenance when the "wrong" matching braces are used.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="2E"></A><FONT SIZE=-1><A NAME="2E"></A><A HREF="steelman.htm#2E">2E. Mnemonic Identifiers.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All support this.  Note that Ada is case-insensitive, while C, C++, and Java identifiers are case-sensitive.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="2F"></A><FONT SIZE=-1><A NAME="2F"></A><A HREF="steelman.htm#2F">2F. Reserved Words.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="2G"></A><FONT SIZE=-1><A NAME="2G"></A><A HREF="steelman.htm#2G">2G. Numeric Literals.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All support numeric literals for integers. C and C++ permit implicit rounding, though many compilers will catch this. Only Ada directly supports fixed point numbers (see 3-1G).</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="2H"></A><FONT SIZE=-1><A NAME="2H"></A><A HREF="steelman.htm#2H">2H. String Literals.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Java String and String_Buffer are considered special types, not one-dimensional character arrays.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="2I"></A><FONT SIZE=-1><A NAME="2I"></A><A HREF="steelman.htm#2I">2I. Comments.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Only C lacks comments automatically terminated by the end of line.  Note that in practice, many C compilers share the preprocessor with C++ and can permit //-style comments with special compilation options, but this is not permitted portably by the C standard.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3A"></A><FONT SIZE=-1><A NAME="3A"></A><A HREF="steelman.htm#3A">3A. Strong Typing.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Note that C and C++ have compile-time types but both are more weakly typed.  Typedef does not define a new type, just a name synonym. A pointer to an array of objects is considered equivalent to a pointer to an object. In C, enumerations are considered identical to int, while in C++ enumerations are different types.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3B"></A><FONT SIZE=-1><A NAME="3B"></A><A HREF="steelman.htm#3B">3B. Type Conversions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C, C++, and Java do not have subtypes (types with additional constraints) for primitive types (such as int or float). Class structures can be used in C++ and Java to implement additional constraints on classes. C and C++ have some representation control using bitfield locations; this is not considered separate from the type.  C and C++ have a number of implicit conversions.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3C"></A><FONT SIZE=-1><A NAME="3C"></A><A HREF="steelman.htm#3C">3C. Type Definitions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C and C++ don't have subtypes. Java doesn't have subtypes or enumerated types; see 3B and 3-2A.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3D"></A><FONT SIZE=-1><A NAME="3D"></A><A HREF="steelman.htm#3D">3D. Subtype Constraints.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada supports user definition of range, precision, scale, and index ranges, but does not directly support arbitrary user-defined constraints. With effort constructors and operations in C++ and Java could be used to enforce constraints.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-1A"></A><FONT SIZE=-1><A NAME="3-1A"></A><A HREF="steelman.htm#3-1A">3-1A. Numeric Values.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All support integers and floats. C, C++, and Java don't raise exceptions on integer overflow.  C/C++ implementations often define ways to handle IEEE floating point exceptions. Java does throw an exception for division by zero. The question marks are noted because it's not clear how much a penalty should be assessed for this.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-1B"></A><FONT SIZE=-1><A NAME="3-1B"></A><A HREF="steelman.htm#3-1B">3-1B. Numeric Operations.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>In C, C++, and Java the exponentiation operator is pow(), not the usual infix operator, and the built-in operation only takes arguments of type double (not int). C provides an absolute value function for int but not double.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-1C"></A><FONT SIZE=-1><A NAME="3-1C"></A><A HREF="steelman.htm#3-1C">3-1C. Numeric Variables.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Counting built-in types (such as "Integer" or "int") as specifying a range, all of these languages do so to some extent. C, C++ and Java do not support user-defined numeric ranges (see 3D).</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-1D"></A><FONT SIZE=-1><A NAME="3-1D"></A><A HREF="steelman.htm#3-1D">3-1D. Precision.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>The standards for C and C++ define the minimum precision of double and float, but no control over actual precision. Java defines specific precisions for double and float, and no other control over precision.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-1E"></A><FONT SIZE=-1><A NAME="3-1E"></A><A HREF="steelman.htm#3-1E">3-1E. Approximate Arithmetic Implementation.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada makes the precision, radix, and exponent range available through language-defined attributes. C and C++ make these available through &lt;float.h&gt;. Java defines these in the language itself. Java requires IEEE arithmetic semantics (with specific options) to be used, regardless of the underlying machine's floating point mechanisms.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-1F"></A><FONT SIZE=-1><A NAME="3-1F"></A><A HREF="steelman.htm#3-1F">3-1F. Integer and Fixed Point Numbers.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C, C++, and Java don't support fixed point numbers.  C++ and Java classes could be used to build fixed point functionality. C and C++ permit implicit truncation in integer computations.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-1G"></A><FONT SIZE=-1><A NAME="3-1G"></A><A HREF="steelman.htm#3-1G">3-1G. Fixed Point Scale.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>No built-in fixed point support in C, C++, or Java.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-1H"></A><FONT SIZE=-1><A NAME="3-1H"></A><A HREF="steelman.htm#3-1H">3-1H. Integer and Fixed Point Operations.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All support "modulo" operators; C, C++, and Java don't support fixed point numbers.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-2A"></A><FONT SIZE=-1><A NAME="3-2A"></A><A HREF="steelman.htm#3-2A">3-2A. Enumeration Type Definitions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Java doesn't support enumerations.  C enumerations are weakly typed (integers can be freely assigned to them); C++ tightens this slightly (but still permits quiet conversions from enum to int). C and C++ only permit identifiers (not character constants) as enumeration elements. Neither C nor C++ support sub-sequences.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-2B"></A><FONT SIZE=-1><A NAME="3-2B"></A><A HREF="steelman.htm#3-2B">3-2B. Operations on Enumeration Types.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C and C++ don't have operations to determine the first and last enumerated value.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-2C"></A><FONT SIZE=-1><A NAME="3-2C"></A><A HREF="steelman.htm#3-2C">3-2C. Boolean Type.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C doesn't have a "bool" type; C++'s bool type is weakly typed. Both Ada's and Java's boolean type is fully distinct from their integer types.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-2D"></A><FONT SIZE=-1><A NAME="3-2D"></A><A HREF="steelman.htm#3-2D">3-2D. Character Types.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All languages have a predefined character type, though it's not necessarily considered an enumerated type.  C and C++ enumeration types can be used to create "character sets", though this is rarely done. Java lacks enumeration types.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-3A"></A><FONT SIZE=-1><A NAME="3-3A"></A><A HREF="steelman.htm#3-3A">3-3A. Composite Type Definitions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All have arrays and records (Java and C++ classes may be used as records).</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-3B"></A><FONT SIZE=-1><A NAME="3-3B"></A><A HREF="steelman.htm#3-3B">3-3B. Component Specifications.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Range, precision, and scale specifications are included in numeric type definitions (with support varying, see 3-1).</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-3C"></A><FONT SIZE=-1><A NAME="3-3C"></A><A HREF="steelman.htm#3-3C">3-3C. Operations on Composite Types.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>The "constructor" meant here is simply the ability to declare or allocate a value of the given type, which all support. Ada, C++, and Java provide more sophisticated control over construction.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-3D"></A><FONT SIZE=-1><A NAME="3-3D"></A><A HREF="steelman.htm#3-3D">3-3D. Array Specifications.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C, C++, and Java array indexes may only start at zero and cannot use enumerations to define array subscripts. In C enumerations may be used to access array elements. In C++ enumerations can be cast into int's to access array values, while Java has no enumeration types.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-3E"></A><FONT SIZE=-1><A NAME="3-3E"></A><A HREF="steelman.htm#3-3E">3-3E. Operations on Subarrays.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C and C++'s memcpy and memcmp can be used to do some of these operations using an extremely low-level interface.  C, C++, and Java do not have array concatenation operators (Java has a string concatenator as a special case).</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-3F"></A><FONT SIZE=-1><A NAME="3-3F"></A><A HREF="steelman.htm#3-3F">3-3F. Nonassignable Record Components.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C++ and Java classes can include constants (and functions).</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-3G"></A><FONT SIZE=-1><A NAME="3-3G"></A><A HREF="steelman.htm#3-3G">3-3G. Variants.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Java and C++ class structures can be used to simulate at run time the typical uses of variants. C and C++ also permit "unions" to define types with alternative record structures without tag fields.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-3H"></A><FONT SIZE=-1><A NAME="3-3H"></A><A HREF="steelman.htm#3-3H">3-3H. Tag Fields.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Java operations (e.g. instanceof) and C++ RTTI can be used to simulate typical uses of tag fields.  Note that C unions do not have automatic tag fields.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-3I"></A><FONT SIZE=-1><A NAME="3-3I"></A><A HREF="steelman.htm#3-3I">3-3I. Indirect Types.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada access values, C/C++ pointers, and Java object references support this. Note that Java requires garbage collection and Ada permits garbage collection as an option (with a pragma for controlling it). C/C++ implementations usually do not include garbage collection, although conservative garbage collection systems for C/C++ are available. C and C++ permit pointers which reference deallocated storage. Ada programs using Unchecked_Deallocation may reference deallocated storage.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-3J"></A><FONT SIZE=-1><A NAME="3-3J"></A><A HREF="steelman.htm#3-3J">3-3J. Operations on Indirect Types.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Note that the "constructor" mentioned here is "new" (in Ada, C++, and Java) or "malloc" (in C or C++). Note that Ada, C++, and Java (but not C) provide additional control over constructors. Copying isn't defined automatically in Java.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-4A"></A><FONT SIZE=-1><A NAME="3-4A"></A><A HREF="steelman.htm#3-4A">3-4A. Bit Strings (i.e., Set Types).</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>In Ada, declare a packed array of boolean values.  In C, short bit strings can be handled using "int"  or "long", but longer bit strings are best handled through user-defined functions or macros. In C++, use the STL template class bitset (for short ones, use bitmask). In Java, use class BitSet in package "java.util".</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-4B"></A><FONT SIZE=-1><A NAME="3-4B"></A><A HREF="steelman.htm#3-4B">3-4B. Bit String Operations.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>In C, such operations can be easily created with the built-in operations when there are sizeof(long) or fewer bits; longer bit strings are typically handled by user-defined functions or macros. Java BitSet doesn't have a group negation ("not") operation.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-5A"></A><FONT SIZE=-1><A NAME="3-5A"></A><A HREF="steelman.htm#3-5A">3-5A. Encapsulated Definitions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada's unit of encapsulation is the package. C's is the ".h" file. C++'s are classes and ".h" files. Java's is the class.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-5B"></A><FONT SIZE=-1><A NAME="3-5B"></A><A HREF="steelman.htm#3-5B">3-5B. Effect of Encapsulation.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C encapsulation requires extreme discipline using the "static" keyword (the default is to make everything globally accessible). C++ more strongly supports encapsulation when classes and the private modifier are used.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="3-5C"></A><FONT SIZE=-1><A NAME="3-5C"></A><A HREF="steelman.htm#3-5C">3-5C. Own Variables.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="4A"></A><FONT SIZE=-1><A NAME="4A"></A><A HREF="steelman.htm#4A">4A. Form of Expressions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="4B"></A><FONT SIZE=-1><A NAME="4B"></A><A HREF="steelman.htm#4B">4B. Type of Expressions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada qualifiers do this. C, C++, and Java "casts" can do this, but may also quietly invoke a conversion operation.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="4C"></A><FONT SIZE=-1><A NAME="4C"></A><A HREF="steelman.htm#4C">4C. Side Effects.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All permit side effects beyond their own variables of encapsulation (e.g. global variables or other objects can be affected). C encourages this, and combined with macros can cause unexpected results (e.g. "putchar(*p++)").  Such use is not necessarily considered erroneous in C/C++. C++ permits the same effects, though due to other language features (such as OO features) they tend to receive less use.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="4D"></A><FONT SIZE=-1><A NAME="4D"></A><A HREF="steelman.htm#4D">4D. Allowed Usage.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="4E"></A><FONT SIZE=-1><A NAME="4E"></A><A HREF="steelman.htm#4E">4E. Translation Time Expressions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C, C++, and Java specifications do not require all literals to be evaluated at compile time, but compilers typically do so.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="4F"></A><FONT SIZE=-1><A NAME="4F"></A><A HREF="steelman.htm#4F">4F. Operator Precedence Levels.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C, C++, and Java have  a large number of precedence levels.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="4G"></A><FONT SIZE=-1><A NAME="4G"></A><A HREF="steelman.htm#4G">4G. Effect of Parentheses.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="5A"></A><FONT SIZE=-1><A NAME="5A"></A><A HREF="steelman.htm#5A">5A. Declarations of Constants.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="5B"></A><FONT SIZE=-1><A NAME="5B"></A><A HREF="steelman.htm#5B">5B. Declarations of Variables.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C and C++ permit "void *" as a type, which is really a pointer to an unknown type and subverts the type system.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="5C"></A><FONT SIZE=-1><A NAME="5C"></A><A HREF="steelman.htm#5C">5C. Scope of Declarations.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All support nested scopes of variable declarations. Ada supports hierarchical packages, nested packages, and nested subprograms. C only provides two scope levels for functions: static and non-static. Java and C++ support class scoping mechanisms (private, protected, and public) and larger structuring mechanisms (C++ namespaces and Java nested packages). Neither Java nor C++ support nested functions (functions declared in other functions).</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="5D"></A><FONT SIZE=-1><A NAME="5D"></A><A HREF="steelman.htm#5D">5D. Restrictions on Values.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada, C, and C++ support the use of access/pointer to subprograms/functions. The original Ada83 did not permit access to subprograms; this was later found to be too limiting. Ada and C++ permit passing of exceptions as values. Java does not support pointers to functions, though Java interfaces can be used as a somewhat clumsy workaround. Java permits types and exceptions to be assigned and used as nongeneric parameters.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="5E"></A><FONT SIZE=-1><A NAME="5E"></A><A HREF="steelman.htm#5E">5E. Initial Values.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada defines an initial value for access values. Java defines initial values for all types, though recommends against using them and Java compilers attempt to warn of such use.  In both Java and Ada, this is to support reliability.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="5F"></A><FONT SIZE=-1><A NAME="5F"></A><A HREF="steelman.htm#5F">5F. Operations on Variables.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="5G"></A><FONT SIZE=-1><A NAME="5G"></A><A HREF="steelman.htm#5G">5G. Scope of Variables.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>The languages differ significantly in their notions of "importing" and how scoping is handled, but all support the essence of this requirement.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="6A"></A><FONT SIZE=-1><A NAME="6A"></A><A HREF="steelman.htm#6A">6A. Basic Control Facility.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C, C++, and Java have both "continue" and "break" operations, which could be viewed as two "exit" points from a control structure.  Java has a multi-level break statement, but these goes to specific exit points in specific control structures.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="6B"></A><FONT SIZE=-1><A NAME="6B"></A><A HREF="steelman.htm#6B">6B. Sequential Control.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All use statement terminators.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="6C"></A><FONT SIZE=-1><A NAME="6C"></A><A HREF="steelman.htm#6C">6C. Conditional Control.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="6D"></A><FONT SIZE=-1><A NAME="6D"></A><A HREF="steelman.htm#6D">6D. Short Circuit Evaluation.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="6E"></A><FONT SIZE=-1><A NAME="6E"></A><A HREF="steelman.htm#6E">6E. Iterative Control.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>In C, C++, and Java, the loop control variable is not considered a constant.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="6G"></A><FONT SIZE=-1><A NAME="6G"></A><A HREF="steelman.htm#6G">6G. Explicit Control Transfer.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>The Java language does not include the "goto" (though it does reserve the keyword). Java does have a multi-level break and continue statement which can serve the role of "goto" in many cases.  K&amp;R does not list any restrictions on C's goto statement, so some implementations may permit entry into control structures.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="7A"></A><FONT SIZE=-1><A NAME="7A"></A><A HREF="steelman.htm#7A">7A. Function and Procedure Definitions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C does not permit multiple functions to share the same name even when the parameter signatures differ.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="7B"></A><FONT SIZE=-1><A NAME="7B"></A><A HREF="steelman.htm#7B">7B. Recursion.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="7C"></A><FONT SIZE=-1><A NAME="7C"></A><A HREF="steelman.htm#7C">7C. Scope Rules.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="7D"></A><FONT SIZE=-1><A NAME="7D"></A><A HREF="steelman.htm#7D">7D. Function Declarations.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada permits any type as a function return value, and does not require the number of components to be determined by function call time (which gives flexibility at the cost of efficiency when using this capability). Java also permits a function to return an array without knowning the number of components at call time; Java's approach to arrays is different than that implied by this requirement.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="7F"></A><FONT SIZE=-1><A NAME="7F"></A><A HREF="steelman.htm#7F">7F. Formal Parameter Classes.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C, C++, and Java do not identify in, out, and in-out parameters. C and C++ can identify in-only parameters using "const" or by using non-pointer types.  C++ supports passing by reference as well as passing by value (which implies that the item already exists).</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="7G"></A><FONT SIZE=-1><A NAME="7G"></A><A HREF="steelman.htm#7G">7G. Parameter Specifications.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C and C++ permit re-specification in other places, permitting the specifications to go "out of sync". C and C++ also permit recasting of pointers that can subvert the type specification.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="7H"></A><FONT SIZE=-1><A NAME="7H"></A><A HREF="steelman.htm#7H">7H. Formal Array Parameters.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Subscript ranges are not accessible in C and C++. C, C++, and Java don't support multidimension arrays, though arrays of arrays permit some similar operations (particularly in Java).</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="7I"></A><FONT SIZE=-1><A NAME="7I"></A><A HREF="steelman.htm#7I">7I. Restrictions to Prevent Aliasing.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Aliasing is a well-known problem when trying to optimize C and C++ code.  Java defines all non-primitives as references and does not permit "internal" references, so in some sense all aliases are intended.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="8A"></A><FONT SIZE=-1><A NAME="8A"></A><A HREF="steelman.htm#8A">8A. Low Level Input-Output.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada, C, and C++ permit access to memory-mapped locations but do not have standard I/O channel operations. Ada's machine code insertion capability can perform I/O channel operations in the language.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="8B"></A><FONT SIZE=-1><A NAME="8B"></A><A HREF="steelman.htm#8B">8B. User Level Input-Output.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada and Java applets may be restricted further by the environment, but this is determined by the local applet security manager and user, not by the language.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="8C"></A><FONT SIZE=-1><A NAME="8C"></A><A HREF="steelman.htm#8C">8C. Input Restrictions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="8D"></A><FONT SIZE=-1><A NAME="8D"></A><A HREF="steelman.htm#8D">8D. Operating System Independence.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="8E"></A><FONT SIZE=-1><A NAME="8E"></A><A HREF="steelman.htm#8E">8E. Resource Control.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada supports memory storage pool management (managed by the allocation/deallocation language features), task scheduling policies, and task priorities. The C++ "new" operator can be overridden to support memory storage pool management. Java supports thread priorities.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="8F"></A><FONT SIZE=-1><A NAME="8F"></A><A HREF="steelman.htm#8F">8F. Formating.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C and C++ don't have built-in enumeration reading and writing; Java doesn't have enumerated types.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="9A"></A><FONT SIZE=-1><A NAME="9A"></A><A HREF="steelman.htm#9A">9A. Parallel Processing.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C and C++ do not have have built-in thread or process facilities - the assumption is that these are to be provided by operating system dependent libraries (such as the POSIX p-threads library).  Java's parallel processing facilities differ in approach from the wording of this requirement, but can provide these facilities.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="9B"></A><FONT SIZE=-1><A NAME="9B"></A><A HREF="steelman.htm#9B">9B. Parallel Process Implementation.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Both Ada and Java leave some semantics open to permit efficient implementation on different operating systems.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="9C"></A><FONT SIZE=-1><A NAME="9C"></A><A HREF="steelman.htm#9C">9C. Shared Variables and Mutual Exclusion.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Neither Ada nor Java require shared variables to be marked with an attendant warning. Ada 83's obsolete pragma shared doesn't really meet this requirement. Both Ada and Java support shared variables and high-efficiency locking (using protected types/synchronized guards), and both permit the circumventing of such if the programmer determines it to be necessary. Ada, C, and C++ support marking variables as "volatile", and Ada supports marking variables as "atomic".</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="9D"></A><FONT SIZE=-1><A NAME="9D"></A><A HREF="steelman.htm#9D">9D. Scheduling.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Java in general runs the highest priority thread, but permits occasional running of lower priority threads (see "http://java.sun.com/Series/Tutorial/java/threads/priority.html"). Java does not guarantee first-in first-out within a priority.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="9E"></A><FONT SIZE=-1><A NAME="9E"></A><A HREF="steelman.htm#9E">9E. Real Time.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C/C++ provide some functions for handling local and calendar time; real-time calls are operating system dependent. Java supports delays in centiseconds and clock access in milliseconds.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="9G"></A><FONT SIZE=-1><A NAME="9G"></A><A HREF="steelman.htm#9G">9G. Asynchronous Termination.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C/C++ programs can call an OS-dependent library to perform this task.  Ada and Java permit asynchronous termination (via the abort statement and stop() call respectively). Ada does not permit statement sequences to be run on termination in general (though asynchronous transfer of control and the terminate alternative can permit this in some cases).  Java can do this by catching Error ThreadDeath.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="9H"></A><FONT SIZE=-1><A NAME="9H"></A><A HREF="steelman.htm#9H">9H. Passing Data.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada rendezvous and Java synchronized calls permit controlled passing of data.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="9I"></A><FONT SIZE=-1><A NAME="9I"></A><A HREF="steelman.htm#9I">9I. Signalling.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Java objects can be used as synchronized guards. Ada does not have a "signal" type, but protected types can trivially implement them (see Ada LRM D.12 for an example). C and C++ have a file "signal.h" but this file does not provide this functionality.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="9J"></A><FONT SIZE=-1><A NAME="9J"></A><A HREF="steelman.htm#9J">9J. Waiting.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly?</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada select statement supports such capabilities. Java does not have an equivalent structure, but intermediate structures could be used to easily implement such functionality.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="10A"></A><FONT SIZE=-1><A NAME="10A"></A><A HREF="steelman.htm#10A">10A. Exception Handling Facility.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C's "signal.h" and setjmp/longjmp can be used to handle some exceptions, but don't really satisfy these requirements.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="10B"></A><FONT SIZE=-1><A NAME="10B"></A><A HREF="steelman.htm#10B">10B. Error Situations.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>None normally detect uninitialized variables access. Ada's Normalize_Scalars pragma aids in detecting uninitialized variables. Java attempts to detect uninitialized variables at compile-time. Ada and Java don't have assertions built into the language, while C and C++ can detect assertion errors. C and C++ don't detect out-of-bound array accesses. C, C++, and Java don't detect range errors (of either kind) nor overflow. All can detect out-of-memory errors.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="10C"></A><FONT SIZE=-1><A NAME="10C"></A><A HREF="steelman.htm#10C">10C. Raising Exceptions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C has an assert macro, but it doesn't have the kind of enclosure described here.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="10D"></A><FONT SIZE=-1><A NAME="10D"></A><A HREF="steelman.htm#10D">10D. Exception Handling.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="10E"></A><FONT SIZE=-1><A NAME="10E"></A><A HREF="steelman.htm#10E">10E. Order of Exceptions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="10F"></A><FONT SIZE=-1><A NAME="10F"></A><A HREF="steelman.htm#10F">10F. Assertions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B>, not built-in</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B>, not built-in</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C and C++ include a simple assert() facility. Neither Ada nor Java have a built-in assert checking facility, though they can be trivially implemented. GNAT Ada compiler has pragma assert, but this is compiler-specific. None permit simple assertions of frequency.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="10G"></A><FONT SIZE=-1><A NAME="10G"></A><A HREF="steelman.htm#10G">10G. Suppressing Exceptions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>&nbsp</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="11A"></A><FONT SIZE=-1><A NAME="11A"></A><A HREF="steelman.htm#11A">11A. Data Representation.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>C and C++ bitfields provide some data representation control, but don't control big-endian/little-endianness. Lack of endianness control makes control over portable representation of lower-level constructs very difficult.  C and C++ also don't provide mechanisms to control the exact bit size of basic types, nor hooks to interrupts.  Java does not provide representation control.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="11C"></A><FONT SIZE=-1><A NAME="11C"></A><A HREF="steelman.htm#11C">11C. Translation Time Facilities.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada, C, and C++ all provide some mechanisms to query the compilation environment, though not to the extent given in this requirement.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="11D"></A><FONT SIZE=-1><A NAME="11D"></A><A HREF="steelman.htm#11D">11D. Object System Configuration.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B>?</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada requires that separately compiled modules be compatible when linked together, implying some of the requirements here.  Java is designed to make this generally unnecessary, by translating to system-independent bytecodes first, so it's arguable if this requirement applies to Java.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="11E"></A><FONT SIZE=-1><A NAME="11E"></A><A HREF="steelman.htm#11E">11E. Interface to Other Languages.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada has standard interfaces to C, Fortran, COBOL, and machine language, and standard pragmas Import, Export, and Convention for interfacing to other languages.  Some C implementations support the "asm" keyword.  C has little support for interfacing to other languages, but on many systems it is the "standard" host language and serves as a common interface standard for other languages. C++ has a general external linkage system using extern "language", though often only C is supported as the external language.  Java has an external link to C.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="11F"></A><FONT SIZE=-1><A NAME="11F"></A><A HREF="steelman.htm#11F">11F. Optimization.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B>?</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada programs can specify whether to optimize for speed or space.  C and C++ code cannot make such specifications, but do provide the "register" keyword to provide optimization hints.  Most compilers support external optimization flags.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="12A"></A><FONT SIZE=-1><A NAME="12A"></A><A HREF="steelman.htm#12A">12A. Library.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All provide mechanisms to make reusable components available to a library.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="12B"></A><FONT SIZE=-1><A NAME="12B"></A><A HREF="steelman.htm#12B">12B. Separately Translated Units.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All support separate compilation.  C separately compiled units need not agree on their interface. This is true for C++ as well, but C++ programs using classes and header files in normal ways obtain most such protection.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="12D"></A><FONT SIZE=-1><A NAME="12D"></A><A HREF="steelman.htm#12D">12D. Generic Definitions.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Ada types cannot be directly made generic, but can be generic via encapsulation. C/C++'s #define preprocessor is not sufficiently powerful to meet these requirements. C++'s templates provide this capability, though weaknesses and different semantics render C++ templates less useful at this time. Java lacks this ability.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="13A"></A><FONT SIZE=-1><A NAME="13A"></A><A HREF="steelman.htm#13A">13A. Defining Documents.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>The C and C++ defining documents include a very large number of undefined results.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="13B"></A><FONT SIZE=-1><A NAME="13B"></A><A HREF="steelman.htm#13B">13B. Standards.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>no</B></FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Official standards are available for Ada and C. There is no official C++ standard, but work to develop one is ongoing.  Work to standardize Java is at an extremely early stage.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="13C"></A><FONT SIZE=-1><A NAME="13C"></A><A HREF="steelman.htm#13C">13C. Completeness of Implementations.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes in practice</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Some Ada compilers have not completed their transition to Ada95; the Ada validation process (including the ACVC test suite) helps to ensure that Ada compilers implement the entire Ada language. C implementations need not implement the entire language, but production compilers generally do so. Since the definition of C++ is changing, C++ compilers are mostly complete as of some version of the C++ standard.  Note that all compilers have bugs, so none can truly process "any" correct program.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="13D"></A><FONT SIZE=-1><A NAME="13D"></A><A HREF="steelman.htm#13D">13D. Translator Diagnostics.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B>?</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>All provide at least some error reporting and warnings, all have optimizing compilers, and all permit separate compilation. Translator characteristics for detecting errors in the presence of separate compilation are undefined by C and C++. Shared definitions are not required in C; they are generally used in C++. Many C compilers do not do full type checking; lint (where available) can supplement checking.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="13E"></A><FONT SIZE=-1><A NAME="13E"></A><A HREF="steelman.htm#13E">13E. Translator Characteristics.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>mostly</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Many compilers are implemented in their own language, though not all.  Java implementations may have two code production stages, one that generates virtual machine code and a second that converts virtual machine code to a specific machine's code.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="13F"></A><FONT SIZE=-1><A NAME="13F"></A><A HREF="steelman.htm#13F">13F. Restrictions on Translators.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1><B>partial</B></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>The C language definition still permits externally-visible identifiers to be considered identical if the first 6 characters are equal ignoring case (as a concession to old linkers). C++ recommends large maximums (see "Implementation Quantities"), though these are not mandated.  Credit is given if the limits are sufficiently large that encountering them is very unlikely.</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<A NAME="13G"></A><FONT SIZE=-1><A NAME="13G"></A><A HREF="steelman.htm#13G">13G. Software Tools and Application Packages.</A></FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD ALIGN=center>
+<FONT SIZE=-1>yes</FONT>
+</TD>
+<TD>
+<FONT SIZE=-1>Many tools exist for all of these languages (particularly for C and C++) from a wide variety of vendors.</FONT>
+</TD>
+</TR>
+</TABLE>
+<P>
+You may
+<A HREF="index.html">Return to the Steelman On-Line Introduction</A>.
+<P>
+<I>(C) 1996 David A. Wheeler</I>.
+<P>
+<I>This paper is not endorsed by, and does not necessarily represent
+the views of, the Institute for Defense Analyses (IDA),
+the U.S. Department of Defense (DoD), or the U.S. Government</I>.
+<P>
+</body>
+</html>
+
