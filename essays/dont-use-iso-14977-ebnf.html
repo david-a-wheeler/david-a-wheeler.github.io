@@ -14,15 +14,14 @@
 
 <h1 class="title">Don&#8217;t Use ISO/IEC 14977 Extended Backus-Naur Form (EBNF)</h1>
 <h2 class="author">David A. Wheeler</h2>
-<h2 class="date">2020-02-18 (original 2019-03-02)</h2>
+<h2 class="date">2023-03-20 (original 2019-03-02)</h2>
 
 <p>
 If you need to define a language
 (such as a programming language or complex data structure)
 it&#8217;s often helpful to use some kind of
 Extended Backus-Naur form (EBNF).
-Often
-people do a Google search, find out that there&#8217;s an
+Often people do a Google search, find out that there&#8217;s an
 ISO/IEC standard (ISO/IEC 14977:1996), and then just use it...
 without realizing that this very old
 ISO/IEC standard has a lot of problems and should not be used.
@@ -31,10 +30,11 @@ ISO/IEC standard has a lot of problems and should not be used.
 In this essay I will briefly explain the problems of
 the ISO/IEC 14977:1996 specification,
 and why I think you should avoid using it.
-I will first explain why
-<a href="#mindless">just mindlessly obeying ISO is inappropriate</a>,
-and then discuss the
-<a href="#problems">many technical failings of the specification itself</a>.
+I will first discuss the
+<a href="#problems">many technical failings of the specification itself</a>,
+the follow that with why
+<a href="#mindless">just mindlessly obeying ISO is inappropriate</a>
+(since some people may do that),
 When I discuss its failings
 I will also compare the 14977 specification to a common alternative, the EBNF
 notation from the
@@ -46,167 +46,6 @@ has a number of very serious problems and that there are much better
 alternatives available.
 Obviously these are my personal opinions, which you may not share...
 but I hope this essay will help you understand why I hold them.
-
-<h1 id="mindless">But shouldn't I mindlessly obey ISO and IEC?</h1>
-
-<p>
-But first: why not obey whatever ISO and IEC say?
-It may surprise you, but ISO and IEC are not gods from on high.
-They are just two of many standards-setting bodies.
-Just because
-they wrote a specification does not mean you should use it.
-
-<p>
-First, just because ISO or IEC wrote a document doesn't mean people use it.
-After all,
-<a href="https://spectrum.ieee.org/tech-history/cyberspace/osi-the-internet-that-wasnt">ISO developed and promulgated the so-called
-Open Systems Interconnect (OSI) standards in the 1980s as the one true way
-to connect networks, and OSI was solidly trounced by the TCP/IP suite
-developed by IETF</a>.
-Anyone who committed to the ISO-developed OSI standards wasted
-a lot of money!
-
-<p>
-In this specific case,
-even ISO does not use 14977 itself for all the language standards it publishes.
-Since even ISO doesn't always use 14977, there's no reason you need to.
-The 2011 paper
-<a href="https://www.grammarware.net/text/2012/bnf-was-here.pdf"
->&#8220;BNF was Here:
-What Have We Done About the Unnecessary Diversity of
-Notation for Syntactic Definitions&#8221;
-by Vadim Zaytsev</a> expressly notes that
-many ISO specifications do not use 14977, and
-considers 14977 to be a failure.
-Unfortunately, most ISO standards are not publicly available
-(as I'll discuss in a moment).
-That said, here's a specific example you can check: the
-<a href="http://www.ada-auth.org/standards/ada12_w_tc1.html"
->Ada programming language standard
-(published as International Standard ISO/IEC 8652:2012)</a>
-defines its own BNF format in section 1.1.4.
-Note that it does not use 14977 notation
-(for example, it does not use commas for concatenation).
-
-<p>
-I am certainly not anti-ISO or anti-standards, far from it.
-I am trying to convince you that you should not use something
-just because it comes from ISO.
-If you need something from an international standards body, then
-it&#8217;s worth noting that the W3C and IETF are also international
-standards bodies that have specified <i>different</i> EBNF notations.
-The W3C one, in particular, is a reasonable alternative, and that is
-the one I will focus on here (as a point of comparison).
-
-<p id="unjustified_fees">
-A broader
-problem with ISO and IEC is that unlike modern standards-setting organizations,
-they often charge for the IT standards they publish instead of making
-them publicly available.
-By "publicly available" I mean "at no cost"; even ISO uses this terminology.
-In contrast, the IETF, W3C, and other modern standards-setting
-organizations always make standards publicly available.
-These fees are not justifiable today.
-Distributing documents costs practically nothing, and
-ISO and IEC do not pay their authors (or the authors' employers),
-so all the money paid for these standards is exploitative.
-These fees also greatly impede the use of standards;
-modern systems require at least tens of thousands of standards
-(in the broad sense),
-so while charging for one document (even though the authors get none of it)
-is unjustified, no one can afford to get them all even if they wanted to.
-These fees are especially harmful to small businesses and hobbyists, and
-the world depends on them.
-In a historical context the fees made sense, because they were necessary
-to purchase and use printing presses.
-But today, no one wants that; they want the electronic document,
-nstantly, at no charge.
-ISO has been exploiting the world through these unjustified fees.
-I don't object at all to profit; the profit motivation has done great
-things for society.
-I object to exploitation; these organizations like ISO are
-charging for work, yet not paying the people who do the work nor
-making the work available for free.
-
-<p>
-Of course, many others have made the same observation.
-On
-<a href="https://news.ycombinator.com/item?id=16752556">April 4, 2018,
-user mycl</a> observed that
-"ISO Prolog (ISO/IEC 13211) doesn't have a free standard and it has
-hurt the Prolog language immeasurably. In this case the last freely
-available draft is quite different from the final standard, which makes
-the situation worse because not everyone is aware of this.
-I have noticed a lot of Prolog programmers don't know what's in the
-standard and what's not - you routinely see answers given on SO that are
-implementation dependent when they could easily have been expressed in
-strictly conforming ISO Prolog."
-
-<p>
-These fees exploit a feature of international law.
-In international law, certain organizations (such as the ISO and IEC)
-have historically been treated specially.
-To oversimplify, international law has recognized
-two kinds of standards (in French, « norme » and « standard »),
-and the bodies that make the first kind include ISO and IEC, while
-the bodies that make the second kind include IETF and W3C.
-This might suggest that ISO should be given more deference, but the
-reality is that ISO is exploiting this position to make unjustified profits.
-That reality undercuts any justification ISO might have for deference.
-
-<p>
-Since ISO has been exploiting its position,
-I see no reason to give ISO special deference.
-I feel sad about this; I think that ISO
-is an important organization that has lost its way.
-ISO has done some good work!
-I will continue to use ISO specifications where they are good, and
-I will even work with ISO where appropriate.
-More generally, I <i>do</i> think that it's important to have standards
-from organizations like ISO and IETF.
-
-<p>
-That said, I think it's important to realize that
-ISO <i>must</i> change its behavior if it wants to stay relevant
-in the long run.
-ISO needs to rediscover its actual purpose:
-to develop and encourage the use of international standards.
-If you can find a way to encourage ISO to update its practices and
-join the modern world, before it finally
-slips into irrelevance, that'd be great.
-I <i>want</i> to see a successful ISO in the long run, and I think its
-currently policies are inappropriate for the modern world.
-But until ISO fixes its policies to focus on making standards instead
-of making profits, it is appropriate to be a little wary of ISO standards.
-
-<p>
-This problem of charging unjustified fees is less of a problem in this case,
-though the situation is not great.  Thankfully
-<a href="https://www.iso.org/standard/26153.html">ISO/IEC 14977:1996</a>
-is one of the few ISO
-<a href="https://standards.iso.org/ittf/PubliclyAvailableStandards/index.html"
->publicly-available specifications</a> (that means available at no charge).
-I find it bizarre that ISO thinks it's acceptable to have any standard
-it develops <i>not</i> be publicly available, obviously!
-On the other hand,
-it&#8217;s not friction-free;
-when I last tried, it&#8217;s easy to not notice the free version,
-you have to agree to a license before you can download it,
-you get a zip file that you have to decompress
-instead of simply getting the actual specification, and it&#8217;s a
-PDF file that doesn&#8217;t properly scale to different screen sizes
-(instead of clean responsive HTML or at least reflowing PDF).
-Compare this complicated multi-step process with the experience
-of getting the much-better W3C specification for the same job:
-<a href="https://www.w3.org/TR/xml/#sec-notation"
->click here and start reading on any device</a>.
-
-<p>
-Hopefully I have convinced you that mindlessly obeying ISO is
-completely inappropriate.
-But getting the specification is not the primary problem in this case.
-The problem is using it.
-The specification is terrible, and far better options are available.
 
 <h1 id="problems">The specification itself has serious problems</h1>
 
@@ -335,8 +174,26 @@ an easy-to-read grammar definition, almost doubling
 the number of required syntactic symbols is a serious mistake.
 W3C&#8217;s notation uses spaces, eliminating the problem entirely.
 
-<li id="one_or_more"><b>It has a bizarre, difficult-to-understand, and easily-misunderstood
-&#8220;one or more&#8221; notation</b>.
+<li id="regex"><b>It does not build on widely-used regex notation</b>.
+The easiest language to learn and use is one that's very similar to one you already know.
+The vast majority of software developers today
+<a href="https://xkcd.com/208/">know regular expressions</a>.
+Regular expressions (regexes)
+are built into the syntax of many programming languages
+including JavaScript, Ruby, and Perl.
+The Python programming language technically doesn't have regexes built into
+its syntax, but it has special string syntax designed for them, and its
+built-in library supports them.
+Regexes are widely used for input validation and many other purposes.
+POSIX standardizes extended regular expressions (EREs).
+In POSIX EREs and the regexes built into many programming languages,
+an atom can be followed by a count ("*" for 0 or more, "+" for 1 or more, and
+"?" for 0 or 1).
+Yet 14977 (and IETF's EBNF format) use a different syntax.
+There's no good justification for using a syntax that's different from what
+developers use every day.
+
+<li id="one_or_more"><b>It has a bizarre, difficult-to-understand, and easily-misunderstood &#8220;one or more&#8221; notation</b>.
 Another common operation is to identify that something
 occurs &#8220;one or more&#8221; times.
 Regular expressions (which are widely used and known in the computing
@@ -381,19 +238,177 @@ characters.
 When the specification was written one of the concerns was that
 there were computers and typewriters (!)
 that did not have some of the characters
-such &#8220;{&#8220; and &#8220;}&#8221;,
+such as &#8220;{&#8220; and &#8220;}&#8221;,
 so alternatives such as
 &#8220;(:&#8221; and &#8220;:)&#8221; were defined.
 There is no reason today to use that nonsense.
 
+<h1 id="mindless">But shouldn't I mindlessly obey ISO and IEC?</h1>
+
 <p>
-But when the primary advantage of your specification is that it can
-handle old typewriters, perhaps that should not be your preferred spec.
-The weaknesses of this specification far outweigh its advantages.
-It is widely perceived as a failure, but because it still exists,
-people occasionally make the mistake of trying to use it.
+For many the technical problems are enough.
+But others may think they should obey whatever ISO and IEC say.
+It may surprise you, but ISO and IEC are not gods from on high.
+They are just two of many standards-setting bodies.
+Just because
+they wrote a specification does not mean you should use it.
+
+<p>
+First, just because ISO or IEC wrote a document doesn't mean people use it.
+After all,
+<a href="https://spectrum.ieee.org/tech-history/cyberspace/osi-the-internet-that-wasnt">ISO developed and promulgated the so-called
+Open Systems Interconnect (OSI) standards in the 1980s as the one true way
+to connect networks, and OSI was solidly trounced by the TCP/IP suite
+developed by IETF</a>.
+Anyone who committed to the ISO-developed OSI standards wasted
+a lot of money!
+
+<p>
+In this specific case,
+even ISO does not use 14977 itself for all the language standards it publishes.
+Since even ISO doesn't always use 14977, there's no reason you need to.
+The 2011 paper
+<a href="https://www.grammarware.net/text/2012/bnf-was-here.pdf"
+>&#8220;BNF was Here:
+What Have We Done About the Unnecessary Diversity of
+Notation for Syntactic Definitions&#8221;
+by Vadim Zaytsev</a> expressly notes that
+many ISO specifications do not use 14977, and
+considers 14977 to be a failure.
+Unfortunately, most ISO standards are not publicly available
+(as I'll discuss in a moment).
+That said, here's a specific example you can check: the
+<a href="http://www.ada-auth.org/standards/ada12_w_tc1.html"
+>Ada programming language standard
+(published as International Standard ISO/IEC 8652:2012)</a>
+defines its own BNF format in section 1.1.4.
+Note that it does not use 14977 notation
+(for example, it does not use commas for concatenation).
+
+<p>
+I am certainly not anti-ISO or anti-standards, far from it.
+I am trying to convince you that you should not use something
+just because it comes from ISO.
+If you need something from an international standards body, then
+it&#8217;s worth noting that the W3C and IETF are also international
+standards bodies that have specified <i>different</i> EBNF notations.
+The W3C one, in particular, is a reasonable alternative, and that is
+the one I will focus on here (as a point of comparison).
+
+<p id="unjustified_fees">
+A broader
+problem with ISO and IEC is that unlike modern standards-setting organizations,
+they often charge for the IT standards they publish instead of making
+them publicly available.
+By "publicly available" I mean "at no cost"; even ISO uses this terminology.
+In contrast, the IETF, W3C, and other modern standards-setting
+organizations always make standards publicly available.
+These fees are not justifiable today.
+Distributing documents costs practically nothing, and
+ISO and IEC do not pay their authors (or the authors' employers),
+so all the money paid for these standards is exploitative.
+These fees also greatly impede the use of standards;
+modern systems require at least tens of thousands of standards
+(in the broad sense),
+so while charging for one document (even though the authors get none of it)
+is unjustified, no one can afford to get them all even if they wanted to.
+These fees are especially harmful to small businesses and hobbyists, and
+the world depends on them.
+In a historical context the fees made sense, because they were necessary
+to purchase and use printing presses.
+But today, no one wants that; they want the electronic document,
+instantly, at no charge.
+I don't object at all to profit; the profit motivation has done great
+things for society.
+I object to exploitation; in some cases ISO is
+charging for work, yet not paying the people who do the work nor
+making the work available for free.
+
+<p>
+Of course, many others have made the same observation.
+On
+<a href="https://news.ycombinator.com/item?id=16752556">April 4, 2018,
+user mycl</a> observed that
+"ISO Prolog (ISO/IEC 13211) doesn't have a free standard and it has
+hurt the Prolog language immeasurably. In this case the last freely
+available draft is quite different from the final standard, which makes
+the situation worse because not everyone is aware of this.
+I have noticed a lot of Prolog programmers don't know what's in the
+standard and what's not - you routinely see answers given on SO that are
+implementation dependent when they could easily have been expressed in
+strictly conforming ISO Prolog."
+
+<p>
+These fees exploit a feature of international law.
+In international law, certain organizations (such as the ISO and IEC)
+have historically been treated specially.
+To oversimplify, international law has recognized
+two kinds of standards (in French, « norme » and « standard »),
+and the bodies that make the first kind include ISO and IEC, while
+the bodies that make the second kind include IETF and W3C.
+This might suggest that ISO should be given more deference, but the
+reality is that ISO is exploiting this position to make unjustified profits.
+That reality undercuts any justification ISO might have for deference.
+
+<p>
+I feel sad about this; I think that ISO
+is an important organization that has lost its way.
+ISO has done some good work!
+I will continue to use ISO specifications where they are good, and
+I will work with ISO where appropriate.
+In particular, I'm delighted to work with ISO when the result will be
+a publicly available standard.
+More generally, I <i>do</i> think that it's important to have standards
+from organizations like ISO and IETF.
+
+<p>
+That said, I think it's important that ISO change its behavior.
+ISO needs to develop and encourage the use of international standards,
+not focus on charging for work done by others.
+If you can find a way to encourage ISO to update its practices and
+join the modern world, before it finally
+slips into irrelevance, that'd be great.
+I <i>want</i> to see a successful ISO in the long run, and I think its
+currently policies are inappropriate for the modern world.
+
+<p>
+This problem of charging unjustified fees is less of a problem in this case,
+though the situation is not great.  Thankfully
+<a href="https://www.iso.org/standard/26153.html">ISO/IEC 14977:1996</a>
+is one of the few ISO
+<a href="https://standards.iso.org/ittf/PubliclyAvailableStandards/index.html"
+>publicly-available specifications</a> (that means available at no charge).
+I find it bizarre that ISO thinks it's acceptable to have any standard
+it develops <i>not</i> be publicly available, obviously!
+On the other hand,
+it&#8217;s not friction-free;
+when I last tried, it&#8217;s easy to not notice the free version,
+you have to agree to a license before you can download it,
+you get a zip file that you have to decompress
+instead of simply getting the actual specification, and it&#8217;s a
+PDF file that doesn&#8217;t properly scale to different screen sizes
+(instead of clean responsive HTML or at least reflowing PDF).
+Compare this complicated multi-step process with the experience
+of getting the much-better W3C specification for the same job:
+<a href="https://www.w3.org/TR/xml/#sec-notation"
+>click here and start reading on any device</a>.
+
+<p>
+Hopefully I have convinced you that mindlessly obeying ISO is
+completely inappropriate.
+But getting the specification is not the primary problem in this case.
+The problem is using it.
+The specification is terrible, and far better options are available.
 
 <h1 id="conclusions">Conclusions</h1>
+
+<p>
+When the primary advantage of your specification is that it can
+handle old typewriters, perhaps that should not be your preferred spec.
+The weaknesses of this specification far outweigh its advantages.
+It is widely perceived as a failure, as it is often not used
+(even by the organization that created it), but because it still exists,
+people occasionally make the mistake of trying to use it.
 
 <p>
 I am not the only person to notice problems with 14977, of course.
@@ -454,7 +469,7 @@ the Numbers!</a> and my book on
 secure programs</a>.
 
 <p>
-(C) Copyright 2019-2020 David A. Wheeler.
+(C) Copyright David A. Wheeler.
 Released under
 <a href="https://creativecommons.org/licenses/by-sa/3.0/">Creative Commons
 Attribution-ShareAlike version 3.0 or later
