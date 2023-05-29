@@ -1788,6 +1788,53 @@ Even given that, it's easier to first create a package that's
 semantically reproducible, and <i>then</i> work on the issues remaining
 to make it a fully reproducible build.
 <p>
+The intended use case for semantically reproducible builds
+(instead of fully reproducible builds)
+really to help people make risk decisions when they're thinking
+about bringing in external software.
+I'm primarily trying to deal with the case where the developer has decided
+to <i>not</i> provide a reproducible build,
+and I have to estimate the likelihood
+of it being maliciously built (presumably as a part of decideing whether or not
+the package is safe to install). I'm primarily thinking of
+applying this process to mostly-unmanaged repositories
+like npm, PyPI, and RubyGems, *not* to managed repositories like
+most Linux distributions' repositories (which have other
+mechanisms to counter malicious builds).
+The problem is that I cannot make the developer
+provide me a reproducible build (I can beg, but that's not the same thing).
+I'm trying to make good decisions with the information I have,
+not the information I *want* to have.
+<p>
+The threat model is a little different, too. The assumption isn't that
+"it is impossible for these differences to cause damage".
+The assumption is that "the original source code was benign,
+reasonably coded, and did not do damage". The question is,
+"is this non-reproducible
+package likely to have been generated from it, even though it's
+not a reproducible build?"
+<p>
+Here's an example that might clarify the threat model.
+It's possible that a
+program could look for the file ".gitignore" and run it if present.
+The source code repo might not have a .gitignore file,
+but the malicious package might add a .gitignore file and fill it with
+a malicious application. That would cause malicious code to
+be executed. However, it would also be *highly* suspicious for
+the source code to
+run a ".gitignore" file (that's *not* what they are for), so
+it's reasonable to assume that the source code didn't do that.
+If an attacker can insert a file that *would* cause malicious code
+to execute in a reasonably-coded app, then that *would* be a problem.
+"What's reasonable" is hard to truly write down, but
+ignoring date/time stamps and ignoring a
+whitelisted list of specific filenames seems like a reasonable place
+to start.
+<p>
+Sure, ideally everything would have a reproducible build.
+Since that day isn't here, what can we do to take piecemeal
+steps towards that?
+<p>
 In short, making packages at least semantically reproducible
 (and verifying this) is a great countermeasure against subverted builds.
 
