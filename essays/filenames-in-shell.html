@@ -1471,15 +1471,18 @@ don&#8217;t need stdin):
 
 It'd also be nice to
 extend the shell so that its <tt>for</tt> loop can handle a
-null-separated list.
-This one is harder; it&#8217;s not obvious how to do this.
+computed null-separated list <i>without</i> overriding
+standard input.
+It's often nice to read from standard input; if standard input is used to
+provide the filenames then easy use of the "normal" standard input is lost.
+This goal is harder; it&#8217;s not obvious how to do this.
 My current theory is that there be a new shell option &#8216;nullseparator&#8221;;
 when enabled, IFS is ignored, and instead \0 is the input seperator.
 Then, extend the shell&#8217;s <tt>for</tt> loop syntax so that if you say
 <tt>then in</tt> instead of <tt>in</tt>, this mode is temporarily
-enabled while the list is processed.
-(I originally had <tt>null in</tt>, but using <tt>then in</tt>
-means that no new keywords are needed.)
+enabled to process the list of filenames.
+I originally suggested the syntax <tt>null in</tt>, but using <tt>then in</tt>
+means that no new keywords are needed.
 You could then do this:
 <pre>
  for file then in $(find . -print0) do ... done
