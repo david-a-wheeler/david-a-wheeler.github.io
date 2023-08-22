@@ -13,7 +13,7 @@
 
 <h1 class="title">Filenames and Pathnames in Shell: How to do it Correctly</h1>
 <h2 class="author">David A. Wheeler</h2>
-<h2 class="date">2020-02-22 (original version 2010-05-19)</h2>
+<h2 class="date">2023-08-23 (original version 2010-05-19)</h2>
 <p>
 
 <p>
@@ -65,7 +65,7 @@ you ever unarchive &#8220;tar&#8221; or &#8220;zip&#8221; files
 from someone else,
 examine directories with files created by someone else,
 or simply create files yourself that contain shell metacharacters
-(like space or question mark).
+(like newline, space, or question mark).
 
 <p>
 This is not a <i>just</i> a shell problem.
@@ -83,15 +83,16 @@ in Unix-like kernels (allowing dangerous filenames)</a> combines
 with additional weaknesses in the Bourne shell language,
 making it even <i>more</i> difficult in shell to correctly handle
 filenames and pathnames.
-I think shell is a reasonable language for short scripts,
+I think shell is a reasonable language for many scripts,
 when properly used, but the excessive permissiveness of filenames
 turns easy tasks into easily-done-wrong tasks.
 A <a href="./fixing-unix-linux-filenames.html">few small changes would
 make it much easier to write secure code for handling filenames</a>
-for all languages including shell.
+for all languages including shell, but I think it's unlikely that the
+standards will change to forbid dangerous constructs.
 So if your script may handle unarchived files, or files created by
-different user or mobile app, then
-your script needs to handle this botched situation.
+a different user or mobile app, then
+your script needs to handle this situation.
 Tools like <a href="http://www.shellcheck.net">shellcheck</a> can
 help you find some of these problems, but not all of them, and
 you can use such tools more effectively if you understand the problem.
@@ -117,16 +118,28 @@ pathname components also cannot include &#8220;/&#8221;;
 those turn out to be the only rules you can really count on today.
 
 <p>
+The POSIX standard made a few modest changes in 2023 to
+make this <i>slightly</i> easier in a standards-compliant way.
+The POSIX authors
+<a href="https://www.austingroupbugs.net/view.php?id=251"
+>won't forbid control characters or leading dashes in filenames</a>,
+but they have
+<a href="https://www.austingroupbugs.net/view.php?id=243"
+>added a few mechanisms to make it easier to handle such filenames</a>
+(<tt>find -print0</tt>, <tt>xargs -0</tt>, and <tt>read -d ""</tt>).
+We'll how to use these additions where practical below.
+
+<p>
 <h1 id="summary">Doing it correctly: A quick summary</h1>
 <p>
 So, how can you process pathnames <i>correctly</i> in shell?
 Here&#8217;s a quick summary about how to do it correctly, for the impatient
 who &#8220;just want the answer&#8221;.
 
-<h2>Basic rules</h2>
+<h2>Basic rules for shell</h2>
 <ol>
 <li><a href="#doublequote">Double-quote all variable references
-and command substitutions</a> unless you are
+and command substitutions in shell</a> unless you are
 <i>certain</i> they can only contain alphanumeric characters
 or you have specially prepared things
 (i.e., use <tt>"$variable"</tt> instead of <tt>$variable</tt>).
@@ -135,23 +148,32 @@ In particular, you should practically always put
 POSIX defines this to be special
 (it expands into the positional parameters as
 <i>separate</i> fields even though it is inside double-quotes).
+This is a "normal rule" when writing shell scripts that is mentioned in
+almost any tutorial about the shell language.
+The <tt>shellcheck</tt> tool (which you should use!) will warn you when
+you fail to do this.
 </li>
 <li><a href="#ifs">Set IFS to just newline and tab</a>, if you can,
 to reduce the risk of mishandling filenames with spaces.
 Use newline or tab to separate options stored in a single variable.
 Set IFS with
 <tt>IFS="$(printf&nbsp;'\n\t')"</tt></li>
+or
+<tt>IFS=$'\n\t'</tt> (the latter was added to POSIX in 2023).
 <li><a href="#prefixglobs">Prefix all pathname globs so they cannot expand to begin with
 &#8220;-&#8221;</a>.
 In particular, never start a glob with &#8220;?&#8221;
 or &#8220;*&#8221; (such as &#8220;*.pdf&#8221;);
-always prepend globs with something (like &#8220;./&#8221;)
+always prepend globs with something like &#8220;./&#8221;
 that cannot expand to a dash.
 So never use a pattern like &#8220;*.pdf&#8221;; use &#8220;./*.pdf&#8221;
 instead.
+You should do this in any programming language, not just shell, because
+the filenames may eventually be passed to something else.
 <li><a href="#checkdash">Check if a pathname begins with &#8220;-&#8221;
-when accepting pathnames</a>, and then
+when accepting pathnames</a>, if that's possible, and then
 prepend &#8220;./&#8221; if it does.
+Again, you should do this in any programming language, not just shell.
 <li><a href="#display-store">Be careful about
 displaying or storing pathnames</a>, since they can
 include newlines, tabs, terminal control escape sequences, non-UTF-8
@@ -163,8 +185,11 @@ before display using
 always using &#8220;<tt>--</tt>&#8221;</a>
 between options and pathnames as the primary countermeasure against
 filenames beginning with &#8220;-&#8221;.
-You have to do it with <i>every</i> command for this to work, but
-people will <i>not</i> use it consistently (they never have), and many
+Some guidance recommends this, but I think it's bad advice.
+You have to do this with <i>every</i> command for this approach to work,
+without error; this doesn't work with real people, because
+people will <i>not</i> use it consistently (they never have).
+Also, many
 programs (including <tt>echo</tt>) do not support &#8220;<tt>--</tt>&#8221;.
 Feel free to use &#8220;<tt>--</tt>&#8221;
 between options and pathnames, but only
@@ -177,7 +202,7 @@ As already noted, always prepend globs (e.g., with "./")
 so you never have a glob with a leading "-".
 Consider also disabling leading-dash matches, so that if you accidentally
 forget to do it, the mistake is unlikely to become a security vulnerability.
-There's no standard way to do that (yet).
+There's no standard way to do this.
 In bash you can set <tt>GLOBIGNORE='-*:.:..'</tt> ; notice the <tt>-*</tt>.
 The
 <a href="http://www.oilshell.org/preview/doc/help.html?topic=dashglob#dashglob"
@@ -205,8 +230,6 @@ The phrase "<tt>set -eu</tt>" works on all POSIX shells.
 <a href="http://www.shellcheck.net">shellcheck</a> to find problems
 you missed.
 </ol>
-
-
 
 <h2>Template: <a href="#globbing">Using globs</a></h2>
 
@@ -255,17 +278,21 @@ walk the filesystem, skipping all "hidden" directories and files
 Below are the forms that always work (though some require
 nonstandard extensions or fail with Cygwin),
 followed by simpler ones with serious limitations.
+The <a href="https://www.austingroupbugs.net/view.php?id=243"
+>POSIX specification has added in 2023 some constructs</a>:
+<tt>find -print0</tt>, <tt>xargs -0</tt>, and <tt>read -d ""</tt>.
+This POSIX additions help in some cases.
 
 <h3>Always works</h3>
 <pre>
  # Simple find -exec; unwieldy if COMMAND is large, and creates 1 process/file:
  find . -exec COMMAND... {} \;
 
- # Simple find -exec with +, faster if multiple files are okay for COMMAND:
+ # Simple find -exec with +, faster if multiple files are okay for one COMMAND:
  find . -exec COMMAND... {} \+
 
- # Use find and xargs with \0 separators
- # (nonstandard common extensions -print0 and -0. Works on GNU, *BSDs, busybox)
+ # Use find and xargs with \0 separators. This is a POSIX addition in 2023,
+ # but it's been widely available long before then.
  find . -print0 | xargs -0 COMMAND
 
  # Head-busting, but it works portably.  Use '\'' for single-quote in command.
@@ -275,27 +302,28 @@ followed by simpler ones with serious limitations.
      ...  # Use "$file" not $file
   done' sh {} +
 
- # find... while loop, requires find (-print0) and shell (read -d) extensions.
+ # find... while loop. This uses find -print0 and shell's read -d which are
+ # POSIX additions in 2023 (but have long been widely implemented).
  # Fails on Cygwin; in while loops, filenames ending in \r \n and \n look =.
- # Variable values may be lost unset because loop may run in a subshell.
- find . -print0 | while IFS="" read -r -d "" file ; do ...
+ # Variable values may be lost/unset because loop may run in a subshell.
+ find . -print0 | while IFS="" read -r -d "" file ; do
    COMMAND "$file" # Use quoted "$file", not $file, everywhere.
  done
 
  # while + find with process substitution.
- # Requires nonstandard read -d (bash ok) and find -print0.
+ # Requires read -d and find -print0, POSIX additions in 2023.
  # Rquires nonstandard process redirection &lt;(...); bash, zsh, and ksh 93
  # have process redirection, but dash and ksh 88 do not. Also,
  # the underlying system must have named pipes (FIFOs) or /dev/fd.
  # Fails on Cygwin; in while loops, filenames ending in \r \n and \n look =.
- # Variables *do* retain their value after the loop ends, and
- # you can read from stdin (change the 4s to another number if fd 4 is needed):
+ # Variables *do* retain their value after the loop ends, and you can read
+ # from stdin (change the 4s to another number if file descriptor 4 is needed):
  while IFS="" read -r -d "" file &lt;&amp;4 ; do
    COMMAND "$file" # Use quoted "$file", not $file, everywhere.
  done 4&lt; &lt;(find . -print0)
 
  # Named pipe version.
- # Requires nonstandard extensions to find (-print0) and read -d (bash ok);
+ # Requires find -print0 and read -d, which are in POSIX as of 2023.
  # underlying system must inc. named pipes (FIFOs).
  # Fails on Cygwin; in while loops, filenames ending in \r \n and \n look =.
  # Variables *do* retain their value after the loop ends, and
@@ -308,7 +336,8 @@ followed by simpler ones with serious limitations.
 
  # Use the <a href="../encodef/index.html">author's encodef program</a>.
  # Variables *do* retain their value after the loop ends.
- # This version is POSIX portable, but you must have encodef. In practice
+ # This version is POSIX portable, but you must have encodef, which is
+ # something else to manage. In practice
  # you can often use "-print0" instead of POSIX "-exec printf '%s\0' {} \;"
  for encoded_pathname in $(find . -exec printf '%s\0' {} \; | encodef ) ; do
    file="$(encodef -dY -- "$encoded_pathname")" ; file="${file%Y}"
@@ -375,6 +404,7 @@ Here are examples (and their limitations):
 There&#8217;s no easy portable way to handle multiple
 arbitrary filenames in one variable and then directly use them.
 Shell arrays work, but can be tricky to use in this case and are not portable.
+If you want a portable solution,
 I suggest forbidding filenames with tabs and newlines; then you
 can easily use those characters as separators like this:
 <pre>
@@ -415,7 +445,6 @@ save and restore shell option settings by doing this:
  ... (set -f, etc.)
  eval "$oldSetOptions" 2&gt; /dev/null  # Restore shell option settings
 </pre>
-
 
 <p>
 <h1 id="wrong">How to do it wrongly</h1>
@@ -1123,16 +1152,14 @@ a common solution is to use byte 0 (aka \0 or null)
 to separate pathnames.
 This works because pathnames, by definition, cannot include byte 0.
 <p>
+This is the primary approach encouraged by the POSIX specification
+additions in 2023.
 This is very useful, and it works nicely, but note that
 there are downsides to this approach:
 <ul>
-<li>The easy way to use this convention requires
-the use of nonstandard extensions that are not a part of the
-<a href="http://www.opengroup.org/onlinepubs/009695399/">POSIX standard</a>,
-so the result is non-standard and less portable.
-Still, many toolsets have a few tool extensions to support this,
-including the GNU, *BSD, and busybox toolsets.
-Hopefully someday POSIX will add this.
+<li>The easy way to use this convention requires using 2023 additions to the
+<a href="http://www.opengroup.org/onlinepubs/009695399/">POSIX standard</a>.
+These are widely but not universally implemented today.
 <li>The option names to use this convention today (when available)
 are jarringly inconsistent.
 In particular, <tt>perl</tt> uses <tt>-0</tt>,
@@ -1373,7 +1400,9 @@ newline=$'\n'
 <p>
 The POSIX standard could (and should!) be modified to make it easier to
 to handle the outrageously permissive pathnames that are permitted today.
-Basically, we need extensions to make globbing and find easier to use.
+The POSIX specification was modified in 2023 in a few modest ways
+that do help;
+there are other possible changes as well.
 <p>
 <h2>Globbing</h2>
 <p>
@@ -1405,31 +1434,32 @@ beginning with &#8220;./&#8221; if you need them.
 <p>
 <h2>Find / null separators</h2>
 <p>
-There also needs to be standard way to use <tt>find</tt> with
-arbitrary pathnames.
-The normal way to handle this is by separating pathnames with the null (\0)
-character; a few changes would simplify this:
+Thankfully POSIX has added, in 2023, a few modest
+additions that make things a little easier.
+Most of them are described in
+<a href="http://austingroupbugs.net/view.php?id=243">bugid:243</a>:
+
 <ol>
-<li>Extend existing commands to generate or use null-separated pathname lists.
-At the least, add &#8220;find -print0&#8221;
-(<a href="http://austingroupbugs.net/view.php?id=243">bugid:243</a>)
-and &#8220;xargs -0&#8221; (<a href="http://austingroupbugs.net/view.php?id=244">bugid:244</a>)
-since these are already widely implemented.
-For consistency, I think &#8220;-0&#8221; should be the standard option name for
-null-separated lists.
-It&#8217;d be useful to add &#8220;grep -0&#8221;
-(GNU grep accepts either -Z or --null)
-and &#8220;sort -0&#8221; (GNU sort uses -z).
-Once added, this common template would be portable:
+<li>&#8220;find -print0&#8221; prints pathnames with null byte terminators.
+<li>&#8220;xars -0&#8221; reads pathnames with null byte terminators
+(and does no other processing on pathnames), so this works as expected:
 <pre>
  find . -print0 | xargs -0 COMMAND
 </pre>
-<li>
-Extend the shell&#8217;s <tt>read</tt> so that it can easily read
-null-separated streams.
-(<a href="http://austingroupbugs.net/view.php?id=245">bugid:245</a>)
-Bash can do this today, but it&#8217;s painful; the command is
+<li>The shell's <tt>read</tt> command has been extended so -d ""
+will cause reading to a null byte. You can read an unprocessed line using
 <tt>IFS="" read -d "" -r</tt> which is overly complicated
+but at least it works.
+<li>
+<p>
+The shell <tt>$'...'</tt> construct has also been added to the POSIX
+standard, as it makes certain things easier, including easily
+generating newlines
+(<a href="http://austingroupbugs.net/view.php?id=249">bugid:249</a>).
+</ol>
+
+<p>
+There's more that could be done.
 I believe there should be a new &#8220;-0&#8221; option for read, which says
 &#8220;ignore IFS, and just read until the next \0 byte&#8221;
 (<a href="https://dwheeler.com/misc/read0.patch">Here&#8217;s a bash 4.1 patch</a>).
@@ -1440,8 +1470,8 @@ don&#8217;t need stdin):
  find . -print0 | while read -0 file ; do ... done
 </pre>
 
-<li>
-Extend the shell so that its <tt>for</tt> loop can handle a
+It'd also be nice to
+extend the shell so that its <tt>for</tt> loop can handle a
 null-separated list.
 This one is harder; it&#8217;s not obvious how to do this.
 My current theory is that there be a new shell option &#8216;nullseparator&#8221;;
@@ -1455,12 +1485,6 @@ You could then do this:
 <pre>
  for file then in $(find . -print0) do ... done
 </pre>
-</ol>
-<p>
-As a side note, it&#8217;d be nice if the <tt>$'...'</tt> construct was
-standard, as it makes certain things easier
-(<a href="http://austingroupbugs.net/view.php?id=249">bugid:249</a>).
-
 
 <h1>If pathnames were limited, would it be better?</h1>
 
@@ -1541,7 +1565,7 @@ And, of course, my
 paper on fixing Unix/Linux/POSIX filenames</a>.
 
 <p>
-(C) Copyright 2010-2013 David A. Wheeler.
+(C) Copyright 2010- David A. Wheeler.
 Released under Creative Commons CC-BY-SA (any version), GNU GPL v2+,
 and the
 <a href="http://www.opencontent.org/openpub/">
