@@ -2004,6 +2004,84 @@ by David A. Wheeler, IDA Document D-13166, April 2020</a>
 (here's a <a href="https://perma.cc/FVQ8-EKWA">Perma.cc link to the
 PDF of D-13166</a>).
 
+<h2>Building (more) trusted hardware</h2>
+
+<p>
+A related issue is developing (more) trusted hardware.
+Since it's much harder to determine if hardware is "equivalent" there are
+many ways an attacker can subvert hardware that aren't a trusting trust attack.
+It's especially easy to subvert an ASIC mask, and unfortunately it's hard to
+detect. Those who control foundries can easily insert attacks that
+are hard to detect.
+I can't cover this huge field, but I thought I should make a few notes about it.
+
+<p>
+First, it's well-known that it's possible to insert attacks on hardware
+that are hard to detect later.
+E.g.,
+"<a href="https://www.ieee-security.org/TC/SP2016/papers/0824a018.pdf"
+>A2: Analog Malicious Hardware</a>”
+showed "how a fabrication-time attacker can
+leverage analog circuits to create a hardware attack that is
+small (i.e., requires as little as one gate) and stealthy (i.e.,
+requires an unlikely trigger sequence before effecting a chip’s
+functionality)."
+It won “best paper” at the 37th IEEE Symposium on Security and Privacy
+and
+<a href="https://www.computerworld.com/article/1673247/researchers-built-devious-undetectable-hardware-level-backdoor-in-computer-chips.html"
+>ComputerWorld had article about it</a>.
+
+<p>
+There are <i>some</i> countermeasures. E.g.,
+"<a href="https://cseweb.ucsd.edu/~weh140/resource/IEEEComputer_16.pdf"
+>Detecting Hardware Trojans with Gate-Level Information-Flow Tracking</a>”
+(IEEE Computer August 2016)
+uses information flow tracking to discover hardware Trojans
+As noted in a
+<a href="https://today.ucsd.edu/story/nowhere_to_hide_uc_san_diego_researchers_devise_proactive_method_for_detect"
+>UCSD article</a>, it works by assigning a label to important data
+like a cryptographic key.
+That has some value, but it's not a good general-purpose technique
+for countering arbitrary Trojans - what if the Trojan isn't trying to
+violate that specific property?
+
+<p>
+Obviously, what we'd <i>like</i> to have is computers that we can
+<i>really</i> trust for important missions, either directly or for use as
+checks on "normal" computers.
+One approach I've suggested for decades is possibly using FPGAs to implement
+some computers. FPGAs can be subverted also, especially to add "kill switches",
+but at least the FPGA manufacturer has less information about the chip's use.
+
+<p>
+A really interesting set of work is
+<a href="https://www.contrib.andrew.cmu.edu/~somlo/BTCP/"
+>
+"A Trustworthy, Free (Libre), Linux Capable,
+Self-Hosting 64bit RISC-V Computer" by
+Gabriel L. Somlo</a>.
+Gabriel L. Somlo
+has built an entire hardware and software system using an FPGA.
+He managed this by implementing RISC-V, an open instruction set that
+is supported by today's Linux systems.
+I'm especially delighted that he points to my DDC work (smile).
+
+<p>
+As of 2020 Somlo's FPGA-implemented system's speed was about 65MHz.
+That's obviously
+much slower than current systems which are measured in GHzr
+Still, this is a usable speed if you're patient;
+it's far faster than computers of decades past.
+I also believe that future versions could be <i>much</i> faster if
+resources were poured into it.
+This work used many off-the-shelf components;
+I expect that those components could be optimized to be much faster.
+Its speed is also seriously limited by the lack of capacity in current FPGAs
+(the 2020 implementation lacks hardware floating point and has a
+limited L1 cache).
+Future FPGA systems could be developed with more capacity (and more RAM)
+to improve its performance.
+
 <h2>Miscellaneous</h2>
 
 <p>
@@ -2231,14 +2309,11 @@ provides interesting context about this important paper.
 I used
 <a href="http://www.openoffice.org">OpenOffice.org</a>
 to write the dissertation, and it worked out <i>very nicely</i>.
-OpenOffice.org is a great program for writing larger documents.
-<a href="http://www.documentfoundation.org/download/">The Document Foundation&#8217;s LibreOffice Productivity Suite</a> is derived
-from OpenOffice.org (as I used it), and it also supports OpenDocument,
-so what I say here about OpenOffice.org
-will also apply to LibreOffice (in general).
-(As of early 2011 it appears that
-<a href="http://www.technewsworld.com/story/72329.html?wlc=1303794319&wlc=1303827127">LibreOffice is replacing OpenOffice.org</a>, with a far more
-active community.)
+OpenOffice.org was a great program for writing larger documents.
+<a href="http://www.technewsworld.com/story/72329.html?wlc=1303794319&wlc=1303827127">LibreOffice has replaced OpenOffice.org as its successor</a>;
+LibreOffice started from the same code and has a far more active community.
+So definitely check out
+<a href="http://www.documentfoundation.org/download/">The Document Foundation&#8217;s LibreOffice Productivity Suite</a>.
 <p>
 I developed an
 <a href="https://dwheeler.com/misc/gmu-sample-format.odt">
@@ -2252,12 +2327,12 @@ so others can easily find it (and improve on it).
 -->
 <p>
 The <i>most important</i> rule for writing large documents
-using OpenOffice.org or any other word processor is to
+using LibreOffice or any other word processor is to
 automate everything you can, and in particular, <i>always use styles</i>.
-<b>Never</b> set the font size, font type, etc., for a range of chararacters
-or a paragraph (one exception: using italics/bold to emphasize a word is okay).
-Instead, all formatting information like that
-should be attached to a paragraph style,
+<b>Never</b> set the font size, font type, etc., for a range of characters
+or a paragraph (one exception: using italics/bold to emphasize a word or
+phrase is okay).
+Instead, all formatting information should be attached to a paragraph style,
 and then make sure that each paragraph has the right paragraph style.
 Use &#8220;Text&nbsp;body&#8221; (not &#8220;Default&#8221;) for normal text, and the various
 &#8220;Heading&nbsp;1&#8221;, &#8220;Heading&nbsp;2&#8221;, and
