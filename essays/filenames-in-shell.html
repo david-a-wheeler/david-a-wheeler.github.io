@@ -128,6 +128,9 @@ but they have
 <a href="https://www.austingroupbugs.net/view.php?id=243"
 >added a few mechanisms to make it easier to handle such filenames</a>
 (<tt>find -print0</tt>, <tt>xargs -0</tt>, and <tt>read -d ""</tt>).
+These changes were included in
+<a href="https://pubs.opengroup.org/onlinepubs/9799919799/"
+>POSIX released in 2024</a>.
 We'll how to use these additions where practical below.
 
 <p>
@@ -280,7 +283,7 @@ Below are the forms that always work (though some require
 nonstandard extensions or fail with Cygwin),
 followed by simpler ones with serious limitations.
 The <a href="https://www.austingroupbugs.net/view.php?id=243"
->POSIX specification has added in 2023 some constructs</a>:
+>POSIX specification has added in 2023 and released in 2024 some constructs</a>:
 <tt>find -print0</tt>, <tt>xargs -0</tt>, and <tt>read -d ""</tt>.
 These POSIX additions help in some cases.
 
@@ -293,7 +296,7 @@ These POSIX additions help in some cases.
  find . -exec COMMAND... {} \+
 
  # Use find and xargs with \0 separators. This is a POSIX addition in 2023,
- # but it's been widely available long before then.
+ # published in 2024, but it's been widely available long before then.
  find . -print0 | xargs -0 COMMAND
 
  # Head-busting, but it works portably.  Use '\'' for single-quote in command.
@@ -304,7 +307,8 @@ These POSIX additions help in some cases.
   done' sh {} +
 
  # find... while loop. This uses find -print0 and shell's read -d which are
- # POSIX additions in 2023 (but have long been widely implemented).
+ # POSIX additions in 2023 and released in 2024
+ # (and have long been widely implemented).
  # Fails on Cygwin; in while loops, filenames ending in \r \n and \n look =.
  # Variable values may be lost/unset because loop may run in a subshell.
  find . -print0 | while IFS="" read -r -d "" file ; do
@@ -313,7 +317,7 @@ These POSIX additions help in some cases.
 
  # while + find with process substitution.
  # Requires read -d and find -print0, POSIX additions in 2023.
- # Rquires nonstandard process redirection &lt;(...); bash, zsh, and ksh 93
+ # Requires nonstandard process redirection &lt;(...); bash, zsh, and ksh 93
  # have process redirection, but dash and ksh 88 do not. Also,
  # the underlying system must have named pipes (FIFOs) or /dev/fd.
  # Fails on Cygwin; in while loops, filenames ending in \r \n and \n look =.
@@ -324,7 +328,7 @@ These POSIX additions help in some cases.
  done 4&lt; &lt;(find . -print0)
 
  # Named pipe version.
- # Requires find -print0 and read -d, which are in POSIX as of 2023.
+ # Requires find -print0 and read -d, which were accepted in POSIX in 2023.
  # underlying system must inc. named pipes (FIFOs).
  # Fails on Cygwin; in while loops, filenames ending in \r \n and \n look =.
  # Variables *do* retain their value after the loop ends, and

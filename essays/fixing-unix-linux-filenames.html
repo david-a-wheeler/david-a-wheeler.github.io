@@ -13,7 +13,7 @@
 
 <h1 class="title">Fixing Unix/Linux/POSIX Filenames:<br>Control Characters (such as Newline), Leading Dashes, and Other Problems</h1>
 <h2 class="author">David A. Wheeler</h2>
-<h2 class="date">2023-08-22 (originally 2009-03-24)</h2>
+<h2 class="date">2024-07-19 (originally 2009-03-24)</h2>
 
 <p>
 <blockquote>
@@ -160,8 +160,10 @@ and instead have decided to
 <a href="https://www.austingroupbugs.net/view.php?id=243"
 >add a few mechanisms to make it easier to handle such filenames</a>
 (such as <tt>find -print0</tt>, <tt>xargs -0</tt>, and <tt>read -d ""</tt>).
-These POSIX additions were accepted in 2023 and will be included in the
-next release of POSIX.
+These POSIX additions were accepted in 2023 and are included in the
+<a href="https://pubs.opengroup.org/onlinepubs/9799919799/"
+>2024 release of POSIX</a>.
+This is only a partial measure, but it <i>is</i> an improvement.
 
 <p><hr><p>
 
@@ -350,8 +352,6 @@ Now at this point, some of you may suggest using xargs, like this:
 </pre>
 <p>
 Yet this is wrong on many levels.
-If you try to use xargs, and limit yourself to the POSIX standard,
-xargs is <i>painful</i> to use.
 By default, xargs&#8217; input is <i>parsed</i>, so
 space characters (as well as newlines) separate arguments, and
 the backslash, apostrophe, double-quote, <i>and</i> ampersand
@@ -404,7 +404,7 @@ But <b>filenames can include newlines!</b>
 
 <p>
 Handling filenames with all possible characters (including newlines)
-is often hard to do portably.
+can be hard to do portably.
 You can use <tt>find...-exec...{}</tt>, which is portable,
 but this gets ugly fast if the command being executed is nontrivial.
 It can also be slow, because this has to start a new process for every file,
@@ -450,35 +450,35 @@ with open('filelist.txt') as fl:
 </pre>
 
 <p>
-If you use GNU find and GNU xargs, you can
-use non-standard extensions to separate filenames with \0 instead:
+You can use options to separate filenames with \0 instead;
+this has been widely implemented for many years, and has been formally
+blessed by the 2024 edition of POSIX for a few cases:
 <pre>
- # CORRECT but nonstandard:
+ # Simple approach, find ... xargs, POSIX 2024 compliant:
  ( find . -type f -print0 | xargs -0 cat ) &gt; ../collection
- # OR, also correct but nonstandard:
+ # Using find and a shell loop, for more complex situations,
+ # this is supported by POSIX 2024:
  find . -print0 |
  while IFS="" read -r -d "" file ; do ...
    # Use "$file" not $file everywhere.
  done
 </pre>
 <p>
-But using \0 as a filename separator
-requires that you use non-standard (non-portable) extensions in shell,
-this convention is supported by only a few tools,
-and the option names to use this convention (when available)
+Using \0 as a filename separator definitely helps, but it
+requires that you use such options.
+The option names to use this convention (when available)
 are jarringly inconsistent (perl has -0, while GNU tools have
 sort -z, find -print0, xargs -0, and grep either -Z or --null).
-This format is also difficult to view and modify
-(in part because so few tools support it), compared to the
+POSIX 2024 did formally add such support in a few cases, but not all.
+POSIX 2024 supports find, xargs, and read... but lacks support for
+this format in other tools like grep and sort.
+This format is also more difficult to view and modify
+(in part because fewer tools support it), compared to the
 line-at-a-time format that is widely supported.
 You can&#8217;t even pass such null-separated
 lists back to the shell via command substitution;
 <tt>cat&nbsp;`find&nbsp;.&nbsp;-print0`</tt> and
 similar &#8220;for&#8221; loops don&#8217;t work.
-Even the POSIX standard&#8217;s version of
-&#8220;read&#8221; can&#8217;t use \0 as the separator
-(POSIX&#8217;s read has the -r option, but not bash&#8217;s -d option),
-so they&#8217;re really awkward to use.
 <p>
 The problem hits other languages, too.
 Many applications, regardless
