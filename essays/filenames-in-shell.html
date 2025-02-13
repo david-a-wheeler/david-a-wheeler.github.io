@@ -13,7 +13,7 @@
 
 <h1 class="title">Filenames and Pathnames in Shell: How to do it Correctly</h1>
 <h2 class="author">David A. Wheeler</h2>
-<h2 class="date">2023-08-23 (original version 2010-05-19)</h2>
+<h2 class="date">2025-02-13 (original version 2010-05-19)</h2>
 <p>
 
 <p>
@@ -120,13 +120,13 @@ those turn out to be the only rules you can really count on today.
 <p>
 The POSIX standard accepted in 2023 a few modest changes to
 make this <i>slightly</i> easier in a standards-compliant way
-(these changes will be included in the next POSIX release).
+(these changes are included in the current POSIX release).
 The POSIX authors
 <a href="https://www.austingroupbugs.net/view.php?id=251"
 >won't forbid control characters or leading dashes in filenames</a>,
 but they have
 <a href="https://www.austingroupbugs.net/view.php?id=243"
->added a few mechanisms to make it easier to handle such filenames</a>
+>added a few mechanisms to make it easier to handle challenging filenames</a>
 (<tt>find -print0</tt>, <tt>xargs -0</tt>, and <tt>read -d ""</tt>).
 These changes were included in
 <a href="https://pubs.opengroup.org/onlinepubs/9799919799/"
@@ -968,7 +968,7 @@ a non-existent file... which is almost never what you want.
 <p>
 You can use use globbing in a <tt>for</tt> loop, even if it might not
 match anything, using one of two approaches.
-One approach, which is completely portable,
+One approach, which is completely portable and doesn't require deep analysis,
 is to re-test for the existance of the file before using it in the loop:
 <pre>
  for file in ./* ; do        # Use this, NOT "for file in *"
@@ -982,9 +982,8 @@ This is both ugly and a little inefficient (you have to re-test each file
 again).
 There are also pathological cases where
 the pattern doesn&#8217;t match but there
-is a file that is identical to the unmatched pattern
-(though for typical patterns that can&#8217;t happen), so you have to check
-your pattern to see if that could happen.
+is a file that is identical to the unmatched pattern.
+An example is the filename `[abc].pdf`.
 <p>
 A more efficient but nonstandard solution for empty matches is to use
 a nonstandard shell extension called &#8220;null globbing&#8221;.
