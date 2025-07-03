@@ -1,0 +1,790 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 HelveticaNeue;\f1\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green0\blue0;\red69\green60\blue204;
+\red20\green160\blue194;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0\cname textColor;\cssrgb\c0\c0\c0;\cssrgb\c34510\c33725\c83922;
+\cssrgb\c0\c68627\c80392;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs36 \cf2 From: "David A. Wheeler" <dwheeler@dwheeler.com>\
+Subject: Re: [RFC v2] Add new LSM module safename\
+Date: July 3, 2025 at 5:20:28 PM EDT\
+To: Casey Schaufler <casey@schaufler-ca.com>\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f1\fs24 \cf2 \
+\pard\pardeftab720\partightenfactor0
+
+\fs36 \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec3 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 On Jun 27, 2025, at 5:57 PM, Casey Schaufler <casey@schaufler-ca.com> wrote:\
+I found this lurking in my archives.\
+\
+\
+\
+-------- Forwarded Message --------\
+Subject: Re: [RFC v2] Add new LSM module safename\
+Date: Thu, 5 May 2016 11:23:42 -0700\
+From: Casey Schaufler <casey@schaufler-ca.com>\
+To: dwheeler@dwheeler.com, linux-security-module\
+<linux-security-module@vger.kernel.org>\
+\
+\
+\
+On 5/4/2016 8:29 PM, David A. Wheeler wrote:\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 Safename is a Linux Security Module to harden systems against attack\
+by restricting what filenames can be created. This version 2\
+fixes some errors in UTF-8 checking, and makes a few more tweaks.\
+\
+Signed-off-by: David A. Wheeler <dwheeler@dwheeler.com>\
+---\
+Documentation/security/Safename.txt | 129 ++++++++++++\
+MAINTAINERS | 7 +\
+include/linux/lsm_hooks.h | 6 +\
+security/Kconfig | 1 +\
+security/Makefile | 2 +\
+security/safename/Kconfig | 18 ++\
+security/safename/Makefile | 3 +\
+security/safename/safename_lsm.c | 404\
+++++++++++++++++++++++++++++++++++++\
+security/security.c | 1 +\
+9 files changed, 571 insertions(+)\
+create mode 100644 Documentation/security/Safename.txt\
+create mode 100644 security/safename/Kconfig\
+create mode 100644 security/safename/Makefile\
+create mode 100644 security/safename/safename_lsm.c\
+\
+diff --git a/Documentation/security/Safename.txt\
+b/Documentation/security/Safename.txt\
+new file mode 100644\
+index 0000000..7c49736\
+--- /dev/null\
++++ b/Documentation/security/Safename.txt\
+@@ -0,0 +1,129 @@\
++Safename is a Linux Security Module to harden systems against attack\
++by restricting what filenames can be created\
++(e.g., it can prevent creation of filenames with control characters like\
++newline, filenames beginning with dash, or filenames that are not UTF-8).\
++\
++Safename can be used to harden a system against attacks\
++that are based on creating unusual filenames to exploit\
++imperfectly-written programs and user commands.\
++Safename enforces rules that many users follow anyway, so non-attackers\
++will typically not notice when it's enabled.\
++Safename is a minor Linux Security Module, so it can be\
++included along with a major module like SELinux or AppArmor.\
++\
++The TL;DR version is that you can enforce rules to require filenames obey\
++the default rules, which counter many attacks, by doing:\
++\
++ echo 1 > /proc/sys/kernel/safename/mode_for_unprivileged\
++ echo 1 > /proc/sys/kernel/safename/mode_for_privileged\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+I think that the standard for this sort of\
+control is to create a pseudo filesystem in\
+/sys/fs. Instead of /proc/sys/kernel/safename\
+it should be /sys/fs/safename.\
+\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 +\
++Below are more details.\
++\
++Many POSIX systems, including Linux, normally allow filenames to contain\
++any sequence of bytes other than / and \\0 (pathnames are a sequence\
++of filenames) if the filesystem format allows it.\
++However, many users and developers presume that filenames\
++can't include control characters (like tab and newline), can't start\
+with "-",\
++and are a sequence of valid UTF-8 characters (e.g., for display).\
++This difference between what users and developers expect, as compared\
++to reality, can lead to security vulnerabilities.\
++The Common Weakness Enumeration (CWE) includes 3 weakneses related to\
+this\
++(CWE 78, CWE 73, and CWE 116). Examples of vulnerabilities from this\
++problem include CVE-2011-1155 (logrotate) and\
++CVE-2013-7085 (uscan in devscripts).\
++For a general discussion of the problem, see:\
++http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html\
++There have long been complaints about filenames, e.g., see the\
+comments by\
++Jamie Zawinski in the "The Unix-haters handbook" starting on page 167.\
++On systems that enforce the default Safename rules on all tasks,\
++many filename-related constructs that are widely used, but normally\
+unsafe,\
++become safe and work in all cases.\
++\
++You should still normally write code that handles unusual filenames\
+correctly,\
++because that makes your code portable.\
++However, it is not trivial to handle arbitrary filenames correctly; see:\
++http://www.dwheeler.com/essays/filenames-in-shell.html\
++Until all code correctly handles arbitrary filenames, and stays that way,\
++Safename can be useful as a security hardening mechanism.\
++Like crumple zones on a car, this module can reduce the damage\
++caused by accidents.\
++\
++This module addresses three different cases, where\
++"privileged" means "has CAP_SYS_ADMIN":\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+Since this is a mandatory policy (as a normal user\
+it's out of my control) you might consider using CAP_MAC_ADMIN\
+instead. It's much less likely to by turned on for other\
+purposes than CAP_SYS_ADMIN.\
+\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 +1. A malicious untrusted user or application directly\
++ creates a malicious filename.\
++ Later user commands or code (privileged or not) then\
++ cause the filename to be misinterpreted and lead to an exploit\
++ Examples of these circumstances include another application\
++ on the device and an administrative script trying to\
++ manage a virtual machine or container.\
++ Examples of incorrect code or scripts include any construct (e.g.,\
+pipes)\
++ that separate/terminate each filename in a list with a newline\
++ (since filenames can contain newlines), a glob beginning with "*" or "?"\
++ (since these can expand into "-" and be misinterpreted as options),\
++ and displaying filenames (they may include escape sequences or\
++ non-UTF-8 sequences). This problem *cannot* be fixed in userspace;\
++ countering these attacks requires a countermeasure in the kernel.\
++2. A non-malicious unprivileged application is tricked by an\
++ attacker into creating a malicious filename. Later errors in some code\
++ (privileged or not) cause the filename to be misinterpreted and\
++ lead to an exploit.\
++3. Like #1, but a *privileged* application\
++ is tricked into creating a malicious filename, which later leads to\
++ an exploit. For this case, you need to prevent privileged processes\
++ from creating those filenames. This module lets you decide if you\
++ want to prevent privileged processes from creating such filenames.\
++\
++This module only prevents *creating* filenames with certain\
++characteristics within currently-mounted filesystems.\
++It makes no attempt to counter unusual filenames at mount time.\
++This is still useful, since in many systems it's not possible\
++to mount untrusted filesystems. A future version of this module\
++might add such mount-time checking as an option.\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+You could do lookup checking, but what would you do\
+if you encounter a name you don't like?\
+\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 +\
++This module's functions can be configured via\
+"/proc/sys/kernel/safename/".\
++Within that directory there are the following configuration values:\
++\
++* mode_for_unprivileged: Mode used for unprivileged tasks (0..3).\
++ We consider tasks unpriviliged if they lack capability CAP_SYS_ADMIN.\
++ The allowed mode values are:\
++ * 0 = not enforced, no reports on failed requests.\
++ * 1 = enforced, no reports on failed requests.\
++ * 2 = not enforced, reports made on failed requests.\
++ * 3 = enforced, reports made on failed requests.\
++ Default is 0: no enforcement, no report.\
++* mode_for_privileged: Mode used for unprivileged tasks (0..3).\
++ We consider tasks privileged if they have capability CAP_SYS_ADMIN.\
++ The mode values the same as mode_for_unprivileged.\
++ Default is 0: no enforcement, no report.\
++* utf8: If true, include a check to see if filenames are valid UTF-8\
+(0..1).\
++ Default is 0: Do not check.\
++* permitted_bytes_initial: The set of bytes allowed as the first\
++ byte of a filename. Default value is 33-44,46-125,128-254;\
++ this omits control chars, space, '-', '~', 0x7f (DEL),\
++ and 0xff (part of FFFE).\
++* permitted_bytes_middle: The set of bytes allowed in the middle of\
++ a filename (not including the first and last bytes).\
++ Filenames less than three bytes long will never consult this value.\
++ Default value 32-126,128-254; this omits control chars, 0x7f (DEL),\
++ and 0xff (part of FFFE).\
++* permitted_bytes_final: The set of bytes allowed as the last byte of\
++ a filename. A filename exactly 1 byte long must meet the requirements\
++ of both permitted_bytes_initial and and permitted_bytes_final.\
++ Default values 33-126,128-254; this omits control chars, space,\
++ 0x7f (DEL), and 0xff (part of FFFE).\
++\
++If at least one mode is either 1 or 3, we say that this module is\
+'enforcing'.\
++\
++Currently this module returns -EPERM if a filename fails to meet\
+criteria.\
++In the future a different (more specific) error value might be returned.\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+EPERM means that you tried to do something that required\
+privilege that you didn't have. EINVAL might make it clearer\
+what's wrong.\
+\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 +\
++The POSIX 2013 specification says in XBD 4.7 (file portability, page 109)\
++that for a filename to be portable across implementations\
++conforming to POSIX, "it shall consist only of the\
++portable character set as defined in Section 3.278".\
++These characters are [A-Za-z0-9._-].\
++POSIX also notes that "applications should avoid using\
++filenames that have the <hyphen> character as the\
++first character since this may cause problems when\
++filenames are passed as arguments."\
+diff --git a/MAINTAINERS b/MAINTAINERS\
+index 8491336..1ac2c51 100644\
+--- a/MAINTAINERS\
++++ b/MAINTAINERS\
+@@ -9977,6 +9977,13 @@ T: git\
+git://git.kernel.org/pub/scm/linux/kernel/git/kees/linux.git yama/tip\
+S: Supported\
+F: security/yama/\
++SAFENAME SECURITY MODULE\
++M: David A. Wheeler <David A. Wheeler>\
++T: git https://github.com/david-a-wheeler/linux.git safename/tip\
++S: Maintained\
++F: security/safename/\
++F: Documentation/security/Safename.txt\
++\
+SENSABLE PHANTOM\
+M: Jiri Slaby <jirislaby@gmail.com>\
+S: Maintained\
+diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h\
+index cdee11c..061cf5d 100644\
+--- a/include/linux/lsm_hooks.h\
++++ b/include/linux/lsm_hooks.h\
+@@ -1894,4 +1894,10 @@ extern void __init yama_add_hooks(void);\
+static inline void __init yama_add_hooks(void) \{ \}\
+#endif\
++#ifdef CONFIG_SECURITY_SAFENAME\
++extern void __init safename_add_hooks(void);\
++#else\
++static inline void __init safename_add_hooks(void) \{ \}\
++#endif\
++\
+#endif /* ! __LINUX_LSM_HOOKS_H */\
+diff --git a/security/Kconfig b/security/Kconfig\
+index e452378..9b5530b 100644\
+--- a/security/Kconfig\
++++ b/security/Kconfig\
+@@ -123,6 +123,7 @@ source security/smack/Kconfig\
+source security/tomoyo/Kconfig\
+source security/apparmor/Kconfig\
+source security/yama/Kconfig\
++source security/safename/Kconfig\
+source security/integrity/Kconfig\
+diff --git a/security/Makefile b/security/Makefile\
+index c9bfbc8..e8753e4 100644\
+--- a/security/Makefile\
++++ b/security/Makefile\
+@@ -8,6 +8,7 @@ subdir-$(CONFIG_SECURITY_SMACK) += smack\
+subdir-$(CONFIG_SECURITY_TOMOYO) += tomoyo\
+subdir-$(CONFIG_SECURITY_APPARMOR) += apparmor\
+subdir-$(CONFIG_SECURITY_YAMA) += yama\
++subdir-$(CONFIG_SECURITY_SAFENAME) += safename\
+# always enable default capabilities\
+obj-y += commoncap.o\
+@@ -22,6 +23,7 @@ obj-$(CONFIG_AUDIT) += lsm_audit.o\
+obj-$(CONFIG_SECURITY_TOMOYO) += tomoyo/\
+obj-$(CONFIG_SECURITY_APPARMOR) += apparmor/\
+obj-$(CONFIG_SECURITY_YAMA) += yama/\
++obj-$(CONFIG_SECURITY_SAFENAME) += safename/\
+obj-$(CONFIG_CGROUP_DEVICE) += device_cgroup.o\
+# Object integrity file lists\
+diff --git a/security/safename/Kconfig b/security/safename/Kconfig\
+new file mode 100644\
+index 0000000..467f45c\
+--- /dev/null\
++++ b/security/safename/Kconfig\
+@@ -0,0 +1,18 @@\
++config SECURITY_SAFENAME\
++ bool "Safename support"\
++ depends on SECURITY\
++ default n\
++ help\
++ This selects Safename, which restricts what filenames can be created\
++ (e.g., it can prevent creation of filenames with control characters,\
++ beginning with dash, or ones that are not UTF-8).\
++ This can be used as a hardening measure to counter certain\
++ kinds of attacks. You should still write code that handles\
++ these unusual filenames correctly, but until all incorrect\
++ code stops getting written, this hardening mechanism can be useful.\
++ For a general discussion of the problem, see:\
++ http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html\
++ Further information can be found in\
++ Documentation/security/Safename.txt.\
++\
++ If you are unsure how to answer this question, answer N.\
+diff --git a/security/safename/Makefile b/security/safename/Makefile\
+new file mode 100644\
+index 0000000..aeec95a\
+--- /dev/null\
++++ b/security/safename/Makefile\
+@@ -0,0 +1,3 @@\
++obj-$(CONFIG_SECURITY_SAFENAME) := safename.o\
++\
++safename-y := safename_lsm.o\
+diff --git a/security/safename/safename_lsm.c\
+b/security/safename/safename_lsm.c\
+new file mode 100644\
+index 0000000..5adba18\
+--- /dev/null\
++++ b/security/safename/safename_lsm.c\
+@@ -0,0 +1,404 @@\
++/*\
++ * Safename Linux Security Module\
++ *\
++ * Author: David A. Wheeler <dwheeler@dwheeler.com>\
++ *\
++ * Copyright (C) 2016 David A. Wheeler\
++ *\
++ * This program is free software; you can redistribute it and/or modify\
++ * it under the terms of the GNU General Public License version 2, as\
++ * published by the Free Software Foundation.\
++ *\
++ */\
++\
++#include <linux/lsm_hooks.h>\
++#include <linux/sysctl.h>\
++#include <linux/types.h>\
++#include <linux/bitmap.h>\
++\
++/* For reporting */\
++#include <linux/ratelimit.h>\
++\
++/* Questions:\
++ * - Do we need to lock the dentry (I don't think so)?\
++ * - Should we change the reporting mechanism from printk_ratelimited?\
++ *\
++ * Possible future directions:\
++ * - Optionally check filenames on mount.\
++ * - Possibly optimize byte check loop for common cases.\
++ * - Namespace this to allow per-container control.\
++ */\
++\
++/* Mode used for unprivileged tasks. We consider tasks without\
++ * CAP_SYS_ADMIN as unprivileged. The mode values are:\
++ * 0 = not enforced, no reports on failed requests.\
++ * 1 = enforced, no reports on failed requests.\
++ * 2 = not enforced, reports made on failed requests.\
++ * 3 = enforced, reports made on failed requests.\
++ * Default is 0: no enforcement, no reports.\
++ */\
++static int mode_for_unprivileged;\
++\
++/* Mode used for privileged tasks. We consider tasks with\
++ * CAP_SYS_ADMIN as privileged. The mode values the same as\
++ * mode_for_unprivileged.\
++ * Default is 0: no enforcement, no report.\
++ */\
++static int mode_for_privileged;\
++\
++/* If true, includes a check to see if newly-created filenames are\
+valid UTF-8.\
++ * Default is 0: Disabled by default.\
++ */\
++static int utf8;\
++\
++/* Number of possible values in a char */\
++#define POSSIBLE_CHAR 256\
++\
++/* The following are bitmaps that determine which byte values are\
+permitted.\
++ * An 'on' bit means that the corresponding byte is permitted in a\
+filename.\
++ * A filename's initial byte must be permitted by\
+permitted_bytes_initial,\
++ * its final byte must be permitted by permitted_bytes_final,\
++ * and all other bytes must be permitted by permitted_bytes_middle.\
++ *\
++ * DECLARE_BITMAP is defined in linux/types.h as an array of unsigned\
+longs.\
++ */\
++\
++static DECLARE_BITMAP(permitted_bytes_initial, POSSIBLE_CHAR);\
++static DECLARE_BITMAP(permitted_bytes_middle, POSSIBLE_CHAR);\
++static DECLARE_BITMAP(permitted_bytes_final, POSSIBLE_CHAR);\
++\
++/* Need these for proc_do_large_bitmap */\
++unsigned long *permitted_bytes_initial_ptr = permitted_bytes_initial;\
++unsigned long *permitted_bytes_middle_ptr = permitted_bytes_middle;\
++unsigned long *permitted_bytes_final_ptr = permitted_bytes_final;\
++\
++/**\
++ * ut8_check - Returns NULL if string is utf8, else returns pointer\
+to failure.\
++ * @s - string to check.\
++ *\
++ * Description:\
++ * This function is from https://www.cl.cam.ac.uk/~mgk25/ucs/utf8_check.c\
++ * by Markus Kuhn, released as public domain *and* GPL.\
++ * See: http://www.cl.cam.ac.uk/~mgk25/short-license.html\
++ * checkpatch.pl warns "else is not generally useful after a break or\
+return",\
++ * but in this case there's no problem; the returns halt processing\
+once we've\
++ * found a failure (and thus we don't need to examine anything further).\
++ */\
++const unsigned char *utf8_check(const unsigned char *s)\
++\{\
++ while (*s) \{\
++ if (*s < 0x80)\
++ /* 0xxxxxxx */\
++ s++;\
++ else if ((s[0] & 0xe0) == 0xc0) \{\
++ /* 110XXXXx 10xxxxxx */\
++ if ((s[1] & 0xc0) != 0x80 ||\
++ (s[0] & 0xfe) == 0xc0) /* overlong? */\
++ return s;\
++ else\
++ s += 2;\
++ \} else if ((s[0] & 0xf0) == 0xe0) \{\
++ /* 1110XXXX 10Xxxxxx 10xxxxxx */\
++ if ((s[1] & 0xc0) != 0x80 ||\
++ (s[2] & 0xc0) != 0x80 ||\
++ (s[0] == 0xe0 && (s[1] & 0xe0) == 0x80) ||\
++ (s[0] == 0xed && (s[1] & 0xe0) == 0xa0) ||\
++ (s[0] == 0xef && s[1] == 0xbf &&\
++ (s[2] & 0xfe) == 0xbe)) /* U+FFFE or U+FFFF? */\
++ return s;\
++ else\
++ s += 3;\
++ \} else if ((s[0] & 0xf8) == 0xf0) \{\
++ /* 11110XXX 10XXxxxx 10xxxxxx 10xxxxxx */\
++ if ((s[1] & 0xc0) != 0x80 ||\
++ (s[2] & 0xc0) != 0x80 ||\
++ (s[3] & 0xc0) != 0x80 ||\
++ (s[0] == 0xf0 && (s[1] & 0xf0) == 0x80) ||\
++ (s[0] == 0xf4 && s[1] > 0x8f) ||\
++ (s[0] > 0xf4))\
++ return s;\
++ else\
++ s += 4;\
++ \} else\
++ return s;\
++ \}\
++ return NULL;\
++\}\
++\
++/**\
++ * safename_name_check_valid - Return 0 iff given filename valid.\
++ * @name - filename to check (this is not the entire pathname)\
++ *\
++ * Description:\
++ * Compare filename to all active rules.\
++ * This function only checks the name; mode bits are handled elsewhere.\
++ */\
++static int safename_name_check_valid(const char *name)\
++\{\
++ unsigned char first, c, next; /* Unsigned to index in a bitmask */\
++ const unsigned char *p;\
++\
++ if (!name) \{ /* Handle null name; shouldn't happen. */\
++ pr_alert("Error - safename got name==NULL\\n");\
++ return -EPERM;\
++ \}\
++ /* Check first character */\
++ first = (unsigned char) name[0];\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+Why the cast?\
+\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 + if (!first) \{ /* Handle 0-length name; shouldn't happen. */\
++ pr_alert("Error - safename got 0-length name\\n");\
++ return -EPERM;\
++ \}\
++ if (!test_bit(first, permitted_bytes_initial))\
++ return -EPERM;\
++ if (utf8 && utf8_check((const unsigned char *) name))\
++ return -EPERM;\
++ /* Check rest of characters. Future: Optimize common cases? */\
++ p = ((const unsigned char *) name) + 1;\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+p = &name[1];\
+\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 + c = *p++;\
++ if (!c) /* Special case: first character is also last character */\
++ return test_bit(first, permitted_bytes_final) ? 0 : -EPERM;\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+Generally kernel code uses blank lines to break dense code\
+like this up visually.\
+\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 + /* Examine the rest of the characters EXCEPT the last one */\
++ while (1) \{\
++ /* At start of loop, p points one *past* current char c */\
++ next = *p++;\
++ if (!next)\
++ break;\
++ if (!test_bit(c, permitted_bytes_middle))\
++ return -EPERM;\
++ c = next;\
++ \}\
++ /* Check final character. p is currently one past \\0. We can use\
++ * "p - 2" because we can only get here if strlen(name) >= 2.\
++ */\
++ if (!test_bit(*(p - 2), permitted_bytes_final))\
++ return -EPERM;\
++ return 0;\
++\}\
++\
++/**\
++ * safename_report - Report that a filename doesn't meet the criteria.\
++ * @name - filename to check (this is not the entire pathname)\
++ * @enforcing - if nonzero, we're going to prevent its creation.\
++ *\
++ * Description:\
++ * Report when filename doesn't meet criteria. If you change this,\
++ * be sure to escape its name on output since \\n, ESC, etc. could be\
+in name.\
++ */\
++static void safename_report(const char *name, int enforcing)\
++\{\
++ printk_ratelimited(KERN_INFO "Safename: Invalid filename%s:%*pE\\n",\
++ enforcing ? " (creation rejected)" : "",\
++ (int) strlen(name), name);\
++\}\
++\
++/**\
++ * safename_name_check - Depending on mode, check name and report if\
+not okay.\
++ * @name - filename to check (this is NOT the entire pathname)\
++ *\
++ * Description:\
++ * This function checks the mode bits; if we're supposed to enforce or\
++ * check, it checks the filename (using safename_name_check_valid)\
++ * This returns 0 iff given name is acceptable as a filename.\
++ * This function is separate from safename_dentry_check so that we can\
++ * check names in the future without a dentry\
++ * (e.g., if we're checking a filesystem before mounting it\
++ * and don't want to create dentries while traversing it).\
++ */\
++static int safename_name_check(const char *name)\
++\{\
++ int mode, err;\
++\
++ if (capable(CAP_SYS_ADMIN))\
++ mode = mode_for_privileged;\
++ else\
++ mode = mode_for_unprivileged;\
++ /* Don't do any work if it's not needed. */\
++ if (!mode)\
++ return 0;\
++ err = safename_name_check_valid(name);\
++ if (err && (mode & 0x02))\
++ safename_report(name, mode & 0x01);\
++ if (mode & 0x01)\
++ return err;\
++ return 0;\
++\}\
++\
++/**\
++ * safename_dentry_check - Check dentry name; return 0 if okay.\
++ * @dentry - the dentry to check.\
++ */\
++static int safename_dentry_check(const struct dentry *dentry)\
++\{\
++ /* Do we need to lock the dentry, using\
++ * spin_lock(&dentry->d_lock) .. spin_unlock(&dentry->d_lock) ?\
++ * I believe the answer is "no", since the dentries haven't been\
++ * added to the filesystem yet (that's what we're checking for!).\
++ * See discussion about getting dentry name (d_name) and %pd here:\
++ * thread.gmane.org/gmane.linux-file-systems/37940\
++ */\
++ return safename_name_check(dentry->d_name.name);\
++\}\
++\
++/**\
++ * safename_inode_create - Check safename rules when it tries to\
+create inode.\
++ */\
++static int safename_inode_create(struct inode *dir, struct dentry\
+*dentry,\
++ umode_t mode)\
++\{\
++ return safename_dentry_check(dentry);\
++\}\
++\
++static int safename_inode_link(struct dentry *old_dentry, struct\
+inode *dir,\
++ struct dentry *new_dentry)\
++\{\
++ return safename_dentry_check(new_dentry);\
++\}\
++\
++static int safename_inode_symlink(struct inode *dir, struct dentry\
+*dentry,\
++ const char *old_name)\
++\{\
++ return safename_dentry_check(dentry);\
++\}\
++\
++static int safename_inode_mkdir(struct inode *dir, struct dentry *dentry,\
++ umode_t mode)\
++\{\
++ return safename_dentry_check(dentry);\
++\}\
++\
++static int safename_inode_mknod(struct inode *dir, struct dentry *dentry,\
++ umode_t mode, dev_t dev)\
++\{\
++ return safename_dentry_check(dentry);\
++\}\
++\
++static int safename_inode_rename(struct inode *old_dir,\
++ struct dentry *old_dentry,\
++ struct inode *new_dir,\
++ struct dentry *new_dentry)\
++\{\
++ return safename_dentry_check(new_dentry);\
++\}\
++\
++#ifdef CONFIG_SYSCTL\
++static int zero;\
++static int one = 1;\
++static int three = 3;\
++\
++struct ctl_path safename_sysctl_path[] = \{\
++ \{ .procname = "kernel", \},\
++ \{ .procname = "safename", \},\
++ \{ \}\
++\};\
++\
++static struct ctl_table safename_sysctl_table[] = \{\
++ \{\
++ .procname = "mode_for_unprivileged",\
++ .data = &mode_for_unprivileged,\
++ .maxlen = sizeof(int),\
++ .mode = 0644,\
++ .proc_handler = proc_dointvec_minmax,\
++ .extra1 = &zero,\
++ .extra2 = &three,\
++ \},\
++ \{\
++ .procname = "mode_for_privileged",\
++ .data = &mode_for_privileged,\
++ .maxlen = sizeof(int),\
++ .mode = 0644,\
++ .proc_handler = proc_dointvec_minmax,\
++ .extra1 = &zero,\
++ .extra2 = &three,\
++ \},\
++ \{\
++ .procname = "utf8",\
++ .data = &utf8,\
++ .maxlen = sizeof(int),\
++ .mode = 0644,\
++ .proc_handler = proc_dointvec_minmax,\
++ .extra1 = &zero,\
++ .extra2 = &one,\
++ \},\
++ \{\
++ .procname = "permitted_bytes_initial",\
++ .data = &permitted_bytes_initial_ptr,\
++ /* proc_do_large_bitmap maxlen is in bits, NOT in bytes. */\
++ .maxlen = POSSIBLE_CHAR,\
++ .mode = 0644,\
++ .proc_handler = proc_do_large_bitmap,\
++ \},\
++ \{\
++ .procname = "permitted_bytes_middle",\
++ .data = &permitted_bytes_middle_ptr,\
++ .maxlen = POSSIBLE_CHAR,\
++ .mode = 0644,\
++ .proc_handler = proc_do_large_bitmap,\
++ \},\
++ \{\
++ .procname = "permitted_bytes_final",\
++ .data = &permitted_bytes_final_ptr,\
++ .maxlen = POSSIBLE_CHAR,\
++ .mode = 0644,\
++ .proc_handler = proc_do_large_bitmap,\
++ \},\
++ \{ \}\
++\};\
++\
++static void __init safename_init_sysctl(void)\
++\{\
++ if (!register_sysctl_paths(safename_sysctl_path, safename_sysctl_table))\
++ panic("Safename: sysctl registration failed.\\n");\
++\}\
++#else\
++static inline void safename_init_sysctl(void) \{ \}\
++#endif /* CONFIG_SYSCTL */\
++\
++/**\
++ * safename_init_bitmasks - initialize bitmasks needed by safename.\
++ *\
++ * Description:\
++ * Initialize permitted_bytes_initial, permitted_bytes_middle,\
++ * and permitted_bytes_final.\
++ * We do this at run-time for clarity; these bit manipulations are quick,\
++ * and take little space in code, so there's no great advantage\
++ * in doing this at compile time.\
++ */\
++static void safename_init_bitmasks(void)\
++\{\
++ bitmap_set(permitted_bytes_middle, (int) ' ', 0x7e - (int) ' ' + 1);\
++ bitmap_set(permitted_bytes_initial, (int) ' ', 0x7e - (int) ' ' + 1);\
++ bitmap_set(permitted_bytes_final, (int) ' ', 0x7e - (int) ' ' + 1);\
++\
++ bitmap_set(permitted_bytes_middle, 0x80, 0xfe - 0x80 + 1);\
++ bitmap_set(permitted_bytes_initial, 0x80, 0xfe - 0x80 + 1);\
++ bitmap_set(permitted_bytes_final, 0x80, 0xfe - 0x80 + 1);\
++\
++ /* Forbid '-', ' ', and '~' as initial values. */\
++ bitmap_clear(permitted_bytes_initial, (int) '-', 1);\
++ bitmap_clear(permitted_bytes_initial, (int) ' ', 1);\
++ bitmap_clear(permitted_bytes_initial, (int) '~', 1);\
++\
++ /* Forbid ' ' as final value. */\
++ bitmap_clear(permitted_bytes_final, (int) ' ', 1);\
++\}\
++\
++static struct security_hook_list safename_hooks[] = \{\
++ LSM_HOOK_INIT(inode_create, safename_inode_create),\
++ LSM_HOOK_INIT(inode_link, safename_inode_link),\
++ LSM_HOOK_INIT(inode_symlink, safename_inode_symlink),\
++ LSM_HOOK_INIT(inode_mkdir, safename_inode_mkdir),\
++ LSM_HOOK_INIT(inode_mknod, safename_inode_mknod),\
++ LSM_HOOK_INIT(inode_rename, safename_inode_rename),\
++\};\
++\
++\
++/**\
++ * safename_add_hooks - initialize safename\
++ */\
++void __init safename_add_hooks(void)\
++\{\
++ pr_info("Safename: Preventing the creation of malicious filenames.\\n");\
++ safename_init_bitmasks();\
++ security_add_hooks(safename_hooks, ARRAY_SIZE(safename_hooks));\
++ safename_init_sysctl();\
++\}\
+diff --git a/security/security.c b/security/security.c\
+index 3644b03..7d587d5 100644\
+--- a/security/security.c\
++++ b/security/security.c\
+@@ -60,6 +60,7 @@ int __init security_init(void)\
+*/\
+capability_add_hooks();\
+yama_add_hooks();\
++ safename_add_hooks();\
+/*\
+* Load all the remaining security modules.\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+--\
+To unsubscribe from this list: send the line "unsubscribe\
+linux-security-module" in\
+the body of a message to majordomo@vger.kernel.org\
+More majordomo info at http://vger.kernel.org/majordomo-info.html\
+\
+\pard\pardeftab720\partightenfactor0
+\cf3 \strokec3 \
+}
