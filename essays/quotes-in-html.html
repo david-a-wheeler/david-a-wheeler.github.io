@@ -5,15 +5,51 @@
 <meta http-equiv="author" content="David A. Wheeler">
 <meta http-equiv="copyright" content="2002">
 <meta name="keywords" content="quotes, quotation, quotation marks, smart quotes, curly quotes, curling quotes, curled quotes, curved quotes, curly, curled, curling, curved, XML, HTML, SGML, angle, angled, single quotes, double quotes, straight quotes, character set, character sets, charset, decimal numeric character references, character references, character reference, Microsoft, quoter, demoroniser, demoronizer, standards, portability, interoperability, David A. Wheeler, David Wheeler, Wheeler, David">
-<meta name="description" content="This paper describes how to handle curling quotes (smart quotes) in HTML, SGML, and XML, in a portable and standard manner."></head><body bgcolor="#ffffff">
-<h1>Curling Quotes in HTML, SGML, and XML</h1>
-<b>by <a href="https://dwheeler.com">David A. Wheeler</a></b><br>
-2002-12-10
+<meta name="description" content="This paper describes how to handle curling quotes (smart quotes) in HTML and XML in a portable and standard manner."></head><body bgcolor="#ffffff">
+<h1>Curling Quotes in HTML and XML</h1>
+<b>by <a href="https://dwheeler.com">David A. Wheeler</a></b>,
+2025-10-08 (was 2002-12-10)
 
 <h1>Summary</h1>
-<p>If you&#8217;re creating HTML, SGML, and XML directly,
-perhaps using a text editor or writing a program,
-the safest approach is to use
+<p>If you’re creating HTML or XML,
+<i>use UTF-8 characters for curling quote characters</i>.
+Here’s a table showing what I mean (you can copy and paste from this
+table if you would like):
+
+<table border="1" nosave="nosave">
+<tbody><tr><td>Character</td><td>UTF-8</td></tr>
+<tr><td>Left Double Quotation Mark (U+201C)</td><td>“</td></tr>
+<tr><td>Right Double Quotation Mark (U+201D)</td><td>”</td></tr>
+<tr><td>Left Single Quotation Mark (U+2018)</td><td>‘</td></tr>
+<tr><td>Right Single Quotation Mark (U+2019, including English possessives and contractions)</td><td>’</td></tr>
+</tbody></table>
+
+<h1>History</h1>
+<p>
+I first wrote this page in 2002.
+While <a href="https://en.wikipedia.org/wiki/UTF-8">UTF-8 had been created
+earlier, in 1992</a>, but in 2002
+UTF-8 was used by less than 1% of all web (HTML) pages.
+HTML pages instead used a hodgepodge of different character encodings
+including ASCII, Western European encodings like Latin-1, (shift) JIS,
+Windows-1251, Windows-1252, and GB2312 among others.
+The default character encoding for HTML 4.0 was ISO-8859-1, aka Latin-1,
+though an HTML page could specify something different, and different they were.
+<p>
+Part of this came down to tooling.
+Many text editors and tools didn’t support UTF-8 natively in 2002.
+The first Linux using UTF-8 by default was
+<a href="https://news.ycombinator.com/item?id=29748679"
+>Red Hat</a> in 2002, which was a big deal at the time.
+<a href="https://unix.stackexchange.com/questions/112216/which-terminal-encodings-are-default-on-linux-and-which-are-most-common">Debian's default
+character encoding didn't switch to UTF-8 until 2007</a>.
+<p>
+While this did cause many problems, the good news was that
+most character encodings used ASCII as a subset.
+So you could use ASCII characters to specify the <i>other</i>
+characters you wanted to display.
+This meant that
+the safest approach to display these characters was to use
 &#8220;decimal numeric character references&#8221;
 for curling single and double quote characters
 (these marks are called
@@ -29,7 +65,9 @@ This approach complies with all international standards, and works
 essentially everywhere.
 </p>
 <p>
-Here&#8217;s a table showing what I mean.
+Here&#8217;s a table showing what I recommended in 2002
+given that historical circumstance:
+
 <table border="1" nosave="nosave">
 <tbody><tr><td>To show</td><td>In HTML, SGML, or XML use</td><td>Displays on your system as</td></tr>
 <tr><td>Left Double Quotation Mark</td><td>&amp;#8220;</td><td>&#8220;</td></tr>
@@ -37,501 +75,27 @@ Here&#8217;s a table showing what I mean.
 <tr><td>Left Single Quotation Mark</td><td>&amp;#8216;</td><td>&#8216;</td></tr>
 <tr><td>Right Single Quotation Mark (including English possessives and contractions)</td><td>&amp;#8217;</td><td>&#8217;</td></tr>
 </tbody></table>
-</p>
-<p> By doing this, your text will look good on a very wide variety of 
-browsers and viewers, and you can easily cut-and-paste portions of data between
-HTML, SGML, and XML documents (letting you dynamically query and create new
-material from existing material, without having to deal with the complexities
-of translating between character sets).<br>
-</p>
-<p>
-If you don't want to do this directly, use tools that will do it for you.
-If you're using simple ASCII text files,
-<a href="http://daringfireball.net/projects/smartypants/">SmartyPants</a>
-can do this for you.
-</p>
-<p>
-The best alternative is using UTF-8.
-UTF-8 is fantastic, but other charsets are still in use and can cause problems.
-</p>
 
-<h1>Rationale</h1>
-<p>
-There are many advantages to this particular recommendation.
-These are the official, standard, vendor-neutral encodings for these
-characters according to both Unicode and ISO-10646, so you don&#8217;t need to
-worry about them not working in the future.
-They also work across XML, HTML, and SGML, simplifying data extraction -
-alternatives such as named character entity references do <i>not</i>
-easily work across XML and HTML (in particular).
-Systems which can display curling quotes (with the current fonts) will do so,
-and practically without exception will gracefully go back to neutral (vertical)
-characters if they can&#8217;t - even if they&#8217;re a somewhat old browser.
-I&#8217;ve tested this approach on several versions of Internet Explorer, Netscape
-(the old 4.5 and 6.X), Mozilla (0.9.9 and 1.0),
-and lynx (a text browser), on a variety of systems
-(Windows, Linux, Sun Solaris).
-The one minor problem is that on some older X windows systems with
-old fonts, the left
-single quotation mark may get mapped to a character that is an angled
-character for the right single quotation mark - but it doesn&#8217;t look bad,
-the alternatives look far worse everywhere else, and this solution
-is &#8220;future-proof&#8221;.
-</p><p>
-<b>Do not</b> use the various alternatives:
-</p><ul>
-<li>
-Don&#8217;t use
-<a href="http://www.w3.org/TR/html4/sgml/entities.html">
-HTML&#8217;s character entity references assigned for this purpose</a>:
-&amp;ldquo;, &amp;rdquo;, &amp;lsquo;, and &amp;rsquo;.
-
-Character entity references won&#8217;t work in SGML or XML in general,
-because they aren&#8217;t a predefined entity in SGML or XML
-(see the XML specification version 1.0 on predefined entitities for more
-information).
-They are predefined in modern HTML implementation, and you could define
-them in both SGML and XML, but this makes it harder
-to use data fragments - if you take parts of the material, the definitions
-probably won&#8217;t come along.
-Are you <i>sure</i> your information will never be used again?
-Indeed, one of the main points of XML is that you can manipulate the
-resulting data, and using these conveniences interferes with that process.
-Another problem is that they are not supported by older browsers
-(such as Netscape 4.5) and tools,
-and remember, it takes some users a long time to upgrade.
-Some older text browsers
-<!-- Note sure if lynx 2.8.4 supported, because the test was wrong -->
-don&#8217;t support them - and text browsers are important for
-accessibility, because they&#8217;re the basis of most readers for the blind.
-It&#8217;s also easy to make mistakes with character entity references -
-earlier versions of this document incorrectly used &#8220;lsquot&#8221;
-instead of &#8220;lsquo&#8221; (note the excess letter t).
-If you&#8217;re sure you&#8217;ll never use the text in SGML or XML, you could
-consider using these symbols in a few years as browsers retire,
-but it&#8217;s not worth it.
-You&#8217;re probably much better off following the recommendation above;
-it will be easier to combine your data with other data
-(e.g., to create dynamic results) by following this recommendation.
-</li>
-<li>Don&#8217;t use HTML
-hexadecimal numeric character references,
-such as &amp;#x201c;, &amp;#x201d;, &amp;#x2018;, and &amp;#x2019;.
-Hexadecimal numeric character references are nice because the official
-documents that define the character standards also use hexadecimal.
-However, support for hexadecimal is a recent feature with inconsistent support:
-older browsers (like Netscape 4.5) don&#8217;t support it,
-and many other SGML and XML processors don&#8217;t support it.
-Indeed, SGML doesn&#8217;t include this ability at all.
-Since they're rarely used (compared to the decimal versions),
-there is also a higher risk of hitting a bug with them.
-</li>
-<li>
-Don&#8217;t embed the UTF-8 (or UTF-16) characters directly into the text and
-depend on setting the UTF-8 charset for now.
-For example, for
-right single quotation mark (including English possessives and contractions),
-use &amp;#8217; and do do not use the UTF-8 encoding
-11100010 10000000 10011001 (binary) aka
-e2 80 99 (hexadecimal) aka 342 200 231 (octal) aka
-226 128 153 (decimal).
-UTF-8 is fantastic, but it not yet universal, and the problem is that
-other charsets are still in use.
-The UTF-8 encoding won&#8217;t work on some text browsers (e.g., lynx, and thus
-many blind readers that depend on text rendering).
-It&#8217;s possible in XML and HTML to specify that characters should be
-interpreted according to a particular character set (charset),
-but requiring a particular charset has many drawbacks.
-Setting the charset to utf-8
-does work in many places, but only if you explicitly set the charset;
-failing to set the charset will cause this to fail on many systems.
-Fundamentally, this makes combining your material with other sources harder,
-because they&#8217;re likely to use other charsets.
-For example, Microsoft&#8217;s non-standard character sets (discussed next)
-interfere with it, so using the UTF-8 encoding can cause trouble when
-trying to combine with data from some Microsoft and MacOS tools
-in some circumstances.
-In the longer term, hopefuly everyone will switch to UTF-8 and UTF-16,
-and then this would a reasonable alternative.
-For now, don&#8217;t do it.
-</li><li>Don&#8217;t use Microsoft&#8217;s non-standard character sets (such as
-positions 145 through 148 for the windows-1252 charset).
-Not only are they nonstandard, they
-<a href="http://lists.w3.org/Archives/Public/www-validator/2002Aug/0135.html">
-<i>conflict</i> with the standards</a> -
-<a href="http://www.w3.org/TR/REC-html40/sgml/sgmldecl.html">the specification
-for HTML clearly forbids the use of character positions
-128 through 159</a>, because Unicode and ISO 10646
-reserve positions 128 to 159 as control characters.
-Windows&#8217; non-standard characters are
-not supported on all browsers and viewers.
-In fact, using them can cause trouble even if everyone only uses
-Microsoft&#8217;s products.
-Using them at all (even in browsers that support them) requires
-that you set the &#8220;charset&#8221;
-to a non-standard value (typically windows-1252)
-at the beginning of your document.
-If you set the charset to windows-1252, it works fairly widely, but
-doing this makes it more difficult to combine the resulting text with other
-material (because there&#8217;s no guarantee that your other material
-uses this charset - there are many other charsets in use,
-even if you only use Microsoft products).
-Thus, just as with the embedded utf-8 solution, this approach
-makes it harder to
-combine data with other sources - if the other source doesn&#8217;t use the
-same charset (very likely!), it will stop working.
-Many browsers do try to get these to work as long as this particular
-charset is set, since many Microsoft products
-generate them, but it&#8217;s touch-and-go...
-even with Microsoft&#8217;s own products.
-Oddly enough,
-specifying these Microsoft code positions using numeric identifiers
-often works on existing systems,
-but doing that is a complete botch to the standards (they&#8217;re
-officially forbidden), so it&#8217;s quite unsafe to depend on this.
-(<a href="http://www.w3.org/International/tutorials/tutorial-char-enc/">the W3C specifically notes this.</a>)
-Because there are <i>multiple</i> Microsoft character sets,
-doing this sort of thing causes complications in a Microsoft-only world -
-you can easily have two files, both using <i>different</i> Microsoft
-charsets, that can&#8217;t be easily combined.
-<a href="http://www.netmechanic.com/news/vol5/html_no11.htm">
-Larisa Thomason&#8217;s article in NetMechanic</a> noted the same thing - that
-even in a Microsoft-only world these characters caused problems.
-And besides all that, Microsoft has already stated that it&#8217;s moving
-towards ISO 10646/Unicode, and it has already modified much of their software
-to do this, so even if you only use Microsoft products this isn&#8217;t where
-Microsoft itself is headed.
-Microsoft calls them &#8220;smart quotes&#8221; and people often complain
-about smart quotes - the problem is not that Microsoft automatically
-curls quotation marks by default (that&#8217;s okay), but that Microsoft
-uses these non-standard characters that interfere with standards
-to do so.
-So, this approach is
-proprietary, it requires you to set a nonstandard charset (which
-makes doing this reliably harder and interferes with merging text),
-and Microsoft has already declared that it&#8217;s moving toward ISO 10646 instead,
-so don&#8217;t do this.
-</li><li>In fact, avoid the need for charsets if you are transmitting English
-documents. There are other charsets, such as Apple&#8217;s many charsets,
-but they 
-cause no end of problems. Sticking with a simple ASCII-character-only file,
-and using decimal numeric character references for all non-ASCII characters, 
-may take a little more space but it completely
-eliminates a vast number of problems. 
-Getting a system to correctly determine the character set while it&#8217;s already
-trying to read the file is problematic, and there are a vast number of configuraton
-settings that can go wrong - as well as client systems that may not handle
-things correctly. UTF-8 at least means the same thing everywhere, so you
-have some hope if you really want to use a non-ASCII character set and use
-UTF-8. &nbsp;But since not all documents use UTF-8, and other charsets (like
-the Windows charsets) interfere with them, sticking with the approach
-recommended
-here has the best chance of success in HTML, SGML, and XML. </li></ul>
+<h1>What’s changed?</h1>
 
 <p>
-Now, why is this a problem?
-Normal English uses matched pairs of curled single quotation marks and double quotation marks
-to indicate quotation.  Unfortunately, the original designers of the
-ASCII character set didn&#8217;t define a standard method for identifying
-properly curved quotation marks, so computers have had problems with properly
-exchanging quotation marks ever since.<br>
-</p>
+In short, UTF-8 is now broadly supported and used.
+Over time, tools have added support for UTF-8.
+The current version of HTML <i>defaults</i> to UTF-8.
+Almost all HTML pages are in UTF-8.
+XML supports UTF-8, too.
+In 2002 I noted UTF-8, but I also noted how poorly UTF-8 was supported.
+I concluded in 2002, “For now, don&#8217;t do it.”
+Thankfully, things have changed for the better.
+
 <h1>Other Sources of Information<br>
 
-
-</h1>
 <p>
 <a href="http://www.cl.cam.ac.uk/%7Emgk25/ucs/quotes.html">
 Markus Kuhn&#8217;s &#8220;ASCII and Unicode Quotation Marks&#8221;</a> describes the
 general problem well.
-He summarizes this way:
-</p><blockquote>
-Please do not use the ASCII grave accent (0x60) as
-a left quotation mark together with the ASCII apostrophe (0x27)
-as the corresponding right quotation mark. Your text will otherwise appear
-rather strange with most modern fonts (e.g., on Windows and Mac systems).
-Only old X Window System fonts and some old video terminals
-show ASCII 0x60/0x27 as left and right quotation marks,
-while most modern systems follow the ISO and Unicode standards instead.
-If you can use only ASCII&#8217;s typewriter characters, then use the
-apostrophe character (0x27) as both the left and right quotation mark.
-If you can use Unicode characters,
-nice directional quotation marks are available in the form
-of characters U+2018 and U+2019.
-</blockquote>
-There&#8217;s an interesting
-<a href="http://www.people.fas.harvard.edu/%7Edbaron/www/quotes">test page</a>
-that tests some characters.
-<a href="http://www.w3.org/International/O-charset.html">The W3C
-has a page on character encodings</a>.
 
 <p>
-Unfortunately, Kuhn doesn&#8217;t describe how to specifically deal with the
-problem in HTML, XML, and SGML, which is why I wrote this page.
-
-</p><p>
-If you&#8217;re curious, here are the text pages I used to examine the issue
-on a wide variety of machines:
-</p><ul>
-<li><a href="quotes-test-utf-8.html">Test page, UTF-8 charset</a>
-</li><li><a href="quotes-test-default.html">Test page, default charset</a>
-</li><li><a href="quotes-test-windows.html">Test page, Windows-1252 (proprietary and obsolete) charset</a>
-</li></ul>
-
-<p>
-Note that this approach means that if you're trying to generate
-simple ASCII text from HTML, SGML, or XML,
-you will need to translate curved quotes into straight quotes.
-But this is true in general - if you start with a richer character set
-(such as HTML, SGML, or XML when using numeric character references)
-and have to move to a poorer character set, you should
-expect that some characters will need to be translated.
-There are many other characters you have to handle anyway, so this
-is a step you would would have to do anyway.
-
-</p><p>
-After I wrote this page, I found that others have come to the same conclusion
-(for the same reasons).
-For example,
-<a href="http://www.alistapart.com/stories/emen">Peter K. Sheerin&#8217;s
-<i>The Trouble with EM &#8216;n EN</i></a> proposes the same solution, for many of
-the same reasons (although he doesn&#8217;t note the issues with SGML and XML,
-which I think are important too).
-He also discusses proper use of the
-em dash (&amp;#8212;), which is used to indicate a sudden break in thought,
-the en dash, (&amp;#8211;), which is used to indicate a range or
-connection between things,
-and the single prime (&amp;#8242;), which is used to represent feet or minutes.
-Again, the solution is to use decimal numeric character references.
-</p>
-
-<p>
-Note that
-<a href="http://www.w3.org/International/tutorials/tutorial-char-enc/#exceptional">the W3C recommends only using such escapes as an exception.</a>
-They suggest using a Unicode-based encoding (UTF-8, UTF-16, or
-UTF-32), and for XML using UTF-8 or UTF-16.
-The problem is that we're still in a transition period where tools
-don't all handle them so well, and the recommendation made here
-will ALWAYS work (now and in the future).
-
-</p><p>
-If you want detailed specifications on some of this, here are
-a few pointers:
-here is the
-<a href="http://www.microsoft.com/globaldev/reference/sbcs/1252.htm">
-Microsoft Windows Codepage 1252 (Windows Latin 1)</a>, as well as the
-<a href="http://www.microsoft.com/globaldev/reference/sbcs/1253.htm">
-Microsoft Windows Codepage 1253</a> (there are many more).
-<a href="http://www.df.lth.se/%7Etriad/krad/recode/palm.html">A summary of
-the PalmOS code page is available</a>.
-Possibly more importantly,
-here are some mapping documents that show how to convert from some of
-these character encodings into Unicode/ISO 10646:
-<a href="http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP1252.TXT">Microsoft Windows 1252 to Unicode</a>,
-<a href="http://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/ROMAN.TXT">MacOS
-Roman to Unicode</a>, and
-<a href="http://www.unicode.org/Public/MAPPINGS/">here are the
-set of mappings from various encodings into Unicode/ISO 10646</a>.
-
-
-</p>
-<h1>Tools</h1>
-<p>
-I make a
-<a href="https://dwheeler.com/oss_fs_refs.html"> open source software / free software (OSS/FS)</a>
-tool,
-<a href="https://dwheeler.com/quoter">quoter</a>, available which
-uses heuristics to try to fix quotation marks in HTML, XML, or SGML
-(it&#8217;s smart enough to leave quotes alone when used in tags).
-It&#8217;s free, so feel free to use it
-(it requires a Unix-like system or Cygwin on Windows).
-</p>
-<p>
-The
-<a href="http://www.fourmilab.ch/webtools/demoroniser/">demoroniser</a>
-program fixes many incompatible Microsoft punctuation marks so that they
-comply with standards, but unfortunately, the last version I&#8217;ve seen
-(published January 1998) only converts the Microsoft quotation marks into
-the straight ASCII quotation marks instead of implmenting the
-approach described here.
-The demoroniser results at least look better and are more interoperable
-than doing nothing, but they aren&#8217;t as good as the approach
-recommended here.
-This perhaps makes sense; in January 1998, there were still some old
-tools that did not handle quotation marks well, but at this time that
-is unnecessary.
-My <a href="https://dwheeler.com/quoter">quoter</a>
-tool does a better job of translating quotation marks;
-you can use demoroniser after using quoter
-if you&#8217;d like to fix other characters.
-
-</p><p>
-Composer, the HTML editor in Mozilla and Netscape 6 (and later),
-will normally correctly edit files that include curled quotes defined this way.
-In other words, if the file has them, and you edit the file,
-they&#8217;ll be fine.
-However, if you set the Content-type value in the HTML file,
-be sure to use a setting such ascii or iso-8859-1.
-Here&#8217;s an example of the HTML codes you should set, if you choose
-to set the Content-type (often a good idea):
-</p><pre>&lt;meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"&gt;<br></pre>
-If you set some other charset that can represent quote characters
-directly, such as utf-8, then Composer will
-automatically convert any numeric character references
-to that character set.
-This is reasonable for Composer to do, but it
-may cause trouble when you try to combine files later
-(you may then have to use various conversion tools).
-You may also want to use the
-Edit/Preferences menu and
-select &#8220;Retain original source formatting.&#8221;
-Sadly, at the time of this writing, Composer doesn&#8217;t have a
-preference setting that lets you automatically use curling quotes
-when pressing a straight quote button
-(the capability is sometimes called &#8220;smart quotes&#8221;),
-and its Insert/Characters and Symbols
-capability have curled quotes as an option.
-I&#8217;ve entered a suggestion to do so;
-<a href="http://bugzilla.mozilla.org/show_bug.cgi?id=145765">please
-look at the bug report #145765 and vote to add this capability.</a>
-Thus, for the moment, to enter curled quotes while in Composer
-you have to switch to HTML source view; this works, but is slow on
-extremely large files.
-An alternative is to just edit files normally, and then use tools such as my
-quoter tool to fix things after editing.
-
-<p>
-<a href="http://www.plkr.org">Plucker</a>, as of version 1.2,
-handles these quotes correctly.
-<!--
-If you wish to use older versions of Plucker, I also have a
-<a href="plucker-fix-quotes.txt">small patch file to fix Plucker 1.1.3
-to handle these decimal numeric references for the quoting characters
-correctly</a>.
--->
-
-<p>
-MacOS X&#8217;s Cocoa supports curling quotes,
-both entering and displaying them,
-using the standard Unicode character values advocated here.
-However, users may not remember how to enter the curly quotes.
-<a href="http://www.stone.com/The_Cocoa_Files/Smart_Quotes.html">
-Andrew C. Stone shows how to 
-automatically add curly quotes to Cocoa&#8217;s Text system</a>.
-
-</p><p>
-If you have existing text in one character set, particularly a
-non-standard one like Windows&#8217;, you can use one of many tools to
-convert it to something else.
-Unix-like systems such as GNU/Linux usually have <i>iconv</i>, which will let you
-convert between the character sets to a single uniform character set (iconv comes with the GNU C library).
-Changing everything using iconv to something standard
-(like utf-8), and then running a simple program
-to change all non-ASCII characters into
-decimal numeric character references, would be a very good way to
-turn random text in various character sets into a single, uniform result.
-
-
-
-<!--
-
-<table border nosave>
-<tr>
- <td>Software and Platform Name</td>
-   <td>HTML named character entity references</td>
-   <td>Numeric (decimal) references (recommended)</td>
-   <td>Numeric (hexadecimal) references</td>
-   <td>Embedded UTF-8 Encoding</td>
-   <td>Embedded Microsoft-1252 Encoding</td>
-   <td>Microsoft-1252 Encoding as numeric character entity (very nonstandard)</td>
-</tr><tr>
- <td>Netscape 4.5 on Windows NT 4.0</td>
-   <td>Junk - names displayed instead</td>
-   <td>Perfect</td>
-   <td>Junk</td>
-   <td>Perfect if charset=utf-8, junk if default or windows-1252</td>
-   <td>Boxes if utf-8, perfect if default or windows-1252</td>
-   <td>Perfect</td>
-</tr><tr>
- <td>Mozilla 0.9.9 on Red Hat 7.3</td>
-   <td>Junk - names displayed instead</td>
-   <td>Straight double, angled single</td>
-   <td>Straight double, angled single</td>
-   <td>Straight double, angled single if charset=utf-8, else garbage</td>
-   <td>Question marks if charset=utf-8, else straight double, angled single</td>
-   <td>Straight double, angled single</td>
-</tr><tr>
- <td>lynx 2.8.4 on Red Hat 7.3</td>
-   <td>Junk - names displayed instead</td>
-   <td>Straight double, angled left single, straight right single</td>
-   <td>Straight double, angled left single, straight right single</td>
-   <td>Straight double, angled left single, straight right single
-       if charset utf-8; garbage characters if default or windows-1252</td>
-   <td>Lost if UTF-8 or default</td>
-   <td>Straight double, angled left single, straight right single</td>
- <td>Netscape 4.79 on Red Hat 7.3</td>
-   <td>Junk - names displayed instead</td>
-   <td>Straight double, angled left single, straight right single; excess space if utf-8</td>
-   <td>Straight double, angled left single, straight right single; excess space if utf-8</td>
-   <td>Straight double, angled left single, straight right single; excess space if utf-8</td>
-   <td>Question marks in all charsets (even windows-1252!)</td>
-   <td>Straight double, angled left single, straight right single;
-       excess space if utf-8</td>
-</tr><tr>
- <td>links 0.3.0 on Red Hat 7.3</td>
-   <td>Junk - names displayed instead</td>
-   <td>Straight double, angled left single, straight right single</td>
-   <td>Straight double, angled left single, straight right single</td>
-   <td>Straight double, angled left single, straight right single
-       if charset utf-8; garbage characters if default ??? or windows-1252</td>
-   <td>Asterisks (even windows-1252!)</td>
-   <td>Straight double, angled left single, straight right single</td>
- <td>Netscape 4.79 on Red Hat 7.3</td>
-   <td>Junk - names displayed instead</td>
-   <td>Straight double, angled left single, straight right single; excess space if utf-8</td>
-   <td>Straight double, angled left single, straight right single; excess space if utf-8</td>
-   <td>Straight double, angled left single, straight right single; excess space if utf-8</td>
-   <td>Question marks in all charsets (even windows-1252!)</td>
-   <td>Straight double, angled left single, straight right single;
-       excess space if utf-8</td>
-</tr><tr>
-</table>
-
-Key:
- Perfect: Curling both single and double quotes.
- Straight: Both single and double quotes are neutral, straight vertical marks.
-    This is a very reasonable backoff strategy.
- Straight double, angled single: Double quotes are neutral, straight
-    vertical marks.  All single quotes (either way) are angled from
-    bottom left to top right, which means they don't pair but at least
-    they are correct for possessives and contractions.
- Straight double, angled left single, straight right single: Double quotes are
-    neutral, the left single quote is angled top left to bottom right,
-    the right single quote mark is neutral.
- Excess space if utf-8: If utf-8,
-    left quotes are preceded by extra space, and
-    right quotes have extra space after them; the extra space is fine
-    for quotations, but causes problems for contractions and possessives.
- Asterisks if utf-8: If utf-8, "*" characters are displayed instead.
-
- Garbage: Miscelleneous bad characters.
-
-           This _does_work on:
-            + Internet Explorer.
-            + Netscape on Windows.
-            + Plucker: 1.0 shows "?" unknown char, 1.2 shows all as vertical
-              equivalents (yay).
- single-quotes: &lsquo; and &rsquo;     (U+2018, U+2019)
-
- The results vary depending on the charset
- for many alternatives, but not for the recommended approach.
--->
-
-</p><p>
 Feel free to see
-<a href="https://dwheeler.com">my home page</a> or my paper
-<a href="https://dwheeler.com/oss_fs_why.html"><i>Why OSS/FS?
-Look at the Numbers!</i></a>.
-
-
+<a href="https://dwheeler.com">my home page</a>.
 </p></body></html>
