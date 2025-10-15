@@ -14,7 +14,7 @@
 
 <p><strong>IMPORTANT: This applies ONLY to Intel-based Macs running x86/x86_64 Linux VMs on Apple's Hypervisor Framework (HVF) with UTM and similar, not Apple Silicon (ARM) Macs.</strong></p>
 
-<h2>The Visible Problem: Severe UI Freezing</h2>
+<h1>The Visible Problem: Severe UI Freezing</h1>
 
 <p>If you're running Ubuntu (or another Linux distribution) in a UTM virtual machine on an <strong>Intel Mac</strong>, you may experience severe UI freezing after it works for a short while. The symptoms are:</p>
 
@@ -25,7 +25,7 @@
 <li><strong>Problems worsen</strong> after about half an hour of uptime, or when running multiple applications or during I/O operations, eventually leading to the system hanging</li>
 </ul>
 
-<h2>How to Detect This Problem</h2>
+<h1>How to Detect This Problem</h1>
 
 <p>From within the guest Ubuntu system, you can quickly diagnose this issue:</p>
 
@@ -43,11 +43,11 @@ cat /sys/devices/system/clocksource/clocksource0/available_clocksource
 
 <p>If <code>tsc</code> is <em>not</em> listed in the available clocksources, the CPU type misconfiguration is preventing proper timer initialization.</p>
 
-<h2>Why This Happens: A Two-Part Problem (x86-Specific)</h2>
+<h1>Why This Happens: A Two-Part Problem (x86-Specific)</h1>
 
 <p>The root cause is actually <strong>two separate but related issues with x86 virtualization on Intel Macs</strong>:</p>
 
-<h3>Part 1: CPU Type Misconfiguration Prevents TSC at Boot</h3>
+<h2>Part 1: CPU Type Misconfiguration Prevents TSC at Boot</h2>
 
 <p>UTM's default CPU type setting prevents proper Time Stamp Counter (TSC) passthrough. TSC is an x86/x86_64 CPU feature critical for high-precision timing:</p>
 
@@ -57,7 +57,7 @@ cat /sys/devices/system/clocksource/clocksource0/available_clocksource
 <li><strong>Kernel marks TSC as "unstable"</strong> and falls back to the much slower <code>acpi_pm</code> clocksource (approximately 1000x slower than TSC)</li>
 </ol>
 
-<h3>Part 2: TSC Watchdog Disables TSC at Runtime</h3>
+<h2>Part 2: TSC Watchdog Disables TSC at Runtime</h2>
 
 <p>Even if you fix the CPU type, there's a second problem:</p>
 
@@ -72,11 +72,11 @@ cat /sys/devices/system/clocksource/clocksource0/available_clocksource
 
 <p>The drift occurs because QEMU/HVF lacks proper paravirtualization support (kvm-clock) and VM scheduling on macOS causes TSC discontinuities. However, the drift rate is small and acceptable for VM workloads - the watchdog is being overly sensitive.</p>
 
-<h2>The Complete Solution: Two Steps Required</h2>
+<h1>The Complete Solution: Two Steps Required</h1>
 
 <p>Both steps are required for a permanent fix:</p>
 
-<h3>Step 1: Change UTM CPU Type Setting</h3>
+<h2>Step 1: Change UTM CPU Type Setting</h2>
 
 <p>This enables TSC at boot time:</p>
 
@@ -92,7 +92,7 @@ cat /sys/devices/system/clocksource/clocksource0/available_clocksource
 </ol>
 
 
-<h3>Step 2: Add Kernel Boot Parameter</h3>
+<h2>Step 2: Add Kernel Boot Parameter</h2>
 
 <p>This prevents the watchdog from disabling TSC at runtime:</p>
 
@@ -127,7 +127,7 @@ sudo reboot
 </li>
 </ol>
 
-<h3>Verify Both Fixes Work</h3>
+<h2>Verify Both Fixes Work</h2>
 
 <p>After rebooting with both changes:</p>
 
@@ -145,11 +145,11 @@ watch -n 60 'cat /sys/devices/system/clocksource/clocksource0/current_clocksourc
 
 <p>It should continuously show <code>tsc</code> and never revert to <code>acpi_pm</code>.</p>
 
-<h2>Additional Optimization (Optional)</h2>
+<h1>Additional Optimization (Optional)</h1>
 
 <p>If you originally allocated 8 vCPUs, consider reducing to 4 vCPUs.</p>
 
-<h2>Understanding the tsc=reliable Parameter</h2>
+<h1>Understanding the tsc=reliable Parameter</h1>
 
 <p>The <code>tsc=reliable</code> kernel parameter tells Linux to trust the TSC even if the clocksource watchdog detects drift. This is safe because:</p>
 
@@ -162,9 +162,9 @@ watch -n 60 'cat /sys/devices/system/clocksource/clocksource0/current_clocksourc
 
 <p>The watchdog's strict threshold is designed for bare metal systems where TSC should be perfectly stable. In VM environments, small drift is expected and acceptable.</p>
 
-<h2>Why Both Steps Are Necessary</h2>
+<h1>Why Both Steps Are Necessary</h1>
 
-<h3>Step 1 (CPU Type "max") provides:</h3>
+<h2>Step 1 (CPU Type "max") provides:</h2>
 
 <ul>
 <li><strong>Direct TSC access</strong> from the guest kernel</li>
@@ -173,7 +173,7 @@ watch -n 60 'cat /sys/devices/system/clocksource/clocksource0/current_clocksourc
 <li><strong>Initial TSC enablement</strong> at boot time</li>
 </ul>
 
-<h3>Step 2 (tsc=reliable) provides:</h3>
+<h2>Step 2 (tsc=reliable) provides:</h2>
 
 <ul>
 <li><strong>Disables watchdog enforcement</strong> - prevents runtime disabling of TSC</li>
@@ -183,7 +183,7 @@ watch -n 60 'cat /sys/devices/system/clocksource/clocksource0/current_clocksourc
 
 <p>Without Step 1, TSC never becomes available. Without Step 2, TSC gets disabled after about half an hour. Both steps together provide a complete, permanent fix.</p>
 
-<h2>Why This Problem Exists (Intel Mac / x86 Virtualization with HVF)</h2>
+<h1>Why This Problem Exists (Intel Mac / x86 Virtualization with HVF)</h1>
 
 <p>While HVF (Apple's Hypervisor Framework) is the recommended and fastest virtualization option for Intel Macs, QEMU/HVF has some limitations when virtualizing x86 Linux guests compared to KVM on Linux:</p>
 
@@ -196,7 +196,7 @@ watch -n 60 'cat /sys/devices/system/clocksource/clocksource0/current_clocksourc
 
 <p>The kernel message "Booting paravirtualized kernel on bare hardware" reveals that the kernel expects paravirtualization support that QEMU/HVF doesn't provide. This is the fundamental limitation that requires the tsc=reliable workaround.</p>
 
-<h3>Why ARM Macs Don't Have This Problem</h3>
+<h2>Why ARM Macs Don't Have This Problem</h2>
 
 <p>Apple Silicon Macs (M1/M2/M3) running ARM Linux VMs use:</p>
 
@@ -207,7 +207,7 @@ watch -n 60 'cat /sys/devices/system/clocksource/clocksource0/current_clocksourc
 
 <p>The <code>tsc=reliable</code> kernel parameter doesn't even exist on ARM Linux - it's specific to x86/x86_64 architecture.</p>
 
-<h2>Conclusion</h2>
+<h1>Conclusion</h1>
 
 <p>This two-step fix resolves a severe usability problem with x86/x86_64 Linux VMs on UTM running on <strong>Intel-based Macs</strong>. If you're experiencing UI freezing on an Intel Mac:</p>
 
