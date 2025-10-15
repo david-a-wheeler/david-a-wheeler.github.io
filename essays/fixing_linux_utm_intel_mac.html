@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="paper.css">
+<title>Fixing Ubuntu Linux VM Freezing on UTM/MacOS with an Intel Mac: Complete Two-Step Solution</title>
+</head>
+
+<body>
+<h1 class="title">Fixing Ubuntu Linux VM Freezing on UTM/MacOS with an Intel Mac: Complete Two-Step Solution</h1>
+
+<p><em>By David A. Wheeler (2025-10-15)</em></p>
+
+<p><strong>IMPORTANT: This applies ONLY to Intel-based Macs running x86/x86_64 Linux VMs on Apple's Hypervisor Framework (HVF) with UTM and similar, not Apple Silicon (ARM) Macs.</strong></p>
+
+<h2>The Visible Problem: Severe UI Freezing</h2>
+
+<p>If you're running Ubuntu (or another Linux distribution) in a UTM virtual machine on an <strong>Intel Mac</strong>, you may experience severe UI freezing after it works for a short while. The symptoms are:</p>
+
+<ul>
+<li><strong>Mouse cursor freezes</strong> for 1-5 seconds at a time, especially under moderate load, eventually halting</li>
+<li><strong>Applications become unresponsive</strong> intermittently</li>
+<li><strong>System feels sluggish</strong> despite having adequate CPU and memory resources allocated</li>
+<li><strong>Problems worsen</strong> after about half an hour of uptime, or when running multiple applications or during I/O operations, eventually leading to the system hanging</li>
+</ul>
+
+<h2>How to Detect This Problem</h2>
+
+<p>From within the guest Ubuntu system, you can quickly diagnose this issue:</p>
+
+<pre>
+cat /sys/devices/system/clocksource/clocksource0/current_clocksource
+</pre>
+
+<p>If the output shows only <code>acpi_pm</code> (ACPI Power Management timer), you have this problem. The system should be using <code>tsc</code> (Time Stamp Counter) for optimal performance.</p>
+
+<p>You can also check available clocksources:</p>
+
+<pre>
+cat /sys/devices/system/clocksource/clocksource0/available_clocksource
+</pre>
+
+<p>If <code>tsc</code> is <em>not</em> listed in the available clocksources, the CPU type misconfiguration is preventing proper timer initialization.</p>
+
+<h2>Why This Happens: A Two-Part Problem (x86-Specific)</h2>
+
+<p>The root cause is actually <strong>two separate but related issues with x86 virtualization on Intel Macs</strong>:</p>
+
+<h3>Part 1: CPU Type Misconfiguration Prevents TSC at Boot</h3>
+
+<p>UTM's default CPU type setting prevents proper Time Stamp Counter (TSC) passthrough. TSC is an x86/x86_64 CPU feature critical for high-precision timing:</p>
+
+<ol>
+<li><strong>QEMU/HVF fails to emulate the PIT timer correctly</strong> during boot with certain CPU type settings</li>
+<li><strong>TSC calibration fails</strong> because the guest kernel cannot properly calibrate against the (improperly emulated) Programmable Interval Timer</li>
+<li><strong>Kernel marks TSC as "unstable"</strong> and falls back to the much slower <code>acpi_pm</code> clocksource (approximately 1000x slower than TSC)</li>
+</ol>
+
+<h3>Part 2: TSC Watchdog Disables TSC at Runtime</h3>
+
+<p>Even if you fix the CPU type, there's a second problem:</p>
+
+<ol>
+<li><strong>QEMU/HVF TSC emulation has timing drift</strong> - TSC drifts relative to the ACPI PM timer by approximately 0.1% (~480 microseconds over 497 milliseconds)</li>
+<li><strong>The kernel's clocksource watchdog detects this drift</strong> after about half an hour of runtime</li>
+<li><strong>Watchdog marks TSC unstable and disables it</strong>, falling back to <code>acpi_pm</code></li>
+<li><strong>UI freezing returns</strong> due to inadequate timer resolution</li>
+</ol>
+
+<p>The TSC is critical for system performance. Modern x86-64 systems expect nanosecond-level timer precision, but <code>acpi_pm</code> only provides microsecond-level precision. This mismatch causes the kernel scheduler to make poor decisions, leading to the UI freezing behavior.</p>
+
+<p>The drift occurs because QEMU/HVF lacks proper paravirtualization support (kvm-clock) and VM scheduling on macOS causes TSC discontinuities. However, the drift rate is small and acceptable for VM workloads - the watchdog is being overly sensitive.</p>
+
+<h2>The Complete Solution: Two Steps Required</h2>
+
+<p>Both steps are required for a permanent fix:</p>
+
+<h3>Step 1: Change UTM CPU Type Setting</h3>
+
+<p>This enables TSC at boot time:</p>
+
+<ol>
+<li>Shut down your Ubuntu VM completely</li>
+<li>Open UTM and select your Ubuntu virtual machine</li>
+<li>Click the "Edit" button (or right-click and select "Edit")</li>
+<li>Navigate to <strong>System</strong> settings</li>
+<li>Under <strong>CPU</strong>, find the CPU type dropdown</li>
+<li>Change from "Default" to <strong>"Enables all features supported by the accelerator in the current host (max)"</strong></li>
+<li>Under the "QEMU" tab, select "Use Hypervisor". This uses Apple's Hypervisor Framework (HVF), which is the recommended and highest-performance virtualization option for Intel Macs.</p>
+<li>Click "Save"</li>
+</ol>
+
+
+<h3>Step 2: Add Kernel Boot Parameter</h3>
+
+<p>This prevents the watchdog from disabling TSC at runtime:</p>
+
+<ol>
+<li>Start your Ubuntu VM (with the new CPU type setting)</li>
+<li>Open a terminal</li>
+<li>Edit the GRUB configuration:
+<pre>
+sudo nano /etc/default/grub
+</pre>
+</li>
+<li>Find the line that starts with <code>GRUB_CMDLINE_LINUX_DEFAULT</code></li>
+<li>Add <code>tsc=reliable</code> inside the quotes. For example, change:
+<pre>
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
+</pre>
+to:
+<pre>
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash tsc=reliable"
+</pre>
+</li>
+<li>Save the file (Ctrl+O, Enter, Ctrl+X in nano)</li>
+<li>Update GRUB:
+<pre>
+sudo update-grub
+</pre>
+</li>
+<li>Reboot your VM:
+<pre>
+sudo reboot
+</pre>
+</li>
+</ol>
+
+<h3>Verify Both Fixes Work</h3>
+
+<p>After rebooting with both changes:</p>
+
+<pre>
+cat /sys/devices/system/clocksource/clocksource0/current_clocksource
+</pre>
+
+<p>You should see <code>tsc</code> as the current clocksource, and it should remain <code>tsc</code> even after hours of uptime. The UI freezing should be completely eliminated.</p>
+
+<p>To monitor that TSC remains stable, you can check periodically:</p>
+
+<pre>
+watch -n 60 'cat /sys/devices/system/clocksource/clocksource0/current_clocksource'
+</pre>
+
+<p>It should continuously show <code>tsc</code> and never revert to <code>acpi_pm</code>.</p>
+
+<h2>Additional Optimization (Optional)</h2>
+
+<p>If you originally allocated 8 vCPUs, consider reducing to 4 vCPUs.</p>
+
+<h2>Understanding the tsc=reliable Parameter</h2>
+
+<p>The <code>tsc=reliable</code> kernel parameter tells Linux to trust the TSC even if the clocksource watchdog detects drift. This is safe because:</p>
+
+<ul>
+<li><strong>The CPU genuinely supports constant_tsc</strong> - TSC rate is stable and doesn't vary with frequency scaling</li>
+<li><strong>The drift rate is very small</strong> - approximately 0.1%, which equals roughly 8 seconds per day</li>
+<li><strong>NTP will automatically correct drift</strong> - the system time daemon keeps time synchronized (if you allow it to use NTP)</li>
+<li><strong>This is standard practice for VMs</strong> - most virtual machine environments use tsc=reliable due to inevitable timing variations</li>
+</ul>
+
+<p>The watchdog's strict threshold is designed for bare metal systems where TSC should be perfectly stable. In VM environments, small drift is expected and acceptable.</p>
+
+<h2>Why Both Steps Are Necessary</h2>
+
+<h3>Step 1 (CPU Type "max") provides:</h3>
+
+<ul>
+<li><strong>Direct TSC access</strong> from the guest kernel</li>
+<li><strong>Proper timer calibration</strong> during boot</li>
+<li><strong>constant_tsc CPU feature</strong> exposed to the guest</li>
+<li><strong>Initial TSC enablement</strong> at boot time</li>
+</ul>
+
+<h3>Step 2 (tsc=reliable) provides:</h3>
+
+<ul>
+<li><strong>Disables watchdog enforcement</strong> - prevents runtime disabling of TSC</li>
+<li><strong>Permanent TSC usage</strong> - TSC remains active indefinitely</li>
+<li><strong>Stable high-precision timing</strong> - scheduler gets the timer resolution it needs</li>
+</ul>
+
+<p>Without Step 1, TSC never becomes available. Without Step 2, TSC gets disabled after about half an hour. Both steps together provide a complete, permanent fix.</p>
+
+<h2>Why This Problem Exists (Intel Mac / x86 Virtualization with HVF)</h2>
+
+<p>While HVF (Apple's Hypervisor Framework) is the recommended and fastest virtualization option for Intel Macs, QEMU/HVF has some limitations when virtualizing x86 Linux guests compared to KVM on Linux:</p>
+
+<ul>
+<li><strong>No proper paravirtualization support</strong> - QEMU/HVF doesn't provide kvm-clock, which would eliminate drift</li>
+<li><strong>macOS VM scheduling introduces discontinuities</strong> - when vCPUs are preempted, TSC appears to skip</li>
+<li><strong>TSC emulation accumulates errors</strong> - small timing offsets accumulate over time</li>
+<li><strong>Default CPU types are too restrictive</strong> - they block critical CPU features for compatibility reasons</li>
+</ul>
+
+<p>The kernel message "Booting paravirtualized kernel on bare hardware" reveals that the kernel expects paravirtualization support that QEMU/HVF doesn't provide. This is the fundamental limitation that requires the tsc=reliable workaround.</p>
+
+<h3>Why ARM Macs Don't Have This Problem</h3>
+
+<p>Apple Silicon Macs (M1/M2/M3) running ARM Linux VMs use:</p>
+
+<ul>
+<li><strong>Different virtualization technology</strong> - Virtualization.framework for ARM, not HVF with QEMU</li>
+<li><strong>Different timer hardware</strong> - ARM Generic Timer architecture, not x86 TSC</li>
+</ul>
+
+<p>The <code>tsc=reliable</code> kernel parameter doesn't even exist on ARM Linux - it's specific to x86/x86_64 architecture.</p>
+
+<h2>Conclusion</h2>
+
+<p>This two-step fix resolves a severe usability problem with x86/x86_64 Linux VMs on UTM running on <strong>Intel-based Macs</strong>. If you're experiencing UI freezing on an Intel Mac:</p>
+
+<ol>
+<li>Change UTM CPU type to "max" (enables TSC at boot)</li>
+<li>Add kernel parameter tsc=reliable (keeps TSC enabled permanently)</li>
+</ol>
+
+<p>The diagnosis is straightforward (check the clocksource), the cause is well-understood (TSC calibration failure and watchdog drift detection), and the solution requires two simple configuration changes. The result is stable, high-performance VM operation without UI freezing.</p>
+
+<p><strong>Note:</strong> If you're using an Apple Silicon Mac (M1/M2/M3) with ARM Linux VMs, this fix does not apply - ARM uses completely different timer hardware and virtualization technology that doesn't have this TSC-related issue.</p>
+
+<p><strong>Note 2:</strong> I found the problem and solution working with Claude Code (thanks Anthropic!). However, my first foray was a complete failure. I learned that when debugging deep problems like this, AI/ML is often intellectually lazy; it often wants to repeatedly find something that <i>might</i> work and propose it. I went down various useless rabbit holes. I restarted and demanded that it list all possible causes of the problem, then repeatedly analyze to disprove all other options and prove the one remaining option. Demanding airtight proof didn't immediately get the answer, but forcing it to prove its diagnosis before doing stuff was a key in getting to success.</p>
+
+</body>
+</html>
