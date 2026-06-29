@@ -17,15 +17,140 @@ eleventh axiom and presenting a different model to which the new
 combination of axioms applies, he proves that all the axioms are independent
 of each other." [Hesseling, page 278].
 
-Almost but one of the assumptions can be proven independent of the other
-assumptions by using the "mace" tool.
+The model-finding "mace4" tool, part of the prover9 suite,
+can prove that assumptions are independent of the other assumptions.
 Mace finds models that satisfy all the claims given.
 An assumption X can be shown to be independent of the others if all
 assumptions are given to mace, except that X is negated.
 If mace can find a model that satisfies this set, then it is possible
 that the negated assumption does not follow from the others, and therefore
 the assumption is independent.
-This was shown for:
+
+However, early work failed to prove independence of
+all-repeats-independence-2.in
+
+- - ( ( portable_and_deterministic(Source, Language, Input) &
+-   exactly_correspond(Executable1, Source, Language, Environment1) &
+-   exactly_correspond(Executable2, Source, Language, Environment2)) ->
+-     ( converttext(run(Executable1, Input, EnvEffects1, Environment1),
+-                   Environment1, Target) =
+-       converttext(run(Executable2, Input, EnvEffects2, Environment2),
+-                   Environment2, Target)))
+-   # label(define_portable_and_deterministic).
+
+
+## The Quantifier Trap: Proving Axiom Independence Safely in Mace4
+
+**By David A. Wheeler**
+
+When formally verifying a system like Diverse Double-Compiling (DDC), we must ensure our foundational specifications are both sound and elegant. A key part of this process is establishing **axiom independence**—demonstrating that none of our starting assumptions can be derived from the others.
+
+To prove independence using a model finder like Mace4, the strategy is straightforward in theory: you search for a model where all your other assumptions hold true, but the target assumption is false. If the tool finds such a model, you have successfully proven independence.
+
+However, first-order logic tools have strict, subtle syntactic behaviors. If you are not extremely careful with how you phrase a negation, you will accidentally force the solver into a mathematical impossibility. This is exactly what happened in a recent DDC model draft, and it serves as an excellent case study in implicit quantifier scoping.
+
+---
+
+### The Attempted Negation
+
+Consider the core DDC definition for a portable and deterministic program. The draft attempted to test its independence by prefixing it with a negation symbol (`-`) inside the `formulas(assumptions)` block:
+
+```prolog
+formulas(assumptions).
+
+  - ( ( portable_and_deterministic(Source, Language, Input) &
+        exactly_correspond(Executable1, Source, Language, Environment1) &
+        exactly_correspond(Executable2, Source, Language, Environment2)) ->
+   	  ( converttext(run(Executable1, Input, EnvEffects1, Environment1), Environment1, Target) =
+        converttext(run(Executable2, Input, EnvEffects2, Environment2), Environment2, Target)))
+    # label(define_portable_and_deterministic).
+
+  % ... (other DDC axioms) ...
+
+end_of_list.
+
+```
+
+At first glance, this looks completely reasonable. We want the rule to fail, so we put a minus sign in front of it. Unfortunately, this creates a catastrophic structural error due to how Mace4 handles unquantified variables.
+
+---
+
+### Why It Is Wrong: How Mace4 Interprets Free Variables
+
+In Prover9 and Mace4, when you use capitalized terms (like `Source`, `Language`, `Input`) without an explicit quantifier, the tool treats them as **free variables**. To process the file, the engine must bind these variables. It does this by automatically wrapping the entire expression in an implicit universal quantifier (`all`).
+
+Crucially, because the negation symbol (`-`) was written *inside* the statement, Mace4 applied the implicit `all` **outside** the negation.
+
+Mathematically, Mace4 interpreted your assumption as:
+
+
+$$\forall \text{ Vars } \neg (\text{Premise} \rightarrow \text{Conclusion})$$
+
+For an implication ($\rightarrow$) to be false, the premise must be true **and** the conclusion must be false. Because of the universal quantifier, you didn't ask Mace4 to find a single, specific loophole. Instead, you commanded it to construct a universe where:
+
+1. **Every single object** in existence must satisfy the premise (meaning *everything* must be portable, deterministic, and exactly corresponding).
+2. **Every single compiled output** in existence must simultaneously *fail* to be equal to every other output.
+
+This defines a completely absurd, hyper-restrictive mathematical universe. The moment Mace4 evaluated your other DDC axioms against this sweeping rule, it hit an immediate contradiction. The tool didn't fail because your logic was flawed; it failed because you asked it to build an impossible world.
+
+---
+
+### What Was Meant Instead
+
+To prove independence, you do not want to say that the rule fails *everywhere for everything*. You want to prove that there is **at least one loophole**—a single, lonely counterexample where the prerequisites are met, but the conclusion fails to hold.
+
+Mathematically, a true counterexample requires an **existential quantifier** ($\exists$) wrapped around the negation:
+
+
+$$\exists \text{ Vars } (\text{Premise} \land \neg \text{Conclusion})$$
+
+In raw Mace4 syntax, you would have to manually write out every single variable to force this behavior:
+
+```prolog
+% Manual existential counterexample (highly error-prone)
+exists Source Language Input Executable1 Environment1 Executable2 Environment2 EnvEffects1 EnvEffects2 Target (
+    portable_and_deterministic(Source, Language, Input) & ... &
+    - ( converttext(...) = converttext(...) )
+).
+
+```
+
+Writing this out manually is tedious and highly susceptible to typos or missed variables, which brings us to the correct, engineering-focused solution.
+
+---
+
+### The Elegant Solution: Using the `formulas(goals)` Block
+
+The safest and most effective way to handle independence proofs in the LADR suite is to let the tool manage the quantifiers for you. Instead of manually negating the rule and stuffing it into the assumptions list, you should leave the statement **completely positive** and place it inside a **`formulas(goals)`** block.
+
+```prolog
+formulas(assumptions).
+    % ... Keep all your other DDC axioms here unmodified ...
+end_of_list.
+
+formulas(goals).
+  % Keep the target rule POSITIVE here. Do not use '-'
+  ( ( portable_and_deterministic(Source, Language, Input) &
+      exactly_correspond(Executable1, Source, Language, Environment1) &
+      exactly_correspond(Executable2, Source, Language, Environment2)) ->
+   	( converttext(run(Executable1, Input, EnvEffects1, Environment1), Environment1, Target) =
+      converttext(run(Executable2, Input, EnvEffects2, Environment2), Environment2, Target)))
+   # label(define_portable_and_deterministic).
+end_of_list.
+
+```
+
+### Why This Is Better
+
+When Prover9 or Mace4 sees a statement in the `goals` block, it utilizes a built-in automated mechanism:
+
+1. It automatically treats the free variables as universally quantified for the goal ($\forall \text{ Vars } (\text{Rule})$).
+2. Because the solver's job is to either prove the goal true (Prover9) or find a falsifying countermodel (Mace4), **the tool automatically negates the entire block correctly behind the scenes**.
+3. It pushes the negation *inside* the universal quantifier, mathematically transforming it into a clean, localized existential statement: $\exists \text{ Vars } \neg (\text{Rule})$.
+
+By utilizing the `goals` block, you eliminate the risk of quantifier mismatch. Mace4 will search for a model that satisfies all your assumptions while breaking the goal in exactly *one* valid place. If it finds that model, your independence proof is secure, your syntax remains clean, and you avoid the subtle scoping traps that completely upend formal analysis.
+
+
 
 dissertation/all-repeats-independence-1.tabular
 dissertation/all-repeats-independence-3.tabular
@@ -47,6 +172,42 @@ dissertation/ddc-independence-5.tabular
 I was unable to show independence using mace for
 dissertation/all-repeats-independence-2.in
 
+I was unable to show independence using mace for
+dissertation/all-repeats-independence-2.in
+
+
+OLD:
+
+The original Mace4 statement was structurally incorrect for what you were trying to achieve. Because of how the negation was placed, you weren't asking Mace4 to find a regular counterexample; you were accidentally asking it to find a completely impossible universe.Here is exactly why that statement didn't do what you intended.What You Intended vs. What Mace4 HeardTo prove an assumption is independent, you want to tell the solver: "Find me a universe where the other rules work, but this specific rule has at least one loophole."Here is how the syntax translated that idea:ConceptLogical MeaningWhat it looks like in practiceYour True Intent(Existential Negation)$\exists \text{ Vars } \neg (\text{Premise} \rightarrow \text{Conclusion})$"There is at least one specific case where the compiler inputs match, but the text outputs do not match."What Mace4 Saw(Universal Negation)$\forall \text{ Vars } \neg (\text{Premise} \rightarrow \text{Conclusion})$"For every single object, environment, and file in existence, the inputs must match and the outputs must never match."By leaving the variables free (unquantified) and putting a minus sign - in front of the whole clause, Mace4 implicitly wrapped the entire expression—negation included—in an outer all quantifier.This forced a hyper-restrictive constraint on the solver. It meant that in the model Mace4 was trying to build, no two compiled texts could ever be equal under any circumstances anywhere, while simultaneously forcing every single item in the universe to be "portable and deterministic." The other DDC axioms immediately clashed with this extreme requirement, which is why Mace4 choked and couldn't find a model.
+
+Option B: Use the goals block
+Prover9 and Mace4 are designed to automatically flip quantifiers correctly if you use their built-in goal architecture. If you leave the axiom un-negated and positive, but move it into a separate formulas(goals) block, Mace4 will automatically negate it existentially behind the scenes:  
+
+Prolog
+formulas(goals).
+    % Keep it positive here; Mace4 will automatically invert it 
+    % into a proper existential counterexample for the search.
+    ( ( portable_and_deterministic(Source, Language, Input) & ... ) -> ( ... = ... ) ).
+end_of_list.
+
+Option A: Explicitly use the exists quantifier
+You must explicitly tell Mace4 to use existential quantification for the counterexample, exactly like we did in Z3:
+
+Prolog
+% Explicitly force an existential counterexample
+exists Source Language Input Executable1 Environment1 Executable2 Environment2 EnvEffects1 EnvEffects2 Target (
+    portable_and_deterministic(Source, Language, Input) &
+    exactly_correspond(Executable1, Source, Language, Environment1) &
+    exactly_correspond(Executable2, Source, Language, Environment2) &
+    - ( converttext(run(Executable1, Input, EnvEffects1, Environment1), Environment1, Target) =
+        converttext(run(Executable2, Input, EnvEffects2, Environment2), Environment2, Target) )
+).
+
+Repeatedly:
+vi all-repeats-independence-2.in
+make all-repeats-independence-2.cooked
+
+NOTES:
 
 Proving independence in Mace4 for a complex specification like Diverse Double-Compiling (DDC) is notoriously tricky. The primary bottleneck here isn't the number of predicates, but the **combinatorial explosion caused by your functions**.
 

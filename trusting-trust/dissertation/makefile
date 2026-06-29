@@ -1,7 +1,20 @@
 # Makefile.  Uses GNU make.
 
+# NOTE: "brew" includes prover9, but they didn't package
+# helpers like interpformat. So you need to compile yourself.
+# # 1. Download the matching 2009-11A source code
+# curl -O https://www.cs.unm.edu/~mccune/prover9/download/LADR-2009-11A.tar.gz
+# # 2. Extract the archive
+# tar -xzf LADR-2009-11A.tar.gz
+# 3. Enter the folder and compile everything
+# cd LADR-2009-11A
+# make all
 
-INTERPFORMAT = prover9-interpformat
+# INTERPFORMAT = prover9-interpformat
+INTERPFORMAT = interpformat
+
+# OMITTED (mace4 strugged):
+# all-repeats-independence-2.cooked
 
 INDEPENDENCE= \
 ddc-independence-1.cooked \
@@ -10,7 +23,6 @@ ddc-independence-3.cooked \
 ddc-independence-4.cooked \
 ddc-independence-5.cooked \
 all-repeats-independence-1.cooked \
-all-repeats-independence-2.cooked \
 all-repeats-independence-3.cooked \
 all-repeats-independence-4.cooked \
 all-repeats-independence-5.cooked \
@@ -20,7 +32,8 @@ all-repeats-independence-8.cooked \
 all-repeats-independence-9.cooked \
 cP-corresponds-sP-independence-1.cooked \
 cP-corresponds-sP-independence-2.cooked \
-cP-corresponds-sP-independence-3.cooked
+cP-corresponds-sP-independence-3.cooked \
+all-repeats-independence-3.z3result
 
 all: ddc.pdf repeats.pdf lemma-stage1-cp.pdf lemma-sp.pdf all-repeats.pdf ddc-equivalence.pdf $(INDEPENDENCE)
 
@@ -33,13 +46,17 @@ all: ddc.pdf repeats.pdf lemma-stage1-cp.pdf lemma-sp.pdf all-repeats.pdf ddc-eq
 %.mout: %.in
 	# For most "-n 2" works fine.
 	# mace4 -c -f $+ > $@.temp
-	mace4 -n 6 -N 10 -b 3000 -c -f $+ > $@.temp
+	# mace4 -n 6 -N 10 -b 3000 -c -f $+ > $@.temp
+	mace4 -b 3000 -c -f $+ > $@.temp
 	# If that succeeded, then create the new mout file.
 	mv $@.temp $@
 
 %.cooked: %.mout
 	$(INTERPFORMAT) tabular -f $< > $*.tabular
 	$(INTERPFORMAT) cooked -f $< > $*.cooked
+
+%.z3result: %.smt2
+	z3 $< > $@
 
 .PRECIOUS: %.out %.mout
 

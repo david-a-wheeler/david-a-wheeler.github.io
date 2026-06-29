@@ -3,27 +3,35 @@
 
 set(prolog_style_variables).
 
+% THIS IS HARD for mace4, so we gave it some parameters to aid
+% its search for a model.
+% SPECIAL VALUES - vary search to try to get unstuck.  See mace4 documentation.
+
 % Try to get a model output in my lifetime... :-).
 % predicate_order([exactly_correspond,portable_and_deterministic,accurately_translates]).
+% predicate_order([accurately_translates,portable_and_deterministic,exactly_correspond]).
 % function_order([converttext,run,compile,extract,retarget]).
-predicate_order([accurately_translates,portable_and_deterministic,exactly_correspond]).
-function_order([retarget,extract,compile,run,converttext]).
 
-% SPECIAL VALUES - vary search to try to get unstuck.  See mace4 documentation.
+% We'll put "compile" last because it has the highest arity.
+function_order([retarget,extract,run,converttext,compile]).
+
+% Choose cell selection strategy, default 4.
 % assign(selection_order, n). % 0..2, default 2
-assign(selection_measure, 1). % 0..4, default 4
+
+% assign(selection_order, 0). % 0..4, default 4
+% assign(selection_measure, 0). % 0..4, default 4
+
+% Set a dynamic search range
+% assign(start_size, 2).
+% assign(end_size, 4).
+% assign(start_size, 6).
+
+% Give up on a domain size after some time, try bigger
+% assign(max_seconds_per, 60).
 
 formulas(assumptions).
 
- - ( ( portable_and_deterministic(Source, Language, Input) &
-   exactly_correspond(Executable1, Source, Language, Environment1) &
-   exactly_correspond(Executable2, Source, Language, Environment2)) ->
-     ( converttext(run(Executable1, Input, EnvEffects1, Environment1),
-                   Environment1, Target) =
-       converttext(run(Executable2, Input, EnvEffects2, Environment2),
-                   Environment2, Target)))
-   # label(define_portable_and_deterministic).
-
+ % Negated define_portable_and_deterministic
  % NOTE: Reorder to try to make it easier to calculate.
  exactly_correspond(cP, sP, lsP, eA) # label(cP_corresponds_to_sP).
 
@@ -52,5 +60,15 @@ formulas(assumptions).
  all EnvEffects accurately_translates(cT, lsP, sP, EnvEffects, e1, e2)
    # label(cT_compiles_sP).
 
-end_of_list.
+formulas(goals).
 
+ ( ( portable_and_deterministic(Source, Language, Input) &
+   exactly_correspond(Executable1, Source, Language, Environment1) &
+   exactly_correspond(Executable2, Source, Language, Environment2)) ->
+     ( converttext(run(Executable1, Input, EnvEffects1, Environment1),
+                   Environment1, Target) =
+       converttext(run(Executable2, Input, EnvEffects2, Environment2),
+                   Environment2, Target)))
+   # label(define_portable_and_deterministic).
+
+end_of_list.
