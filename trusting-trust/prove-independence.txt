@@ -17,6 +17,82 @@ eleventh axiom and presenting a different model to which the new
 combination of axioms applies, he proves that all the axioms are independent
 of each other." [Hesseling, page 278].
 
+Almost but one of the assumptions can be proven independent of the other
+assumptions by using the "mace" tool.
+Mace finds models that satisfy all the claims given.
+An assumption X can be shown to be independent of the others if all
+assumptions are given to mace, except that X is negated.
+If mace can find a model that satisfies this set, then it is possible
+that the negated assumption does not follow from the others, and therefore
+the assumption is independent.
+This was shown for:
+
+dissertation/all-repeats-independence-1.tabular
+dissertation/all-repeats-independence-3.tabular
+dissertation/all-repeats-independence-4.tabular
+dissertation/all-repeats-independence-5.tabular
+dissertation/all-repeats-independence-6.tabular
+dissertation/all-repeats-independence-7.tabular
+dissertation/all-repeats-independence-8.tabular
+dissertation/all-repeats-independence-9.tabular
+dissertation/cP-corresponds-sP-independence-1.tabular
+dissertation/cP-corresponds-sP-independence-2.tabular
+dissertation/cP-corresponds-sP-independence-3.tabular
+dissertation/ddc-independence-1.tabular
+dissertation/ddc-independence-2.tabular
+dissertation/ddc-independence-3.tabular
+dissertation/ddc-independence-4.tabular
+dissertation/ddc-independence-5.tabular
+
+I was unable to show independence using mace for
+dissertation/all-repeats-independence-2.in
+
+
+Proving independence in Mace4 for a complex specification like Diverse Double-Compiling (DDC) is notoriously tricky. The primary bottleneck here isn't the number of predicates, but the **combinatorial explosion caused by your functions**.
+
+Because Mace4 searches for *finite total models*, every function you define must have an explicit output mapped for every single combination of inputs. Your `compile` function takes 5 arguments; in a domain of just size 3, that requires mapping $3^5 = 243$ combinations. When nested inside `extract` and `converttext`, the search space balloons instantly.
+
+Here are the most promising strategies to get Mace4 to find a model without changing the underlying logic of your DDC proof.
+
+---
+
+### 1. Flatten the Nested Functions into Predicates
+
+The single most effective way to speed up Mace4 is to replace deeply nested functions with relation predicates.
+
+* **The Problem:** `extract(converttext(run(...)))` forces Mace4 to evaluate an astronomical number of function tables.
+* **The Fix:** Instead of a 5-argument function for `compile`, use a 6-argument predicate: `is_compiled_to(Source, Compiler, EnvEffects, RunOn, Target, Output)`.
+* **Why it works:** Mace4 evaluates predicates much faster than functions because it doesn't have to guarantee "totality" (an output for every single junk combination of inputs) for predicates.
+
+### 2. Introduce Intermediate Constants (Manual Skolemization)
+
+If you want to keep the functions, break up the deeply nested definitions by introducing named intermediate constants in your assumptions.
+
+* For example, instead of letting Mace4 evaluate `compile(sA, stage1, e2effects, e2, eArun)` dynamically, explicitly define what the inner parts look like using dummy constants (e.g., `const_retarget1`, `const_run1`).
+* This gives Mace4 fixed reference points ("anchors") in the domain, drastically cutting down the isomorphic models it has to test.
+
+### 3. Aggressive Axiom Trimming (Slicing)
+
+When proving the independence of a specific axiom, you often do not need the *entire* DDC specification.
+
+* Identify which predicates and functions are actually involved in the axiom you are trying to negate.
+* Temporarily comment out any definitions, function orders, or assumptions that do not structurally connect to that target axiom. If `converttext` isn't strictly necessary to falsify your target axiom, drop it for this run.
+
+### 4. Leverage Mace4-Specific Parameter Tuning
+
+You’ve already started tweaking `selection_measure`, but you can guide the search more aggressively:
+
+* **`assign(isomorphism_testing, 1).`** Ensure this is on. It prevents Mace4 from wasting time looking at models that are just permutations of previous ones.
+* **`assign(max_size, 4).`** Force a strict ceiling. If DDC has a countermodel, it’s likely either very small (size 2 or 3) or too large for Mace4 anyway. Don't let it waste time grid-searching size 5+.
+* **Explicit Element Naming:** Use `assign(domain_size, 3).` and explicitly name domain elements (`0, 1, 2`) in a temporary weight/order list to force Mace4 to assign your constants (`sP`, `lsP`, `eA`) to distinct elements right out of the gate.
+
+### 5. Consider an SMT Solver (The "Plan B")
+
+If Mace4 continues to spin its wheels, it’s likely because the model requires an infinite domain or an algebraic structure Mace4 isn't optimized for.
+
+* **Z3 / Alloy:** Translating these first-order logic formulas into an SMT solver like **Z3** (using Python) or using **Alloy** can be much faster. SMT solvers handle uninterpreted functions naturally without requiring the finite totality tables that bog down Mace4.
+
+
 
 References
 
