@@ -33,7 +33,7 @@ all-repeats-independence-9.cooked \
 cP-corresponds-sP-independence-1.cooked \
 cP-corresponds-sP-independence-2.cooked \
 cP-corresponds-sP-independence-3.cooked \
-all-repeats-independence-3.z3result
+all-repeats-independence-2.z3result
 
 all: ddc.pdf repeats.pdf lemma-stage1-cp.pdf lemma-sp.pdf all-repeats.pdf ddc-equivalence.pdf $(INDEPENDENCE)
 

@@ -1,8 +1,8 @@
 ============================== Mace4 =================================
-Mace4 (32) version Aug-2007, Aug 2007.
-Process 6888 was started by dwheeler on dwheeler3-pc.ida.org,
-Sat Nov  6 17:59:50 2010
-The command was "mace4 -c -t 60 -f all-repeats-independence-6.in".
+Mace4 (64) version 2009-11A, November 2009.
+Process 69889 was started by dwheeler on SkynetPC,
+Mon Jun 29 16:01:46 2026
+The command was "mace4 -b 3000 -c -f all-repeats-independence-6.in".
 ============================== end of head ===========================
 
 ============================== INPUT =================================
@@ -17,13 +17,14 @@ portable_and_deterministic(Source,Language,Input) & exactly_correspond(Executabl
 portable_and_deterministic(sP,lsP,retarget(sA,eArun)) # label(sP_portable_and_deterministic).
 compile(Source,Compiler,EnvEffects,RunOn,Target) = extract(converttext(run(Compiler,retarget(Source,Target),EnvEffects,RunOn),RunOn,Target)) # label(define_compile).
 stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
-stage2 != compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
 cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).
 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond).
 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP).
+formulas(goals).
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
 end_of_list.
 
-% From the command line: assign(max_seconds, 60).
+% From the command line: assign(max_megs, 3000).
 
 ============================== end of input ==========================
 
@@ -44,15 +45,16 @@ exactly_correspond(cP,sP,lsP,eA) # label(cP_corresponds_to_sP).
 portable_and_deterministic(sP,lsP,retarget(sA,eArun)) # label(sP_portable_and_deterministic).
 compile(A,B,C,D,E) = extract(converttext(run(B,retarget(A,E),C,D),D,E)) # label(define_compile).
 stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
-stage2 != compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
 cA = compile(sA,cP,eAeffects,eA,eArun) # label(definition_cA).
 -accurately_translates(A,B,C,D,E,F) | exactly_correspond(compile(C,A,D,E,F),C,B,F) # label(define_exactly_correspond).
 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).
+formulas(goals).
+stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
 end_of_list.
 
 ============================== end of clauses for search =============
 
-% The maximum domain element in the input is 0.
+% There are no natural numbers in the input.
 
 ============================== DOMAIN SIZE 2 =========================
 
@@ -80,6 +82,8 @@ interpretation( 2, [number=1, seconds=0], [
 
         function(eArun, [ 0 ]),
 
+        function(goals, [ 0 ]),
+
         function(lsP, [ 0 ]),
 
         function(sA, [ 0 ]),
@@ -88,7 +92,7 @@ interpretation( 2, [number=1, seconds=0], [
 
         function(stage1, [ 0 ]),
 
-        function(stage2, [ 1 ]),
+        function(stage2, [ 0 ]),
 
         function(extract(_), [ 0, 0 ]),
 
@@ -129,6 +133,8 @@ interpretation( 2, [number=1, seconds=0], [
 			   0, 0,
 			   0, 0,
 			   0, 0 ]),
+
+        relation(formulas(_), [ 1, 0 ]),
 
         relation(portable_and_deterministic(_,_,_), [
 			   1, 0,
@@ -188,16 +194,16 @@ interpretation( 2, [number=1, seconds=0], [
 For domain size 2.
 
 Current CPU time: 0.00 seconds (total CPU time: 0.01 seconds).
-Ground clauses: seen=1127, kept=1127.
-Selections=71, assignments=71, propagations=94, current_models=1.
-Rewrite_terms=4360, rewrite_bools=1424, indexes=158.
-Rules_from_neg_clauses=1, cross_offs=1.
+Ground clauses: seen=1128, kept=1128.
+Selections=73, assignments=73, propagations=95, current_models=1.
+Rewrite_terms=4361, rewrite_bools=1425, indexes=159.
+Rules_from_neg_clauses=0, cross_offs=0.
 
 ============================== end of statistics =====================
 
-User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+User_CPU=0.01, System_CPU=0.01, Wall_clock=0.
 
 Exiting with 1 model.
 
-Process 6888 exit (max_models) Sat Nov  6 17:59:50 2010
-The process finished Sat Nov  6 17:59:50 2010
+Process 69889 exit (max_models) Mon Jun 29 16:01:46 2026
+The process finished Mon Jun 29 16:01:46 2026
