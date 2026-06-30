@@ -1,7 +1,7 @@
 ============================== Mace4 =================================
 Mace4 (64) version 2009-11A, November 2009.
-Process 69791 was started by dwheeler on SkynetPC,
-Mon Jun 29 16:01:45 2026
+Process 80817 was started by dwheeler on SkynetPC,
+Tue Jun 30 08:52:25 2026
 The command was "mace4 -b 3000 -c -f ddc-independence-3.in".
 ============================== end of head ===========================
 
@@ -16,6 +16,8 @@ accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exac
 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP).
 stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
 stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
+end_of_list.
+
 formulas(goals).
 accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA).
 end_of_list.
@@ -29,7 +31,7 @@ end_of_list.
 % Formulas that are not ordinary clauses:
 1 accurately_translates(Compiler,Lang,Source,EnvEffects,ExecEnv,TargetEnv) -> exactly_correspond(compile(Source,Compiler,EnvEffects,ExecEnv,TargetEnv),Source,Lang,TargetEnv) # label(define_exactly_correspond) # label(non_clause).  [assumption].
 2 (all EnvEffects accurately_translates(cT,lsP,sP,EnvEffects,e1,e2)) # label(cT_compiles_sP) # label(non_clause).  [assumption].
-3 accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA) # label(non_clause).  [assumption].
+3 accurately_translates(GoodCompilerLangP,lsP,sP,EnvEffectsMakeP,ExecEnv,TargetEnv) -> accurately_translates(compile(sP,GoodCompilerLangP,EnvEffectsMakeP,ExecEnv,TargetEnv),lsA,sA,EnvEffectsP,TargetEnv,eArun) # label(sP_compiles_sA) # label(non_clause) # label(goal).  [goal].
 
 ============================== end of process non-clausal formulas ===
 
@@ -40,8 +42,8 @@ formulas(mace4_clauses).
 accurately_translates(cT,lsP,sP,A,e1,e2) # label(cT_compiles_sP).
 stage1 = compile(sP,cT,e1effects,e1,e2) # label(definition_stage1).
 stage2 = compile(sA,stage1,e2effects,e2,eArun) # label(definition_stage2).
-formulas(goals).
--accurately_translates(A,lsP,sP,B,C,D) | accurately_translates(compile(sP,A,B,C,D),lsA,sA,E,D,eArun) # label(sP_compiles_sA).
+accurately_translates(c1,lsP,sP,c2,c3,c4) # label(sP_compiles_sA).
+-accurately_translates(compile(sP,c1,c2,c3,c4),lsA,sA,c5,c4,eArun) # label(sP_compiles_sA).
 end_of_list.
 
 ============================== end of clauses for search =============
@@ -66,8 +68,6 @@ interpretation( 2, [number=1, seconds=0], [
 
         function(eArun, [ 0 ]),
 
-        function(goals, [ 0 ]),
-
         function(lsA, [ 0 ]),
 
         function(lsP, [ 0 ]),
@@ -79,6 +79,16 @@ interpretation( 2, [number=1, seconds=0], [
         function(stage1, [ 0 ]),
 
         function(stage2, [ 0 ]),
+
+        function(c1, [ 0 ]),
+
+        function(c2, [ 0 ]),
+
+        function(c3, [ 0 ]),
+
+        function(c4, [ 1 ]),
+
+        function(c5, [ 0 ]),
 
         function(compile(_,_,_,_,_), [
 			   0, 0,
@@ -98,10 +108,8 @@ interpretation( 2, [number=1, seconds=0], [
 			   0, 0,
 			   0, 0 ]),
 
-        relation(formulas(_), [ 1, 0 ]),
-
         relation(exactly_correspond(_,_,_,_), [
-			   1, 0,
+			   1, 1,
 			   0, 0,
 			   0, 0,
 			   0, 0,
@@ -111,7 +119,7 @@ interpretation( 2, [number=1, seconds=0], [
 			   0, 0 ]),
 
         relation(accurately_translates(_,_,_,_,_,_), [
-			   1, 0,
+			   1, 1,
 			   0, 0,
 			   1, 0,
 			   0, 0,
@@ -152,16 +160,16 @@ interpretation( 2, [number=1, seconds=0], [
 For domain size 2.
 
 Current CPU time: 0.00 seconds (total CPU time: 0.00 seconds).
-Ground clauses: seen=101, kept=101.
-Selections=65, assignments=65, propagations=62, current_models=1.
-Rewrite_terms=313, rewrite_bools=163, indexes=142.
-Rules_from_neg_clauses=0, cross_offs=0.
+Ground clauses: seen=70, kept=70.
+Selections=73, assignments=74, propagations=57, current_models=1.
+Rewrite_terms=109, rewrite_bools=122, indexes=57.
+Rules_from_neg_clauses=1, cross_offs=1.
 
 ============================== end of statistics =====================
 
-User_CPU=0.00, System_CPU=0.01, Wall_clock=0.
+User_CPU=0.00, System_CPU=0.00, Wall_clock=0.
 
 Exiting with 1 model.
 
-Process 69791 exit (max_models) Mon Jun 29 16:01:45 2026
-The process finished Mon Jun 29 16:01:45 2026
+Process 80817 exit (max_models) Tue Jun 30 08:52:25 2026
+The process finished Tue Jun 30 08:52:25 2026
