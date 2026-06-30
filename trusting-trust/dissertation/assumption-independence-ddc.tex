@@ -4,7 +4,7 @@
   title = {Fully Countering Trusting Trust through Diverse Double-Compiling (DDC)},
   school = {George Mason University},
   year = {2010},
-  url = {https://dwheeler.com/trustingtrust/}
+  url = {https://dwheeler.com/trusting-trust/}
 }
 @online{mccune2009prover9,
   author = {William McCune},
@@ -73,6 +73,15 @@
   year      = {2026},
   url       = {https://bootstrappable.org/}
 }
+@incollection{russell1910study,
+  author    = {Bertrand Russell},
+  title     = {The Study of Mathematics},
+  booktitle = {Philosophical Essays},
+  publisher = {Longmans, Green, and Co.},
+  address   = {London},
+  year      = {1910},
+  pages     = {73--86}
+}
 \end{filecontents}
 
 \documentclass[sigconf]{acmart}
@@ -130,7 +139,7 @@ Diverse Double-Compiling (DDC) counters the classic ``trusting trust'' attack by
 
 \section{Introduction}
 
-Many software programs have unintentional vulnerabilities, but in principle these can be found and fixed using various approaches including human review, traditional static analysis, traditional dynamic analysis, and artificial intelligence (AI). Intentional vulnerabilities in source code can often be found by many of the same techniques. An executable of an ordinary program (as opposed to a program for processing programs) might not correspond to its source code, for example, because its build was subverted or it was subverted after the build. Processes that protect the build can reduce the risk of the first. In addition, if the software has a reproducible build, these subversions can be reliably detected by rebuilding the executable and determining if the resulting executable is the same. All of these measures fail to counter an old and well-known attack.
+Most software security issues have, in principle, well-understood solutions. Many software programs have unintentional vulnerabilities, but in principle these can be found and fixed using various approaches including human review, traditional static analysis, traditional dynamic analysis, and artificial intelligence (AI). Intentional vulnerabilities in source code can often be found by many of the same techniques. An executable of an ordinary program (as opposed to a program for processing programs) might not correspond to its source code, for example, because its build was subverted or it was subverted after the build. Processes that protect the build can reduce the risk of the first. In addition, if the software has a reproducible build, these subversions can be reliably detected by rebuilding the executable and determining if the resulting executable is the same. These solutions are often not easy to implement, but at least they are well-understood. However, all of these measures fail to counter a clever attack.
 
 An Air Force evaluation of Multics by Karger and Schell \cite{karger1974multics} \cite{karger2002thirty}, and Ken Thompson’s Turing award lecture (“Reflections on Trusting Trust”) \cite{thompson1984trust}, showed that compilers can be subverted to insert malicious Trojan horses into critical software, including themselves, as part of the compilation process.  If this “trusting trust” attack goes undetected, even complete analysis of a system’s source code will not find the malicious code that is running.
 
@@ -157,7 +166,7 @@ In actuality, there are three proofs involving DDC:
 	\item Goal \path{cP_corresponds_to_sP} (3 assumptions): The previous “\path{always_equal}” proof does not require that a “grandparent” compiler exist, but having one is a common circumstance.  This third proof shows that if there is a grandparent compiler, one of the assumptions of proof \#2 can be proved given other assumptions that may be easier to verify (potentially making DDC even easier to apply in this common case).
 \end{enumerate}
 
-\section{Axiomatic Independence in First-Order Logic}
+\section{Assumption Independence in First-Order Logic}
 
 If a proof uses a set of assumptions, that does \emph{not} mean
 that the assumptions are independent.
@@ -172,19 +181,26 @@ derived from others
 or (2) prove that all the assumptions are independent of each other
 in their respective proofs.
 
-Given some set of consistent assumptions $Q$, and another assumption $P$, then $P$ is independent of $Q$ if both $Q \cup \{P\}$ and $Q \cup \{\neg P\}$ yield consistent assumptions. This is noted, for example, by Kunen~\cite[page xi]{kunen1980set}. It's already formally proved that our entire base set of DDC assumptions is consistent, so the first half of that definition ($Q \cup \{P\}$) is already proven. Therefore, to prove $P$'s independence, we only have to show that $Q \cup \{\neg P\}$ is consistent. In first-order logic, the easiest way to show that a set of assumptions is consistent is to find a model where they are all true. So, for each assumption $P$, we just need to find a model where $P$ is false but all other assumptions in $Q$ are true.
+Given some set of consistent assumptions $Q$, and another assumption $P$, then $P$ is independent of $Q$ if both $Q \cup \{P\}$ and $Q \cup \{\neg P\}$ yield consistent assumptions. This is noted, for example, by Kunen~\cite[page xi]{kunen1980set}. It's already formally proved that our entire base set of DDC assumptions is consistent, so the first half of that definition ($Q \cup \{P\}$) is already proven. Therefore, to prove $P$'s independence, we only have to show that $Q \cup \{\neg P\}$ is consistent.
+
+In first-order logic, the easiest way to show that a set of assumptions is consistent is to find a ``model'' where they are all true. Formulas in first-order logic contain abstract syntax symbols (variables, relations, and functions) with no inherent mathematical meaning. A \emph{structure} (or \emph{interpretation}) defines a specific (``concrete'') domain of objects (aka a universe of discourse) and maps these abstract symbols to actual relations, functions, and constants on that domain. An \emph{assignment} (or \emph{valuation}) then maps the free variables to specific elements within that domain. Under this interpretation and assignment, we evaluate the truth value of the formulas. A structure is a \emph{model} of a set of formulas if we can assign concrete values from the domain to the variables such that every formula in the set evaluates to true~\cite{enderton2001logic}.
+
+A model is not a claim about absolute, universal truth across all possible universes. Rather, it is an assertion of \emph{satisfiability}. It is a concrete, mathematically consistent instance (a specific ``world'' with specific assignments of values) where the assumptinos are satisfied. To prove independence, we do not need to show that our assumptions are universally true; we just need to show that there exists at least one such satisfying assignment of values (a model) where $P$ is false while all other assumptions in $Q$ remain true.
+In short: for each assumption $P$, we just need to find a model where $P$ is false but all other assumptions in $Q$ are true.
 
 Hesseling explains that Heyting~\cite{heyting1930regeln} uses this exact approach to prove the independence of his formalization of intuitionist logic, and credits Bernays with the technique in which ``what we would nowadays call models in which each time ten of the eleven given axioms are true, the eleventh one false\dots\ [by] varying the eleventh axiom and presenting a different model to which the new combination of axioms applies, he proves that all the axioms are independent of each other''~\cite[page 278]{hesseling2003gnomes}.
+
+\section{Our Approach for Finding Models}
 
 To prove this formally, we used automated logic tools to establish the bounds of this independence. Specifically, to show that a set of $n$ assumptions is independent, we must prove that no single assumption can be derived from the remaining $n-1$ assumptions. In first-order logic, proving independence is not a matter of generating proofs of correctness; it is a search for counterexamples.
 
 In our case, for each assumption $a_i$, we must show that there exists a mathematically consistent world where $a_i$ is false, yet all other assumptions in a given proof remain true. If we do this for all three proofs, we've shown that all of the assumptions are independent of each other.
 
-We worked to accomplish this by feeding our formal axioms into Mace4 \cite{mccune2009prover9}, which searches for finite mathematical models. Mace4 is not at the cutting edge of model creation technology today. However, it's still a fine tool, and mace4 takes the same syntax as the prover9 tool which was used to generate the original proofs. Using the tool specifically designed to take the syntax avoided the risk of mistranslating the statements if we switched to a different system.
+We worked to accomplish this by feeding our formal assumptions into Mace4 \cite{mccune2009prover9}, which searches for finite mathematical models. Mace4 is not at the cutting edge of model creation technology today. However, it's still a fine tool, and mace4 takes the same syntax as the prover9 tool which was used to generate the original proofs. Using the tool specifically designed to take the syntax avoided the risk of mistranslating the statements if we switched to a different system.
 
-\subsection{The Mace4 Scoping Trap}
+\subsection{The Mace4 Variable Scope Trap}
 
-When attempting to formally prove independence using Mace4, early drafts ran into a subtle semantic roadblock while analyzing the second assumption of goal \path{always_equal}. Specifically, the issue occurred with the axiom defining a portable and deterministic program, labelled \path{define_portable_and_deterministic}.
+When attempting to formally prove independence using Mace4, early drafts ran into a subtle roadblock while analyzing the second assumption of goal \path{always_equal}. This occurred with the assumption defining a portable and deterministic program, labelled \path{define_portable_and_deterministic}.
 
 Consider this attempted negation of the assumption, where we take the original aassertion and wrap it with \path{- ( ... )}:
 
@@ -206,9 +222,9 @@ formulas(assumptions).
 end_of_list.
 \end{verbatim}
 
-At first glance, this looks completely reasonable. We want the rule to fail, so we put a negation symbol ($-$) in front of it, and we surround everything else with parenthesis to ensure it has the highest priority. Unfortunately, this creates a catastrophic structural error due to how Mace4 handles unquantified variables.
+At first glance, this looks completely reasonable. We want the negation of the rule, so we put a negation symbol ($-$) in front of it, and we surround everything else with parenthesis to ensure it has the highest precedence. Unfortunately, this creates a catastrophic misinterpretation due to how Mace4 handles unquantified variables.
 
-In Prover9 and Mace4, when you use capitalized terms (like \path{Source}, \path{Language}, or \path{Input}) without an explicit quantifier, the tool treats them as free variables. To process the file, the engine must bind these variables. It does this by automatically wrapping the entire expression in an implicit universal quantifier ($\forall$). Crucially, because the negation symbol ($-$) was written \emph{inside} the statement, Mace4 applied the implicit universal quantifier \emph{outside} the negation. Mathematically, Mace4 interpreted the assumption as:
+In Prover9 and Mace4 set to Prolog conventions, when you use capitalized terms (like \path{Source}, \path{Language}, or \path{Input}) without an explicit quantifier, the tool treats them as free variables. To process the file, the engine must bind these variables. It does this by automatically wrapping the entire expression in an implicit universal quantifier ($\forall$). This made sense for the original assumption. However, because in this modified assertion the negation symbol ($-$) is written \emph{inside} the statement, Mace4 applied the implicit universal quantifier \emph{outside} the negation. Mathematically, Mace4 interpreted the assumption as:
 $$\forall \vec{x} \, \neg (\text{Premise}(\vec{x}) \rightarrow \text{Conclusion}(\vec{x}))$$
 
 For an implication ($\rightarrow$) to be false, the premise must be true \emph{and} the conclusion must be false. Because of the universal quantifier, we didn't ask Mace4 to find a single, specific loophole. Instead, we commanded it to construct a universe where \emph{every single object} in existence must satisfy the premise (meaning everything in existence is portable, deterministic, and exactly corresponding) and yet \emph{every single compiled output} must simultaneously fail to be equal to every other output. This defines a completely absurd, hyper-restrictive mathematical universe. The tool didn't fail because our DDC logic was flawed; it failed because we asked it to build an impossible world.
@@ -251,17 +267,107 @@ end_of_list.
 
 When Prover9 or Mace4 sees a statement in the \path{goals} block, it utilizes a built-in automated mechanism that correctly negates the expression behind the scenes. By utilizing the \path{goals} block, we eliminate the risk of quantifier mismatch. Mace4 will search for a model that satisfies all our assumptions while breaking the goal in exactly \emph{one} valid place. If it finds that model, our independence proof is secure, our syntax remains clean, and we avoid subtle scoping traps.
 
+However, this solution risks triggering another trap.
+
+\subsection{The Missing Ending}
+
+Typically any goal(s) are listed after assumptions, using
+\path{formulas(goals).} to being the goal section.
+But what happens if the previous list of assumptions isn't terminated with
+\path{end_of_list.}?
+
+The answer, unfortunately, is that this is a major hazard.
+This tiny syntactic omission can silently change the entire semantic meaning of the proof request without throwing a parser error or even a warning.
+This behavior creates a dangerous ``gulf of evaluation'' where a human reader interprets the input file one way, but the machine interprets it in a completely different way.
+
+Consider a typical Prover9 or Mace4 input file where a user defines a set of background assumptions and a target goal to test for independence:
+
+\begin{lstlisting}[language=Prolog, caption={A problematic LADR input block containing a missing boundary separator.}]
+formulas(assumptions).
+  assumption_1.
+  assumption_2.
+  % Missing 'end_of_list.'
+
+formulas(goals).
+  target_goal.
+end_of_list.
+\end{lstlisting}
+
+To a human eye, the block boundary is obvious. We see \path{formulas(goals).} and naturally assume the tool transitions from parsing assumptions to parsing goals. To the LADR parser used by mace4 and prover9, however, \textbf{no such transition occurs}.
+
+The silent semantic shifting of formulas occurs due to specific implementation properties of the sequential engine:
+
+\begin{enumerate}
+    \item \textbf{Sequential Term Parsing:} The LADR parser is a sequential engine. When it enters a \path{formulas(list_name).} block, it continuously parses incoming lines as first-order terms (formulas) until it hits the specific, isolated atomic symbol \path{end_of_list.}.
+    \item \textbf{Functor Misinterpretation:} Because \path{"formulas"} is not a reserved keyword in the lexer, the line \path{formulas(goals).} is parsed as a syntactically valid \emph{compound term} (specifically, a functor of arity 1 with the constant argument \path{"goals"}).
+    \item \textbf{Silent Appending:} Because there was no \path{end_of_list.} to break the parsing loop, the parser simply appends the compound formula \path{formulas(goals)} to the active \path{assumptions} list.
+    \item \textbf{Goal Hijacking:} Every subsequent line, \emph{including} the intended \path{target_goal}, continues to be parsed as an assumption. The parser only exits the assumption list when it finally reaches the single \path{end_of_list.} at the very bottom of the file.
+\end{enumerate}
+
+This behavior leads to a silent, compounding failure that misleads both the tool and the investigator. In our case, the tool immediately found a model that solved the misinterpreted problem. The investigator, seeing a model generated, falsely concludes \emph{``Excellent, Mace4 found a valid countermodel, so my assumption is independent!''} In reality, the tool proved nothing when \path{end_of_list.} was missing.
+
 \section{Success}
 
-Once this was addressed, for each assumption, Mace4 successfully found a countermodel with a negated assumption. This formally guarantees that none of the DDC assumptions are redundant.
+Once these problems were addressed, for each assumption, Mace4 successfully found a countermodel with a negated assumption. This formally guarantees that none of the DDC assumptions are redundant. Most were trivially found, though one (all-repeats-independence-7) took 48 seconds to find. The time is irrelevant, since all that matters is that a satisfying model was found in each case.
 
-Since the assumptions are independent, application of DDC cannot take a lazy shortcut. To rely on the security guarantees of the DDC proof, you must establish the validity of every one of the proof's assumptions.
+This means all these assumptions are independent. Since the assumptions are independent, application of DDC cannot take a lazy shortcut. To rely on the security guarantees of the DDC proof, you must establish the validity of every one of the proof's assumptions.
 
 The specific models found can be viewed at \href{https://dwheeler.com/trusting-trust}{\path{https://dwheeler.com/trusting-trust}}.
 
+\section{Lessons Learned}
+
+These experiences highlighted some lessons that should be learned.
+
+\subsection{Mathematical Tools Must Alert and Counter Likely Mistakes}
+
+Modern cars don't just go somewhere; they're design to alert users about unusual events and to attempt to protect their occupants if a mistake is made. Modern cars include turn and brake signals, seat belts, air bags, bumpers, and many other features to alert and protect.
+
+Similarly, mathematical tools should be designed to alert on unusual events and attempt to protect their users from mistakes in their inputs. Both humans and machines make mistakes, often following patterns that are easy to predict.
+
+There is more than one way to address the variable scope trap.
+The system could require \emph{all} variables to be bound, for example.
+Another solution would be to alert on suspicious patterns like a leading \path{-} on an expression with an unbound variable.
+
+Similarly, there is more than one way to deal with a missing ending.
+The tool could reject a statement starting a new section when a section
+is already open (this is the approach I prefer).
+The tool could also quietly close any section in progress when it's asked
+to start a new section.
+The point is that the \emph{current} behavior is dangerous.
+
+What's \emph{not} acceptable is \textbf{failing to fail}. Tools should not silently accept input if it's unlikely to be what was intended.
+Tools should avoid being too permissive.
+
+\subsection{Use AI to Review}
+
+Both of these problems were detected by AI, specifically Google Gemini.
+These tools and their documentation are widely available, so well-trained
+AI systems already knew about these tools and their foibles.
+
+This clearly shows that today, if a proof matters, it's important to
+have an AI review it. An AI may not necessarily see a mistake, but it might,
+and it's important to review any concerns an AI raises.
+
+\subsection{Proofs and Provers as Tools}
+
+Bertrand Russell stated that mathematics possesses a
+``supreme beauty—a beauty cold and austere...''~\cite{russell1910study}.
+I agree that mathematics can be beautiful.
+
+However, developers of software and systems often need to use
+mathematics as tools.
+In particular, when it's \emph{vital} that something be true in the
+real world, it's vital to be able to quickly get a correct and certain answers.
+Provers that can create proofs, both automatically and interactively,
+can help achieve that.
+However, it's vital that provers have the ability to detect and counter
+likely mistakes.
+Otherwise, the "proof" they generate may be misunderstood, and people
+may be put in unexpected danger.
+
 \section{Conclusion and Next Steps}
 
-By formally proving the independence of the assumptions underlying the three proofs of Diverse Double-Compiling (DDC), we have established that there are no redundant axioms in the DDC mathematical framework. When practitioners apply DDC to secure their binary distribution pipelines, they cannot assume that any single condition is a "freebie" implied by the others. Each assumption, from compiler determinism to the independence of the environment configurations, must be validated with care. On the other hand, they can be confident that their efforts are not wasted, since each assumption really does need to be verified.
+By formally proving the independence of the assumptions underlying the three proofs of Diverse Double-Compiling (DDC), we have established that there are no redundant assumptions in the DDC mathematical framework. When practitioners apply DDC to secure their binary distribution pipelines, they cannot assume that any single condition is a "freebie" implied by the others. Each assumption, from compiler determinism to the independence of the environment configurations, must be validated with care. On the other hand, they can be confident that their efforts are not wasted, since each assumption really does need to be verified.
 
 The Mace4 scoping trap underscores that formal tools are only as robust as our understanding of their underlying semantics. Minor changes in the placement of negations can easily transform a standard logical inquiry into a mathematical impossibility.
 
