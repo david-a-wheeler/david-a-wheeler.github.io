@@ -105,9 +105,66 @@
   url          = {https://dwheeler.com/essays/allsome.html},
   organization = {dwheeler.com}
 }
+@online{metamathmpe,
+  author       = {{Metamath Community}},
+  title        = {Metamath Proof Explorer: \texttt{set.mm} Database},
+  year         = {2026},
+  url          = {https://us.metamath.org/mpeuni/mmset.html},
+  organization = {Metamath Project}
+}
+@techreport{wheeler2020underhanded,
+  author      = {David A. Wheeler},
+  title       = {Initial Analysis of Underhanded Source Code},
+  institution = {Institute for Defense Analyses},
+  address     = {Alexandria, VA, USA},
+  month       = apr,
+  year        = {2020},
+  type        = {IDA Document},
+  number      = {D-13166},
+  url         = {https://apps.dtic.mil/sti/pdfs/AD1122149.pdf}
+}
+@online{openssfslsa,
+  author       = {{SLSA Steering Committee}},
+  title        = {Supply-chain Levels for Software Artifacts (SLSA)},
+  year         = {2026},
+  url          = {https://slsa.dev/},
+  organization = {Open Source Security Foundation (OpenSSF)}
+}
+@online{openssfsigstore,
+  author       = {{Sigstore Community}},
+  title        = {Sigstore: Software Signing for Everyone},
+  year         = {2026},
+  url          = {https://sigstore.dev/},
+  organization = {Open Source Security Foundation (OpenSSF)}
+}
+@online{reproduciblebuilds,
+  author       = {{Reproducible Builds Project}},
+  title        = {Reproducible Builds: Timestamps, toolchains, and development practices},
+  year         = {2026},
+  url          = {https://reproducible-builds.org/},
+  organization = {Software Freedom Conservancy}
+}
 \end{filecontents}
 
 \documentclass[sigconf]{acmart}
+
+% =========================================================================
+% FONT WARNING FIX: MONOSPACE COHESION FOR ACM COMPLIANCE
+% =========================================================================
+% PROBLEM: A single \ttfamily assignment only initializes the T1 encoding.
+% The TS1 variant remains uninitialized until a special character (like a
+% straight quote) is rendered, causing a font engine panic at \begin{document}.
+%
+% SOLUTION: Initialize two separate dummy boxes—one explicitly targeting T1
+% and the other targeting TS1. This safely registers the 'zi4' family across
+% both encoding matrices before mapping the italic shapes back to upright.
+\AtBeginDocument{
+  \sbox0{\fontencoding{T1}\ttfamily}
+  \sbox1{\fontencoding{TS1}\ttfamily}
+  \DeclareFontShape{T1}{zi4}{m}{it}{<->ssub*zi4/m/n}{}
+  \DeclareFontShape{TS1}{zi4}{m}{it}{<->ssub*zi4/m/n}{}
+}
+% =========================================================================
 
 % Load the listings package to format proof source configurations safely
 \usepackage{listings}
@@ -140,7 +197,7 @@
 \email{dwheeler@linuxfoundation.org}
 
 \begin{abstract}
-Diverse Double-Compiling (DDC) counters the classic ``trusting trust'' attack by using a second, trusted compiler to verify the compiler under test. DDC has been formally proved, and its assumptions have been proven consistent. However, the DDC assumptions have not been shown to be independent. This is important to have confidence that the efforts to verify each DDC assumption are necessary. This paper shows that the DDC proof assumptions are independent.
+Diverse Double-Compiling (DDC) counters the classic ``trusting trust'' attack by using a second, trusted compiler to verify the compiler under test. DDC has been formally proved, and its assumptions have been proved consistent. However, the DDC assumptions have not been shown to be independent. Establishing independence is important to ensure that efforts to verify each individual assumption are strictly necessary. This paper demonstrates that the DDC proof assumptions are independent. Additionally, we document subtle parsing pitfalls encountered during automated countermodel generation. These experiences yield broader lessons on the importance of defensive tool engineering and language affordances to mitigate the risks of misinterpreted proof requests.
 \end{abstract}
 
 \keywords{Diverse Double-Compiling, DDC, Trusting Trust, Supply Chain Security, Open Source Software, formal proof, assumption independence}
@@ -175,11 +232,24 @@ Diverse Double-Compiling (DDC) counters the classic ``trusting trust'' attack by
 
 \section{Introduction}
 
-Most software security issues have, in principle, well-understood solutions. Many software programs have unintentional vulnerabilities, but in principle these can be found and fixed using various approaches including human review, traditional static analysis, traditional dynamic analysis, and artificial intelligence (AI). Intentional vulnerabilities in source code can often be found by many of the same techniques. An executable of an ordinary program (as opposed to a program for processing programs) might not correspond to its source code, for example, because its build was subverted or it was subverted after the build. Processes that protect the build can reduce the risk of the first. In addition, if the software has a reproducible build, these subversions can be reliably detected by rebuilding the executable and determining if the resulting executable is the same. These solutions are often not easy to implement, but at least they are well-understood. However, all of these measures fail to counter a clever attack.
+Most software security issues have, in principle, well-understood solutions:
 
-An Air Force evaluation of Multics by Karger and Schell \cite{karger1974multics} \cite{karger2002thirty}, and Ken Thompson's Turing award lecture (``Reflections on Trusting Trust'') \cite{thompson1984trust}, showed that compilers can be subverted to insert malicious Trojan horses into critical software, including themselves, as part of the compilation process. If this ``trusting trust'' attack goes undetected, even complete analysis of a system's source code will not find the malicious code that is running.
+\begin{enumerate}
+	\item Many programs contain unintentional vulnerabilities. These vulnerabilities can in principle be identified using human review, traditional static analysis, traditional dynamic analysis, and artificial intelligence (AI).
+	\item Programs may have intentional vulnerabilities in their source code. These can often be detected through similar methods, in particular, by reviewing their source code. Attackers can create ``underhanded'' source code written to try to mislead reviewers, but there are countermeasures against underhanded code that reduce its risk~\cite{wheeler2020underhanded}.
+	\item A compiled executable of an ordinary program may not correspond directly to its source code due to causes such as subverted builds, subverted distribution, or corruption after loading. Countermeasures exist including protecting builds (see OpenSSF SLSA~\cite{openssfslsa}), digital signatures (see OpenSSF Sigstore~\cite{openssfsigstore}), and reproducible builds~\cite{reproduciblebuilds}.
+\end{enumerate}
 
-For decades, the industry treated this as an unresolvable problem. If you can't trust the compiler executable used to build your tools, you can't trust anything built with it, including other compiler executables. This is especially important for open source software, where people verify source code but in practice people execute compiled binaries.
+
+Addressing these challenges is not necessarily \emph{easy}, but at least there \emph{are} known ways to address them. Unfortunately, a different and clever attack subverts all of these countermeasures.
+
+\subsection{Trusting Trust Attack}
+
+An Air Force evaluation of Multics by Karger and Schell \cite{karger1974multics} \cite{karger2002thirty}, and Ken Thompson's Turing award lecture (``Reflections on Trusting Trust'') \cite{thompson1984trust}, showed that compilers can be subverted to insert malicious Trojan horses into critical software, including themselves, as part of the compilation process. If this ``trusting trust'' attack goes undetected, even complete analysis of a system's source code will not find the malicious code that is running. Re-running the compiler does no good, because such a compiler can self-subvert. The ability to subvert future versions of tools makes this attack challenging to counter.
+
+For decades, the industry treated the ``trusting trust'' attack as an unresolvable problem. Yet if you can't completely trust the compiler executable used to build your tools, you can't trust anything built with it, including other compiler executables descended from its compilation. This is especially important for open source software, where people verify source code but execute compiled executables.
+
+\subsection{Countering the Trusting Trust Attack}
 
 Diverse Double-Compiling (DDC) counters this attack by using a second, independent compiler to compile the parent of the compiler under test, then using that result to compile the source code of the compiler under test \cite{wheeler2010ddc}. If the output of this process matches the original compiler executable, then the executable corresponds to its source code. DDC does not require that arbitrary different compilers produce the same executable output given the same input. Indeed, this would be extremely unlikely in the real world. DDC instead requires determinism by the parent compiler of the compiler under test. It is generally desirable that a compiler be deterministic, and many real-world compilers are deterministic or can be made deterministic via a flag.
 
@@ -191,8 +261,8 @@ In actuality, there are three proofs involving DDC:
 
 \begin{enumerate}
 	\item Goal \path{source_corresponds_to_executable} (5 assumptions): This is the key proof for DDC. It shows that given certain assumptions, if stage2 (the result of the DDC process) and cA (the original compiler-under-test) are equal, then the executable cA and the source code sA exactly correspond. (Filename prefix \texttt{ddc}.)
-	\item Goal \path{always_equal} (9 assumptions): This proves that, under ``normal conditions'' (such as when compiler executables have not been rigged and thus do correspond to their respective source code), cA and stage2 are in fact always equal. Thus, the first proof is actually useful, because its assumptions will often hold. This also implies that if cA and stage2 are not equal, then at least one of its assumptions is not true. (Filename prefix \texttt{all-repeats}.)
-	\item Goal \path{cP_corresponds_to_sP} (3 assumptions): The previous ``\path{always_equal}'' proof does not require that a ``grandparent'' compiler exist, but having one is a common circumstance. This third proof shows that if there is a grandparent compiler, one of the assumptions of proof \#2 can be proved given other assumptions that may be easier to verify (potentially making DDC even easier to apply in this common case). (Filename prefix \texttt{cP-corresponds-sP}.)
+	\item Goal \path{always_equal} (9 assumptions): This proves that, under ``normal conditions'' (such as when compiler executables have not been rigged and thus do correspond to their respective source code), cA and stage2 are in fact always equal. Thus, the first proof is actually useful, because its assumptions will often hold. This also implies that if cA and stage2 are not equal, then at least one of its assumptions is not true. (Filename prefix \texttt{all-\allowbreak{}repeats}.)
+	\item Goal \path{cP_corresponds_to_sP} (3 assumptions): The previous ``\path{always_equal}'' proof does not require that a ``grandparent'' compiler exist, but having one is a common circumstance. This third proof shows that if there is a grandparent compiler, one of the assumptions of proof \#2 can be proved given other assumptions that may be easier to verify (potentially making DDC even easier to apply in this common case). (Filename prefix \texttt{cP-\allowbreak{}corresponds-\allowbreak{}sP}.)
 \end{enumerate}
 
 \section{Assumption Independence in First-Order Logic}
@@ -209,11 +279,11 @@ Hesseling explains that Heyting~\cite{heyting1930regeln} uses this exact approac
 
 \section{Our Approach for Finding Models}
 
-To prove this formally, we used automated logic tools to establish the bounds of this independence. Specifically, to show that a set of $n$ assumptions is independent, we must prove that no single assumption can be derived from the remaining $n-1$ assumptions. In first-order logic, proving independence is not a matter of generating proofs of correctness; it is a search for counterexamples.
+To prove this formally, we used automated logic tools to establish the bounds of this independence. Specifically, to show that a set of $n$ assumptions is independent for some proof, we must prove that no single assumption can be derived from the remaining $n-1$ assumptions. We can do that by demonstrating a counterexample.
 
-In our case, for each assumption $a_i$, we must show that there exists a mathematically consistent world where $a_i$ is false, yet all other assumptions in a given proof remain true. If we do this for all three proofs, we've shown that all of the assumptions are independent of each other.
+In our case, for each assumption $a_i$, we must show that there exists a mathematically consistent world where $a_i$ is false, yet all other assumptions in a given proof remain true. If we do this for each assumption for all three proofs, we've shown that all of the assumptions are independent of each other.
 
-We worked to accomplish this by feeding our formal assumptions into Mace4 \cite{mccune2009prover9}, which searches for finite mathematical models. Mace4 is not at the cutting edge of model creation technology today. However, it's still a fine tool, and Mace4 takes the same syntax as the Prover9 tool which was used to generate the original proofs. Using the tool specifically designed to take the syntax avoided the risk of mistranslating the statements if we switched to a different system.
+We worked to accomplish this by feeding our formal assumptions into Mace4~\cite{mccune2009prover9}, which searches for finite mathematical models. Mace4 is not at the cutting edge of model creation technology today. However, it's still a fine tool, and Mace4 takes the same syntax as the Prover9 tool which was used to generate the original proofs. Using the tool specifically designed to take the syntax avoided the risk of mistranslating the statements if we switched to a different system.
 
 \subsection{The Mace4 Variable Scope Trap}
 
@@ -246,7 +316,7 @@ $$\forall \vec{x} \, \neg (\text{Premise}(\vec{x}) \rightarrow \text{Conclusion}
 
 For an implication ($\rightarrow$) to be false, the premise must be true \emph{and} the conclusion must be false. Because of the mis-applied universal quantifier, the resulting request was to satisfy an absurd set of requirements for all of the objects covered in the implicit universal quantifier.
 
-To prove independence, simply want to prove that there is \emph{at least one} counterexample. Mathematically, a true counterexample requires an existential quantifier ($\exists$) wrapped around the negation: $\exists \vec{x} \, (\text{Premise}(\vec{x}) \land \neg \text{Conclusion}(\vec{x}))$
+To prove independence, we simply want to prove that there is \emph{at least one} counterexample. Mathematically, a true counterexample requires an existential quantifier ($\exists$) wrapped around the negation: $\exists \vec{x} \, (\text{Premise}(\vec{x}) \land \neg \text{Conclusion}(\vec{x}))$
 
 In raw Mace4 syntax you can manually write out every single variable to force this behavior:
 \begin{verbatim}
@@ -288,7 +358,7 @@ However, this solution risks triggering another trap.
 
 \subsection{The Missing Ending Trap}
 
-Typically, goals follow assumptions in these files, using the \path{formulas(goals).} header block to open the section. But what happens in mace4 if the assumptions list is not terminated with an explicit \path{end_of_list.} separator?
+Typically, goals follow assumptions in these files, using the \path{formulas(goals)} header block to open the section. But what happens in mace4 if the assumptions list is not terminated with an explicit \path{end_of_list.} separator?
 
 The answer, unfortunately, is that this is a major hazard. This tiny syntactic omission can silently change the entire semantic meaning of the proof request without throwing a parser error or even a warning. This behavior creates a dangerous ``gulf of evaluation'' where a human reader interprets the input file one way, but the tools interpret it in a completely different way.
 
@@ -305,13 +375,13 @@ formulas(goals).
 end_of_list.
 \end{lstlisting}
 
-To a human eye, the block boundary is obvious. We see \texttt{formulas(\allowbreak{}goals).} and naturally assume the tool transitions from parsing assumptions to parsing goals. To the LADR parser used by Mace4 and Prover9, however, \textbf{no such transition occurs}.
+To a human eye, the block boundary is obvious. We see \texttt{formulas(\allowbreak{}goals)} and naturally assume the tool transitions from parsing assumptions to parsing goals. Many systems do work this way, for example, an HTML processor that reads a list item start (\texttt{<li>}) will close the previous list item. In the LADR parser used by Mace4 and Prover9, however, \textbf{no such transition occurs}.
 
 The silent semantic shifting of formulas occurs due to specific implementation properties of the sequential engine:
 
 \begin{enumerate}
     \item \textbf{Sequential Term Parsing:} The LADR parser is a sequential engine. When it enters a \path{formulas(list_name).} block, it continuously parses incoming lines as first-order terms (formulas) until it hits the specific, isolated atomic symbol \path{end_of_list.}.
-    \item \textbf{Functor Misinterpretation:} Because \path{"formulas"} is not a reserved keyword in the lexer, the line \path{formulas(goals).} is parsed as a syntactically valid \emph{compound term} (specifically, a functor of arity 1 with the constant argument \path{"goals"}).
+    \item \textbf{Functor Misinterpretation:} Because \path{"formulas"} is not a reserved keyword in the lexer, the line \path{formulas(goals)} is parsed as a syntactically valid \emph{compound term} (specifically, a functor of arity 1 with the constant argument \path{"goals"}).
     \item \textbf{Silent Appending:} Because there was no \path{end_of_list.} to break the parsing loop, the parser simply appends the compound formula \path{formulas(goals)} to the active \path{assumptions} list.
     \item \textbf{Goal Hijacking:} Every subsequent line, \emph{including} the intended \path{target_goal}, continues to be parsed as an assumption. The parser only exits the assumption list when it finally reaches the single \path{end_of_list.} at the very bottom of the file.
 \end{enumerate}
@@ -320,7 +390,9 @@ This behavior leads to a silent, compounding failure that misleads both the tool
 
 \section{Success}
 
-Once these problems were addressed, for each assumption, Mace4 successfully found a countermodel with a negated assumption. This formally guarantees that none of the DDC assumptions are redundant. Most were trivially found, though one (all-repeats-independence-7) took 48 seconds to find. The time is irrelevant, since all that matters is that a satisfying model was found in each case.
+Once these problems were addressed, Mace4 successfully identified all 17 ($5+9+3$) models. Each countermodel satisfies the negation of a single target assumption while satisfying all other background assumptions within its respective proof.
+
+This formally guarantees that \emph{none} of the DDC assumptions are redundant. Most models were found trivially, although one (\texttt{all-\allowbreak{}repeats-\allowbreak{}independence-7}) required 48 seconds of search time. While search time is secondary to the mathematical confirmation of satisfiability, this demonstrates the computational feasibility of the check. Notably, all 17 models possess a domain size of 2. This small size is not a theoretical constraint, but such compact domains ensure that it should be easy to verify this result by finding at least one countermodel for every case using other automated model finders.
 
 This means all these assumptions are independent. Since the assumptions are independent, application of DDC cannot take a lazy shortcut. To rely on the security guarantees of the DDC proof, you must establish the validity of every one of the proof's assumptions.
 
@@ -345,20 +417,20 @@ $$ \exists x (P(x) \rightarrow Q(x)) $$
 This is almost always a catastrophic misstatement of user intent. Typically, an investigator intends to assert that there exists some object $x$ which possesses property $P$ and satisfies consequence $Q$, which must be formally stated using a conjunction:
 $$ \exists x (P(x) \land Q(x)) $$
 
-The danger of writing $\exists x (P(x) \rightarrow Q(x))$ lies in the classical definition of material implication. By definition, the conditional $P(x) \rightarrow Q(x)$ is logically equivalent to $\neg P(x) \lor Q(x)$. Therefore, the quantified expression can be expanded as:
+The danger of writing $\exists x (P(x) \rightarrow Q(x))$ lies in the classical definition of material implication. By definition, the conditional $P(x) \rightarrow Q(x)$ is logically equivalent to $\neg P(x) \lor Q(x)$. Therefore, the previous quantified expression can be expanded as:
 $$ \exists x (\neg P(x) \lor Q(x)) $$
 
-This statement is vacuously true in any universe containing at least one object that simply fails to satisfy the premise $P(x)$. For example, if we attempt to formalize the claim ``there exists a compiled program that is malicious'' using this flawed structure, we get:
+This statement is vacuously true in any universe containing at least one object that fails to satisfy the premise $P(x)$. For example, if we attempt to formalize the claim ``there exists a compiled program that is malicious'' using this flawed structure, we get:
 $$ \exists x (\text{Program}(x) \rightarrow \text{Malicious}(x)) $$
 If our universe contains a block of text, a cup of coffee, or a human being, none of those objects are programs ($\neg\text{Program}(x)$ evaluates to true). Consequently, the implication trivially evaluates to true for those elements, satisfying the existential claim without ever locating a malicious program. As noted by Barker-Plummer, Barwise, and Etchemendy, the existential quantifier pairs naturally with conjunction ($\land$), whereas the universal quantifier ($\forall$) pairs with implication ($\rightarrow$)~\cite{barwise2011lpl}. Pairing $\exists$ with $\rightarrow$ creates an incredibly weak statement that automated solvers like Mace4 can satisfy trivially, yielding misleading results.
 
-Another way to counter to translation errors is to introduce of syntactic affordances that make common constructs easier to \emph{correctly} express. One example is the \emph{allsome} quantifier that combines existence and universality. In standard first-order logic, universal statements of the form $\forall x (P(x) \rightarrow Q(x))$ are susceptible to the trap of \emph{vacuous truth}. If no object in the universe satisfies the antecedent $P(x)$, the entire universal implication evaluates to true. In security verification, this can be disastrous.
+Another way to counter translation errors is to introduce of syntactic affordances that make common constructs easier to \emph{correctly} express. One example is the \emph{allsome} quantifier that combines existence and universality. In standard first-order logic, universal statements of the form $\forall x (P(x) \rightarrow Q(x))$ are susceptible to the trap of \emph{vacuous truth}. If no object in the universe satisfies the antecedent $P(x)$, the entire universal implication evaluates to true. In security verification, this can be disastrous.
 
 To prevent this error, an investigator must manually chain an existential prerequisite to the universal claim:
 $$(\exists x P(x)) \land (\forall x (P(x) \rightarrow Q(x)))$$
-This is mathematically sound, but writing this compound expression repeatedly in raw tool syntax introduces a heavy unnecessary cognitive load and invites typos, variable mismatch, or scoping errors.
+This is mathematically sound, but writing this compound expression repeatedly in raw tool syntax introduces a heavy unnecessary cognitive load. It also invites typos, variable mismatch, or scoping errors.
 
-The ``allsome'' quantifier acts as a shorthand linguistic affordance that enforces both conditions simultaneously. A language that supports this single unified operator makes it easy for users to guarantee that at least one instance of the target subject exists (\emph{some}) and that every instance satisfies the given criteria (\emph{all}). This defensive language feature eliminates the risk of vacuous satisfaction while keeping the proof source clean, readable, and less error-prone~\cite{wheeler2026allsome}.
+The ``allsome'' quantifier acts as a shorthand linguistic affordance that enforces both conditions simultaneously. A language that supports this single unified operator makes it easy for users to guarantee that at least one instance of the target subject exists (\emph{some}) and that every instance satisfies the given criteria (\emph{all}). This defensive language feature eliminates the risk of vacuous satisfaction while keeping the proof source clean, readable, and less error-prone~\cite{wheeler2026allsome}. The ``allsome'' quantifier has been implemented and proven correct in the Metamath Proof Explorer framework~\cite{metamathmpe}, but it would be good to see it implemented in more tools.
 
 What's \emph{not} acceptable is \textbf{failing to fail}. Both humans and AI make mistakes. Tools should not silently accept input if it's unlikely to be what was intended. Tools should avoid being too permissive. In addition, tools should provide affordances that reduce the likelihood of mistakes.
 
@@ -372,7 +444,7 @@ This clearly shows that today, if a proof matters, it's important to have an AI 
 
 Bertrand Russell stated that mathematics possesses a ``supreme beauty---a beauty cold and austere...''~\cite{russell1910study}. I agree that mathematics can be beautiful.
 
-However, developers of software and systems often need to use mathematics as tools. In particular, when it's \emph{vital} that something be true in the real world, it's vital to be able to quickly get a correct and certain answers. Provers that can create proofs, both automatically and interactively, can help achieve that. However, it's vital that provers have the ability to detect and counter likely mistakes. Otherwise, the ``proof'' they generate may be misunderstood, and people may be put in unexpected danger.
+However, developers of software and systems often need to use mathematics as tools. In particular, when it's \emph{vital} that something be true in the real world, it's vital to be able to quickly get correct and certain answers. Provers that can create proofs, both automatically and interactively, can help achieve that. However, it's vital that provers have the ability to detect and counter likely mistakes, as well as provide simplifying affordances. Otherwise, the ``proof'' they generate may be misunderstood, and people may be put in unexpected danger.
 
 \section{Conclusion and Next Steps}
 
