@@ -340,7 +340,7 @@ exists Source Language Input Executable1
 
 Writing this out manually is tedious and highly susceptible to typos or missed variables, which raised some concerns.
 
-We then realized there was a much safer engineering-focused solution: let the tool do the negation for us, including handling the quantifiers. Instead of manually negating the rule in the assumptions list, we simply moved the statement into a new \path{formulas(goals)} block:
+We then realized there was a much safer engineering-focused solution: let the tool do the negation for us, including handling the quantifiers. Instead of manually negating the rule in the assumptions list, we simply moved the statement into a new \texttt{formulas(\allowbreak{}goals)} block:
 
 \begin{verbatim}
 formulas(assumptions).
@@ -358,7 +358,10 @@ However, this solution risks triggering another trap.
 
 \subsection{The Missing Ending Trap}
 
-Typically, goals follow assumptions in these files, using the \path{formulas(goals)} header block to open the section. But what happens in mace4 if the assumptions list is not terminated with an explicit \path{end_of_list.} separator?
+Typically, goals follow assumptions in these files, using the
+\texttt{formulas(\allowbreak{}goals)}
+header block to open the section. But what happens in mace4 if the assumptions list is not terminated with an explicit \path{end_of_list} separator?
+
 
 The answer, unfortunately, is that this is a major hazard. This tiny syntactic omission can silently change the entire semantic meaning of the proof request without throwing a parser error or even a warning. This behavior creates a dangerous ``gulf of evaluation'' where a human reader interprets the input file one way, but the tools interpret it in a completely different way.
 
@@ -380,13 +383,13 @@ To a human eye, the block boundary is obvious. We see \texttt{formulas(\allowbre
 The silent semantic shifting of formulas occurs due to specific implementation properties of the sequential engine:
 
 \begin{enumerate}
-    \item \textbf{Sequential Term Parsing:} The LADR parser is a sequential engine. When it enters a \path{formulas(list_name).} block, it continuously parses incoming lines as first-order terms (formulas) until it hits the specific, isolated atomic symbol \path{end_of_list.}.
-    \item \textbf{Functor Misinterpretation:} Because \path{"formulas"} is not a reserved keyword in the lexer, the line \path{formulas(goals)} is parsed as a syntactically valid \emph{compound term} (specifically, a functor of arity 1 with the constant argument \path{"goals"}).
-    \item \textbf{Silent Appending:} Because there was no \path{end_of_list.} to break the parsing loop, the parser simply appends the compound formula \path{formulas(goals)} to the active \path{assumptions} list.
-    \item \textbf{Goal Hijacking:} Every subsequent line, \emph{including} the intended \path{target_goal}, continues to be parsed as an assumption. The parser only exits the assumption list when it finally reaches the single \path{end_of_list.} at the very bottom of the file.
+    \item \textbf{Sequential Term Parsing:} The LADR parser is a sequential engine. When it enters a \path{formulas(list_name).} block, it continuously parses incoming lines as first-order terms (formulas) until it hits the specific, isolated atomic symbol \path{end_of_list}.
+    \item \textbf{Functor Misinterpretation:} Because \path{"formulas"} is not a reserved keyword in the lexer, the line \texttt{formulas(\allowbreak{}goals)} is parsed as a syntactically valid \emph{compound term} (specifically, a functor of arity 1 with the constant argument \path{"goals"}).
+    \item \textbf{Silent Appending:} Because there was no \path{end_of_list} to break the parsing loop, the parser simply appends the compound formula \texttt{formulas(\allowbreak{}goals)} to the active \path{assumptions} list.
+    \item \textbf{Goal Hijacking:} Every subsequent line, \emph{including} the intended \path{target_goal}, continues to be parsed as an assumption. The parser only exits the assumption list when it finally reaches the single \path{end_of_list} at the very bottom of the file.
 \end{enumerate}
 
-This behavior leads to a silent, compounding failure that misleads both the tool and the investigator. In our case, the tool immediately found a model that solved the misinterpreted problem. The investigator, seeing a model generated, falsely concludes \emph{``Excellent, Mace4 found a valid countermodel, so my assumption is independent!''} In reality, the tool proved nothing when \path{end_of_list.} was missing.
+This behavior leads to a silent, compounding failure that misleads both the tool and the investigator. In our case, the tool immediately found a model that solved the misinterpreted problem. The investigator, seeing a model generated, falsely concludes \emph{``Excellent, Mace4 found a valid countermodel, so my assumption is independent!''} In reality, the tool proved nothing when \path{end_of_list} was missing.
 
 \section{Success}
 
