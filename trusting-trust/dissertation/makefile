@@ -23,6 +23,7 @@ ddc-independence-3.cooked \
 ddc-independence-4.cooked \
 ddc-independence-5.cooked \
 all-repeats-independence-1.cooked \
+all-repeats-independence-2.cooked \
 all-repeats-independence-3.cooked \
 all-repeats-independence-4.cooked \
 all-repeats-independence-5.cooked \
