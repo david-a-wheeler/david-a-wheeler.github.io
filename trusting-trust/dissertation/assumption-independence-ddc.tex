@@ -144,6 +144,42 @@
   url          = {https://reproducible-builds.org/},
   organization = {Software Freedom Conservancy}
 }
+@book{bonacina2013automated,
+  editor    = {Maria Paola Bonacina and Mark E. Stickel},
+  title     = {Automated Reasoning and Mathematics: Essays in Memory of William W. McCune},
+  series    = {Lecture Notes in Artificial Intelligence (LNAI)},
+  volume    = {7788},
+  publisher = {Springer},
+  year      = {2013},
+  doi       = {10.1007/978-3-642-36675-8},
+  isbn      = {978-3-642-36674-1}
+}
+@online{wheeler2021preventingsolarwinds,
+  author       = {David A. Wheeler},
+  title        = {Preventing Supply Chain Attacks like {SolarWinds}},
+  year         = {2021},
+  month        = jan,
+  day          = {13},
+  organization = {The Linux Foundation Blog},
+  url          = {https://www.linuxfoundation.org/blog/blog/preventing-supply-chain-attacks-like-solarwinds}
+}
+@online{akamai2024xzutils,
+  author       = {{Akamai Security Intelligence Group}},
+  title        = {{XZ} Utils Backdoor --- Everything You Need to Know, and What You Can Do},
+  year         = {2024},
+  month        = apr,
+  day          = {1},
+  organization = {Akamai Technologies},
+  url          = {https://www.akamai.com/blog/security-research/critical-linux-backdoor-xz-utils-discovered-what-to-know}
+}
+@TECHREPORT{BarFT-RR-25,
+  author =	 {Clark Barrett and Pascal Fontaine and Cesare Tinelli},
+  title =	 {{The SMT-LIB Standard: Version 2.7}},
+  institution =	 {Department of Computer Science, The University of Iowa},
+  year =	 2025,
+  note =	 {Available at {\tt www.SMT-LIB.org}},
+  url =          {https://smt-lib.org/}
+}
 \end{filecontents}
 
 \documentclass[sigconf]{acmart}
@@ -237,9 +273,8 @@ Most software security issues have, in principle, well-understood solutions:
 \begin{enumerate}
 	\item Many programs contain unintentional vulnerabilities. These vulnerabilities can in principle be identified using human review, traditional static analysis, traditional dynamic analysis, and artificial intelligence (AI).
 	\item Programs may have intentional vulnerabilities in their source code. These can often be detected through similar methods, in particular, by reviewing their source code. Attackers can create ``underhanded'' source code written to try to mislead reviewers, but there are countermeasures against underhanded code that reduce its risk~\cite{wheeler2020underhanded}.
-	\item A compiled executable of an ordinary program may not correspond directly to its source code due to causes such as subverted builds, subverted distribution, or corruption after loading. Countermeasures exist including protecting builds (see OpenSSF SLSA~\cite{openssfslsa}), digital signatures (see OpenSSF Sigstore~\cite{openssfsigstore}), and reproducible builds~\cite{reproduciblebuilds}.
+	\item A compiled executable of an ordinary program may not correspond directly to the source code reviewed by others due to causes such as manipulated source releases, subverted builds, subverted distribution, or corruption after loading. Examples include the attack on SolarWinds Orion in 2020~\cite{wheeler2021preventingsolarwinds} and the backdoor in xz utils in 2023~\cite{akamai2024xzutils}. Countermeasures exist, including protecting builds (see OpenSSF SLSA~\cite{openssfslsa}), digital signatures (see OpenSSF Sigstore~\cite{openssfsigstore}), and reproducible builds~\cite{reproduciblebuilds}.
 \end{enumerate}
-
 
 Addressing these challenges is not necessarily \emph{easy}, but at least there \emph{are} known ways to address them. Unfortunately, a different and clever attack subverts all of these countermeasures.
 
@@ -260,7 +295,7 @@ DDC has been formally (mathematically) proven to produce this result when a set 
 In actuality, there are three proofs involving DDC:
 
 \begin{enumerate}
-	\item Goal \path{source_corresponds_to_executable} (5 assumptions): This is the key proof for DDC. It shows that given certain assumptions, if stage2 (the result of the DDC process) and cA (the original compiler-under-test) are equal, then the executable cA and the source code sA exactly correspond. (Filename prefix \texttt{ddc}.)
+	\item Goal \path{source_corresponds_to_\allowbreak{}executable} (5 assumptions): This is the key proof for DDC. It shows that given certain assumptions, if stage2 (the result of the DDC process) and cA (the original compiler-under-test) are equal, then the executable cA and the source code sA exactly correspond. (Filename prefix \texttt{ddc}.)
 	\item Goal \path{always_equal} (9 assumptions): This proves that, under ``normal conditions'' (such as when compiler executables have not been rigged and thus do correspond to their respective source code), cA and stage2 are in fact always equal. Thus, the first proof is actually useful, because its assumptions will often hold. This also implies that if cA and stage2 are not equal, then at least one of its assumptions is not true. (Filename prefix \texttt{all-\allowbreak{}repeats}.)
 	\item Goal \path{cP_corresponds_to_sP} (3 assumptions): The previous ``\path{always_equal}'' proof does not require that a ``grandparent'' compiler exist, but having one is a common circumstance. This third proof shows that if there is a grandparent compiler, one of the assumptions of proof \#2 can be proved given other assumptions that may be easier to verify (potentially making DDC even easier to apply in this common case). (Filename prefix \texttt{cP-\allowbreak{}corresponds-\allowbreak{}sP}.)
 \end{enumerate}
@@ -312,7 +347,7 @@ end_of_list.
 At first glance, this looks completely reasonable. We want the negation of the rule, so we put a negation symbol ($-$) in front of it, and we surround everything else with parentheses to ensure it has the highest precedence. Unfortunately, this creates a catastrophic misinterpretation due to how Mace4 handles unquantified variables.
 
 In Prover9 and Mace4 set to Prolog-style variables, when you use capitalized terms (like \path{Source}, \path{Language}, or \path{Input}) without an explicit quantifier, the tool treats them as free variables. To process the file, the engine must bind these variables. It does this by automatically wrapping the entire expression in an implicit universal quantifier ($\forall$). This made sense for the original assumption. However, because in this modified assertion the negation symbol ($-$) is written \emph{inside} the statement, Mace4 applied the implicit universal quantifier \emph{outside} the negation. Mathematically, Mace4 interpreted the assumption as:
-$$\forall \vec{x} \, \neg (\text{Premise}(\vec{x}) \rightarrow \text{Conclusion}(\vec{x}))$$
+\[\forall \vec{x} \, \neg (\text{Premise}(\vec{x}) \rightarrow \text{Conclusion}(\vec{x}))\]
 
 For an implication ($\rightarrow$) to be false, the premise must be true \emph{and} the conclusion must be false. Because of the mis-applied universal quantifier, the resulting request was to satisfy an absurd set of requirements for all of the objects covered in the implicit universal quantifier.
 
@@ -352,9 +387,11 @@ formulas(goals).
 end_of_list.
 \end{verbatim}
 
-When Prover9 or Mace4 sees a statement in the \path{goals} block, it utilizes a built-in automated mechanism that correctly negates the expression behind the scenes. By utilizing the \path{goals} block, we eliminate the risk of quantifier mismatch. Mace4 will search for a model that satisfies all our assumptions while breaking the goal in exactly \emph{one} valid place. If it finds that model, our independence proof is secure, our syntax remains clean, and we avoid subtle scoping traps.
+When Prover9 or Mace4 sees a statement in the \path{goals} block, it uses a built-in automated mechanism that correctly negates the expression behind the scenes. By using the \path{goals} block, we eliminate the risk of quantifier mismatch. Mace4 will search for a model that satisfies all our assumptions while breaking the goal in exactly \emph{one} valid place. If it finds that model, our independence proof is correct, our syntax remains clean, and we avoid subtle scoping traps.
 
-However, this solution risks triggering another trap.
+The \path{goals} block is an example of a \emph{syntactic affordance}, that is, a syntactic construct designed to make common constructs easier to \emph{correctly} express. The term \path{goals} is a little misleading, and stems from the fact that prover9 is a refutation-based theorem prover. It would be even nicer if \path{goals} had a synonym like \path{negated} when you aren't really expressing a goal. Still, this is quibbling, and the mechanism is a significant aid.
+
+However, using this approach to avoid a trap risks triggering \emph{another} trap.
 
 \subsection{The Missing Ending Trap}
 
@@ -362,11 +399,15 @@ Typically, goals follow assumptions in these files, using the
 \texttt{formulas(\allowbreak{}goals)}
 header block to open the section. But what happens in mace4 if the assumptions list is not terminated with an explicit \path{end_of_list} separator?
 
-
 The answer, unfortunately, is that this is a major hazard. This tiny syntactic omission can silently change the entire semantic meaning of the proof request without throwing a parser error or even a warning. This behavior creates a dangerous ``gulf of evaluation'' where a human reader interprets the input file one way, but the tools interpret it in a completely different way.
 
 Consider a typical Prover9 or Mace4 input file where a user defines a set of background assumptions and a target goal to test for independence:
 
+% Use minipage to force this listing to stay in 1 column (skipping to
+% the next column if it must). It's short, and splitting the listing
+% across columns makes it ugly.
+\noindent
+\begin{minipage}{\columnwidth}
 \begin{lstlisting}[language=Prolog, caption={A problematic LADR input block containing a missing boundary separator.}]
 formulas(assumptions).
   assumption_1.
@@ -377,6 +418,7 @@ formulas(goals).
   target_goal.
 end_of_list.
 \end{lstlisting}
+\end{minipage}
 
 To a human eye, the block boundary is obvious. We see \texttt{formulas(\allowbreak{}goals)} and naturally assume the tool transitions from parsing assumptions to parsing goals. Many systems do work this way, for example, an HTML processor that reads a list item start (\texttt{<li>}) will close the previous list item. In the LADR parser used by Mace4 and Prover9, however, \textbf{no such transition occurs}.
 
@@ -389,15 +431,25 @@ The silent semantic shifting of formulas occurs due to specific implementation p
     \item \textbf{Goal Hijacking:} Every subsequent line, \emph{including} the intended \path{target_goal}, continues to be parsed as an assumption. The parser only exits the assumption list when it finally reaches the single \path{end_of_list} at the very bottom of the file.
 \end{enumerate}
 
-This behavior leads to a silent, compounding failure that misleads both the tool and the investigator. In our case, the tool immediately found a model that solved the misinterpreted problem. The investigator, seeing a model generated, falsely concludes \emph{``Excellent, Mace4 found a valid countermodel, so my assumption is independent!''} In reality, the tool proved nothing when \path{end_of_list} was missing.
+This behavior leads to a silent, compounding failure that misleads both the tool and the investigator. In our case, the tool immediately found a model that solved the misinterpreted problem. The investigator, seeing a model generated, falsely concludes \emph{``Excellent, Mace4 found a valid countermodel, so my assumption is independent!''} In reality, the tool proved nothing useful when \path{end_of_list} was missing.
 
 \section{Success}
 
-Once these problems were addressed, Mace4 successfully identified all 17 ($5+9+3$) models. Each countermodel satisfies the negation of a single target assumption while satisfying all other background assumptions within its respective proof.
+Once these problems were addressed, Mace4 successfully identified models for all 17 ($5+9+3$) situations. Each model is a countermodel showing a way to satisfy the negation of the target assumption while also satisfying all other background assumptions within its respective proof.
 
-This formally guarantees that \emph{none} of the DDC assumptions are redundant. Most models were found trivially, although one (\texttt{all-\allowbreak{}repeats-\allowbreak{}independence-7}) required 48 seconds of search time. While search time is secondary to the mathematical confirmation of satisfiability, this demonstrates the computational feasibility of the check. Notably, all 17 models possess a domain size of 2. This small size is not a theoretical constraint, but such compact domains ensure that it should be easy to verify this result by finding at least one countermodel for every case using other automated model finders.
+This formally proves that \emph{none} of the DDC assumptions are redundant within their proofs. All 17 models found have a domain size of 2. This small size is not a theoretical constraint, but it does suggest it should be relatively easy for many other automated model finders to find at least one relevant model.
 
-This means all these assumptions are independent. Since the assumptions are independent, application of DDC cannot take a lazy shortcut. To rely on the security guarantees of the DDC proof, you must establish the validity of every one of the proof's assumptions.
+Each model, except one, was found in less than a second. The exception was \texttt{all-\allowbreak{}repeats-\allowbreak{}independence-7}) which required 42 seconds of search time. Search time is not important compared to the mathematical confirmation of satisfiability, but this demonstrates the computational feasibility of the check.
+
+There is a good reason that finding the model for \texttt{all-\allowbreak{}repeats-\allowbreak{}independence-7} took longer. This model required negating the assumption \path{definition_cA} which states \texttt{cA = compile(sA, cP, eAeffects, eA, eArun)}.  Mace4 searches for a model by constructing constraint matrices. This assumption defines the compile function as a deeply nested mapping:
+\texttt{compile(S, C,\allowbreak{} E,\allowbreak{} R, T) =\allowbreak{} extract(\allowbreak{}converttext(\allowbreak{}run(C,\allowbreak{} retarget(S, T),\allowbreak{} E, R),\allowbreak{} R, T))}.
+This definition involves a 5-ary function ($\text{compile}$), a 4-ary function ($\text{run}$), and a 3-ary function ($\text{converttext}$). With our small domain size of $D = 2$, the 3-ary function isn't too bad, it only has $2^{(2^3)} = 2^{8} = 256$ possible configurations. However, even with our small domain size of $D = 2$, a 5-ary function has $2^{(2^5)} = 2^{32} = 4,294,967,296$ possible configurations, and a 4-ary function has $2^{16} = 65,536$ combinations.
+
+When Mace4 negates the goal ($cA \neq \text{compile}(...)$), it must satisfy all the other relevant assumptions. Because the other assumptions contain specific instances of compile (such as stage1 and stage2), Mace4 must construct a consistent mathematical universe across this massive combinatoric space of 5-ary and 4-ary constraints (as well as the 3-ary constraint). The 42-second search time is a reflection of this solver complexity. The search time is a badge of mathematical rigor, not an error.
+
+We could use other tools to \emph{also} find models, such as Z3 or CVC5, but that isn't necessary. If \emph{any} tool finds a model, then a model has been found. We primarily chose mace4 to avoid translations concerns, but there were other good reasons to use mace4 for this specific task. Modern SMT solvers like Z3 and CVC5 are optimized to prove unsatisfiability, so they can struggle when searching for satisfying models with first-order quantifiers. Mace4 bypasses this quantifier battle entirely by systematically searching small, finite domains starting at size 2, turning a computationally infinite headache into a simple, highly solvable constraint problem. That said, we expect other tools \emph{could} find models, and that might be interesting future work.
+
+Since we've proven that the assumptions are independent, application of DDC that relies on the published proofs cannot take a lazy shortcut. To rely on the security guarantees of any of the DDC proofs in \cite{wheeler2010ddc}, you must establish the validity of all of the assumptions of the proofs you depend on.
 
 The specific models found can be viewed at \href{https://dwheeler.com/trusting-trust}{\path{https://dwheeler.com/trusting-trust}}.
 
@@ -405,49 +457,73 @@ The specific models found can be viewed at \href{https://dwheeler.com/trusting-t
 
 These experiences highlighted some lessons that should be learned.
 
-\subsection{Mathematical Tools Must Alert and Counter Likely Mistakes}
+\subsection{Mathematical Tools Should be Designed to be Safe}
 
-Modern cars don't just go somewhere; they're designed to alert users about unusual events and to attempt to protect their occupants if a mistake is made. Modern cars include turn and brake signals, seat belts, air bags, bumpers, and many other features to alert and protect.
+Modern cars don't just go somewhere. They're designed to alert users about unusual events, to attempt to protect people if a mistake is made, and to make it easy to perform typical tasks in safe way. Modern cars include turn and brake signals, seat belts, air bags, bumpers, and many other features to alert, protect, and simplify correct use.
 
-Similarly, mathematical tools should be designed to alert on unusual events and attempt to protect their users from mistakes in their inputs. Both humans and machines make mistakes, often following patterns that are easy to predict.
+Similarly, mathematical tools should be designed to alert on unusual events, attempt to protect their users from mistakes, and simplify correct use. Both humans and machines make mistakes, often following patterns that are easy to predict. There are also common uses that, if made easy, are more likely to be done correctly.
 
-There is more than one way to address the variable scope trap. The system could require \emph{all} variables to be bound, for example. Another solution would be to alert on suspicious patterns like a leading \path{-} of a formula with an unbound variable.
+\subsubsection{Examples from this experience}
+
+There is more than one way to address the variable scope trap. The system could require \emph{all} variables to be bound, for example. Another solution would be to alert on suspicious patterns like a leading \path{-} of a formula with an unbound variable. Once the problem is detected, mace4 does have the affordance texttt{formulas(\allowbreak{}goals)} to reduce the risk of incorrect negation. That is a welcome capability, though alternative clear names would be an improvement.
 
 Similarly, there is more than one way to deal with a missing ending. The tool could reject a statement starting a new section when a section is already open (this is the approach I prefer). The tool could also quietly close any section in progress when it's asked to start a new section. The point is that the \emph{current} behavior is dangerous.
 
-Naturally, there are other well-known patterns of mistakes. A sibling to the variable scoping issue is the classic translation error involving the existential quantifier paired with material implication, structurally written as:
-$$ \exists x (P(x) \rightarrow Q(x)) $$
+\subsubsection{Similar tools}
+
+Mace4 is an older tool. However, this lesson also applies to other similar tools such as Z3 and CVC5, both of which support the SMT-LIB2 format. For example, mace4 and tools supporting SMT-LIB2 format handle division-by-zero in a non-intuitive and dangerous way. In SMT-LIB2 (as well mace4), division is defined as a total function, which means $x / 0$ has a meaning yet it has no constraints on its value.~\cite{BarFT-RR-25} Failing to explicitly constrain the divisor to be non-zero can produce ``models'' that provide a ``solution'' are misleading. Yet tools suppoorting SMT-LIB2 generally don't automatically add the ``don't divide by 0'' constraint automatically, nor do they warn about it.
+
+\subsubsection{Exists with implies}
+
+We can even find risky constructs in the underlying first order logic notation that many systems are built on.
+
+A common translation error involves the existential quantifier (``exists'') paired with material implication (``implies'), structurally written as:
+\[ \exists x (P(x) \rightarrow Q(x)) \]
 This is almost always a catastrophic misstatement of user intent. Typically, an investigator intends to assert that there exists some object $x$ which possesses property $P$ and satisfies consequence $Q$, which must be formally stated using a conjunction:
-$$ \exists x (P(x) \land Q(x)) $$
+\[ \exists x (P(x) \land Q(x)) \]
 
-The danger of writing $\exists x (P(x) \rightarrow Q(x))$ lies in the classical definition of material implication. By definition, the conditional $P(x) \rightarrow Q(x)$ is logically equivalent to $\neg P(x) \lor Q(x)$. Therefore, the previous quantified expression can be expanded as:
-$$ \exists x (\neg P(x) \lor Q(x)) $$
+The SPARK system warns about this specific construct because it's such a common mistake.~\cite{wheeler2026allsome}
 
-This statement is vacuously true in any universe containing at least one object that fails to satisfy the premise $P(x)$. For example, if we attempt to formalize the claim ``there exists a compiled program that is malicious'' using this flawed structure, we get:
-$$ \exists x (\text{Program}(x) \rightarrow \text{Malicious}(x)) $$
-If our universe contains a block of text, a cup of coffee, or a human being, none of those objects are programs ($\neg\text{Program}(x)$ evaluates to true). Consequently, the implication trivially evaluates to true for those elements, satisfying the existential claim without ever locating a malicious program. As noted by Barker-Plummer, Barwise, and Etchemendy, the existential quantifier pairs naturally with conjunction ($\land$), whereas the universal quantifier ($\forall$) pairs with implication ($\rightarrow$)~\cite{barwise2011lpl}. Pairing $\exists$ with $\rightarrow$ creates an incredibly weak statement that automated solvers like Mace4 can satisfy trivially, yielding misleading results.
+% The danger of writing $\exists x (P(x) \rightarrow Q(x))$ lies in the classical definition of material implication. By definition, the conditional $P(x) \rightarrow Q(x)$ is logically equivalent to $\neg P(x) \lor Q(x)$. Therefore, the previous quantified expression can be expanded as: \[ \exists x (\neg P(x) \lor Q(x)) \]
+% This statement is vacuously true in any universe containing at least one object that fails to satisfy the premise $P(x)$. For example, if we attempt to formalize the claim ``there exists a compiled program that is malicious'' using this flawed structure, we get: \[ \exists x (\text{Program}(x) \rightarrow \text{Malicious}(x)) \] If our universe contains a block of text, a cup of coffee, or a human being, none of those objects are programs ($\neg\text{Program}(x)$ evaluates to true). Consequently, the implication trivially evaluates to true for those elements, satisfying the existential claim without ever locating a malicious program. As noted by Barker-Plummer, Barwise, and Etchemendy, the existential quantifier pairs naturally with conjunction ($\land$), whereas the universal quantifier ($\forall$) pairs with implication ($\rightarrow$)~\cite{barwise2011lpl}. Pairing $\exists$ with $\rightarrow$ creates an incredibly weak statement that automated solvers like Mace4 can satisfy trivially, yielding misleading results.
 
-Another way to counter translation errors is to introduce of syntactic affordances that make common constructs easier to \emph{correctly} express. One example is the \emph{allsome} quantifier that combines existence and universality. In standard first-order logic, universal statements of the form $\forall x (P(x) \rightarrow Q(x))$ are susceptible to the trap of \emph{vacuous truth}. If no object in the universe satisfies the antecedent $P(x)$, the entire universal implication evaluates to true. In security verification, this can be disastrous.
+\subsubsection{Combining exists and for-all: Allsome}
+
+In standard first-order logic, universal statements of the form $\forall x (P(x) \rightarrow Q(x))$ are susceptible to the trap of \emph{vacuous truth}. If no object in the universe satisfies the antecedent $P(x)$, the entire universal implication always evaluates to true. Put plainly, both ``all martians are green'' and ``all martians are not green'' are true if there are no martians. In security verification, this can be disastrous.
 
 To prevent this error, an investigator must manually chain an existential prerequisite to the universal claim:
-$$(\exists x P(x)) \land (\forall x (P(x) \rightarrow Q(x)))$$
+\[(\exists x P(x)) \land (\forall x (P(x) \rightarrow Q(x)))\]
 This is mathematically sound, but writing this compound expression repeatedly in raw tool syntax introduces a heavy unnecessary cognitive load. It also invites typos, variable mismatch, or scoping errors.
 
-The ``allsome'' quantifier acts as a shorthand linguistic affordance that enforces both conditions simultaneously. A language that supports this single unified operator makes it easy for users to guarantee that at least one instance of the target subject exists (\emph{some}) and that every instance satisfies the given criteria (\emph{all}). This defensive language feature eliminates the risk of vacuous satisfaction while keeping the proof source clean, readable, and less error-prone~\cite{wheeler2026allsome}. The ``allsome'' quantifier has been implemented and proven correct in the Metamath Proof Explorer framework~\cite{metamathmpe}, but it would be good to see it implemented in more tools.
+The ``allsome'' quantifier is a helpful affordance in such cases. A language that supports this quantifier simplifies guaranteeing that at least one instance of the target subject exists (\emph{some}) and that every instance satisfies the given criteria (\emph{all}). This defensive language feature eliminates the risk of vacuous satisfaction while keeping the proof source clean, readable, and less error-prone~\cite{wheeler2026allsome}. The ``allsome'' quantifier has been implemented and proven correct in the Metamath Proof Explorer framework~\cite{metamathmpe}, but it would be good to see it implemented in more tools.
 
-What's \emph{not} acceptable is \textbf{failing to fail}. Both humans and AI make mistakes. Tools should not silently accept input if it's unlikely to be what was intended. Tools should avoid being too permissive. In addition, tools should provide affordances that reduce the likelihood of mistakes.
+Both humans and AI make mistakes, especially if a task is too complex. Tools should not silently accept input if it's unlikely to be what was intended. Tools should avoid being too permissive. In addition, tools should provide affordances that reduce the likelihood of mistakes.
 
 \subsection{Use AI to Review}
 
-Both of the problems listed above were detected by AI, specifically Google Gemini. These tools and their documentation are widely available, so well-trained AI systems already knew about these tools and their foibles.
+Both of the problems listed above were detected by AI, specifically Google Gemini. These tools and their documentation are widely available, and have been for years, so many well-trained AI systems already knew about these tools and their foibles.
 
 This clearly shows that today, if a proof matters, it's important to have an AI review it. An AI may not necessarily see a mistake, but it might, and it's important to review any concerns an AI raises.
+
+We've taken our own advice. All of these inputs were also reviewed by Google Gemini. It determined that these inputs had:
+
+\begin{enumerate}
+	\item Proper use of goals: Every model cleanly defined the target independent assumption as a standalone conjecture in the goals block. This forces Mace4 to search for a genuine countermodel where that assumption is false but all others are true.
+	\item Goal isolation: The target assumption was completely omitted from the assumptions block and cleanly declared inside \path{formulas(goals)} at the end.
+	\item No unfinished blocks: There are no missing \path{end_of_list} markers or dangling periods that might enable silent logic corruption.
+	\item Correctly enabled Prolog variables: The directive \texttt{set(prolog\_\allowbreak{}style\_\allowbreak{}variables)} is correctly initialized. This guarantees that any identifier starting with a capital letter (such as Source, Language, Input, and Executable1) is treated as a variable, while identifiers starting with lowercase letters (such as sP, lsP, cT) are safely locked as constants. This was the convention we chose.
+	\item Correct case use: These tools are case-sensitive. Every single constant (like cP, sP, lsP, eArun) successfully starts with a lowercase letter, and every variable (like Source, Language, Input, Executable1, Environment1) starts with an uppercase letter. There are no capitalization mismatches that would break model satisfiability.
+\end{enumerate}
+
+We also had the AI review all the outputs, to double-check that the models produced by mace4 really were valid models.
 
 \subsection{Proofs and Provers as Tools}
 
 Bertrand Russell stated that mathematics possesses a ``supreme beauty---a beauty cold and austere...''~\cite{russell1910study}. I agree that mathematics can be beautiful.
 
 However, developers of software and systems often need to use mathematics as tools. In particular, when it's \emph{vital} that something be true in the real world, it's vital to be able to quickly get correct and certain answers. Provers that can create proofs, both automatically and interactively, can help achieve that. However, it's vital that provers have the ability to detect and counter likely mistakes, as well as provide simplifying affordances. Otherwise, the ``proof'' they generate may be misunderstood, and people may be put in unexpected danger.
+
+Civil engineers routinely use systems to mathematically analyze models to find dangers. Sometimes software development also uses mathematical tools, such as provers, to verify processes (such as DDC), protocols, and even code. It's important that these tools be designed to better support such uses.
 
 \section{Conclusion and Next Steps}
 
@@ -456,6 +532,60 @@ By formally proving the independence of the assumptions underlying the three pro
 The Mace4 scoping trap and missing ending underscores that formal tools are only as robust as our understanding of their underlying semantics. Both humans and AI make mistakes. Tools should not silently accept input if it's unlikely to be what was intended. Tools should avoid being too permissive. In addition, tools should provide affordances that reduce the likelihood of mistakes.
 
 This work lays a rigorous foundation, but it is just one step in securing the global digital supply chain. Ultimately, the goal of this research is to help counter attackers, even sophisticated attackers, so that all of us can use software that is increasingly trustworthy.
+
+\section*{Appendix: Sample Countermodel of Independence}
+\label{sec:appendix}
+
+To demonstrate the models (concrete mathematical structures) generated during our independence verification, this appendix presents a shortened model generated by Mace4 for the file \texttt{ddc-\allowbreak{}independence-\allowbreak{}4.in}. This specific run establishes the independence of fourth assumption, the intermediate compiler definition (\texttt{definition\_stage1}), within the main DDC proof that proves goal \texttt{source\_\allowbreak{}corresponds\_\allowbreak{}to\_\allowbreak{}executable}.
+
+This model targets \texttt{stage1}, the assumption defining the intermediate compiler build step that compiles the parent compiler. This model presents a world where the background definition of \texttt{stage2} is successfully satisfied, meaning \texttt{stage2 = \allowbreak{}compile(sA, \allowbreak{}stage1, \allowbreak{}e2effects, \allowbreak{}e2, \allowbreak{}eArun)} implies $1 = 1$ (True). Yet, in this same world, the definition of \texttt{stage1} is violated, meaning \texttt{stage1 = \allowbreak{}compile(sP, \allowbreak{}cT, \allowbreak{}e1effects, \allowbreak{}e1, \allowbreak{}e2)} implies $0 = 1$ (False). While a practitioner might occasionally obtain a secure compiler through luck or an alternative pipeline, this model demonstrates that without this specific assumption, the security guarantee of DDC no longer logically follows. Without this assumption, we lose the mathematical certainty that the final executable corresponds to its source code, proving that verifying this intermediate step is strictly necessary.
+
+Under this model of domain size 2 (where the domain elements are $\{0, 1\}$), all other background DDC assumptions evaluate to \emph{true}, while the target goal (\texttt{definition\_stage1}) evaluates to \emph{false}.
+
+To limit the length of this appendix, relation tables containing only false assignments (such as \texttt{exactly\_correspond}) have been omitted. Given the input as described earlier, we want to shoow that the resulting model proves this specific assumption is independent of the other assumptions in the main DDC proof.
+
+% Use float for this listing. It's longer, so this seems like the
+% better solution in case TeX wants to split the listing across columns.
+\begin{lstlisting}[language=Prolog, float=tb, caption={Shortened satisfying model of domain size 2 for ddc-independence-4.}]
+% Interpretation of size 2
+
+cT = 0.        e1 = 0.        e1effects = 0.
+e2 = 0.        e2effects = 0. eArun = 0.
+lsA = 0.       lsP = 0.       sA = 0.
+sP = 0.        stage1 = 0.    stage2 = 1.
+
+% Valuation of compile(Source, Compiler, EnvEffects, RunOn, Target)
+compile(0,0,0,0,0) = 1.
+compile(0,1,0,0,0) = 1.
+compile(0,1,1,0,0) = 1.
+compile(1,0,0,0,0) = 1.
+compile(1,0,1,0,0) = 1.
+compile(1,1,0,0,0) = 1.
+compile(1,1,1,0,0) = 1.
+% All other compile configurations evaluate to 0
+
+% Valuation of accurately_translates(Compiler, Lang, Source, ...)
+accurately_translates(0,0,0,0,0,0).
+accurately_translates(0,0,0,1,0,0).
+accurately_translates(1,0,0,0,0,0).
+accurately_translates(1,0,0,1,0,0).
+% ... all other accurately_translates configurations evaluate to false
+\end{lstlisting}
+
+\subsection*{Verification of Independence in the Model}
+Under this model, we can manually check that the background DDC assumptions are satisfied while the target definition is falsified:
+\begin{enumerate}
+    \item \textbf{Falsification of the Goal:} The target assumption requires that \texttt{stage1 = compile(sP,\allowbreak{} cT,\allowbreak{} e1effects,\allowbreak{} e1,\allowbreak{} e2)}. Substituting the constant valuations from the model yields \texttt{0 = compile(0, 0,\allowbreak{} 0,\allowbreak{} 0, 0)}.
+    However, the lookup table indicates that \texttt{compile(0, 0,\allowbreak{} 0,\allowbreak{} 0, 0) = 1}. Since $0 \neq 1$, the goal evaluates to \textbf{\emph{false}}.
+    \item \textbf{Satisfaction of the Stage 2 Assumption:} The background assumption requires that \texttt{stage2 =\allowbreak{} compile(sA,\allowbreak{} stage1,\allowbreak{} e2effects, e2,\allowbreak{} eArun)}. Substituting the valuations yields \texttt{1 = compile(0,\allowbreak{} 0,\allowbreak{} 0,\allowbreak{} 0,\allowbreak{} 0)}.
+    Looking up \texttt{compile(0,\allowbreak{} 0,\allowbreak{} 0,\allowbreak{} 0,\allowbreak{} 0)} evaluates to $1$. Since $1 = 1$, this assumption evaluates to \textbf{\emph{true}}.
+\end{enumerate}
+
+Since all other background assumptions similarly evaluate to true, this structure serves as a mathematically sound counterexample proving that the definition of \texttt{stage1} is logically independent and cannot be derived from the other assumptions.
+
+\begin{acks}
+This paper is dedicated to the memory of William Walker McCune (December 17, 1953 -- May 2, 2011), the creator of Prover9 and Mace4, whose foundational automated reasoning tools made this research possible.~\cite{bonacina2013automated}
+\end{acks}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{\jobname}
