@@ -910,17 +910,17 @@ The SPARK system has an option that warns about constructs like this because the
 In standard first-order logic, universal statements of the form $\forall x (P(x) \rightarrow Q(x))$ are susceptible to the trap of \emph{vacuous truth}. If no object in the universe satisfies the antecedent $P(x)$, the entire statement is always true. Put plainly, both ``all Martians are green'' and ``all Martians are not green'' are true if there are no Martians. In security verification, this can be disastrous.
 
 To prevent this error, an investigator must manually chain an existential prerequisite (``a Martian exists''):
-\[(\forall x (P(x) \rightarrow Q(x))) \land (\exists x P(x)).\]
+\[\bigl(\forall x \, (P(x) \rightarrow Q(x))\bigr) \land \bigl(\exists x \, P(x)\bigr).\]
 This is mathematically sound, but repeatedly writing this lengthy compound expression introduces a heavy unnecessary cognitive load. It also invites typos, variable mismatch, or scoping errors.
 
 The ``allsome'' quantifier, written $\forall\exists$ or $\allsome$, is a helpful affordance in such cases. A language that supports this quantifier simplifies guaranteeing that every relevant instance satisfies the given criteria (\emph{all}) and that at least one relevant instance exists (\emph{some}), by providing a quantifier that does both:
 \[\allsome x \, (P(x) \rightarrow Q(x)) \;\equiv\; \bigl(\forall x \, (P(x) \rightarrow Q(x))\bigr) \land \bigl(\exists x \, P(x)\bigr).\]
-A variant ranges over a class or set $A$:
+A bounded variant ranges over a class or set $A$:
 \[\begin{aligned}
 \allsome x \in A \; (P(x) \rightarrow Q(x)) \equiv{} & \bigl(\forall x \in A \; (P(x) \rightarrow Q(x))\bigr) \\
 & {}\land \bigl(\exists x \in A \; P(x)\bigr).
 \end{aligned}\]
-This defensive language feature eliminates the risk of vacuous satisfaction while keeping the proof source clean, readable, and less error-prone~\cite{wheeler2026allsome}. The ``allsome'' quantifier has been defined, and its key properties proved, in the Metamath Proof Explorer (the \code{set.mm} database)~\cite{metamathmpe}. It would be good to see it in more tools.
+Crucially, the ``some'' requires a member of $A$ that also satisfies the antecedent $P$, not merely that $A$ is nonempty; a witness lying in $A$ yet failing $P$ would leave the implication vacuously true. When $A$ is the entire domain, this form reduces to the first. This defensive language feature eliminates the risk of vacuous truth while keeping the proof source clean, readable, and less error-prone~\cite{wheeler2026allsome}. The ``allsome'' quantifier has been defined, and its key properties proved, in the Metamath Proof Explorer (the \code{set.mm} database)~\cite{metamathmpe}. It would be good to see it in more tools.
 
 \subsection{Use AI to Review}
 
