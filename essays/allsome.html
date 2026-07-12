@@ -1,50 +1,107 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE html>
 <html lang="en-US">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>The Allsome Quantifier</title>
+<meta charset="utf-8">
+<title>The Allsome Quantifier ∀∃</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="This essay proposes the allsome quantifier, aka all some quantifier, to make it easier to formally express some statements and avoiding various errors.">
 <meta name="keywords" content="allsome, all some, quantifier, universal quantifier, formal notation, defect, vacuously true">
 <meta name="generator" content="vim">
 <link rel="stylesheet" type="text/css" href="paper.css">
+<style>
+/* The author and date are metadata, not section headings, so they are
+   paragraphs here. paper.css centers them only when they are h2, and
+   indents the first letter of every p, so restore both. */
+p.author, p.date {
+  text-align: center;
+  margin-top: 2px; padding-top: 2px;
+  margin-bottom: 2px; padding-bottom: 2px;
+}
+p.author:first-letter, p.date:first-letter { margin-left: 0; }
+@media print {
+  p.author, p.date { font-size: 14pt; }
+}
+
+/* The abstract is set off by indentation rather than by italics, so that
+   italics stay available inside it (for variables, emphasis, and titles).
+   paper.css indents the first letter of every p, which we do not want here. */
+p.abstract {
+  margin-left: 2em;
+  margin-right: 2em;
+}
+p.abstract:first-letter { margin-left: 0; }
+
+/* Nudge the "there exists" symbol left so the allsome pair
+   "forall exists" reads as one cuddled symbol. Purely a display choice. */
+.allsome span { margin-left: -0.18em; }
+
+/* The three typographic options, side by side: each enlarged symbol sits above
+   its name. Only the symbols are enlarged, so that their differences are
+   visible; the names stay at normal size. */
+table.options {
+  margin: 1em auto;
+  border-collapse: collapse;
+}
+table.options td {
+  padding: 0.1em 1.5em;
+  text-align: center;
+  vertical-align: middle;
+}
+table.options .sample {
+  font-size: 250%;
+  line-height: 1.2;
+}
+
+/* A CC0 font whose forall+exists ligature renders one merged glyph.
+   font-display: swap shows the two symbols adjacent while the font
+   loads, instead of leaving a blank space. */
+@font-face {
+  font-family: Allsome;
+  src: url(allsome.woff2) format("woff2");
+  font-display: swap;
+}
+.allsome-font { font-family: Allsome, serif; }
+</style>
 </head>
 
 <body>
 
-<h1 class="title">The Allsome Quantifier</h1>
-<h2 class="author">David A. Wheeler</h2>
-<h2 class="date">2026-01-29 (originally 2018-10-20)</h2>
+<h1 class="title">The Allsome Quantifier <span class="allsome">∀<span>∃</span></span></h1>
+<p class="author">David A. Wheeler</p>
+<p class="date">2026-07-12 (originally 2018-10-20)</p>
 
-<p>
-<i>
-It is easy to mistranslate informal statements into formal logic,
-and these errors can cause serious problems (potentially including
-property damage, maiming, and loss of life).
+<p class="abstract">
+<i>Abstract:</i>
+It is easy to mistranslate informal statements into formal logic.
+These errors can cause serious problems, potentially including
+property damage, maiming, and loss of life.
 For example, in formal logic,
-&#8220;All Martians are green&#8221; would often be represented
-as &forall;x&nbsp;(&phi;&rarr;&psi;),
-while &#8220;All Martians are not green&#8221;
-would often be represented
-as &forall;x&nbsp;(&phi;&rarr;&not;&psi;).
-In formal logic both statements are simultaneously true
+“All Martians are green” is typically represented
+by the pattern ∀<i>x</i>&nbsp;(φ→ψ),
+while “All Martians are not green”
+is typically represented
+as the pattern ∀<i>x</i>&nbsp;(φ→¬ψ).
+In formal logic <i>both</i> statements are <i>simultaneously</i> true
 if there are no Martians.
-However, informal statements with this format often embed the assumption
+However, informal statements of this form typically assume
 that there is at least one case where the antecedent is true
 (that is, that there is at least one Martian).
 This essay proposes a new formal logic quantifier called
-&#8220;allsome&#8221; (aka &#8220;all some&#8221;) that is designed
-to make some of these mistranslations less likely.
-The allsome quantifier, abbreviated &forall;!,
-simultaneously expresses for all (&forall;)
-and there exists (&exist;) in a way that models many informal
-statements.
+“allsome” (aka “all some”) that is designed
+to make these mistranslations less likely.
+The allsome quantifier, abbreviated
+<span class="allsome">∀<span>∃</span></span>,
+simultaneously expresses for all (∀) and there exists (∃).
 It has two syntactic forms, formally defined as follows:
-&forall;!&nbsp;x&nbsp;(&phi;&rarr;&psi;) &equiv;
-&forall;&nbsp;x&nbsp;(&phi;&rarr;&psi;)&nbsp;&and;&nbsp;&exist;&nbsp;x&nbsp;&phi;
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ) ≡
+(∀<i>x</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃<i>x</i>&nbsp;φ
 and
-&forall;!&nbsp;x&isin;A&nbsp;&phi; &equiv;
-(&forall;&nbsp;x&isin;A&nbsp;&phi;)&nbsp;&and;&nbsp;&exist;&nbsp;x&nbsp;x&isin;A.
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>∈<i>A</i>&nbsp;(φ→ψ) ≡
+(∀<i>x</i>∈<i>A</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃<i>x</i>∈<i>A</i>&nbsp;φ.
+Now
+“All Martians are green and there is at least one Martian”
+is easily expressed as the first form,
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ).
 We have implemented this construct in the Metamath proof system and
 formally proven that it counters this well-known problem.
 We also compare this approach to alternative countermeasures in PVS and SPARK.
@@ -52,9 +109,7 @@ We hope that this new quantifier will
 help reduce the risk of mistranslations of informal statements into
 formal expressions, and that
 others will eventually agree that allsome is awesome.
-</i>
 
-<p>
 <h1 id="problem">The problem</h1>
 <p>
 Modern formal logic notation can represent many statements
@@ -65,221 +120,681 @@ including those that can prevent loss of life.
 Unfortunately, 
 it is easy to mistranslate informal statements
 into current formal logic notation,
-resulting in &#8220;proofs&#8221; that in fact do not prove anything important.
+resulting in “proofs” that in fact do not prove anything important.
 That could be a disaster, because sometimes proofs are used to model systems
 to ensure that they do not damage property, maim, or kill.
 Even in pure mathematics we would like to ensure that what was proved is
 what we <i>thought</i> was proved.
-We should prefer notations that are unlikely to misunderstood,
+We should prefer notations that are unlikely to be misunderstood,
 yet today some common constructs are easy to get wrong.
-This is especially true when material implication (&rarr;)
-is combined with the for-all quantifier (&forall;).
+This is especially true when material implication (→)
+is combined with the for-all quantifier (∀).
 
 <p>
 This is perhaps best explained using an example.  The sentence
-&#8220;All Martians are green&#8221; would typically be represented formally using the
-expression &forall;<i>x</i>&nbsp;(&phi;&rarr;&psi;),
-which means for all <i>x</i>, if &phi; is true then &psi; is true.
-In this example expression &phi; is true
+“All Martians are green” is usually formally represented
+using the pattern ∀<i>x</i>&nbsp;(φ→ψ),
+which means for all <i>x</i>, if φ is true then ψ is true.
+Here φ and ψ represent true-or-false formulas, each of which may depend
+on <i>x</i>.
+A specific representation could be
+∀<i>x</i>&nbsp;(martian(<i>x</i>)→green(<i>x</i>)),
+where martian(<i>x</i>) is true
 if and only if (iff) <i>x</i> is a Martian and
-&psi; is true iff <i>x</i> is green.
-Similarly, &#8220;All Martians are not green&#8221;
-would typically be represented
-as &forall;<i>x</i>&nbsp;(&phi;&rarr;&not;&psi;), that is,
-for all <i>x</i>, if &phi; is true then &psi; is not true
-(we will use the traditional symbols &not; for &#8220;not&#8221;,
-&and; for &#8220;and&#8221;, and
-&or; for &#8220;or&#8221;).
+green(<i>x</i>) is true iff <i>x</i> is green.
+Similarly, “All Martians are not green”
+is usually formally represented using the pattern
+∀<i>x</i>&nbsp;(φ→¬ψ), that is,
+for all <i>x</i>, if φ is true then ψ is not true.
+A specific representation could be
+∀<i>x</i>&nbsp;(martian(<i>x</i>)→¬green(<i>x</i>)).
+Here we use the traditional symbol ¬ for “not”.
 
 <p>
 The problem happens if there are no Martians.
-In formal logic, this can be represented as &not;&exist;<i>x</i>&nbsp;&phi;
-(&#8220;it is not true that there exists an <i>x</i> that is a Martian&#8221;).
+In formal logic, non-existence
+in general can be represented as ¬∃<i>x</i>&nbsp;φ
+(“there does not exist…”).
+This specific situation can be represented as
+¬∃<i>x</i>&nbsp;martian(<i>x</i>), that is,
+“it is not true that there exists an <i>x</i> that is a Martian”.
 If there are no Martians, then
-the statements &#8220;All Martians are green&#8221; <i>and</i>
-&#8220;All Martians are not green&#8221; are <i>both true</i>.
+the statements “All Martians are green” <i>and</i>
+“All Martians are not green” as written above
+are <i>both true</i>.
 That is
 surprising to the inexperienced, because the two expressions seem to be
 the opposite of each other.
-The reason this occurs in formal (classical) logic is because
-the implication (&phi;&rarr;&psi;) is equivalent to
-&not;&phi;&nbsp;&or;&nbsp;&psi;.
-When &phi; is always false,
-&not;&phi; is always true, and an <i>or</i> with true is always true.
+The reason this occurs in formal classical logic is because
+the implication (φ→ψ) is equivalent to
+¬φ&nbsp;∨&nbsp;ψ,
+where ∨ is the traditional symbol for “or”.
+When φ is always false,
+¬φ is always true, and an <i>or</i> with true is always true.
 You can see a detailed formal proof of this in the Metamath proof of
-<a href="http://us.metamath.org/mpeuni/alimp-surprise.html">alimp-surprise</a>,
+<a href="https://us.metamath.org/mpeuni/alimp-surprise.html">alimp-surprise</a>,
 and a proof of a similar problem at
-<a href="http://us.metamath.org/mpeuni/empty-surprise.html">empty-surprise</a>.
+<a href="https://us.metamath.org/mpeuni/empty-surprise.html">empty-surprise</a>.
 
 <p>
 In short: expressions that use for-all and
-implication (such as &forall;<i>x</i>&nbsp;(&phi;&rarr;&psi;)) have
+implication (such as ∀<i>x</i>&nbsp;(φ→ψ)) have
 surprising results to non-experts
-if the implication&#8217;s antecedent is never true.
+if the implication’s antecedent is never true.
 This also affects expressions that use for-all and a variable that ranges
 over a restricted set, since that is simply an abbreviation of a for-all
 with implication.
-Statements like this are sometimes called &#8220;vacuously true&#8221;
+Statements like this are sometimes called “vacuously true”
 statements.
 
 <p>
-(Brief aside: We use Martians in our examples due to a vague sense of convention
+Brief aside: We use Martians in our examples due to a vague sense of convention
 and because at the time of this writing there are no known Martians.
 If it is widely known that there are Martians in the time you are reading
-this, use some other set that is not certain to be inhabited.)
+this, use some other set that is not certain to be inhabited.
 
-<p>
 <h1 id="solution">A solution: the allsome quantifier</h1>
 <p>
-In this author&#8217;s experience, the problem stems from a disconnect
-between informal language and formal logic notation.
-In informal language, when we say that all <i>X</i> is <i>Y</i>, there is often
-an assumption that at least one <i>X</i> exists.
+In our experience, the problem is that
+formal logic notation lacks a <i>simple</i> way to notate a
+common informal expression.
+In informal language, when we say that all <i>X</i> is <i>Y</i>,
+we usually assume that at least one <i>X</i> exists.
 This goes back to at least [Aristotle], who expressly and intentionally
 excluded empty sets from his logic system
-[<a href="http://www.iep.utm.edu/aris-log/">Groarke</a>].
+[<a href="https://iep.utm.edu/aristotle-logic/">Groarke</a>].
 It is possible to state that something exists in modern formal logic notation,
-in addition to saying that they all do it if they exist,
+in addition to saying that they all have some property if they exist,
 but in typical formal logic notation this requires using
-two different quantifiers.
-There is no way to simply express this common informal statement
+two <i>different</i> quantifiers, or other contortions
+(we look at some of these later).
+There is <i>no way to simply express this common informal statement</i>
 in formal logic notation when using a single standard quantifier.
 This lack of a simple way to formally represent a common kind of
-informal statement can hide a lot of mischief.
+informal statement can lead to dangerous mistakes.
 
 <p>
-Here we propose the &#8220;allsome&#8221;
-(aka &#8220;all some&#8221;) quantifier,
+Here we propose the “allsome”
+(aka “all some”) quantifier,
 a convenient shorthand that
-combines the &#8220;for all&#8221; quantifier (&forall;)
-with an &#8220;exists&#8221; quantifier (&exist;).
-This new quantifier directly represents the common informal statement pattern
+combines the “for all” quantifier (∀)
+with an “exists” quantifier (∃).
+This new quantifier <i>directly</i>
+represents the common informal statement pattern
 that simultaneously asserts that some assertion is true of all <i>X</i>s
 <i>and</i> that there is at least one <i>X</i>.
-We have chosen &#8220;&forall;!&#8221; as the allsome symbol,
-with two syntactical patterns: a more general case that applies to
-a top-level implication, and a shorthand case that is applied to all
-members of a class.
-Here are their formal definitions:
+We have chosen “<span class="allsome">∀<span>∃</span></span>” as the allsome symbol,
+with two syntactical patterns: a general case that applies to
+a top-level implication, and a bounded case that applies a
+top-level implication to the members of a class or set <i>A</i>.
+Here are their formal definitions, where ∧ is the traditional symbol
+for “and”:
 
 <ol>
-<li>&forall;!&nbsp;<i>x</i>&nbsp;(&phi;&rarr;&psi;) &equiv;
-&forall;<i>x</i>&nbsp;(&phi;&rarr;&psi;)&nbsp;&and;&nbsp;&exist;<i>x</i>&phi;
-&nbsp;&nbsp;[<a href="http://us.metamath.org/mpeuni/df-alsi.html">df-alsi</a>]
-<li>&forall;!&nbsp;<i>x</i>&isin;<i>A</i>&nbsp;&phi; &equiv;
-(&forall;<i>x</i>&isin;<i>A</i>&nbsp;&phi;)&nbsp;&and;&nbsp;&exist;<i>x</i>&nbsp;<i>x</i>&isin;<i>A</i>
-&nbsp;&nbsp;[<a href="http://us.metamath.org/mpeuni/df-alsc.html">df-alsc</a>]
+<li><span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ) ≡
+(∀<i>x</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃<i>x</i>&nbsp;φ
+&nbsp;&nbsp;[<a href="https://us.metamath.org/mpeuni/df-alsi.html">df-alsi</a>]
+<li><span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>∈<i>A</i>&nbsp;(φ→ψ) ≡
+(∀<i>x</i>∈<i>A</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃<i>x</i>∈<i>A</i>&nbsp;φ
+&nbsp;&nbsp;[<a href="https://us.metamath.org/mpeuni/df-alsci.html">df-alsci</a><!-- MM-PENDING-START --> (to be added)<!-- MM-PENDING-END -->]
+
 </ol>
 
 <p>
-For example, if we now write &#8220;All Martians are green&#8221; as
-&forall;!&nbsp;<i>x</i>&nbsp;(&phi;&rarr;&psi;),
+For example, if we now write “All Martians are green” using
+the pattern
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ),
+say as
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(martian(<i>x</i>)→green(<i>x</i>)),
 we are simultaneously asserting that all Martians are green
-<i>and</i> that there is at least one Martian, which is almost
-certainly what the speaker actually meant.
+<i>and</i> that there is at least one Martian.
+Similarly, “among Martians, all tall ones are green”
+can be written as
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>∈martians&nbsp;(tall(<i>x</i>)→green(<i>x</i>)),
+and this can <i>only</i> be true if there is at least one tall Martian and
+all tall Martians are green.
+These are almost certainly what the speaker actually meant; it should be
+<i>easy</i> to say what is usually meant.
 
 <p>
 The terminology and symbol are carefully chosen.
-The term &#8220;allsome&#8221; was chosen because it&#8217;s short,
+The term “allsome” was chosen because it’s short,
 easy to say, and
-clearly hints at the two concepts it combines (&forall; and &exist;).
-The alternative &#8220;allexist&#8221; takes longer to say
+clearly hints at the two concepts it combines (∀ and ∃).
+The alternative “allexist” takes longer to say
 (three syllables instead of two) and is also more challenging to say due to
 the large sound shift between its vowels.
-We chose the term &#8220;allsome&#8221; instead of
-&#8220;someall&#8221; because we expect it to be used in cases where
-the human is focusing on the notion of &#8220;all&#8221; - so it made
+We chose the term “allsome” instead of
+“someall” because we expect it to be used in cases where
+the human is focusing on the notion of “all”, so it made
 sense to emphasize that.
-The symbol &forall;! was chosen since there is already a &exist;! symbol
-that suggests that it is some variant of &exist;
-(so there is precedence for combining an explanation mark with a quantifier).
-In addition, this sequence when used as a symbol
-does not require that a new Unicode character
-be created and implemented before the symbol can be used.
-It might be useful to create a new Unicode character for it in the future,
-but it will be easier to make that argument once the symbol attains
-broader use.
 
 <p>
-This new quantifier does not eliminate the traditional for all (&forall;)
-quantifier, in fact, allsome is defined using for all.
+The symbol <span class="allsome">∀<span>∃</span></span> was chosen because many readers can correctly
+guess its meaning without any explanation: it simply places the
+“for all” (∀) and “there exists” (∃)
+symbols next to each other, which is exactly what the quantifier combines.
+We’re flexible about its exact typography; options include
+having the two traditional symbols adjacent to each other
+(∀∃), cuddling them together
+(<span class="allsome">∀<span>∃</span></span>), or
+using a merged symbol
+(<span class="allsome-font">∀∃</span>).
+You can easily use it today in many cases just by
+writing the two symbols next to each other, but see below if you
+are interested in other options (including HTML, fonts, TeX, and so on).
+
+<p>
+This new quantifier does not eliminate the traditional for all (∀)
+quantifier; in fact, allsome is defined using for all.
 Instead, this new quantifier makes it easier to express a common
 circumstance, and perhaps more importantly, it reduces the risk of
 dangerous misstatements (which could lead to property destruction,
 maiming, or death if you are depending on the proofs to prevent that).
 
 <p>
-I've even considered the case where someone is using intuitionistic
-logic instead of classical logic.
-The left-hand side of a material implication is often a predicate that checks
-for set membership. If that set is empty (e.g., there are no martians),
-then we immediately have the problem I'm describing.
-In classical logic you could instead assert that the set is not empty, as
-that has the same meaning in classical logic.
-However, in intuitionistic logic, there is a subtle distinction;
-knowing a set is not empty is not exactly the same
-as knowing that a set has an element (aka an "inhabited" set; see
-<a href="https://us.metamath.org/ileuni/n0rf.html">n0rf</a> and
-<a href="https://us.metamath.org/mpeuni/empty-surprise.html"
->empty-surprise</a>).
-I intentionally chose the stronger "is inhabited" form as I believe it's
-easier to work with and more consistent in practice.
-
-<p>
-We have received a number of interesting comments from Yannick Moy;
-one was that this &#8220;might be overkill in some occasions, because it&#8217;s
-more difficult to prove than a simple &#8216;for all&#8217; quantification, and
-it&#8217;s likely to be less automated because automatic provers are bad with
-exhibiting witnesses.&#8221;
-A &#8220;witness&#8221; is simply an example that shows that something exists.
-We agree that sometimes automatic provers are bad at finding them today,
-but we expect that they are going to get better at them over time.
-Humans are usually pretty good about providing them, or at least identifying
-an example that the prover can relatively easily prove, so we don&#8217;t
-think this is such a big problem.
-More importantly, if you care whether or not something is true, you
-should specify
-what you actually require; otherwise, the specification can be very misleading
-(you may think you&#8217;re proving something you aren&#8217;t).
-If you intend for something to exist, then you should specify it.
-
-<p>
-We have implemented the &#8220;allsome&#8221; quantifier in the
-<a href="http://us.metamath.org/mpeuni/mmset.html">Metamath Proof Explorer</a>,
+We have implemented the “allsome” quantifier in the
+<a href="https://us.metamath.org/mpeuni/mmset.html">Metamath Proof Explorer</a>,
 including some formal proofs about its properties, and it works
 exactly as you would expect.
-For example, we can prove that
-&forall;!&nbsp;<i>x</i>&nbsp;(<i>x</i>&isin;<i>A</i>&rarr;&psi;)
-&harr;
-&forall;!&nbsp;<i>x</i>&isin;<i>A</i>&nbsp;&psi;
-[<a href="http://us.metamath.org/mpeuni/alsconv.html">alsconv</a>].
-Perhaps even more importantly, we can prove that the &#8220;surprise&#8221;
+For example, we can prove that the bounded form is simply the general
+form with membership folded into the antecedent,
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>∈<i>A</i>&nbsp;(φ→ψ)
+↔
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;((<i>x</i>∈<i>A</i>&nbsp;∧&nbsp;φ)→ψ)
+[<a href="https://us.metamath.org/mpeuni/alsciconv.html">alsciconv</a><!-- MM-PENDING-START --> (to be added)<!-- MM-PENDING-END -->].
+Perhaps even more importantly, we can prove that the “surprise”
 shown earlier cannot ever happen with allsome, specifically, we can prove that
-&not;(&forall;!&nbsp;<i>x</i>&nbsp;(&phi;&rarr;&psi;) &and;
-&forall;!&nbsp;<i>x</i>&nbsp;(&phi;&rarr;&not;&psi;))
-[<a href="http://us.metamath.org/mpeuni/alsi-no-surprise.html">alsi-no-surprise</a>].
-Thus, the &#8220;allsome&#8221; quantifier is already implemented and
+¬(<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ) ∧
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→¬ψ))
+[<a href="https://us.metamath.org/mpeuni/alsi-no-surprise.html">alsi-no-surprise</a>].
+Thus, the “allsome” quantifier is already implemented and
 has been rigorously proven to have the properties it was designed to have.
 
-<h1 id="other-than-material-implication">Road rarely travelled: Dropping material implication</h1>
+<h1 id="writing-symbol">Writing the allsome symbol</h1>
 <p>
-The problem stems from how the logic operation material implication (&rarr;)
-sometimes differs from informal language.
+You <i>never</i> need a special symbol or specialized typesetting
+to use allsome.
+You can put the widely-available “for all” and
+“there exists” symbols adjacent to each other: ∀∃.
+We’re flexible about its exact typography, but if you prefer, you can
+cuddle the two symbols together, or use a single merged allsome symbol.
+Here is what the three options look like, enlarged so that their differences
+are easy to see:
+
+<table class="options">
+<tr>
+  <td class="sample">∀∃</td>
+  <td class="sample"><span class="allsome">∀<span>∃</span></span></td>
+  <td class="sample allsome-font">∀∃</td>
+</tr>
+<tr>
+  <td>Adjacent</td>
+  <td>Cuddled</td>
+  <td>Merged</td>
+</tr>
+</table>
+
+<p>
+All three are acceptable, and they all mean the same thing.
+The adjacent form needs nothing at all, so if you just want to start using
+allsome quickly, you already can, and the rest of this section is optional.
+If you want one of the fancier forms, the subsections below explain how:
+you can <a href="#html-symbol">cuddle the symbols using HTML and CSS</a>,
+<a href="#allsome-as-font">merge them using a font</a> (which works in HTML,
+word processors, and many other tools), or
+<a href="#tex-symbol">merge them using TeX</a>.
+All of these are workarounds for the fact that allsome currently
+has no character of its own, so we close by looking at
+<a href="#unicode">the longer road: a Unicode assignment</a>.
+
+<h2 id="html-symbol">Cuddled: using HTML and CSS</h2>
+
+<p>
+If you would like allsome to be the single cuddled symbol
+<span class="allsome">∀<span>∃</span></span>
+using simple HTML and CSS, <i>without</i> adding a font,
+you can nudge
+the second symbol slightly to the left with a negative CSS margin.
+Wrap the pair like this:
+</p>
+
+<pre>
+&lt;span class="allsome"&gt;&amp;forall;&lt;span&gt;&amp;exist;&lt;/span&gt;&lt;/span&gt;
+</pre>
+
+<p>
+and add this rule to your stylesheet:
+</p>
+
+<pre>
+.allsome span { margin-left: -0.18em; }
+</pre>
+
+<p>
+Adjust the value to taste.
+It is worth knowing what the value is actually cancelling.
+The gap you see between ∀ and ∃ is not spacing that CSS added, so no amount of
+zeroing margins or padding will remove it.
+It is built into the glyphs themselves: each one carries a little blank space on
+either side, called its side bearings, so that adjacent characters do not
+collide.
+The visible gap is the right bearing of ∀ plus the left bearing of ∃, and in
+common serif fonts that comes to roughly 0.06em to 0.11em.
+So a nudge of about -0.1em brings the two strokes to just touching, and larger
+values overlap them; this page uses -0.18em, which gives the cuddled form shown
+above.
+</p>
+
+<p>
+Because the nudge is measured in <code>em</code>, it is proportional to the font
+size, so one value stays right at every size; the enlarged samples above use
+exactly the same rule as the running text.
+Unfortunately, it is <i>not</i> proportional to the font’s design.
+Fonts differ in how much bearing they give these two glyphs, and CSS offers no
+unit that measures it, so the nudge is always cancelling a quantity it cannot
+see.
+A value tuned for one font may be slightly loose or slightly tight in another,
+especially if the reader’s font lacks ∀ and ∃ and the browser substitutes
+them from somewhere else.
+If you want a join that is reliable no matter what font is in use, don’t nudge
+at all; instead, use a single merged glyph, as described next.
+</p>
+
+<p>
+There is a simpler variant: put both symbols in a single span and use
+negative <code>letter-spacing</code> instead of a margin on a nested span.
+</p>
+
+<pre>
+&lt;span class="allsome"&gt;&amp;forall;&amp;exist;&lt;/span&gt;
+
+.allsome { letter-spacing: -0.18em; }
+</pre>
+
+<p>
+We don’t suggest this, however.
+<code>letter-spacing</code> applies its spacing after <i>every</i>
+character, including the last one, so it also chops off the space to the
+right of the “there exists” symbol and pulls whatever follows
+(such as the variable) too close.
+The negative-margin approach above closes only the gap between the two
+symbols and leaves the trailing space intact.
+</p>
+
+<h2 id="allsome-as-font">Merged: using a font, in HTML and elsewhere</h2>
+
+<p>
+If you want to use the merged symbol,
+the obvious solution is to use a font.
+This works in HTML, word processors, and many other tools.
+However, it
+requires that you download such a font <i>and</i> apply it where
+you use it.
+</p>
+
+<p>
+We have implemented a special font (CC0 license) where if you have the character
+∀ followed immediately by ∃ it will show
+<span class="allsome-font">∀∃</span>.
+The two characters must be immediately next to each other, and it is best
+to apply the font to just those two characters.
+</p>
+
+<p>
+We provide the font in two formats, both released under
+<a href="allsome-font-LICENSE.txt">CC0</a>, so anyone may use them.
+They are small files; the font has only a few glyphs in it.
+Use <a href="allsome.woff2">allsome.woff2</a> on a web page; that is the format
+browsers want, and it is the more compact of the two.
+Use <a href="allsome.ttf">allsome.ttf</a> to install the font in a word
+processor or in your operating system, since those want TrueType and cannot
+use a WOFF2 file.
+The two contain exactly the same glyphs.
+</p>
+
+<p>
+We also provide the program that generates them,
+<a href="build_allsome_font.py">build_allsome_font.py</a>.
+It draws every glyph from scratch, so the font contains no outlines taken from
+anyone else, which is what lets us release it under CC0 in the first place.
+It writes the TrueType file and then derives the WOFF2 from it, so the two
+can’t drift apart.
+You don’t need it to <i>use</i> the font, but it’s there if you want to
+check how the font was made or rebuild it yourself.
+</p>
+
+<p>
+Using such a font in HTML takes three steps and needs no JavaScript.
+First, put <a href="allsome.woff2">allsome.woff2</a> on your site.
+Second, declare it in your CSS with an <code>@font-face</code> rule and
+define a class that applies it:
+</p>
+
+<pre>
+@font-face {
+  font-family: Allsome;
+  src: url("allsome.woff2") format("woff2");
+  font-display: swap;
+}
+.allsome-font { font-family: Allsome, serif; }
+</pre>
+
+<p>
+Third, wrap an adjacent “for all” and “there exists”
+in a span that uses that class:
+</p>
+
+<pre>
+&lt;span class="allsome-font"&gt;&amp;forall;&amp;exist;&lt;/span&gt;
+</pre>
+
+<p>
+The font’s ligature then replaces that pair with the single merged glyph,
+so it displays as
+<span class="allsome-font">∀∃</span>.
+It is cleanest to apply the font only to the allsome pairs.
+Applying it more broadly is harmless in the sense that the font also
+contains ordinary ∀ and ∃ glyphs, so a lone ∀ or
+∃ still renders as a normal symbol and only an immediately adjacent
+pair merges, but those lone symbols would then use this font’s glyphs
+instead of whatever font you would otherwise have chosen for them.
+If the font does not load for some reason,
+the two characters simply appear adjacent, which is a reasonable
+fallback.
+</p>
+
+<p>
+We recommend including <code>font-display: swap</code> in the
+<code>@font-face</code> rule, as shown above.
+Without it browsers apply the default (<code>font-display: auto</code>,
+which they implement as <code>block</code>), and while the font is still
+loading they render text that uses it as
+<i>nothing at all</i> for up to about three seconds.
+A reader on a slow connection would see a blank space where the allsome
+symbol should be.
+With <code>font-display: swap</code> the browser immediately shows the
+fallback, so the two symbols appear adjacent right away and are
+replaced by the merged glyph as soon as the font arrives.
+That also makes the loading case behave like the failure case described
+above, which is what a reader would expect.
+</p>
+
+<h2 id="tex-symbol">Merged: using TeX</h2>
+
+<p>
+If you use TeX (including LaTeX),
+you can make <span class="allsome">∀<span>∃</span></span>
+appear as a single merged symbol, like this:
+<span class="allsome-font">∀∃</span>.
+</p>
+
+<p>
+We have implemented
+a robust, scale-aware <code>\allsome</code> command with the
+<a href="https://ctan.org/pkg/pgf">TikZ</a> package.
+It draws a merged “for all” and “there exists”
+symbol and sizes itself for display, inline, script, and script-script
+math styles. It is CC0-licensed, so you can use it without licensing issues.
+</p>
+
+<p>
+<a href="./allsome-in-tex.tex">Download the TeX allsome command (CC0 license)</a>
+</p>
+
+<p>
+With this definition,
+<span class="allsome-font">∀∃</span>&nbsp;<i>x</i>&nbsp;(φ→ψ)
+can be written in TeX as
+<code>\allsome x\,(\phi \rightarrow \psi)</code>.
+</p>
+
+<h2 id="unicode">In the long term: a Unicode assignment</h2>
+
+<p>
+All of the approaches above are really workarounds.
+There is currently no Unicode code point for allsome, so we must either accept
+two adjacent characters or arrange for something (CSS, a font, or a TeX macro)
+to draw them as one.
+In the long term it’d be good to get a new Unicode assignment for this
+symbol, so that anyone could type and display it anywhere with no font, no
+stylesheet, and no macro.
+</p>
+
+<p>
+That’s a longer road.
+Unicode generally wants evidence that a symbol is already being used before it
+will assign a code point to it.
+So the way to get there is to start using allsome now, using whichever of the
+approaches above suits you.
+</p>
+
+<h1 id="notes">Notes</h1>
+<p>
+This section defends the case for allsome instead of advancing it, so if you are
+already convinced, you can skip ahead without losing the thread.
+Each subsection takes up an objection or an alternative and answers it:
+how allsome fares in logics other than the classical one,
+whether one kind of quantifier could do the job of two,
+why we did not instead abandon material implication,
+and what allsome asks of automated provers.
+
+<h2 id="intuitionistic-logic">Intuitionistic logic</h2>
+<p>
+We have even considered the case where someone uses intuitionistic
+logic instead of classical logic.
+Allsome works there too.
+
+<p>
+First, the problem is just as real in intuitionistic logic.
+The left-hand side of a material implication is often a predicate that checks
+for set membership. If that set is empty (e.g., there are no Martians),
+then we immediately have the problem we are describing.
+
+<p>
+The reason is not quite the one we gave earlier, though, so it is worth
+spelling out.
+Above we explained the surprise by noting that (φ→ψ) is equivalent to
+¬φ&nbsp;∨&nbsp;ψ.
+That full equivalence is classical: the direction from (φ→ψ) to ¬φ&nbsp;∨&nbsp;ψ
+is not intuitionistically valid.
+The surprise, however, needs only the other direction, from ¬φ to (φ→ψ), and
+that direction does hold intuitionistically.
+To see why, recall what → means constructively: a proof of (φ→ψ) is a
+construction that converts any proof of φ into a proof of ψ.
+Suppose nothing satisfies φ, that is, suppose we have ¬φ, so a proof of φ would
+yield absurdity (written ⊥, and also called falsity or the absurd proposition).
+Then the required construction is trivially available.
+Given a supposed proof of φ, derive ⊥, and from ⊥ derive anything at all,
+including ψ.
+That last step is the principle called <i>ex falso quodlibet</i>
+(“from falsity, whatever you like”), which says that
+⊥&nbsp;→&nbsp;<i>p</i> for every proposition <i>p</i>.
+Intuitionistic logic accepts it.
+So (φ→ψ) holds for every <i>x</i>, and ∀<i>x</i>&nbsp;(φ→ψ) is provable.
+Both “All Martians are green” and “All Martians are not green” are therefore
+provable when there are no Martians, exactly as in classical logic.
+The surprise is not an artifact of classical truth tables.
+It follows from the meaning of implication together with ex falso quodlibet.
+That last principle is enough to get both halves of the surprise, though, as we
+will see next, it is not strictly needed for the “are not green” half.
+
+<p>
+What changes is the remedy.
+In classical logic you could instead assert that the set is not empty, as
+that has the same meaning in classical logic.
+In intuitionistic logic there is a subtle distinction:
+knowing a set is not empty is not the same
+as knowing that a set has an element (aka an “inhabited” set).
+Being inhabited implies being nonempty (see
+<a href="https://us.metamath.org/ileuni/n0rf.html">n0rf</a>),
+but the converse does not hold constructively.
+Saying a set is “not empty” amounts to ¬¬∃<i>x</i>&nbsp;<i>x</i>∈<i>A</i>,
+and getting ∃<i>x</i>&nbsp;<i>x</i>∈<i>A</i> from that requires double negation
+elimination, which intuitionistic logic does not have.
+
+<p>
+Allsome asserts the stronger of the two.
+Its definition, (∀<i>x</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃<i>x</i>&nbsp;φ, uses only
+∧, ∀, ∃, and →; it appeals to neither the law of the excluded middle nor
+double negation elimination.
+So the definition may be carried over to intuitionistic logic unchanged, and it
+retains its intended force there: its existence conjunct ∃<i>x</i>&nbsp;φ is the
+constructive existential, which demands an actual witness satisfying φ.
+It does not degrade into the weaker claim that no such witness can fail to
+exist.
+We intentionally chose the stronger “is inhabited” form as we believe it’s
+easier to work with and more consistent in practice with what
+is meant by informal statements.
+
+<p>
+Allsome’s central property is constructively provable as well.
+Here is a sketch: suppose both
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ) and
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→¬ψ) hold.
+The first supplies a witness <i>a</i> satisfying φ.
+The two universals then yield ψ(<i>a</i>) and ¬ψ(<i>a</i>), hence ⊥.
+So the two cannot both hold: the surprise that allsome is meant to prevent
+cannot arise.
+Every step of that argument is intuitionistically valid.
+
+<h2 id="minimal-logic">Minimal logic</h2>
+<p>
+The argument above raises a natural question: what about a logic that does
+<i>not</i> accept ex falso quodlibet?
+If we can show allsome works appropriately in this case, then that is an
+argument that it is a useful general quantifier.
+
+<p>
+Minimal logic is intuitionistic logic with exactly that principle removed.
+There, ⊥ is an ordinary proposition: ⊥&nbsp;→&nbsp;<i>p</i> is simply not
+available, so from ⊥ you may <i>not</i> derive an arbitrary <i>p</i>.
+The derivation given earlier then breaks down.
+From ¬φ and φ we can still reach ⊥, but we can go no further, so ¬φ no longer
+yields (φ→ψ) for an arbitrary ψ.
+In minimal logic, “there are no Martians” no longer proves
+“All Martians are green”.
+
+<p>
+The vacuity does not disappear entirely, however, and the half that remains is
+easy to overlook.
+Proving (φ→¬ψ) never needed ex falso quodlibet in the first place.
+Recall that ¬ψ is simply (ψ→⊥).
+Assume φ; with ¬φ that gives ⊥.
+Now assume ψ; we already have ⊥, so we may discharge ψ and conclude (ψ→⊥),
+that is, ¬ψ.
+Discharging φ then gives (φ→¬ψ).
+Every step is ordinary implication and negation introduction: we <i>derived</i>
+⊥, but we never derived anything <i>from</i> ⊥.
+So in minimal logic “there are no Martians” still proves
+“All Martians are not green”.
+
+<p>
+Minimal logic therefore removes the positive half of the surprise, but it leaves
+the negative half standing.
+The two statements can no longer both be derived from “there are no Martians”,
+so the paired surprise that opened this essay does not arise.
+But a vacuously true statement is still provable, and it still isn’t what the
+speaker meant.
+This also helps sharpen the diagnosis.
+The positive half of the surprise depends on ex falso quodlibet, while the
+negative half needs nothing beyond the meaning of implication and negation.
+Weakening the logic won’t remove it.
+
+<p>
+So in minimal logic, using allsome makes it easier to prevent a real defect.
+Written with allsome, “All Martians are not green” becomes
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(martian(<i>x</i>)→¬green(<i>x</i>)),
+which by definition also requires ∃<i>x</i>&nbsp;martian(<i>x</i>).
+With no Martians it is simply not provable, vacuously or otherwise.
+That is exactly the protection we want, and it is the same protection allsome
+gives classically.
+
+<p>
+The abbreviation is available in minimal logic, too:
+our definition uses only ∧, ∀, ∃, and →,
+every one of which minimal logic provides.
+And the original motivation is untouched.
+It remains a common thing to mean both “all <i>X</i> are <i>Y</i>” <i>and</i>
+“there is at least one <i>X</i>”, and saying that easily
+still takes two quantifiers.
+
+<p>
+Finally, allsome’s no-surprise property still holds here, and its proof needs
+nothing that minimal logic lacks: a witness <i>a</i> satisfying φ yields
+ψ(<i>a</i>) and ¬ψ(<i>a</i>), hence ⊥, and discharging the assumption gives the
+negation directly.
+That last step is ordinary negation introduction, which minimal logic has.
+Once again the argument derives ⊥ but never derives anything <i>from</i> ⊥.
+So allsome’s guarantee doesn’t secretly depend on ex falso quodlibet, and it
+isn’t an artifact of the surrounding logic.
+It holds in the classical, intuitionistic, and minimal cases alike.
+
+<p>
+We should be clear about what is and is not machine-checked.
+Allsome is defined, and its properties are proven, in the
+<i>classical</i> Metamath Proof Explorer; we haven’t yet defined it in the
+Intuitionistic Logic Explorer.
+Both arguments above, for intuitionistic and for minimal logic, are therefore
+sketches rather than formal proofs.
+Formalizing allsome in those logics is future work, and we expect it to be
+straightforward.
+
+<h2 id="one-quantifier">Using only one kind of quantifier</h2>
+<p>
+We said earlier that expressing this common statement takes two
+<i>different</i> quantifiers, or other contortions.
+A pedant could object that in classical logic the two quantifiers are
+interdefinable: ∃<i>x</i>&nbsp;φ is equivalent to ¬∀<i>x</i>&nbsp;¬φ.
+So we could write the general form of allsome using the for-all quantifier
+alone:
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ) ≡
+(∀<i>x</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;¬∀<i>x</i>&nbsp;¬φ.
+
+<p>
+The objection is technically correct, but it doesn’t help in practice.
+That expression uses only one <i>kind</i> of quantifier, but it is harder to
+read, not easier: to recover the simple idea “some <i>x</i> satisfies φ” the
+reader must now decode a double negation, “it is not the case that every
+<i>x</i> fails to satisfy φ”.
+Our complaint was never that this meaning cannot be expressed at all.
+Our complaint is that it cannot be expressed <i>simply</i>, and this
+substitution makes matters worse, not better.
+
+<p>
+It is also worth noting that this rewrite is available only in classical logic.
+Intuitionistic logic does not equate ∃<i>x</i>&nbsp;φ with ¬∀<i>x</i>&nbsp;¬φ;
+the latter is strictly weaker.
+In fact it is exactly the weaker notion we met earlier.
+Since ¬∃<i>x</i>&nbsp;φ and ∀<i>x</i>&nbsp;¬φ <i>are</i> intuitionistically
+equivalent, negating both gives
+¬∀<i>x</i>&nbsp;¬φ ↔ ¬¬∃<i>x</i>&nbsp;φ, the double-negated existential.
+That is the “not empty” claim, not the “is inhabited” claim.
+So the one-quantifier rewrite would quietly replace allsome’s requirement that
+some <i>x</i> actually satisfies φ with the weaker claim that φ is not false of
+everything, and no witness need be produced.
+Outside classical logic, then, this rewrite doesn’t just cost readability;
+it changes the meaning, which is far worse.
+
+<h2 id="other-than-material-implication">Road abandoned: dropping material implication</h2>
+<p>
+A key part of the problem stems from how the logic operation
+material implication (→) sometimes differs from informal language.
 It is possible to drop the normal logic operation called material implication,
-but most people (including me) believe dropping material implication
+but most people (including us) believe dropping material implication
 would not be an improvement.
 
 <p>
-[Suber1997] notes that in English
-there are &#8220;many kinds of implication...
+[Suber 1997] notes that in English
+there are “many kinds of implication...
 the first step in becoming comfortable with material implication is to
-realize that, precisely because it&#8217;s just one kind of implication, it
-cannot capture every use of the English &#8216;if...then&#8217; or
-&#8216;implies&#8217;...
+realize that, precisely because it’s just one kind of implication, it
+cannot capture every use of the English ‘if...then’ or
+‘implies’...
 Material implication sometimes violates our intuition, but
 it is valuable because it creates a
-&#8216;truth-functional kind of implication&#8217;
-which brings many substantial benefits.&#8221;
+‘truth-functional kind of implication’
+which brings many substantial benefits.”
 
 <p>
 This debate about the meaning of implication is an old debate.
@@ -288,30 +803,30 @@ was a dialectic Greek philosopher of the Megarian school.
 (The Megarian school was a predecessor to and
 influencer of later Stoic logic; Zeno, who founded Stoicism, was
 a friend and admirer of Philo.)
-Philo interpreted the conditional (&#8220;if... then&#8221;)
+Philo interpreted the conditional (“if... then”)
 as material implication:
-&#8220;the conditional is true when it does not begin with a true proposition
+“the conditional is true when it does not begin with a true proposition
 and finish with a false one, so that a conditional, according to him,
-is true in three ways and false in one way.&#8221;
+is true in three ways and false in one way.”
 [Empiricus, 2.113].
-Philo&#8217;s teacher, the Greek philosopher Diodorus (died c. 284BC),
+Philo’s teacher, the Greek philosopher Diodorus (died c. 284 BC),
 disagreed with Philo.
-Diodorus said that &#8220;a conditional is true which neither was nor is able to
-begin with a true one and finish with a false one&#8221;.
+Diodorus said that “a conditional is true which neither was nor is able to
+begin with a true one and finish with a false one”.
 Thus, a statement like
-&#8220;If it is day, I am having a discussion&#8221; when it is day
+“If it is day, I am having a discussion” when it is day
 would be true for Philo but
-&#8220;false according to Diodorus. For it is able to begin with the true
-&#8216;It is day&#8217;
-and finish with the false &#8216;I am having a discussion&#8217;
+“false according to Diodorus. For it is able to begin with the true
+‘It is day’
+and finish with the false ‘I am having a discussion’
 (when I have become
 quiet), and it was able to begin with a true one and finish with the false
-&#8216;I am having a discussion.&#8217; &#8221;
+‘I am having a discussion.’ ”
 [Empiricus, 2.115].
-So even around 300 BC there was a debate about this,
-and Sextus Empiricus could point to this disagreement as an
+So even around 300 BC there was a debate about the meaning of implication.
+Sextus Empiricus could still point to this disagreement as an
 unresolved debate around the second century AD
-[Empiricus, 2.113-2115].
+[Empiricus, 2.113-2.115].
 
 <!--
 "Against the Logicians" by Sextus Empiricus
@@ -338,7 +853,7 @@ might be thought to bear on this subject (even though the Hellenistic
 term “criterion of truth” postdates most of the thinkers in question). As a
 result, this passage is a mine of information about ideas that in many cases
 are otherwise poorly recorded. But there are numerous other passages of
-the same kind throughout both books. Outside the first half of Book , it
+the same kind throughout both books. Outside the first half of Book 1, it
 is the Stoics, always for Sextus the preeminent dogmatists, whose views
 receive the most scrutiny, and therefore the most summary. This is particularly
 true on technical logical matters, where the Stoics are almost the
@@ -481,12 +996,12 @@ philosophy is done away with.
 
 <p>
 Some logicians have been disturbed by material implication, so
-they &#8220;have developed so-called &#8216;relevance logics&#8217; in which the
+they “have developed so-called ‘relevance logics’ in which the
 antecedent and consequent of conditionals must somehow bear on the
-same subject.&#8221;
+same subject.”
 However, while interesting, relevance logic has not widely caught on.
 As Suber notes,
-&#8220;(1) The perversity of material implication is deliberate, for it is the
+“(1) The perversity of material implication is deliberate, for it is the
 only way to get truth-functionality. (2) But the perversity violates
 only our ordinary expectations, not any logical principles. (3) For
 material implication, despite its perversity, suffices to capture the
@@ -495,10 +1010,10 @@ The nuances of English that it does not translate do not affect validity
 (in standard logic). (4) Hence, the price is worth paying, for the
 counter-intuitive material implication distorts nothing essential and,
 because it is truth-functional, allows us to test the validity of
-arguments that contain implication statements.&#8221;
-He also notes that in English there are &#8220;many kinds of implication...
-[so] no other specific version of implication can [express
-English statements precisely] either.&#8221;
+arguments that contain implication statements.”
+He also notes that this is not a defect peculiar to material implication:
+because English has so many kinds of implication, no other single version
+could express English statements precisely either.
 
 <p>
 There has been work to define and model causality
@@ -514,27 +1029,46 @@ suggests that there are good reasons mathematicians would choose something else.
 
 <p>
 As [Edgington] notes,
-&#8220;The truth-functional theory of the conditional was integral to Frege&#8217;s
+“The truth-functional theory of the conditional was integral to Frege’s
 new logic (1879).
 It was taken up enthusiastically by Russell (who
-called it &#8220;material implication&#8221;), Wittgenstein in the Tractatus, and
+called it ‘material implication’), Wittgenstein in the Tractatus, and
 the logical positivists, and it is now found in every logic text.
 It is the first theory of conditionals which students encounter.
 Typically, it does not strike students as obviously correct.
-It is logic&#8217;s first surprise.
+It is logic’s first surprise.
 Yet, as the textbooks testify, it does a creditable job in
 many circumstances.
 And it has many defenders.
 It is a strikingly simple
-theory: &#8220;If A, B&#8221; is false when A is true and B is false.
-In all other cases, &#8220;If A, B&#8221; is true.&#8221;
+theory: ‘If A, B’ is false when A is true and B is false.
+In all other cases, ‘If A, B’ is true.”
 
 <p>
-Thus, I don&#8217;t think we should drop material implication.
+Thus, we don’t think we should drop material implication.
 Instead, we should try to find one or more ways to keep material implication
 while making it less likely to be misused.
 
-<h1 id="alternatives">Alternative Solutions</h1>
+<h2 id="witnesses">Witnesses and automation</h2>
+<p>
+We have received a number of interesting comments from Yannick Moy;
+one was that this “might be overkill in some occasions, because it’s
+more difficult to prove than a simple ‘for all’ quantification, and
+it’s likely to be less automated because automatic provers are bad with
+exhibiting witnesses.”
+A “witness” is simply an example that shows that something exists.
+We agree that automatic provers are sometimes bad at finding witnesses today,
+but we expect that they will get better at finding them over time.
+Humans are usually pretty good about providing them, or at least identifying
+an example that the prover can relatively easily prove, so we don’t
+think this is such a big problem.
+More importantly, if you care whether or not something is true, you
+should specify
+what you actually require; otherwise, the specification can be very misleading
+(you may think you’re proving something you aren’t).
+If you intend for something to exist, then you should specify it.
+
+<h1 id="alternatives">Alternative solutions</h1>
 
 <p>
 Of course, we are not the first to notice this problem.
@@ -546,16 +1080,16 @@ while retaining material implication.
 Prototype Verification System (PVS) was developed
 for the development and analysis of formal specifications, and
 it has special abbreviations to declare non-empty types.
-An uninterpreted type or subtype declarations introduced with the keyword TYPE
+An uninterpreted type or subtype declaration introduced with the keyword TYPE
 may be empty, while an
-uninterpreted type declarations introduced with the keyword NONEMPTY TYPE or
-simply TYPE+ are assumed to be nonempty.
+uninterpreted type declaration introduced with the keyword NONEMPTY TYPE or
+simply TYPE+ is assumed to be nonempty.
 Uninterpreted subtype declarations introduced with the keyword NONEMPTY TYPE
 or TYPE+ are assumed to be nonempty, as long as the supertype is nonempty.
-This means that simply adding + after the word TYPE eliminates possibility
+This means that simply adding + after the word TYPE eliminates the possibility
 of that type being empty.
 For more information, see
-<a href="http://pvs.csl.sri.com/doc/pvs-language-reference.pdf"
+<a href="https://pvs.csl.sri.com/doc/pvs-language-reference.pdf"
 >[Owre&nbsp;2001]</a> section 3.1.5.
 <p>
 However, this PVS mechanism <i>only</i> works for that specific type, and if an
@@ -573,28 +1107,28 @@ If the type T is empty, then the following two equivalences hold:
 <p>
 <a href="https://www.adacore.com/about-spark">SPARK</a> is a
 programming language, verification toolset, and a design method which
-together &#8220;ensure that ultra-low defect software can be deployed in
+together “ensure that ultra-low defect software can be deployed in
 application domains where high-reliability must be assured, for example
-where safety and security are key requirements&#8221;.
+where safety and security are key requirements”.
 This is especially useful in embedded systems where performance is critical.
 <a href="https://learn.adacore.com/courses/intro-to-spark/index.html"
 >Intro to SPARK</a> is an interactive introduction to it.
 SPARK makes it possible to mathematically prove that a program
 will do certain things given certain assumptions.
-Of course, if the specification is wrong, then what it proves won&#8217;t
+Of course, if the specification is wrong, then what it proves won’t
 be what was intended.
 
 <p>
 In 2018
 SPARK implemented a warning that can often detect that a
-&#8220;branch&#8221; in a logical formula is &#8220;dead&#8221; - including when an implication
-in a for-all has an antecedent can never occur.
+“branch” in a logical formula is “dead”, including when an implication
+in a for-all has an antecedent that can never occur.
 This warning (when enabled) is implemented by calling SMT provers
 to detect the potential problem; they are given a 1 second timeout
-and only report when they can prove that that there is a dead branch.
+and only report when they can prove that there is a dead branch.
 
 <p>
-Yannick Moy developed and sent me a little specification in November 2018
+Yannick Moy developed and sent us a little specification in November 2018
 that specifies the Martian propositions in SPARK
 (see <a href="./martians.ads">martians.ads</a>).
 As expected, when sent the Martian propositions SPARK can easily prove them:
@@ -605,7 +1139,7 @@ martians.ads:11:19: info: assertion proved
 
 <p>
 However, when SPARK is given the switch
-&#8220;--proof-warnings&#8221; to activate the warnings, SPARK also reports:
+“--proof-warnings” to activate the warnings, SPARK also reports:
 <pre>
 martians.ads:10:66: warning: unreachable branch
 martians.ads:11:66: warning: unreachable branch
@@ -617,11 +1151,11 @@ This warning mechanism has many advantages:
 <li>It works with existing quantifiers.
 <li>It can detect other kinds of problems where something is unreachable.
 <li>It technically has no false positives.
-The warning &#8220;is only triggered if the prover can prove that a branch
-is dead. So you&#8217;ll still get false positives in the sense that people
-may not be interested in that specific warning (&#8220;OK it&#8217;s dead for that
-configuration but not another one&#8221; for example), but it will always
-point to an actual dead branch.&#8221; (Yannick Moy).
+The warning “is only triggered if the prover can prove that a branch
+is dead. So you’ll still get false positives in the sense that people
+may not be interested in that specific warning (‘OK it’s dead for that
+configuration but not another one’ for example), but it will always
+point to an actual dead branch.” (Yannick Moy).
 </ul>
 
 <p>
@@ -629,29 +1163,29 @@ However, it also has disadvantages:
 <ul>
 <li>There is no <i>guarantee</i> that it will report a problem.
 The warning is only reported when it can guarantee that there is a dead
-branch, and in more complex circumstance this may not be detected.
+branch, and in more complex circumstances this may not be detected.
 In short, there are no false positives (all reports are real), but there
 can be false negatives (some problems might not be reported).
 <li>Enabling these warnings takes a noticeable amount of time on larger
 programs, and thus is not the default.
 Yannick Moy reports,
-&#8220;there is a price to pay for such a proof-based warning: calling a
+“there is a price to pay for such a proof-based warning: calling a
 prover. Right now we make this quite small, with 1 second timeout only
 for these special calls, but this is still noticeable on large programs
 with many branches to check (plus we already have in fact a few others
 of these proof-based warnings, on preconditions or postconditions that
-are always false and dead code after loops). This is why we&#8217;ve not made
+are always false and dead code after loops). This is why we’ve not made
 it the default but a separate switch. The customer who asked for this
-feature has made it the default configuration of the tool.&#8221;
+feature has made it the default configuration of the tool.”
 <li>In general, the warning is not as powerful as allsome in cases where
-allsome is useful - there is no guarantee that the warning will show in
+allsome is useful: there is no guarantee that the warning will show in
 dangerous cases, while allsome formally specifies that something must exist.
 </ul>
 
 <h2 id="together">Working together</h2>
 
 <p>
-There isn&#8217;t any need to pick just one approach or the other.
+There isn’t any need to pick just one approach or the other.
 The allsome quantifier can provide guarantees for certain circumstances.
 Techniques like the one used in PVS
 can expressly state that certain types exist.
@@ -674,28 +1208,26 @@ constructs and detecting constructs that are likely to be misstatements.
 The new allsome quantifier does not eliminate all specification errors
 by itself, but it does help counter one common kind of mistake by providing
 notation that more directly represents a common informal construct.
-We expect that the allsome quantifier would be part of a larger
-suite of measures to counter common mistakes.
 Here are some examples of other mistakes and ways they can be countered:
 
 <ul>
 <li>Another common kind of error is using implication directly within an
-exists quantifier (the form &exist;&nbsp;<i>x</i>&nbsp;(&phi;&rarr;&psi;)).
+exists quantifier (the form ∃&nbsp;<i>x</i>&nbsp;(φ→ψ)).
 This is almost always a mistake.
-Usually the implication &rarr; should be
-logical conjunction aka &#8220;and&#8221; aka &and;, so what was intended was
-&exist;&nbsp;<i>x</i>&nbsp;(&phi;&and;&psi;).
-In classical logic, (&phi;&rarr;&psi;)
-is identical to (&not;&phi;&or;&psi;)
+Usually the implication → should be
+logical conjunction aka “and” aka ∧, so what was intended was
+∃&nbsp;<i>x</i>&nbsp;(φ∧ψ).
+In classical logic, (φ→ψ)
+is identical to (¬φ∨ψ)
 so that entire expression is another way to write
-&exist;&nbsp;<i>x</i>&nbsp;(&not;&phi;&or;&psi;) ... an entirely
+∃&nbsp;<i>x</i>&nbsp;(¬φ∨ψ) ... an entirely
 different expression.
 Thankfully, this common error is much easier to detect.
 Both Why3 and SPARK already have a built-in warning if there is
 an implication used directly within an exists quantifier.
 This check does not even need to be built-in;
 a separate style checker could warn when this particular
-combination (&exist; with &rarr;) occurs
+combination (∃ with →) occurs
 since it is practically never intended.
 <li>Paul E. Black noted that an implementation is typically checked
 against a specification by proving that the implementation implies the
@@ -704,10 +1236,10 @@ allowed by the specification, but it does not require the
 implementation to have any behavior at all.
 He suggests that correctness statements have two parts,
 corresponding to liveness and safety. Safety shows that the implementation
-implies an &#8220;allowed-behavior&#8221; specification, while liveness shows that a
-&#8220;required-behavior&#8221; specification implies the implementation.
+implies an “allowed-behavior” specification, while liveness shows that a
+“required-behavior” specification implies the implementation.
 For more, see
-<a href="https://hissa.nist.gov/~black/Papers/tphols99.html">[Black 1999]</a>.
+<a href="https://web.archive.org/web/20250527195336/hissa.nist.gov/~black/Papers/tphols99.html">[Black 1999]</a>.
 </ul>
 
 <p>
@@ -722,6 +1254,120 @@ that appear to be correct but in fact are mistranslations.
 In addition,
 we hope that others will eventually agree that allsome is awesome.
 
+<h1 id="older">Appendix: Older versions of allsome</h1>
+
+<p>
+Older versions of this essay instead used the symbol ∀!,
+by analogy with the existing ∃! symbol.
+However, that notation did not convey its meaning to readers who had not
+already learned it. So we changed the symbol to
+<span class="allsome">∀<span>∃</span></span>,
+so many could immediately intuit its meaning.
+
+<p>
+Those older versions that used the symbol ∀!
+also defined the bounded (second) form differently,
+as a bare formula applied to the members of a class:
+∀!&nbsp;<i>x</i>∈<i>A</i>&nbsp;φ ≡
+(∀<i>x</i>∈<i>A</i>&nbsp;φ)&nbsp;∧&nbsp;∃<i>x</i>&nbsp;<i>x</i>∈<i>A</i>
+(defined in the Metamath token df-alsc).
+This asserted only that φ holds throughout <i>A</i>
+and that <i>A</i> has at least one member; it did not require any member of
+<i>A</i> to satisfy φ.
+We’ve since changed that second conjunct from
+∃&nbsp;<i>x</i>&nbsp;<i>x</i>∈<i>A</i> into
+∃&nbsp;<i>x</i>∈<i>A</i>&nbsp;φ, where φ is now the
+antecedent of the implication, so the corrected form requires a member
+of <i>A</i> that actually satisfies that antecedent.
+We believe that this older definition of the bounded form
+was a mistake, for two reasons:
+
+<ol>
+<li>It does not compose with the antecedent-witnessing purpose of allsome.
+If the formula φ is itself an implication (φ′→ψ′),
+this form guarantees only that <i>A</i> has at least one member, not that any
+member of <i>A</i> actually satisfies the inner antecedent φ′;
+so the inner implication can still be vacuously true, which is exactly the
+problem allsome exists to prevent.
+For example, consider the phrase “among Martians, all tall ones are green”
+written using the older definition,
+∀!&nbsp;<i>x</i>∈martians&nbsp;(tall(<i>x</i>)→green(<i>x</i>)).
+Its existence conjunct is satisfied by any Martian at all, not by a
+<i>tall</i> one.
+So this can be true when there are no <i>tall</i> Martians, since the inner
+implication is then vacuously true of every Martian.
+That is precisely the surprise we set out to eliminate.
+
+<li>The bare-formula form cannot coexist with the corrected bounded form.
+Suppose a system defined both.
+The expression
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>∈<i>A</i>&nbsp;(φ→ψ)
+could then be read two ways: as the bare-formula form, whose formula merely
+happens to be an implication (asserting only that <i>A</i> has at least one
+member),
+or as the corrected form (asserting that some member of <i>A</i> satisfies φ).
+Those two readings assert different things, so the notation would be ambiguous.
+That is why we replaced the bare-formula form rather than adding to it.
+</ol>
+
+<p>
+The bare-formula meaning is not lost, only redundant.
+To say “all members of <i>A</i> satisfy φ, and <i>A</i> has at least one
+member”,
+you can still use <span class="allsome">∀<span>∃</span></span>,
+just use the general form with membership as the antecedent:
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(<i>x</i>∈<i>A</i>→φ).
+By definition that expands to
+(∀<i>x</i>&nbsp;(<i>x</i>∈<i>A</i>→φ))&nbsp;∧&nbsp;∃<i>x</i>&nbsp;<i>x</i>∈<i>A</i>,
+that is, every member of <i>A</i> satisfies φ <i>and</i> <i>A</i> has at least
+one member.
+That <i>A</i> is inhabited is not an extra condition we must remember to add;
+it is exactly what the existence conjunct of allsome already requires.
+This is precisely what the old bare-formula bounded form asserted, so no
+separate quantifier is needed for it.
+Of course, you can still write it the traditional way, using two quantifiers,
+(∀<i>x</i>∈<i>A</i>&nbsp;φ)&nbsp;∧&nbsp;∃<i>x</i>&nbsp;<i>x</i>∈<i>A</i>,
+if you are more comfortable with that.
+
+<p>
+The opposite meaning also remains easy to express.
+If you want to say only that <i>any</i> members of <i>A</i> satisfy φ, without
+asserting that <i>A</i> has any members at all, that is the ordinary bounded
+for-all, ∀<i>x</i>∈<i>A</i>&nbsp;φ, which abbreviates
+∀<i>x</i>&nbsp;(<i>x</i>∈<i>A</i>→φ).
+This is still vacuously true when <i>A</i> is empty.
+That is sometimes exactly what is meant, and the standard quantifier already
+says it.
+
+<p>
+So no option is lost and none is hard to write: use ∀ when you do not care
+whether <i>A</i> is inhabited, and use
+<span class="allsome">∀<span>∃</span></span> when you do.
+Allsome does not take away a choice; it makes the choice that requires an
+inhabited set just as easy to say.
+
+<p>
+Because we changed the symbol at the same time, it is easy to tell which
+definition an older document is using: ∀! always denotes the old definition,
+and <span class="allsome">∀<span>∃</span></span> always denotes the current one.
+
+<p>
+One more name, for the record: a conversion theorem called alsconv depended on
+that older df-alsc definition, relating the general form with a membership
+antecedent to the bare-formula bounded form (again in the older notation),
+∀!&nbsp;<i>x</i>&nbsp;(<i>x</i>∈<i>A</i>→ψ) ↔
+∀!&nbsp;<i>x</i>∈<i>A</i>&nbsp;ψ.
+Both df-alsc and alsconv were removed in favor of df-alsci and alsciconv.
+These two older names are given here only for the record, so they are not
+linked.
+
+<!-- MM-PENDING-START (remove this parenthetical once the Metamath update is posted) -->
+<p>
+Note: the corresponding Metamath update, removing df-alsc and alsconv and
+adding df-alsci and alsciconv, is still in progress, so the database does
+not yet match this essay.
+<!-- MM-PENDING-END -->
+
 <h1 id="references" class="unnumbered">References</h1>
 
 <ul>
@@ -729,41 +1375,39 @@ we hope that others will eventually agree that allsome is awesome.
 Aristotle, <i>Posterior Analytics</i>, II.7.92b6-8 (translation by Mure),
 c. 300s BC.
 <li>[Black 1999]
-<a href="https://hissa.nist.gov/~black/Papers/tphols99.html">Black, Paul E.,
-&#8220;Is &#8216;Implementation Implies Specification&#8217; Enough?&#8221;,
+<a href="https://web.archive.org/web/20250527195336/hissa.nist.gov/~black/Papers/tphols99.html">Black, Paul E.,
+“Is ‘Implementation Implies Specification’ Enough?”,
 presentation to 12th International Conference on Theorem Proving in
-Higher Order Logics (TPHOLs&#8217;99), Nice, France, (September 1999)</a>.
+Higher Order Logics (TPHOLs’99), Nice, France, (September 1999)</a>.
 <li>[Edgington]
 Edgington, Dorothy, The Stanford Encyclopedia of Philosophy,
 <a href="https://plato.stanford.edu/archives/win2008/entries/conditionals/"
->&#8221;Conditionals&#8221;</a>,
+>“Conditionals”</a>,
 2008.
 <li>[Empiricus] Empiricus, Sextus, <i>Against the Logicians</i>,
 written c. second century AD,
 Translated and edited by Richard Bett, 2005.
 <li>[Groarke]
-<a href="http://www.iep.utm.edu/aris-log/">Groarke</a>,
-&#8220;Aristotle: Logic&#8221;,
+<a href="https://iep.utm.edu/aristotle-logic/">Groarke</a>,
+“Aristotle: Logic”,
 <i>Internet Encyclopedia of Philosophy (IEP)</i>.
-</a>
 <li><a
 href="https://www.cs.cornell.edu/home/halpern/papers/causalitybook-ch1-3.html"
 >[Halpern 2016]</a>
 Halpern, Joseph Y., 2016,
 <i>Actual Causality</i>.
 <li>[Owre&nbsp;2001]
-<a href="http://pvs.csl.sri.com/doc/pvs-language-reference.pdf"
+<a href="https://pvs.csl.sri.com/doc/pvs-language-reference.pdf"
 >S. Owre, S., N. Shankar, J.M. Rushby, and D.W.J. Stringer-Calvert,
 <i>PVS Language Reference Manual</i></a>,
 Version 2.4, November 2001,
 section 3.1.5 (Empty versus Nonempty Types).
 <li>[Suber 1997]
 <a href="https://legacy.earlham.edu/~peters/courses/log/mat-imp.htm">
-Suber, Peter, 1997, &#8220;Paradoxes of Material Implication&#8221;
+Suber, Peter, 1997, “Paradoxes of Material Implication”
 (an electronic hand-out for the course <i>Symbolic Logic</i>)</a>.
 </ul>
 
-<p>
 <hr>
 <p>
 Feel free to see my home page at
@@ -775,11 +1419,49 @@ the Numbers!</a> and my book on
 secure programs</a>.
 
 <p>
-(C) Copyright 2018 David A. Wheeler.
+(C) Copyright David A. Wheeler.
 Released under
 <a href="https://creativecommons.org/licenses/by-sa/3.0/">Creative Commons
 Attribution-ShareAlike version 3.0 or later
 (CC-BY-SA-3.0+)</a>.
+
+<!--
+SYMBOL CHEAT SHEET (for editing this file)
+
+This file is UTF-8 and uses literal characters for the math symbols rather
+than HTML entities, so that the source reads like the formulas it describes.
+To type them in vim, press Ctrl-K followed by the two-character digraph.
+The HTML entity still works everywhere if you prefer to type that instead;
+both produce the same rendered character.
+
+  char  vim digraph   HTML entity   name
+  ----  -----------   -----------   ----
+  ∀     Ctrl-K F A    &forall;      for all
+  ∃     Ctrl-K T E    &exist;       there exists
+  ¬     Ctrl-K N O    &not;         not
+  ∧     Ctrl-K A N    &and;         and
+  ∨     Ctrl-K O R    &or;          or
+  →     Ctrl-K - >    &rarr;        implies (material implication)
+  ↔     Ctrl-K < >    &harr;        if and only if
+  ∈     Ctrl-K ( -    &isin;        is a member of
+  ⊥     Ctrl-K - T    &perp;        absurdity (falsity)
+  ≡     Ctrl-K = 3    &equiv;       is defined as
+  φ     Ctrl-K f *    &phi;         phi
+  ψ     Ctrl-K q *    &psi;         psi
+  ′     Ctrl-K 1 '    &prime;       prime (as in phi-prime)
+  “     Ctrl-K " 6    &#8220;       opening double quote
+  ”     Ctrl-K " 9    &#8221;       closing double quote
+  ‘     Ctrl-K ' 6    &#8216;       opening single quote
+  ’     Ctrl-K ' 9    &#8217;       closing single quote; also the
+                                    apostrophe, as in “it’s”
+
+Deliberately still entities: &nbsp; (a literal U+00A0 is invisible in an
+editor and is used structurally in the formulas), and of course &amp;,
+&lt;, and &gt;.
+
+The <pre> blocks show entity source (&amp;forall;) on purpose, because they
+are teaching the reader how to write the markup. Do not "convert" those.
+-->
 
 </body>
 </html>
