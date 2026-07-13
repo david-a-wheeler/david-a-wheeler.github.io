@@ -35,22 +35,37 @@ p.abstract:first-letter { margin-left: 0; }
    "forall exists" reads as one cuddled symbol. Purely a display choice. */
 .allsome span { margin-left: -0.18em; }
 
-/* The three typographic options, side by side: each enlarged symbol sits above
-   its name. Only the symbols are enlarged, so that their differences are
-   visible; the names stay at normal size. */
-table.options {
-  margin: 1em auto;
-  border-collapse: collapse;
+/* The three typographic options: each enlarged symbol sits above its name.
+   Only the symbols are enlarged, so that their differences are visible; the
+   names stay at normal size.
+
+   This is a wrapping flex row rather than a table, so that on a narrow screen
+   (a phone) the three options reflow onto separate lines instead of running
+   off the right edge. The gap is set on the container, whose font size is
+   normal, rather than as padding inside the enlarged cells: an em of padding
+   inside a cell scaled to 250% is 2.5 times wider than it looks, which is what
+   pushed the old table off-screen. */
+div.options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75em 2.5em;
+  margin: 1em 0;
 }
-table.options td {
-  padding: 0.1em 1.5em;
-  text-align: center;
-  vertical-align: middle;
+div.options > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-table.options .sample {
-  font-size: 250%;
+div.options .sample {
+  /* Scales with the viewport, but never below legible or above the old 250%. */
+  font-size: clamp(1.6em, 12vw, 2.5em);
   line-height: 1.2;
 }
+
+/* Code samples can be wider than a phone screen; let them scroll on their own
+   rather than widening the page. */
+pre { overflow-x: auto; }
 
 /* Mapping of older Metamath labels to current ones, in the appendix. */
 table.labels {
@@ -116,7 +131,7 @@ is easily expressed as the first form,
 <span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ).
 We have implemented this construct in the Metamath proof system and
 formally proven that it counters this well-known problem.
-We also compare this approach to alternative countermeasures in PVS and SPARK.
+We also compare this approach to alternative countermeasures.
 We hope that this new quantifier will
 help reduce the risk of mistranslations of informal statements into
 formal expressions, and that
@@ -200,6 +215,51 @@ Statements like this are sometimes called “vacuously true”
 statements.
 
 <p>
+This is not a hypothetical concern; it has been measured.
+Beer and colleagues at IBM, reporting on several years of hardware
+verification, found that
+“during the first formal verification runs of a new hardware design,
+typically 20% of formulas are found to be trivially valid, and that
+<i>trivial validity always points to a real problem</i> in either the design
+or its specification or environment”
+[<a href="#Beer2001">Beer&nbsp;2001</a>, p.&nbsp;141].
+The specific cause they name is an unsatisfiable antecedent, which earlier
+work called <i>antecedent failure</i>.
+Beatty and Bryant, who named it, put the danger memorably:
+“Formally, implications have an extensional meaning: they are also true if
+the antecedent condition is not true.
+<i>Antecedent failure means that we can speak nonsense and not realize
+it.</i>”
+[<a href="#BeattyBryant">BeattyBryant</a>, section “Observations”].
+Their setting is temporal logic rather than first-order logic,
+and they include many issues not just this one.
+Still, their example is AG(request&nbsp;→&nbsp;AX&nbsp;ack)
+[<a href="#Beer2001">Beer&nbsp;2001</a>, p.&nbsp;142]
+(“in <i>every</i> state, if there is a request
+then an acknowledgement follows”).
+Their example domain is time not Martians,
+but this is the same shape as ∀<i>x</i>&nbsp;(φ→ψ) with an antecedent nothing
+satisfies, and it fails for <i>exactly</i> the same reason.
+
+<p>
+There is also evidence about the people, not just the formulas.
+Greenman and colleagues studied how well people understand linear temporal
+logic (LTL), and found that translating <i>from</i> English <i>into</i>
+formal notation was the most common source of errors.
+They found 47% of responses were incorrect from students (rounds 2 and 4),
+and a shockingly high 28% of responses were incorrect (round 3) from
+researchers with prior exposure to LTL
+[<a href="#Greenman2023">Greenman&nbsp;2023</a>, section 8].
+As they put it, this is “the critical <i>authoring</i> direction in which
+a subtle mistake can lead to a faulty system”.
+This included <i>BadProp</i>, responses
+that “mis-use a logical operator or an atomic symbol”.
+They specifically recommend that designers
+“directly address misconceptions by changing the logic”, including
+adding new operations to correctly express common situations.
+That is exactly the approach allsome takes.
+
+<p>
 Brief aside: We use Martians in our examples due to a vague sense of convention
 and because at the time of this writing there are no known Martians.
 If it is widely known that there are Martians in the time you are reading
@@ -210,18 +270,50 @@ this, use some other set that is not certain to be inhabited.
 In our experience, the problem is that
 formal logic notation lacks a <i>simple</i> way to notate a
 common informal expression.
-In informal language, when we say that all <i>X</i> is <i>Y</i>,
-we usually assume that at least one <i>X</i> exists.
+As noted by [<a href="#Parsons">Parsons</a>],
+“Most English speakers tend to understand ‘Every S is P’ as
+requiring for its truth that there be some Ss... Every modern logic text
+must address the apparent implausibility of letting ‘Every S is P’
+be true when there are no Ss.”
 This goes back to at least [Aristotle], who expressly and intentionally
 excluded empty sets from his logic system
 [<a href="https://iep.utm.edu/aristotle-logic/">Groarke</a>].
-It is possible to state that something exists in modern formal logic notation,
-in addition to saying that they all have some property if they exist,
-but in typical formal logic notation this requires using
-two <i>different</i> quantifiers, or other contortions
-(we look at some of these later).
+
+<p>
+Barwise and Etchemendy, in a widely-used textbook on translating informal
+language into formal logic, call these
+“vacuously true generalizations” and note that in everyday
+conversation we hardly ever encounter one:
+“when we do find either of these, we feel that the speaker has misled us”
+[<a href="#BarwiseEtchemendy">BarwiseEtchemendy</a>, section 9.6].
+Their example is a professor who says “Every freshman who took the class
+got an A” when in fact no freshman took her class.
+She has not lied, exactly, but she has misled us, because her statement
+“typically carries the <i>conversational implicature</i> that there were
+freshmen in the class”.
+
+<p>
+Other textbooks on translating informal language into formal logic warn about
+the same trap.
+The open textbook <i>forall x</i> points out that
+∀<i>x</i>&nbsp;(R(<i>x</i>)→M(<i>x</i>)), read as
+“every refrigerator is a monkey”, is <i>true</i> when the domain
+contains no refrigerators, and calls that result
+“counterintuitive”; it states the rule plainly, that
+“when F is an empty predicate, any sentence
+∀<i>x</i>&nbsp;(F(<i>x</i>)→…) is vacuously true”
+[<a href="#forallx">forallx</a>, section 24.2].
+Discussing a different example, it notes that the formal rendering “would
+be trivially true” if the antecedent had no instances, and adds the
+sentence we would underline if we could: “<b>This is not what we want</b>”.
+
+<p>
 There is <i>no way to simply express this common informal statement</i>
-in formal logic notation when using a single standard quantifier.
+in modern formal logic notation when using a single standard quantifier.
+The closest is repeatedly adding “and” and an extra “exists” statement
+every time, but this is absurdly complicated when dealing with real systems
+with many assertions and many long expressions within them.
+It’s also easy to forget.
 This lack of a simple way to formally represent a common kind of
 informal statement can lead to dangerous mistakes.
 
@@ -245,14 +337,10 @@ for “and”:
 <ol>
 <li><span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ) ≡
 (∀<i>x</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃<i>x</i>&nbsp;φ
-&nbsp;&nbsp;[<!-- MM-PENDING-START (once posted, link df-als and drop the parenthetical) -->df-als
-(not yet posted; currently published under its older name
-<a href="https://us.metamath.org/mpeuni/df-alsi.html">df-alsi</a>, which states
-exactly the same thing)<!-- MM-PENDING-END -->]
+&nbsp;&nbsp;[<a href="https://us.metamath.org/mpeuni/df-als.html">df-als</a>]
 <li><span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>∈<i>A</i>&nbsp;(φ→ψ) ≡
 (∀<i>x</i>∈<i>A</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃<i>x</i>∈<i>A</i>&nbsp;φ
-&nbsp;&nbsp;[<!-- MM-PENDING-START (once posted, link df-rals and drop the parenthetical) -->df-rals
-(not yet posted)<!-- MM-PENDING-END -->]
+&nbsp;&nbsp;[<a href="https://us.metamath.org/mpeuni/df-rals.html">df-rals</a>]
 
 </ol>
 
@@ -290,8 +378,8 @@ The symbol <span class="allsome">∀<span>∃</span></span> was chosen because m
 guess its meaning without any explanation: it simply places the
 “for all” (∀) and “there exists” (∃)
 symbols next to each other, which is exactly what the quantifier combines.
-It also composes with the usual extensions of “there exists”, such as the
-unique existential quantifier ∃!; we discuss that in
+It also leaves room to append the modifiers that some systems add to
+“there exists”, which we look at in
 <a href="#variants">variants of “there exists”</a>.
 We’re flexible about its exact typography; options include
 having the two traditional symbols adjacent to each other
@@ -321,23 +409,30 @@ form with membership folded into the antecedent,
 <span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>∈<i>A</i>&nbsp;(φ→ψ)
 ↔
 <span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;((<i>x</i>∈<i>A</i>&nbsp;∧&nbsp;φ)→ψ)
-[<!-- MM-PENDING-START (once posted, link dfrals2 and drop the parenthetical) -->dfrals2
-(not yet posted)<!-- MM-PENDING-END -->].
+[<a href="https://us.metamath.org/mpeuni/dfrals2.html">dfrals2</a>].
 Perhaps even more importantly, we can prove that the “surprise”
 shown earlier cannot ever happen with allsome, specifically, we can prove that
 ¬(<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ) ∧
 <span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→¬ψ))
-[<!-- MM-PENDING-START (once posted, link als-no-surprise and drop the parenthetical) -->als-no-surprise
-(not yet posted; currently published under its older name
-<a href="https://us.metamath.org/mpeuni/alsi-no-surprise.html">alsi-no-surprise</a>,
-which states exactly the same thing)<!-- MM-PENDING-END -->].
+[<a href="https://us.metamath.org/mpeuni/als-no-surprise.html">als-no-surprise</a>].
 The same holds for the bounded form,
 ¬(<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>∈<i>A</i>&nbsp;(φ→ψ) ∧
 <span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>∈<i>A</i>&nbsp;(φ→¬ψ))
-[<!-- MM-PENDING-START (once posted, link rals-no-surprise and drop the parenthetical) -->rals-no-surprise
-(not yet posted)<!-- MM-PENDING-END -->],
+[<a href="https://us.metamath.org/mpeuni/rals-no-surprise.html">rals-no-surprise</a>],
 and note that this needs no assumption that <i>A</i> is nonempty; that is
 precisely the point.
+
+<p>
+Allsome also <i>delivers</i> something that the ordinary for-all does not.
+If all Martians are green and there is at least one Martian, then something
+<i>is</i> green: we can prove
+<span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ)&nbsp;→&nbsp;∃<i>x</i>&nbsp;ψ
+[<a href="https://us.metamath.org/mpeuni/alsex.html">alsex</a>],
+and likewise for the bounded form
+[<a href="https://us.metamath.org/mpeuni/ralsex.html">ralsex</a>].
+From ∀<i>x</i>&nbsp;(φ→ψ) alone, nothing whatsoever follows about ψ.
+So the no-surprise property shows that allsome cannot say something
+contradictory, while this shows that it does say something useful.
 Thus, the “allsome” quantifier is already implemented and
 has been rigorously proven to have the properties it was designed to have.
 
@@ -352,18 +447,11 @@ cuddle the two symbols together, or use a single merged allsome symbol.
 Here is what the three options look like, enlarged so that their differences
 are easy to see:
 
-<table class="options">
-<tr>
-  <td class="sample">∀∃</td>
-  <td class="sample"><span class="allsome">∀<span>∃</span></span></td>
-  <td class="sample allsome-font">∀∃</td>
-</tr>
-<tr>
-  <td>Adjacent</td>
-  <td>Cuddled</td>
-  <td>Merged</td>
-</tr>
-</table>
+<div class="options">
+<div><span class="sample">∀∃</span><span>Adjacent</span></div>
+<div><span class="sample"><span class="allsome">∀<span>∃</span></span></span><span>Cuddled</span></div>
+<div><span class="sample allsome-font">∀∃</span><span>Merged</span></div>
+</div>
 
 <p>
 All three are acceptable, and they all mean the same thing.
@@ -601,113 +689,83 @@ approaches above suits you.
 
 <h1 id="variants">Variants of “there exists”</h1>
 <p>
-Formal systems often extend “there exists” by appending a character to it.
-The most common by far is the unique existential quantifier ∃!, read
-“there exists exactly one”
-[<a href="#BellMachover">BellMachover</a>, Definition 10.1;
-<a href="#WhiteheadRussell">WhiteheadRussell</a>, *14.02].
-Some systems also provide ∃*, read “there exists at most one”
-[<a href="#BellMachover">BellMachover</a>].
-Metamath defines both, as
-<a href="https://us.metamath.org/mpeuni/df-eu.html">df-eu</a> (∃!) and
-<a href="https://us.metamath.org/mpeuni/df-mo.html">df-mo</a> (∃*), along with
-forms of each restricted to a class,
-<a href="https://us.metamath.org/mpeuni/df-reu.html">df-reu</a>
-(∃!&nbsp;<i>x</i>∈<i>A</i>) and
-<a href="https://us.metamath.org/mpeuni/df-rmo.html">df-rmo</a>
-(∃*&nbsp;<i>x</i>∈<i>A</i>).
+Some systems extend “there exists” by appending a character to it.
+If a system provides those extensions, it should provide them for allsome
+as well.
 
 <p>
-Allsome always says two things at once: that in every case where the antecedent
-holds the consequent holds, <i>and</i> the existence claim the speaker actually
-intends about that antecedent.
-Plain allsome intends the ordinary one, “at least one”.
-A variant changes nothing except that second claim, which becomes whatever the
-appended character means.
-That is the whole rule, and it is why the notation composes: someone who knows
-what ∃! means can read
-<span class="allsome">∀<span>∃</span></span>! without being taught it.
+The common one is ∃!, “there exists exactly one”
+[<a href="#BellMachover">BellMachover</a>, Definition 10.1, p.&nbsp;97;
+<a href="#WhiteheadRussell">WhiteheadRussell</a>, *14.02, p.&nbsp;175;
+Metamath <a href="https://us.metamath.org/mpeuni/df-eu.html">df-eu</a>].
+Some also have ∃*, “there exists at most one”
+[<a href="#BellMachover">BellMachover</a>, p.&nbsp;460;
+Metamath <a href="https://us.metamath.org/mpeuni/df-mo.html">df-mo</a>].
+Metamath provides forms of each restricted to a class as well
+(<a href="https://us.metamath.org/mpeuni/df-reu.html">df-reu</a> and
+<a href="https://us.metamath.org/mpeuni/df-rmo.html">df-rmo</a>).
 
 <p>
-We don’t require any system to support these.
-But if a system does extend “there exists” this way, we’d encourage it to use
-the same spelling and the definitions below, so that the meaning stays
-predictable across systems.
-For reference, here are the two forms of allsome itself:
-
-<ul>
-<li><span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>&nbsp;(φ→ψ) ≡
-(∀<i>x</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃<i>x</i>&nbsp;φ
-<li><span class="allsome">∀<span>∃</span></span>&nbsp;<i>x</i>∈<i>A</i>&nbsp;(φ→ψ) ≡
-(∀<i>x</i>∈<i>A</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃<i>x</i>∈<i>A</i>&nbsp;φ
-</ul>
-
-<p>
-and here are the four variants, in which <i>only the second conjunct changes</i>:
+The natural way to extend allsome is to append the same character, and let it
+modify allsome’s existence conjunct.
+Nothing else changes. For example:
 
 <ol>
 <li><span class="allsome">∀<span>∃</span></span>!&nbsp;<i>x</i>&nbsp;(φ→ψ) ≡
 (∀<i>x</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃!<i>x</i>&nbsp;φ
-<li><span class="allsome">∀<span>∃</span></span>*&nbsp;<i>x</i>&nbsp;(φ→ψ) ≡
-(∀<i>x</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃*<i>x</i>&nbsp;φ
 <li><span class="allsome">∀<span>∃</span></span>!&nbsp;<i>x</i>∈<i>A</i>&nbsp;(φ→ψ) ≡
 (∀<i>x</i>∈<i>A</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃!<i>x</i>∈<i>A</i>&nbsp;φ
-<li><span class="allsome">∀<span>∃</span></span>*&nbsp;<i>x</i>∈<i>A</i>&nbsp;(φ→ψ) ≡
-(∀<i>x</i>∈<i>A</i>&nbsp;(φ→ψ))&nbsp;∧&nbsp;∃*<i>x</i>∈<i>A</i>&nbsp;φ
 </ol>
 
 <p>
-In words, using Martians:
-
-<ol>
-<li><span class="allsome">∀<span>∃</span></span>!&nbsp;<i>x</i>&nbsp;(martian(<i>x</i>)→green(<i>x</i>)):
-all Martians are green, and there is exactly one Martian.
-<li><span class="allsome">∀<span>∃</span></span>*&nbsp;<i>x</i>&nbsp;(martian(<i>x</i>)→green(<i>x</i>)):
-all Martians are green, and there is at most one Martian.
-<li><span class="allsome">∀<span>∃</span></span>!&nbsp;<i>x</i>∈martians&nbsp;(tall(<i>x</i>)→green(<i>x</i>)):
-among Martians, all tall ones are green, and there is exactly one tall Martian.
-<li><span class="allsome">∀<span>∃</span></span>*&nbsp;<i>x</i>∈martians&nbsp;(tall(<i>x</i>)→green(<i>x</i>)):
-among Martians, all tall ones are green, and there is at most one tall Martian.
-</ol>
+and likewise with ∃* in place of ∃!.
 
 <p>
-Note carefully what the modifier counts in the restricted cases.
-It counts the members of <i>A</i> that satisfy the antecedent φ, <i>not</i> the
-members of <i>A</i>.
-Case 3 says there is exactly one tall Martian, not that there is exactly one
-Martian.
-This is the same distinction the bounded form of allsome itself turns on, and
-getting it wrong is precisely the mistake we made in an earlier version of the
-bounded definition; see the <a href="#older">appendix</a>.
+<span class="allsome">∀<span>∃</span></span>! is genuinely useful.
+Since exactly one <i>x</i> satisfies φ, saying that <i>all</i> φ are ψ says that
+<i>that one thing</i> is ψ.
+So <span class="allsome">∀<span>∃</span></span>!&nbsp;<i>x</i>&nbsp;(martian(<i>x</i>)→green(<i>x</i>)) says: there is
+exactly one Martian, and it is green.
 
 <p>
-One consequence of ∃* is worth pointing out, though it is not a defect.
-“At most one” is satisfied by having none, so
+This is exactly what the English word “the” usually does.
+“The king is hungry” claims that a king exists, that there is only
+one, and that he is hungry.
+Russell analyzed such <i>definite descriptions</i> with exactly this apparatus
+[<a href="#WhiteheadRussell">WhiteheadRussell</a>, *14.02].
+Now, however, we can succinctly describe it:
+<span class="allsome">∀<span>∃</span></span>!&nbsp;<i>x</i>&nbsp;(king(<i>x</i>)→hungry(<i>x</i>)).
+The bounded form covers the restricted case:
+<span class="allsome">∀<span>∃</span></span>!&nbsp;<i>x</i>∈martians&nbsp;(tall(<i>x</i>)→green(<i>x</i>)) says that
+exactly one Martian is tall and that it is green, which is to say
+“the tall Martian is green”.
+
+<p>
+The reason to care is the reason that motivates allsome, only more so.
+Write “the king is hungry” as
+∀<i>x</i>&nbsp;(king(<i>x</i>)→hungry(<i>x</i>)) and you silently drop
+<i>both</i> claims: it is vacuously true when there is no king, and it says
+nothing about how many kings there are.
+
+<p>
 <span class="allsome">∀<span>∃</span></span>*
-does not by itself rule out the vacuous case:
-if there are no Martians,
-<span class="allsome">∀<span>∃</span></span>*&nbsp;<i>x</i>&nbsp;(martian(<i>x</i>)→green(<i>x</i>))
-is true.
-That is exactly what the speaker asked for, and it is a perfectly reasonable
-thing to want to say.
-It simply is not the anti-vacuity guarantee that plain allsome provides.
-If you want “at most one” <i>and</i> “at least one”, then you want
-“exactly one”, which is ∃! and so
+says that there is at most one <i>X</i>, and that any <i>X</i> there may be
+is <i>Y</i>.
+In English that is the definite article without requiring existence:
+“the king, <i>if there is one</i>, is hungry”.
+That is less common, but it is a real thing to want to say.
+It is <i>not</i> the same as an ordinary for-all:
+∀<i>x</i>&nbsp;(φ→ψ) says nothing about how many <i>x</i> satisfy φ, so
+<span class="allsome">∀<span>∃</span></span>* is a stronger claim.
+
+<p>
+We do have a caution about <span class="allsome">∀<span>∃</span></span>*.
+“At most one” is satisfied by having none, so
+<span class="allsome">∀<span>∃</span></span>* deliberately permits there being
+none, and it is therefore <i>true</i> when nothing satisfies φ.
+If you want protection against vacuous truth, you want
+<span class="allsome">∀<span>∃</span></span> or
 <span class="allsome">∀<span>∃</span></span>!.
-That is not a coincidence: Metamath defines ∃! as precisely that conjunction,
-∃!<i>x</i>&nbsp;φ ↔ (∃<i>x</i>&nbsp;φ ∧ ∃*<i>x</i>&nbsp;φ)
-[<a href="https://us.metamath.org/mpeuni/df-eu.html">df-eu</a>].
-
-<p>
-Since ∃! implies ∃, the variant
-<span class="allsome">∀<span>∃</span></span>! is strictly stronger than allsome: it implies
-<span class="allsome">∀<span>∃</span></span>, so allsome’s no-surprise property comes along with it.
-
-<p>
-This section also explains, in passing, why the older symbol ∀! was a poor
-choice: the “!” already means “exactly one”, so it was never available to mean
-what we needed.
-We say more about that in the <a href="#older">appendix</a>.
 
 <h1 id="notes">Notes</h1>
 <p>
@@ -1212,8 +1270,15 @@ If you intend for something to exist, then you should specify it.
 
 <p>
 Of course, we are not the first to notice this problem.
-Here we note two alternative approaches to counter this problem
-while retaining material implication.
+Here we note two other approaches that counter it while retaining material
+implication: declaring up front that a type is not empty, as PVS does, and
+detecting vacuity after the fact.
+If you suspect we are proposing a solution to a problem nobody has, note that
+tools to detect this have been built since at least 1994
+[<a href="#BeattyBryant">BeattyBryant</a>], and that they exist in quite
+different kinds of tool.
+We look at vacuity detection as it grew up in model checking, and then at the
+same idea as it appears in SPARK, which proves programs a quite different way.
 
 <h2 id="pvs">PVS TYPE+</h2>
 <p>
@@ -1242,14 +1307,100 @@ If the type T is empty, then the following two equivalences hold:
 (FORALL (x: T): p(x)) IFF TRUE, (EXISTS (x: T): p(x)) IFF FALSE
 -->
 
-<h2 id="spark">SPARK dead branch warning</h2>
+<h2 id="vacuity">Vacuity detection</h2>
+
+<p>
+Vacuity detection is a countermeasure that comes from model checking.
+As we noted earlier, Beatty and Bryant found in 1994 that a formula could be
+trivially valid because its antecedent was never satisfiable, and named that
+<i>antecedent failure</i>
+[<a href="#BeattyBryant">BeattyBryant</a>, section “Observations”].
+Beer and colleagues generalized the idea to <i>vacuity</i>, covering other
+kinds of trivial validity as well, and showed how to detect it efficiently.
+Their definition is that a
+“formula φ is vacuous in model <i>M</i> if there is a sub-formula ψ of φ
+such that ψ does not affect φ in <i>M</i>”
+[<a href="#Beer2001">Beer&nbsp;2001</a>, Definition 2].
+Kupferman and Vardi gave
+a general method for detection of vacuity and generation of
+interesting witnesses for specifications in CTL*,
+which checks “whether all the subformulas of the specification affect
+its truth value in the system”
+[<a href="#KupfermanVardi">KupfermanVardi</a>, section 1].
+The technique rests on a precise notion of a subformula doing no work.
+A subformula ψ “affects” φ in a model if there is <i>some</i> replacement
+formula ψ′ for which φ and φ with ψ replaced by ψ′ have different truth values
+[<a href="#Beer2001">Beer&nbsp;2001</a>, Definition 1].
+So if ψ could be swapped for anything at all without changing the answer, it
+did no work, and the formula is vacuous.
+For a formula that is <i>not</i> vacuous, these tools can also produce an
+“interesting witness”, which Beer and colleagues define as
+“a non-trivial example of the validity of the formula”
+[<a href="#Beer2001">Beer&nbsp;2001</a>, abstract].
+
+<p>
+The idea has been applied in industrial practice at more than one company.
+Beer and colleagues report on its use at IBM
+[<a href="#Beer2001">Beer&nbsp;2001</a>], and Armoni and colleagues report
+using vacuity detection on real processor designs at Intel, where they apply
+such checks “on every specification” and check the important
+subformulas manually when a full check exceeds capacity
+[<a href="#Armoni2003">Armoni&nbsp;2003</a>, section 5.4].
+
+<p>
+We think this is valuable, and it is an endorsement of our thesis: people built
+tooling for finding specification defects,
+and the ones who did report that it kept turning up
+(recall the 20% figure quoted earlier).
+But it addresses a different moment in the process than allsome does, and the
+difference matters:
+
+<ul>
+<li>Vacuity detection is <i>detection after the fact</i>, not prevention.
+It tells you that a formula you already wrote turned out to be vacuous against
+a model you already built.
+Allsome prevents the mistake at the moment you write the specification, which
+is the moment the mistake is made.
+<li>It only helps when a tool is looking for it, and the looking is not always
+switched on.
+SPARK’s proof warnings, for instance, “are not enabled by default, as
+they require calling a prover for each potential warning, which incurs a small
+cost”
+[<a href="#SPARKUG">SPARKUG</a>, section 7.3].
+<li>It is not guaranteed to find anything.
+SPARK’s documentation says so plainly: the warnings
+“are not guaranteed to be complete: an absence of warnings does not
+guarantee the logical consistently [<i>sic</i>] of all subprogram contracts or
+assumptions; nor does it guarantee an absence of dead branches or code”
+[<a href="#SPARKUG">SPARKUG</a>, section 7.4].
+As noted earlier, Intel reports that automated tools are
+sometimes unable to handle their specifications due to capacity limits.
+</ul>
+
+<p>
+On the other hand, vacuity detection is more <i>general</i> than allsome in one
+important way.
+Its definition of vacuity turns on <i>any</i> subformula failing to affect the
+result [<a href="#Beer2001">Beer&nbsp;2001</a>, Definition 2], not only on an
+antecedent that nothing satisfies.
+Allsome is a narrow fix for a specific mistake.
+Vacuity detection is a broad net for a whole family of them.
+Neither subsumes the other.
+
+<p>
+The idea is also not confined to model checking, as the next section shows.
+
+<h2 id="spark">SPARK proof warnings</h2>
 
 <p>
 <a href="https://www.adacore.com/about-spark">SPARK</a> is a
 programming language, verification toolset, and a design method which
-together “ensure that ultra-low defect software can be deployed in
+together
+<a href="https://web.archive.org/web/20181225151643/https://www.adacore.com/about-spark"
+>“ensure that ultra-low defect software can be deployed in
 application domains where high-reliability must be assured, for example
-where safety and security are key requirements”.
+where safety and security are key requirements”</a>
+(AdaCore has since reworded that page; the quotation is from a 2018 copy).
 This is especially useful in embedded systems where performance is critical.
 <a href="https://learn.adacore.com/courses/intro-to-spark/index.html"
 >Intro to SPARK</a> is an interactive introduction to it.
@@ -1259,7 +1410,25 @@ Of course, if the specification is wrong, then what it proves won’t
 be what was intended.
 
 <p>
-In 2018
+SPARK has vacuity detection too, although it proves programs by a quite
+different route: its prover, GNATprove, hands each check to an SMT solver
+rather than exploring the states of a model.
+GNATprove will
+“issue warnings as part of proof, on preconditions or postconditions or
+pragma Assume that are <i>always false</i>, unreachable branches in complex
+Boolean expressions (typically in assertions and contracts), dead code at
+branching points in the program”
+[<a href="#SPARKUG">SPARKUG</a>, section 7.3].
+Read that alongside the definition of vacuity we quoted a moment ago, that a
+formula is vacuous when some subformula “does not affect” it.
+A precondition that is always false is an antecedent that nothing can satisfy,
+so the contract is trivially honored.
+An unreachable branch inside an assertion is a subformula that cannot affect
+the result.
+Same defect, same countermeasure, in a quite different kind of tool.
+
+<p>
+The part of this that concerns us most directly arrived in 2018, when
 SPARK implemented a warning that can often detect that a
 “branch” in a logical formula is “dead”, including when an implication
 in a for-all has an antecedent that can never occur.
@@ -1326,13 +1495,26 @@ dangerous cases, while allsome formally specifies that something must exist.
 
 <p>
 There isn’t any need to pick just one approach or the other.
-The allsome quantifier can provide guarantees for certain circumstances.
-Techniques like the one used in PVS
-can expressly state that certain types exist.
-Warnings that try to detect common mistakes
-(without guaranteeing their detection),
-such as those that can be provided by SPARK,
-can help detect problems in many other circumstances.
+They fit together naturally, because they act at different moments:
+
+<ul>
+<li>The allsome quantifier <i>prevents</i> the mistake at the moment the
+specification is written, which is the moment the mistake is made.
+It provides a guarantee, and it needs no tool support beyond the notation
+itself.
+<li>Techniques like the one used in PVS also <i>prevent</i>, by expressly
+stating that certain types are not empty.
+That removes one common cause of the problem, though only for expressions whose
+antecedent is a type.
+<li>Vacuity detection <i>reports</i> the mistakes that were made anyway, in
+model checkers and in program provers like SPARK alike.
+It catches far more than allsome does, since it finds trivial truth from any
+cause.
+But it only helps when a tool is in the loop and looking, and neither community
+claims it will find everything.
+</ul>
+
+<p>
 Countering defects requires a range of approaches, not any one;
 all of these approaches can work together.
 
@@ -1399,20 +1581,14 @@ we hope that others will eventually agree that allsome is awesome.
 <p>
 Older versions of this essay instead used the symbol ∀!,
 by analogy with the existing ∃! symbol.
-That analogy was a mistake, and worse than we first realized.
-The notation did not convey its meaning to readers who had not already learned
-it, which was bad enough.
-But to a reader who <i>had</i> learned the ∃! convention it conveyed the
-<i>wrong</i> meaning, because there the “!” means
-“exactly one”
+However, that notation did not convey its meaning to readers who had
+not already learned it.
+Even worse, a reader who <i>did</i> know about ∃! might be misled,
+because there the “!” in that case means “exactly one”
 (see <a href="#variants">variants of “there exists”</a>).
-Such a reader would naturally read ∀! as
-“for exactly one”, which is nearly the opposite of
-“for all”.
-So we changed the symbol to
-<span class="allsome">∀<span>∃</span></span>,
-so many could immediately intuit its meaning, and so that the “!”
-is left to mean what it already means.
+We changed the symbol to
+<span class="allsome">∀<span>∃</span></span>
+so many could immediately intuit its meaning.
 
 <p>
 Those older versions that used the symbol ∀!
@@ -1502,54 +1678,48 @@ definition an older document is using: ∀! always denotes the old definition,
 and <span class="allsome">∀<span>∃</span></span> always denotes the current one.
 
 <p>
-One more name, for the record: a conversion theorem called
-<a href="https://us.metamath.org/mpeuni/alsconv.html">alsconv</a> depended on
-that older
-<a href="https://us.metamath.org/mpeuni/df-alsc.html">df-alsc</a> definition,
-relating the general form with a membership
+One more name, for the record: a conversion theorem called alsconv depended on
+that older df-alsc definition, relating the general form with a membership
 antecedent to the bare-formula bounded form (again in the older notation),
 ∀!&nbsp;<i>x</i>&nbsp;(<i>x</i>∈<i>A</i>→ψ) ↔
 ∀!&nbsp;<i>x</i>∈<i>A</i>&nbsp;ψ.
-Both were replaced.
+Both were replaced, and neither exists in the Metamath database any more.
 
 <p>
 The Metamath labels changed as well.
 The restricted (bounded) form is now prefixed with <i>r</i>, following the way
 Metamath names the restricted quantifiers that allsome is built from: ∀ gives
 <a href="https://us.metamath.org/mpeuni/df-ral.html">df-ral</a> and ∃ gives
-<a href="https://us.metamath.org/mpeuni/df-rex.html">df-rex</a>, so df-als
-gives df-rals.
+<a href="https://us.metamath.org/mpeuni/df-rex.html">df-rex</a>, so
+<a href="https://us.metamath.org/mpeuni/df-als.html">df-als</a> gives
+<a href="https://us.metamath.org/mpeuni/df-rals.html">df-rals</a>.
 The older labels carried a trailing <i>i</i>, for <i>implication</i>, which no
 longer distinguishes anything now that both forms take an implication.
-Older references will therefore use these names:
+Older references will use the names in the left column below.
+Those older names no longer exist in the Metamath database, so they are not
+linked here:
 
 <table class="labels">
 <tr><th>Older name</th><th>Current name</th></tr>
-<tr><td><a href="https://us.metamath.org/mpeuni/df-alsi.html">df-alsi</a></td>
-    <td>df-als</td></tr>
-<tr><td><a href="https://us.metamath.org/mpeuni/df-alsc.html">df-alsc</a></td>
-    <td>df-rals (and corrected, as described above)</td></tr>
-<tr><td><a href="https://us.metamath.org/mpeuni/alsconv.html">alsconv</a></td>
-    <td>dfrals2 (and corrected)</td></tr>
-<tr><td><a href="https://us.metamath.org/mpeuni/alsi-no-surprise.html">alsi-no-surprise</a></td>
-    <td>als-no-surprise</td></tr>
+<tr><td>df-alsi</td>
+    <td><a href="https://us.metamath.org/mpeuni/df-als.html">df-als</a></td></tr>
+<tr><td>df-alsc</td>
+    <td><a href="https://us.metamath.org/mpeuni/df-rals.html">df-rals</a>
+        (and corrected, as described above)</td></tr>
+<tr><td>alsconv</td>
+    <td><a href="https://us.metamath.org/mpeuni/dfrals2.html">dfrals2</a>
+        (and corrected)</td></tr>
+<tr><td>alsi-no-surprise</td>
+    <td><a href="https://us.metamath.org/mpeuni/als-no-surprise.html">als-no-surprise</a></td></tr>
 </table>
 
-<!-- MM-PENDING-START (remove this whole paragraph, and the "not yet published" and
-     "currently published under its older name" notes marked MM-PENDING above,
-     once the Metamath update is accepted) -->
 <p>
-Note: this Metamath update is still in progress, so the database does not yet
-match this essay.
-Until it is accepted, the older names in the left column above are the ones
-that exist, which is why they are the only ones linked here.
-The general form and the no-surprise theorem are unchanged apart from their
-names and the symbol, so df-alsi and alsi-no-surprise still state exactly what
-df-als and als-no-surprise will state.
-The bounded form is <i>not</i> merely renamed: df-alsc and alsconv assert the
-older, mistaken definition, so they are not substitutes for df-rals and
-dfrals2.
-<!-- MM-PENDING-END -->
+Take care with the middle two rows.
+The general form and the no-surprise theorem were only renamed, and state
+exactly what they always did.
+The bounded form was <i>not</i> merely renamed: df-alsc and alsconv asserted the
+older, mistaken definition described above, so anything that relied on them
+should be re-examined rather than simply relabeled.
 
 <h1 id="references" class="unnumbered">References</h1>
 
@@ -1557,6 +1727,34 @@ dfrals2.
 <li>[Aristotle]
 Aristotle, <i>Posterior Analytics</i>, II.7.92b6-8 (translation by Mure),
 c. 300s BC.
+<li id="Armoni2003">[Armoni 2003]
+Armoni, Roy; Fix, Limor; Flaisher, Alon; Grumberg, Orna; Piterman, Nir;
+Tiemeyer, Andreas; and Vardi, Moshe Y.,
+<a href="https://www.cse.chalmers.se/~piterman/publications/2003/AFFGPTV03.pdf"
+>“Enhanced Vacuity Detection in Linear Temporal Logic”</a>,
+<i>Computer Aided Verification (CAV)</i>, 2003.
+<li id="BarwiseEtchemendy">[BarwiseEtchemendy]
+Barker-Plummer, Dave; Barwise, Jon; and Etchemendy, John,
+<i>Language, Proof and Logic</i>, second edition,
+CSLI Publications, Stanford, 2011. ISBN 978-1-57586-632-1.
+Section 9.6, “Conversational implicature and quantification”.
+<li id="BeattyBryant">[BeattyBryant]
+Beatty, Derek L. and Bryant, Randal E.,
+<a href="https://www.cs.york.ac.uk/rts/docs/DAC-1964-2006/PAPERS/1994/DAC94_596.PDF"
+>“Formally Verifying a Microprocessor Using a Simulation
+Methodology”</a>,
+<i>Proceedings of the 31st Design Automation Conference (DAC)</i>,
+1994, pp. 596-602.
+The paper that named <i>antecedent failure</i>.
+<li id="Beer2001">[Beer 2001]
+Beer, Ilan; Ben-David, Shoham; Eisner, Cindy; and Rodeh, Yoav,
+<a href="https://www.cs.toronto.edu/~chechik/courses05/csc2108/beer01.pdf"
+>“Efficient Detection of Vacuity in Temporal Model
+Checking”</a>,
+<i>Formal Methods in System Design</i> 18(2), 2001, pp. 141-163.
+An earlier version appeared as
+“Efficient Detection of Vacuity in ACTL Formulas”,
+<i>Computer Aided Verification (CAV)</i>, 1997.
 <li id="BellMachover">[BellMachover]
 Bell, J. L. and Machover, M., <i>A Course in Mathematical Logic</i>,
 North-Holland, Amsterdam, 1977. ISBN 978-0-7204-2844-5.
@@ -1573,6 +1771,26 @@ Edgington, Dorothy, The Stanford Encyclopedia of Philosophy,
 <li>[Empiricus] Empiricus, Sextus, <i>Against the Logicians</i>,
 written c. second century AD,
 Translated and edited by Richard Bett, 2005.
+<li id="forallx">[forallx]
+Magnus, P. D.; Button, Tim; Trueman, Robert; and Zach, Richard,
+with contributions by J. Robert Loftis and Aaron Thomas-Bolduc,
+<a href="https://forallx.openlogicproject.org/"
+><i>forall x: Calgary — An Introduction to Formal Logic</i></a>,
+Open Logic Project, Fall 2025.
+Section 24.2.
+Freely available under a Creative Commons Attribution license;
+<a href="https://forallx.openlogicproject.org/forallxyyc.pdf">PDF</a>.
+<li id="Greenman2023">[Greenman 2023]
+Greenman, Ben; Saarinen, Sam; Nelson, Tim; and Krishnamurthi, Shriram,
+<a href="https://programming-journal.org/2023/7/7/"
+>“Little Tricky Logic: Misconceptions in the Understanding of
+LTL”</a>,
+<i>The Art, Science, and Engineering of Programming</i>,
+volume 7, issue 2, article 7, 2023.
+<a href="https://doi.org/10.22152/programming-journal.org/2023/7/7"
+>doi:10.22152/programming-journal.org/2023/7/7</a>.
+Also available as
+<a href="https://arxiv.org/abs/2211.01677">arXiv:2211.01677</a>.
 <li>[Groarke]
 <a href="https://iep.utm.edu/aristotle-logic/">Groarke</a>,
 “Aristotle: Logic”,
@@ -1582,12 +1800,38 @@ href="https://www.cs.cornell.edu/home/halpern/papers/causalitybook-ch1-3.html"
 >[Halpern 2016]</a>
 Halpern, Joseph Y., 2016,
 <i>Actual Causality</i>.
+<li id="KupfermanVardi">[KupfermanVardi]
+Kupferman, Orna and Vardi, Moshe Y.,
+<a href="https://link.springer.com/article/10.1007/s100090100062"
+>“Vacuity Detection in Temporal Model Checking”</a>,
+<i>International Journal on Software Tools for Technology Transfer (STTT)</i>
+4(2), 2003, pp. 224-233.
+An earlier version appeared in
+<i>Correct Hardware Design and Verification Methods (CHARME)</i>, 1999;
+a copy is on
+<a href="https://www.cs.huji.ac.il/~ornak/publications/charme99.pdf"
+>Kupferman’s page</a>.
 <li>[Owre&nbsp;2001]
 <a href="https://pvs.csl.sri.com/doc/pvs-language-reference.pdf"
 >S. Owre, S., N. Shankar, J.M. Rushby, and D.W.J. Stringer-Calvert,
 <i>PVS Language Reference Manual</i></a>,
 Version 2.4, November 2001,
 section 3.1.5 (Empty versus Nonempty Types).
+<li id="Parsons">[Parsons]
+Parsons, Terence and Ciola, Graziana,
+<a href="https://plato.stanford.edu/entries/square/"
+>“The Traditional Square of Opposition”</a>,
+<i>The Stanford Encyclopedia of Philosophy</i>,
+first published 1997, substantive revision 2025.
+<li id="SPARKUG">[SPARKUG]
+AdaCore and Capgemini Engineering,
+<a href="https://docs.adacore.com/spark2014-docs/html/ug/en/source/how_to_use_gnatprove_in_a_team.html"
+><i>SPARK User’s Guide</i>, section 7.3, “How to Use GNATprove in a
+Team”</a>.
+See also
+<a href="https://docs.adacore.com/spark2014-docs/html/ug/en/source/how_to_write_subprogram_contracts.html"
+>section 7.4, “How to Write Subprogram Contracts”</a>,
+on the <code>--proof-warnings=on</code> switch.
 <li>[Suber 1997]
 <a href="https://legacy.earlham.edu/~peters/courses/log/mat-imp.htm">
 Suber, Peter, 1997, “Paradoxes of Material Implication”
