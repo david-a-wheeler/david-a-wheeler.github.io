@@ -217,6 +217,16 @@
   year      = {2011},
   isbn      = {978-1-57586-632-1}
 }
+@article{greenman2023ltl,
+  author  = {Ben Greenman and Sam Saarinen and Tim Nelson and Shriram Krishnamurthi},
+  title   = {Little Tricky Logic: Misconceptions in the Understanding of {LTL}},
+  journal = {The Art, Science, and Engineering of Programming},
+  volume  = {7},
+  number  = {2},
+  pages   = {7:1--7:37},
+  year    = {2023},
+  doi     = {10.22152/programming-journal.org/2023/7/7}
+}
 @online{wheeler2026allsome,
   author       = {David A. Wheeler},
   title        = {The Allsome Quantifier},
@@ -237,7 +247,7 @@
   title        = {Metamath Proof Explorer: \textup{\texttt{set.mm}} Database},
   year         = {2026},
   url          = {https://us.metamath.org/mpeuni/mmset.html},
-  lastaccessed = {2026-07-07},
+  lastaccessed = {2026-07-13},
   organization = {Metamath Project}
 }
 @techreport{wheeler2020underhanded,
@@ -895,9 +905,11 @@ Division by zero is not the only silent surprise. Fixed-width bit-vectors carry 
 
 \subsubsection{Exists with Implies}
 
-We can even find risky constructs in the underlying first-order logic notation that many systems are built on. In some ways, these are the most dangerous and need the most emphasis. \emph{All} tools that build on this widely-used notation, and do not take steps to deal with them, can lead to the same problems.
+We can even find risky constructs in the underlying mathematical notation that many systems are built on. In some ways, these are the most dangerous and need the most emphasis. \emph{All} tools that build on widely-used mathematical notations, and do not take steps to deal with them, can lead to the same problems.
 
-A common translation error involves pairing the existential quantifier (``exists'') with material implication (``implies''), like this:
+Translating informal intent into formal notation is demonstrably error-prone, and these are not hypothetical risks. A study of how people understand linear temporal logic found that translating English \emph{into} the notation, the direction in which specifications are authored, was the most common source of errors, with 47\% of student responses and 28\% of responses from researchers with prior exposure to the notation incorrect~\cite{greenman2023ltl}. We earlier noted that typically 20\% of industrial formulas passed trivially, and that each such pass pointed to a real problem~\cite{beer2001vacuity}.
+
+A common translation error involves pairing the existential quantifier (``exists'') with material implication (``implies'') in first-order logic, like this:
 \[ \exists x (P(x) \rightarrow Q(x)). \]
 This pattern is almost always a catastrophic misstatement of user intent. Typically, an investigator intends to assert that there exists some object $x$ which possesses property $P$ and satisfies consequence $Q$, which should be formally stated with a conjunction instead:
 \[ \exists x (P(x) \land Q(x)). \]
@@ -939,7 +951,7 @@ We have taken our own advice, having two independent AI systems, Google Gemini a
 
 For the outputs, Gemini likewise checked that the models Mace4 produced really were valid models. Claude Code independently confirmed both, re-deriving the input checks and re-evaluating each of the 17 models against its formulas, and agreed that every assumption holds while every negated target fails. Using more than one AI reviewer parallels the common practice of using more than one human reviewer.
 
-AI does not replace the need for tools that are designed to guard against common mistakes. An AI reviewer is non-deterministic and offers no guarantees; asked the same question twice, especially in slightly different ways, it may not give the same answer. Also, AI systems are trained largely on human work, so they tend to make the same mistakes that people make. In contrast, a tool that prevents or flags likely errors can do this deterministically, every time. Maximally safe tools, AI review, and human review are complementary layers, each catching what the others can miss. They work best \emph{together}.
+AI does not replace the need for tools that are designed to guard against common mistakes. An AI reviewer is non-deterministic and offers no guarantees; asked the same question twice, especially in slightly different ways, it may not give the same answer. Also, AI systems are trained largely on human work, so they tend to make the same mistakes that people make (in addition to their own). In contrast, a tool that prevents or flags likely errors can do this deterministically, every time. Maximally safe tools, AI review, and human review are complementary layers, each catching what the others can miss. They work best \emph{together}.
 
 \subsection{Proofs and Provers as Tools}
 
